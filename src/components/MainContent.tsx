@@ -236,6 +236,192 @@ const MainContent = ({ buttonText, headline, subtitle, lang, isLoggedIn = false,
     }
   };
 
+  const getExampleJobs = (lang: "de" | "en") => {
+    if (lang === 'de') {
+      return [
+        {
+          title: "Marketing Manager",
+          preview: "Entwicklung von Marketingstrategien...",
+          content: `Marketing Manager
+
+AUFGABEN:
+• Entwicklung und Umsetzung von Marketingstrategien
+• Koordination von Werbekampagnen
+• Analyse von Markttrends und Kundenverhalten
+• Budgetplanung und -kontrolle
+• Betreuung von Social Media Kanälen
+• Organisation von Events und Messen
+• Zusammenarbeit mit externen Agenturen
+• Erstellung von Präsentationen und Reports
+
+ANFORDERUNGEN:
+• Abgeschlossenes Studium im Bereich Marketing oder BWL
+• 3-5 Jahre Berufserfahrung im Marketing
+• Kreativität und analytisches Denken
+• Sehr gute Kommunikationsfähigkeiten
+• Sicherer Umgang mit MS Office und Marketing-Tools`
+        },
+        {
+          title: "Software Entwickler",
+          preview: "Programmierung von Webanwendungen...",
+          content: `Software Entwickler (m/w/d)
+
+AUFGABEN:
+• Entwicklung von Webanwendungen mit React und Node.js
+• Code-Reviews und Testing
+• Datenbankdesign und -optimierung
+• API-Entwicklung und Integration
+• Debugging und Fehlerbehebung
+• Dokumentation von Software-Komponenten
+• Zusammenarbeit im agilen Entwicklungsteam
+• Pflege bestehender Systeme
+
+ANFORDERUNGEN:
+• Studium der Informatik oder vergleichbare Qualifikation
+• Erfahrung mit JavaScript, React, Node.js
+• Kenntnisse in SQL und NoSQL Datenbanken
+• Git-Versionskontrolle
+• Problemlösungsorientiertes Denken`
+        },
+        {
+          title: "Kundenservice",
+          preview: "Bearbeitung von Kundenanfragen...",
+          content: `Kundenservice Mitarbeiter
+
+AUFGABEN:
+• Telefonische Beratung von Kunden
+• Bearbeitung von E-Mail-Anfragen
+• Reklamationsbearbeitung
+• Auftragserfassung im System
+• Produktberatung und Verkauf
+• Terminvereinbarung für Außendienst
+• Dokumentation von Kundenkontakten
+• Unterstützung bei Messen und Events
+
+ANFORDERUNGEN:
+• Kaufmännische Ausbildung oder Studium
+• Freundliches und professionelles Auftreten
+• Kommunikationsstärke am Telefon
+• Geduld im Umgang mit Kunden
+• PC-Kenntnisse und CRM-Erfahrung`
+        },
+        {
+          title: "Buchhalter",
+          preview: "Führung der Finanzbuchhaltung...",
+          content: `Buchhalter (m/w/d)
+
+AUFGABEN:
+• Führung der Finanzbuchhaltung
+• Erstellung von Monats- und Jahresabschlüssen
+• Kontierung von Belegen
+• Umsatzsteuervoranmeldungen
+• Mahnwesen und Zahlungsverkehr
+• Abstimmung von Konten
+• Zusammenarbeit mit Steuerberatern
+• Budgetplanung und Controlling
+
+ANFORDERUNGEN:
+• Ausbildung als Steuerfachangestellte/r oder Buchhalter/in
+• Mehrjährige Berufserfahrung in der Buchhaltung
+• Kenntnisse in DATEV oder vergleichbarer Software
+• Genauigkeit und Zuverlässigkeit
+• Steuerrechtliche Kenntnisse`
+        }
+      ];
+    } else {
+      return [
+        {
+          title: "Marketing Manager",
+          preview: "Develop marketing strategies...",
+          content: `Marketing Manager
+
+RESPONSIBILITIES:
+• Develop and implement marketing strategies
+• Coordinate advertising campaigns
+• Analyze market trends and customer behavior
+• Budget planning and control
+• Manage social media channels
+• Organize events and trade shows
+• Collaborate with external agencies
+• Create presentations and reports
+
+QUALIFICATIONS:
+• Bachelor's degree in Marketing or Business Administration
+• 3-5 years of marketing experience
+• Creativity and analytical thinking
+• Excellent communication skills
+• Proficiency in MS Office and marketing tools`
+        },
+        {
+          title: "Software Developer",
+          preview: "Develop web applications...",
+          content: `Software Developer
+
+RESPONSIBILITIES:
+• Develop web applications using React and Node.js
+• Code reviews and testing
+• Database design and optimization
+• API development and integration
+• Debugging and troubleshooting
+• Document software components
+• Work in agile development teams
+• Maintain existing systems
+
+QUALIFICATIONS:
+• Computer Science degree or equivalent
+• Experience with JavaScript, React, Node.js
+• Knowledge of SQL and NoSQL databases
+• Git version control
+• Problem-solving mindset`
+        },
+        {
+          title: "Customer Service",
+          preview: "Handle customer inquiries...",
+          content: `Customer Service Representative
+
+RESPONSIBILITIES:
+• Phone customer consultation
+• Handle email inquiries
+• Process complaints
+• Order entry in system
+• Product consulting and sales
+• Schedule appointments for field service
+• Document customer interactions
+• Support at trade shows and events
+
+QUALIFICATIONS:
+• Commercial training or degree
+• Friendly and professional demeanor
+• Strong phone communication skills
+• Patience in customer interactions
+• PC skills and CRM experience`
+        },
+        {
+          title: "Accountant",
+          preview: "Maintain financial records...",
+          content: `Accountant
+
+RESPONSIBILITIES:
+• Maintain financial accounting records
+• Prepare monthly and annual financial statements
+• Account for receipts and invoices
+• VAT returns
+• Accounts receivable and payment processing
+• Reconcile accounts
+• Collaborate with tax consultants
+• Budget planning and controlling
+
+QUALIFICATIONS:
+• Training as tax specialist or accountant
+• Several years of accounting experience
+• Knowledge of accounting software
+• Accuracy and reliability
+• Tax law knowledge`
+        }
+      ];
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -291,6 +477,31 @@ const MainContent = ({ buttonText, headline, subtitle, lang, isLoggedIn = false,
                 </div>
               )}
             </div>
+
+            {/* Example Job Positions */}
+            {!hasInput && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  {lang === 'de' ? 'Oder wähle ein Beispiel:' : 'Or choose an example:'}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
+                  {getExampleJobs(lang).map((example, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      className="h-auto p-3 text-left justify-start hover:border-primary/50 transition-colors"
+                      onClick={() => setInput(example.content)}
+                    >
+                      <div className="space-y-1">
+                        <div className="font-medium text-sm">{example.title}</div>
+                        <div className="text-xs text-muted-foreground truncate">{example.preview}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Error Display */}
             {analysisError && (
