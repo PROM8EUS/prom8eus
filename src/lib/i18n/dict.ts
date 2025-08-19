@@ -86,7 +86,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     back: "Zurück",
     your_analysis: "Ihre Automatisierungs-Analyse",
     detailed_evaluation: "Detaillierte Auswertung Ihrer Aufgabenbeschreibung",
-    share_landing: "Landingpage teilen",
+    share_landing: "Analyse teilen",
     learn_workflows: "Mehr über Workflows erfahren",
     coming_soon: "Demnächst verfügbar"
   },
@@ -170,7 +170,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     back: "Back",
     your_analysis: "Your Automation Analysis",
     detailed_evaluation: "Detailed evaluation of your task description",
-    share_landing: "Share Landing Page", 
+    share_landing: "Share Analysis", 
     learn_workflows: "Learn More About Workflows",
     coming_soon: "Coming Soon"
   }
