@@ -3,29 +3,59 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { callAnalyzeInput } from "@/lib/supabase";
 import LoadingPage from "./LoadingPage";
 
 const MainContent = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // URL validation regex
   const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
   const isUrl = urlRegex.test(input.trim());
   const hasInput = input.trim() !== "";
 
-  const handleAnalyze = () => {
-    if (hasInput) {
-      setIsLoading(true);
+  const handleAnalyze = async () => {
+    if (!hasInput) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const analysisInput = isUrl 
+        ? { url: input.trim() }
+        : { rawText: input.trim() };
       
-      // Simulate analysis process
-      setTimeout(() => {
-        console.log("Analysis complete:", isUrl ? `URL: ${input}` : `Text: ${input}`);
-        setIsLoading(false);
-        // Navigate to results page
+      console.log('Calling analysis with:', analysisInput);
+      const result = await callAnalyzeInput(analysisInput);
+      
+      if (result.success && result.data) {
+        // Store results in sessionStorage for Results page
+        sessionStorage.setItem('analysisResult', JSON.stringify(result.data));
         navigate('/results');
-      }, 4000);
+        
+        toast({
+          title: "Analyse erfolgreich",
+          description: result.data.summary,
+        });
+      } else {
+        toast({
+          title: "Analyse fehlgeschlagen",
+          description: result.error || "Ein unbekannter Fehler ist aufgetreten",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Fehler",
+        description: "Netzwerkfehler beim Analysieren",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
