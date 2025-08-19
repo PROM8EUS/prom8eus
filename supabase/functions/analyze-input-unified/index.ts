@@ -422,7 +422,42 @@ function extractTasks(text: string): RawTask[] {
 
   console.log(`Found ${bullets.length} bullet points`);
 
-  // 4) Fallback: Verb-Linien (nur falls keine oder wenige Bullets)
+  // 4) Enhanced sentence-based extraction for paragraph-form responsibilities
+  const sentenceTasks: RawTask[] = [];
+  if (bullets.length === 0) {
+    console.log('No bullet points found, trying sentence-based extraction');
+    
+    // Join scoped lines and split by sentence endings
+    const fullText = scoped.join(' ').replace(/\s+/g, ' ');
+    const sentences = fullText.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
+    
+    const ACTION_VERBS = new RegExp(
+      [
+        // English action verbs (common in job descriptions)
+        "\\b(write|edit|create|develop|design|build|maintain|manage|lead|coordinate|support|implement|analyze|optimize|collaborate|partner|help|assist|ensure|provide|deliver|execute|plan|organize|monitor|review|evaluate|establish|enhance|improve|facilitate|guide|mentor|supervise|oversee|direct|control|handle|process|generate|produce|publish|distribute|communicate|present|report|document|research|investigate|identify|recommend|advise|consult|negotiate|sell|market|promote|train|teach|educate|install|configure|deploy|test|debug|troubleshoot|resolve|fix|update|upgrade|integrate|connect|link|sync|backup|restore|archive|store|retrieve|fetch|collect|gather|compile|summarize|translate|convert|transform|adapt|customize|personalize|tailor)\\b",
+        // German action verbs
+        "\\b(schreiben|bearbeiten|erstellen|entwickeln|gestalten|bauen|pflegen|verwalten|leiten|koordinieren|unterstützen|implementieren|analysieren|optimieren|zusammenarbeiten|helfen|sicherstellen|bereitstellen|liefern|ausführen|planen|organisieren|überwachen|überprüfen|bewerten|etablieren|verbessern|erleichtern|führen|betreuen|beaufsichtigen|überwachen|dirigieren|kontrollieren|handhaben|verarbeiten|generieren|produzieren|veröffentlichen|verteilen|kommunizieren|präsentieren|berichten|dokumentieren|recherchieren|untersuchen|identifizieren|empfehlen|beraten|konsultieren|verhandeln|verkaufen|vermarkten|bewerben|trainieren|lehren|bilden|installieren|konfigurieren|einsetzen|testen|debuggen|beheben|lösen|reparieren|aktualisieren|upgraden|integrieren|verbinden|verknüpfen|synchronisieren|sichern|wiederherstellen|archivieren|speichern|abrufen|sammeln|zusammenstellen|zusammenfassen|übersetzen|konvertieren|transformieren|anpassen|personalisieren|maßschneidern)\\b"
+      ].join("|"),
+      "i"
+    );
+
+    for (const sentence of sentences) {
+      if (sentence.length >= 20 && ACTION_VERBS.test(sentence) && !isFluff(sentence)) {
+        // Split compound sentences on conjunctions
+        const parts = sentence.split(/\b(?:and|und|sowie|oder|or)\b/i);
+        for (const part of parts) {
+          const cleanPart = clean(part.trim());
+          if (cleanPart.length >= 15 && ACTION_VERBS.test(cleanPart)) {
+            sentenceTasks.push({ text: shorten(cleanPart), source: "sentence" as any });
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`Found ${sentenceTasks.length} sentence-based tasks`);
+
+  // 5) Fallback: Verb-Linien (nur falls keine oder wenige Bullets und Sentences)
   const VERB_LINE_ENHANCED = new RegExp(
     [
       // DE (Erweiterte Verben am Satzanfang)
@@ -437,7 +472,7 @@ function extractTasks(text: string): RawTask[] {
     "i"
   );
 
-  const verbLines: RawTask[] = bullets.length >= 3 
+  const verbLines: RawTask[] = (bullets.length + sentenceTasks.length) >= 3 
     ? []
     : scoped
         .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && VERB_LINE_ENHANCED.test(l))
@@ -446,19 +481,19 @@ function extractTasks(text: string): RawTask[] {
 
   console.log(`Found ${verbLines.length} verb lines with enhanced detection as fallback`);
 
-  // 5) Kombinieren + deduplizieren
+  // 6) Kombinieren + deduplizieren
   const dedup = new Map<string, RawTask>();
-  for (const t of [...bullets, ...verbLines]) {
+  for (const t of [...bullets, ...sentenceTasks, ...verbLines]) {
     const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
     if (!dedup.has(key) && !isFluff(t.text)) {
       dedup.set(key, t);
     }
   }
 
-  // 6) Filter für generische Titel/Meta-Informationen
+  // 7) Filter für generische Titel/Meta-Informationen
   const GENERIC_TITLES = /(hard facts|details|profil|anforderungen|qualifikationen|benefits|wir bieten|about you|requirements|what we offer|company|unternehmen|zur person|dein profil|ihr profil|das bieten wir|leistungen|perks)/i;
   
-  // 7) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
+  // 8) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
   const result = Array.from(dedup.values())
     .filter(t => !GENERIC_TITLES.test(t.text)) // Generische Titel entfernen
     .sort((a, b) => b.text.length - a.text.length)
@@ -503,7 +538,7 @@ function shorten(s: string, n = 140): string {
 
 interface RawTask { 
   text: string; 
-  source: "bullet" | "verbline"; 
+  source: "bullet" | "verbline" | "sentence"; 
 }
 
 function analyzeTask(taskText: string): Task {
