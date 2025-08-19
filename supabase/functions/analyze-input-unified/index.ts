@@ -554,6 +554,15 @@ function analyzeTask(taskText: string): Task {
 
   // Define human-required indicators (with English keywords added)
   const humanSignals = {
+    physical: {
+      keywords: [
+        // German - körperliche Tätigkeiten
+        'fegen', 'putzen', 'reinigen', 'wischen', 'saugen', 'kehren', 'aufräumen', 'reparieren', 'montieren', 'demontieren', 'bauen', 'installieren', 'bewegen', 'tragen', 'heben', 'transportieren', 'sortieren', 'packen', 'auspacken', 'laden', 'entladen', 'schneiden', 'sägen', 'bohren', 'schrauben', 'kleben', 'schweißen', 'lackieren', 'streichen', 'pflegen', 'gießen', 'ernten', 'pflanzen', 'graben', 'mähen',
+        // English - physical tasks
+        'sweep', 'clean', 'mop', 'vacuum', 'wipe', 'dust', 'scrub', 'polish', 'wash', 'dry', 'repair', 'fix', 'assemble', 'disassemble', 'build', 'construct', 'install', 'move', 'carry', 'lift', 'transport', 'load', 'unload', 'pack', 'unpack', 'sort', 'organize', 'cut', 'saw', 'drill', 'screw', 'glue', 'weld', 'paint', 'maintain', 'water', 'harvest', 'plant', 'dig', 'mow'
+      ],
+      weight: 40 // Höchste Gewichtung für körperliche Arbeit
+    },
     creative: {
       keywords: [
         // German
