@@ -20,14 +20,50 @@ const Legal = () => {
           </div>
 
           <div className="bg-card border border-border rounded-lg p-8 space-y-8">
-            <div className="space-y-6">
-              <p className="text-muted-foreground text-center">
-                {lang === "de" 
-                  ? "Die Inhalte für das Impressum werden in Kürze hinzugefügt." 
-                  : "Legal notice content will be added shortly."
-                }
-              </p>
-            </div>
+            {lang === "de" ? (
+              <div className="space-y-8 text-left">
+                {/* TMG Section */}
+                <section>
+                  <h2 className="text-xl font-semibold mb-4">Angaben gemäß § 5 TMG</h2>
+                  <div className="space-y-2 text-muted-foreground">
+                    <p className="font-medium text-foreground">prom8eus GbR</p>
+                    <p>vertreten durch Thomas Fritsch und André Sheydin</p>
+                    <p>c/o ABCDATA</p>
+                    <p>Niehler Straße 44a</p>
+                    <p>50733 Köln</p>
+                    <p>Deutschland</p>
+                  </div>
+                </section>
+
+                {/* Contact Section */}
+                <section>
+                  <h2 className="text-xl font-semibold mb-4">Kontakt</h2>
+                  <div className="space-y-2 text-muted-foreground">
+                    <p>Telefon: <a href="tel:+4922125927541" className="text-primary hover:text-primary/80">0221 2592 7541</a></p>
+                    <p>E-Mail: <a href="mailto:mail@prom8eus.de" className="text-primary hover:text-primary/80">mail@prom8eus.de</a></p>
+                  </div>
+                </section>
+
+                {/* Responsibility Section */}
+                <section>
+                  <h2 className="text-xl font-semibold mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
+                  <div className="space-y-2 text-muted-foreground">
+                    <p className="font-medium text-foreground">André Sheydin & Thomas Fritsch</p>
+                    <p>Niehler Straße 44a</p>
+                    <p>50733 Köln</p>
+                  </div>
+                </section>
+              </div>
+            ) : (
+              <div className="space-y-6 text-center">
+                <p className="text-muted-foreground">
+                  This legal notice is only available in German as required by German law.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Please switch to German to view the complete legal notice.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
