@@ -2,7 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import PageFooter from "@/components/PageFooter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { resolveLang } from "@/lib/i18n/i18n";
+import { resolveLang, t } from "@/lib/i18n/i18n";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap } from "lucide-react";
 
@@ -20,10 +20,10 @@ const About = () => {
           {/* Hero Section */}
           <section className="text-center space-y-8">
             <h1 className="text-5xl md:text-6xl font-bold text-foreground">
-              About <span className="text-primary">PROM8EUS</span>
+              {t(lang, "about_page_title")}
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              We bring clarity to a crucial question: Should a task be handled by humans or machines?
+              {t(lang, "about_mission_text")}
             </p>
           </section>
 
@@ -31,35 +31,35 @@ const About = () => {
           <section className="text-center space-y-12">
             <div className="flex items-center justify-center space-x-3">
               <Zap className="w-8 h-8 text-primary" />
-              <h2 className="text-3xl font-bold text-foreground">What We Do</h2>
+              <h2 className="text-3xl font-bold text-foreground">{t(lang, "about_what_we_do")}</h2>
             </div>
             
             <p className="text-lg text-muted-foreground leading-relaxed">
-              PROM8EUS analyzes job descriptions and delivers a clear score showing how automatable each task really is.
+              {t(lang, "about_what_we_do_text")}
             </p>
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-2xl p-8 text-center space-y-4">
                 <div className="text-3xl font-bold text-destructive">0–30</div>
-                <div className="font-semibold text-foreground">Human-centered</div>
-                <p className="text-sm text-muted-foreground">Little automation potential</p>
+                <div className="font-semibold text-foreground">{t(lang, "about_human_centered")}</div>
+                <p className="text-sm text-muted-foreground">{t(lang, "about_human_centered_desc")}</p>
               </div>
               <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-2xl p-8 text-center space-y-4">
                 <div className="text-3xl font-bold text-yellow-600">31–70</div>
-                <div className="font-semibold text-foreground">Mixed</div>
-                <p className="text-sm text-muted-foreground">Balance of both</p>
+                <div className="font-semibold text-foreground">{t(lang, "about_mixed")}</div>
+                <p className="text-sm text-muted-foreground">{t(lang, "about_mixed_desc")}</p>
               </div>
               <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 text-center space-y-4">
                 <div className="text-3xl font-bold text-primary">71–100</div>
-                <div className="font-semibold text-foreground">High potential</div>
-                <p className="text-sm text-muted-foreground">Machines can handle most</p>
+                <div className="font-semibold text-foreground">{t(lang, "about_high_potential")}</div>
+                <p className="text-sm text-muted-foreground">{t(lang, "about_high_potential_desc")}</p>
               </div>
             </div>
           </section>
 
           {/* How It Works */}
           <section className="space-y-12">
-            <h2 className="text-3xl font-bold text-foreground text-center">How It Works</h2>
+            <h2 className="text-3xl font-bold text-foreground text-center">{t(lang, "about_how_it_works")}</h2>
             
             <div className="grid md:grid-cols-2 gap-12">
               <div className="space-y-6">
@@ -68,8 +68,8 @@ const About = () => {
                     <span className="text-sm font-bold text-white">1</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Input</h3>
-                    <p className="text-muted-foreground">Upload a job description or paste text</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_input")}</h3>
+                    <p className="text-muted-foreground">{t(lang, "about_input_desc")}</p>
                   </div>
                 </div>
                 
@@ -78,8 +78,8 @@ const About = () => {
                     <span className="text-sm font-bold text-white">2</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Analysis</h3>
-                    <p className="text-muted-foreground">AI breaks down tasks and categories</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_analysis")}</h3>
+                    <p className="text-muted-foreground">{t(lang, "about_analysis_desc")}</p>
                   </div>
                 </div>
               </div>
@@ -90,8 +90,8 @@ const About = () => {
                     <span className="text-sm font-bold text-white">3</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Scoring</h3>
-                    <p className="text-muted-foreground">Each task gets an automation score</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_scoring")}</h3>
+                    <p className="text-muted-foreground">{t(lang, "about_scoring_desc")}</p>
                   </div>
                 </div>
                 
@@ -100,8 +100,8 @@ const About = () => {
                     <span className="text-sm font-bold text-white">4</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Results</h3>
-                    <p className="text-muted-foreground">Clear dashboard with actionable insights</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_results")}</h3>
+                    <p className="text-muted-foreground">{t(lang, "about_results_desc")}</p>
                   </div>
                 </div>
               </div>
@@ -110,22 +110,22 @@ const About = () => {
 
           {/* Why PROM8EUS */}
           <section className="text-center space-y-12">
-            <h2 className="text-3xl font-bold text-foreground">Why PROM8EUS?</h2>
+            <h2 className="text-3xl font-bold text-foreground">{t(lang, "about_why_prom8eus")}</h2>
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="space-y-3">
-                <h3 className="text-xl font-semibold text-foreground">Transparent</h3>
-                <p className="text-muted-foreground">Clear numbers, no buzzwords</p>
+                <h3 className="text-xl font-semibold text-foreground">{t(lang, "about_transparent")}</h3>
+                <p className="text-muted-foreground">{t(lang, "about_transparent_desc")}</p>
               </div>
               
               <div className="space-y-3">
-                <h3 className="text-xl font-semibold text-foreground">Actionable</h3>
-                <p className="text-muted-foreground">Practical recommendations</p>
+                <h3 className="text-xl font-semibold text-foreground">{t(lang, "about_actionable")}</h3>
+                <p className="text-muted-foreground">{t(lang, "about_actionable_desc")}</p>
               </div>
               
               <div className="space-y-3">
-                <h3 className="text-xl font-semibold text-foreground">Balanced</h3>
-                <p className="text-muted-foreground">Humans and machines together</p>
+                <h3 className="text-xl font-semibold text-foreground">{t(lang, "about_balanced")}</h3>
+                <p className="text-muted-foreground">{t(lang, "about_balanced_desc")}</p>
               </div>
             </div>
           </section>
@@ -133,10 +133,10 @@ const About = () => {
           {/* Story */}
           <section className="text-center space-y-6 py-12">
             <p className="text-lg text-muted-foreground italic">
-              "Like Prometheus brought fire to mankind, PROM8EUS delivers the modern fire of automation."
+              "{t(lang, "about_story_quote")}"
             </p>
             <p className="text-xl font-semibold text-foreground">
-              Machine or human – what's the right choice for each task?
+              {t(lang, "about_story_vision")}
             </p>
           </section>
 
@@ -144,14 +144,14 @@ const About = () => {
           <section className="text-center py-16 bg-gradient-to-br from-primary/5 to-primary/10 rounded-3xl">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-foreground">
-                Ready to get your score?
+                {t(lang, "about_cta_title")}
               </h2>
               <Button
                 size="lg"
                 className="px-8 py-6 font-semibold hover:scale-105 transition-transform duration-200"
                 onClick={() => window.location.href = '/'}
               >
-                Start Analysis
+                {t(lang, "about_cta_button")}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>

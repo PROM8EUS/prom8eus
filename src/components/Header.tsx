@@ -20,7 +20,7 @@ const Header = () => {
             href="/about" 
             className="text-foreground hover:text-primary transition-colors duration-200"
           >
-            About
+            {t(lang, "about")}
           </a>
           <a 
             href="/contact" 
