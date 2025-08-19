@@ -146,8 +146,8 @@ const About = () => {
           </section>
 
           {/* CTA */}
-          <section className="text-center py-16 bg-gradient-to-br from-primary/5 to-primary/10 rounded-3xl">
-            <div className="space-y-6">
+          <section className="text-center py-16 px-8 md:px-12 bg-gradient-to-br from-primary/5 to-primary/10 rounded-3xl">
+            <div className="space-y-6 max-w-4xl mx-auto">
               <h2 className="text-2xl font-bold text-foreground">
                 {t(lang, "about_cta_title")}
               </h2>
