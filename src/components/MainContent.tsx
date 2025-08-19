@@ -6,23 +6,22 @@ import { useNavigate } from "react-router-dom";
 import LoadingPage from "./LoadingPage";
 
 const MainContent = () => {
-  const [text, setText] = useState("");
-  const [url, setUrl] = useState("");
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // URL validation regex
   const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
-  const isValidUrl = url === "" || urlRegex.test(url);
-  const hasUrl = url.trim() !== "";
+  const isUrl = urlRegex.test(input.trim());
+  const hasInput = input.trim() !== "";
 
   const handleAnalyze = () => {
-    if (hasUrl || text.trim()) {
+    if (hasInput) {
       setIsLoading(true);
       
       // Simulate analysis process
       setTimeout(() => {
-        console.log("Analysis complete:", hasUrl ? `URL: ${url}` : `Text: ${text}`);
+        console.log("Analysis complete:", isUrl ? `URL: ${input}` : `Text: ${input}`);
         setIsLoading(false);
         // Navigate to results page
         navigate('/results');
@@ -50,38 +49,26 @@ const MainContent = () => {
 
         {/* Input Section */}
         <div className="space-y-6">
-          {/* URL Input */}
-          <div className="space-y-2">
-            <Input
-              type="url"
-              placeholder="URL einfügen (optional)"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className={`text-base ${!isValidUrl ? "border-destructive focus:ring-destructive/20" : "focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30"} transition-colors`}
-            />
-            {!isValidUrl && url !== "" && (
-              <p className="text-sm text-destructive">Ungültiges URL-Format</p>
-            )}
-          </div>
-
-          {/* Text Area */}
+          {/* Combined Input Field */}
           <div className="relative">
             <Textarea
-              placeholder={hasUrl ? "Der Inhalt wird automatisch importiert" : "Aufgabenbeschreibung oder Stellenanzeige hier einfügen …"}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              disabled={hasUrl}
-              className={`min-h-[300px] text-lg resize-none transition-colors ${
-                hasUrl 
-                  ? "bg-muted text-muted-foreground cursor-not-allowed" 
-                  : "focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30"
-              }`}
+              placeholder="URL oder Aufgabenbeschreibung hier einfügen …"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="min-h-[300px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors"
             />
+            {isUrl && hasInput && (
+              <div className="absolute top-3 right-3">
+                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
+                  URL erkannt
+                </span>
+              </div>
+            )}
           </div>
 
           <Button
             onClick={handleAnalyze}
-            disabled={(!hasUrl && !text.trim()) || !isValidUrl}
+            disabled={!hasInput}
             size="lg"
             className="px-12 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200 disabled:hover:scale-100"
           >
@@ -91,7 +78,10 @@ const MainContent = () => {
 
         {/* Features hint */}
         <div className="text-sm text-muted-foreground">
-          KI-gestützte Analyse für klare Einblicke in Ihre Aufgaben.
+          {isUrl && hasInput ? 
+            "URL erkannt – der Inhalt wird automatisch analysiert." : 
+            "KI-gestützte Analyse für klare Einblicke in Ihre Aufgaben."
+          }
         </div>
       </div>
     </main>
