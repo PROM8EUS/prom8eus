@@ -18,6 +18,8 @@ const MainContent = () => {
     url: string;
     textLength: number;
     wasRendered?: boolean;
+    fromCache?: boolean;
+    cacheDate?: string;
   } | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -53,7 +55,9 @@ const MainContent = () => {
             rawText: composedText,
             url: input.trim(),
             textLength: composedText.length,
-            wasRendered: false // This would come from the scraper response
+            wasRendered: false, // This would come from the scraper response
+            fromCache: extractedJobText.fromCache,
+            cacheDate: extractedJobText.cacheDate
           });
           
           // Check if extracted text is sufficient
@@ -222,6 +226,8 @@ const MainContent = () => {
         url={debugData?.url || ''}
         textLength={debugData?.textLength || 0}
         wasRendered={debugData?.wasRendered}
+        fromCache={debugData?.fromCache}
+        cacheDate={debugData?.cacheDate}
       />
     </>
   );

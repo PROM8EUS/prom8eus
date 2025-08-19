@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { supabase } from '@/integrations/supabase/client';
+import { getCachedUrlData, setCachedUrlData, cachedDataToJobText } from './urlCache';
 
 interface JobData {
   title: string;
@@ -22,11 +23,25 @@ interface ScrapeResponse {
   error?: string;
 }
 
-export async function extractJobTextFromUrl(url: string): Promise<ExtractedJobText> {
+export async function extractJobTextFromUrl(url: string): Promise<ExtractedJobText & { fromCache?: boolean; cacheDate?: string }> {
   try {
-    console.log('Fetching job content from URL:', url);
+    console.log('Checking cache for URL:', url);
     
-    // Call the enhanced scraper edge function
+    // Step 1: Check cache first
+    const cachedData = await getCachedUrlData(url);
+    if (cachedData) {
+      console.log('Using cached data for URL:', url);
+      const jobText = cachedDataToJobText(cachedData, url);
+      return {
+        ...jobText,
+        fromCache: true,
+        cacheDate: cachedData.createdAt
+      };
+    }
+    
+    console.log('No cache found, fetching fresh content for URL:', url);
+    
+    // Step 2: Call the enhanced scraper edge function
     const { data, error } = await supabase.functions.invoke('enhanced-job-scraper', {
       body: { url }
     });
@@ -44,7 +59,19 @@ export async function extractJobTextFromUrl(url: string): Promise<ExtractedJobTe
 
     console.log(`Content scraped successfully. Text length: ${scrapeResult.textLength}, Was rendered: ${scrapeResult.wasRendered}`);
     
-    return extractJobText(scrapeResult.html, url);
+    // Step 3: Extract job text from HTML
+    const jobText = extractJobText(scrapeResult.html, url);
+    
+    // Step 4: Cache the results for future use
+    const composedLength = jobText.composeJobText().length;
+    if (composedLength > 100) { // Only cache if we got meaningful content
+      await setCachedUrlData(url, jobText, composedLength, scrapeResult.wasRendered);
+    }
+    
+    return {
+      ...jobText,
+      fromCache: false
+    };
   } catch (error) {
     console.error('Error in extractJobTextFromUrl:', error);
     throw error;

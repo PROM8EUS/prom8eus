@@ -11,6 +11,8 @@ interface DebugModalProps {
   url: string;
   textLength: number;
   wasRendered?: boolean;
+  fromCache?: boolean;
+  cacheDate?: string;
 }
 
 export function DebugModal({ 
@@ -19,7 +21,9 @@ export function DebugModal({
   rawText, 
   url, 
   textLength, 
-  wasRendered 
+  wasRendered,
+  fromCache,
+  cacheDate
 }: DebugModalProps) {
   const { toast } = useToast();
 
@@ -71,6 +75,20 @@ export function DebugModal({
               </span>
             </div>
             <div>
+              <strong>Datenquelle:</strong> 
+              <span className="ml-2">
+                {fromCache ? (
+                  <span className="text-blue-600">
+                    💾 Aus Cache ({cacheDate ? new Date(cacheDate).toLocaleString() : 'unbekannt'})
+                  </span>
+                ) : (
+                  <span className="text-green-600">
+                    🔄 Frisch extrahiert
+                  </span>
+                )}
+              </span>
+            </div>
+            <div>
               <strong>Rendering-Modus:</strong> 
               <span className="ml-2">
                 {wasRendered ? '🚀 JavaScript gerendert' : '📄 Statisch geladen'}
@@ -87,6 +105,16 @@ export function DebugModal({
                  textLength < 2000 ? 'Ausreichend' : 'Gut'}
               </span>
             </div>
+            <div>
+              <strong>Cache-Status:</strong>
+              <span className="ml-2">
+                {fromCache ? (
+                  <span className="text-blue-600">Cache-Treffer (24h gültig)</span>
+                ) : (
+                  <span className="text-muted-foreground">Neue Daten (werden gecacht)</span>
+                )}
+              </span>
+            </div>
           </div>
 
           {textLength < 500 && (
@@ -95,6 +123,17 @@ export function DebugModal({
                 ⚠️ <strong>Warnung:</strong> Der extrahierte Text ist sehr kurz ({textLength} Zeichen). 
                 Dies kann zu ungenauen Analyseergebnissen führen. Bitte prüfen Sie den Text unten und 
                 fügen Sie bei Bedarf manuell zusätzliche Informationen hinzu.
+                {fromCache && " Die Daten stammen aus dem Cache - möglicherweise war die ursprüngliche Extraktion unvollständig."}
+              </p>
+            </div>
+          )}
+
+          {fromCache && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                💾 <strong>Cache-Hinweis:</strong> Diese Daten wurden am {cacheDate ? new Date(cacheDate).toLocaleString() : 'unbekannt'} 
+                automatisch zwischengespeichert und sind 24 Stunden gültig. Bei Problemen können Sie die URL erneut eingeben 
+                oder den Text manuell kopieren.
               </p>
             </div>
           )}
