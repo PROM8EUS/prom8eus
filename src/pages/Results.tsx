@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ScoreCircle from "@/components/ScoreCircle";
 import BarChart from "@/components/BarChart";
 import TaskList from "@/components/TaskList";
+import ShareModal from "@/components/ShareModal";
 import PageFooter from "@/components/PageFooter";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -75,6 +76,20 @@ const Results = () => {
   const lang = resolveLang(searchParams.get("lang") || undefined);
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
   const [displayTasks, setDisplayTasks] = useState<TaskForDisplay[]>(mockTasks);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+
+  // Generate unique share URL for this analysis
+  const generateShareUrl = (data: AnalysisResult) => {
+    const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Store analysis data in localStorage with the unique ID
+    localStorage.setItem(analysisId, JSON.stringify(data));
+    
+    // Generate shareable URL
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/landing?share=${analysisId}&lang=${lang}`;
+  };
 
   useEffect(() => {
     // Try to load real analysis results from sessionStorage
@@ -99,6 +114,9 @@ const Results = () => {
           
           console.log('Transformed tasks:', transformedTasks);
           setDisplayTasks(transformedTasks);
+          
+          // Generate share URL
+          setShareUrl(generateShareUrl(parsedResult));
         }
       } else {
         console.log('No stored analysis result found, using mock data');
@@ -114,7 +132,7 @@ const Results = () => {
   const totalScore = analysisData?.totalScore || 72;
 
   const handleShare = () => {
-    navigate('/landing');
+    setShareModalOpen(true);
   };
 
   const handleLearnMore = () => {
@@ -216,6 +234,13 @@ const Results = () => {
 
       {/* Footer */}
       <PageFooter />
+      
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        shareUrl={shareUrl}
+      />
     </div>
   );
 };

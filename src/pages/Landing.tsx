@@ -44,7 +44,25 @@ const Landing = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
-    // Try to load real analysis results from sessionStorage
+    // Check if this is a shared analysis URL
+    const shareId = searchParams.get('share');
+    
+    if (shareId) {
+      // Load shared analysis data from localStorage
+      try {
+        const sharedData = localStorage.getItem(shareId);
+        if (sharedData) {
+          const parsedResult: AnalysisResult = JSON.parse(sharedData);
+          setAnalysisData(parsedResult);
+          console.log('Loaded shared analysis:', parsedResult);
+          return;
+        }
+      } catch (error) {
+        console.error('Error loading shared analysis:', error);
+      }
+    }
+
+    // Fallback: Try to load analysis results from sessionStorage (current session)
     try {
       const storedResult = sessionStorage.getItem('analysisResult');
       if (storedResult) {
@@ -54,7 +72,7 @@ const Landing = () => {
     } catch (error) {
       console.error('Error loading analysis results for landing page:', error);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleStartAnalysis = () => {
     navigate('/');
