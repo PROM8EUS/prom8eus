@@ -39,7 +39,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const newHeight = Math.max(60, Math.min(textarea.scrollHeight, 400));
+      const newHeight = Math.max(50, Math.min(textarea.scrollHeight, 400));
       textarea.style.height = newHeight + 'px';
     }
   };
@@ -220,7 +220,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
                 placeholder={t(lang, "placeholder")}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="min-h-[60px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors overflow-hidden"
+                className="min-h-[50px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors overflow-hidden"
                 rows={1}
               />
               {isUrl && hasInput && !analysisError && (
