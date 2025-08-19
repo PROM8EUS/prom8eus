@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { supabase } from '@/integrations/supabase/client';
 
 interface JobData {
   title: string;
@@ -11,6 +12,43 @@ interface JobData {
 
 interface ExtractedJobText extends JobData {
   composeJobText: () => string;
+}
+
+interface ScrapeResponse {
+  success: boolean;
+  html?: string;
+  textLength?: number;
+  wasRendered?: boolean;
+  error?: string;
+}
+
+export async function extractJobTextFromUrl(url: string): Promise<ExtractedJobText> {
+  try {
+    console.log('Fetching job content from URL:', url);
+    
+    // Call the enhanced scraper edge function
+    const { data, error } = await supabase.functions.invoke('enhanced-job-scraper', {
+      body: { url }
+    });
+
+    if (error) {
+      console.error('Error calling enhanced-job-scraper:', error);
+      throw new Error(`Failed to fetch content: ${error.message}`);
+    }
+
+    const scrapeResult = data as ScrapeResponse;
+    
+    if (!scrapeResult.success || !scrapeResult.html) {
+      throw new Error(scrapeResult.error || 'Failed to scrape content');
+    }
+
+    console.log(`Content scraped successfully. Text length: ${scrapeResult.textLength}, Was rendered: ${scrapeResult.wasRendered}`);
+    
+    return extractJobText(scrapeResult.html, url);
+  } catch (error) {
+    console.error('Error in extractJobTextFromUrl:', error);
+    throw error;
+  }
 }
 
 export function extractJobText(html: string, url: string): ExtractedJobText {
