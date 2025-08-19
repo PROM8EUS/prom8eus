@@ -61,47 +61,52 @@ const About = () => {
           <section className="space-y-12">
             <h2 className="text-3xl font-bold text-foreground text-center">{t(lang, "about_how_it_works")}</h2>
             
-            <div className="grid md:grid-cols-2 gap-12">
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <div className="max-w-2xl mx-auto relative">
+              {/* Connecting Line */}
+              <div className="absolute left-4 top-12 bottom-12 w-0.5 bg-primary/20"></div>
+              
+              <div className="space-y-12">
+                {/* Step 1 */}
+                <div className="flex items-start space-x-6 relative">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
                     <span className="text-sm font-bold text-white">1</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_input")}</h3>
-                    <p className="text-muted-foreground">{t(lang, "about_input_desc")}</p>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-foreground mb-3">{t(lang, "about_input")}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{t(lang, "about_input_desc")}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                {/* Step 2 */}
+                <div className="flex items-start space-x-6 relative">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
                     <span className="text-sm font-bold text-white">2</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_analysis")}</h3>
-                    <p className="text-muted-foreground">{t(lang, "about_analysis_desc")}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-sm font-bold text-white">3</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_scoring")}</h3>
-                    <p className="text-muted-foreground">{t(lang, "about_scoring_desc")}</p>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-foreground mb-3">{t(lang, "about_analysis")}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{t(lang, "about_analysis_desc")}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                {/* Step 3 */}
+                <div className="flex items-start space-x-6 relative">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
+                    <span className="text-sm font-bold text-white">3</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-foreground mb-3">{t(lang, "about_scoring")}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{t(lang, "about_scoring_desc")}</p>
+                  </div>
+                </div>
+                
+                {/* Step 4 */}
+                <div className="flex items-start space-x-6 relative">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
                     <span className="text-sm font-bold text-white">4</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{t(lang, "about_results")}</h3>
-                    <p className="text-muted-foreground">{t(lang, "about_results_desc")}</p>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-foreground mb-3">{t(lang, "about_results")}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{t(lang, "about_results_desc")}</p>
                   </div>
                 </div>
               </div>
