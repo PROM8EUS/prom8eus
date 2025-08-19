@@ -453,12 +453,16 @@ function extractTasks(text: string): RawTask[] {
     }
   }
 
-  // 6) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
+  // 6) Filter für generische Titel/Meta-Informationen
+  const GENERIC_TITLES = /(hard facts|details|profil|anforderungen|qualifikationen|benefits|wir bieten|about you|requirements|what we offer|company|unternehmen|zur person|dein profil|ihr profil|das bieten wir|leistungen|perks)/i;
+  
+  // 7) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
   const result = Array.from(dedup.values())
+    .filter(t => !GENERIC_TITLES.test(t.text)) // Generische Titel entfernen
     .sort((a, b) => b.text.length - a.text.length)
     .slice(0, 20); // Max 20 Tasks
 
-  console.log(`Final extracted tasks: ${result.length}`);
+  console.log(`Final extracted tasks after generic filter: ${result.length}`);
   return result;
 }
 
