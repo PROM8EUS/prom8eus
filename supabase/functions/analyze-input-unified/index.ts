@@ -363,72 +363,10 @@ function extractTasks(text: string): RawTask[] {
     }
   }
 
-  // Section detection patterns
-  const SECTION_START = new RegExp(
-    [
-      // DE - erweiterte Aufgaben-Überschriften
-      "\\b(aufgaben|deine aufgaben|ihre aufgaben|zur rolle|rolle|verantwortlichkeiten|zuständigkeiten|tätigkeiten|das machst du|du machst|du übernimmst|hauptaufgaben)\\b",
-      // EN - erweiterte Responsibility-Überschriften  
-      "\\b(responsibilities|duties|role|your role|tasks|what you will do|what you'll do|job duties|key responsibilities|main responsibilities|primary responsibilities)\\b",
-      // Single word matches for sections
-      "^responsibilities\\s*$|^duties\\s*$|^tasks\\s*$|^aufgaben\\s*$",
-      // German specific patterns
-      "zur rolle\\s*/\\s*aufgaben|^zur rolle$|^aufgaben$"
-    ].join("|"),
-    "i"
-  );
-
-  const SECTION_END = new RegExp(
-    [
-      // DE - Abschnitte die Aufgaben beenden
-      "\\b(dein profil|ihr profil|anforderungen|qualifikationen|voraussetzungen|benefits|leistungen|wir bieten|das bieten wir|kontakt|über uns|unternehmen|standort|arbeitsplatz)\\b",
-      // EN - Abschnitte die Aufgaben beenden
-      "\\b(profile|about you|requirements|qualifications|prerequisites|skills|experience|contact|about us|company|location|workplace|nice to have)\\b",
-      // Specific German patterns
-      "^dein profil$|^benefits$|^kontakt"
-    ].join("|"),
-    "i"
-  );
-
-  // 1) Find responsibilities section more precisely - look for the actual section
-  let startIdx = -1;
-  let responsibilitiesStartIdx = -1;
-  
-  // First pass: look for explicit German/English responsibilities sections
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim().toLowerCase();
-    if (/^(responsibilities\s*$|zur rolle\s*\/?\s*aufgaben\s*$|^aufgaben\s*$)/i.test(line)) {
-      responsibilitiesStartIdx = i;
-      console.log(`Found explicit responsibilities section at line ${i}: "${lines[i]}"`);
-      break;
-    }
-  }
-  
-  // If we found explicit responsibilities section, use that
-  if (responsibilitiesStartIdx >= 0) {
-    startIdx = responsibilitiesStartIdx;
-  } else {
-    // Fallback: look for general responsibility indicators
-    for (let i = 0; i < lines.length; i++) {
-      if (SECTION_START.test(lines[i])) { 
-        startIdx = i; 
-        console.log(`Found responsibilities section at line ${i}: "${lines[i]}"`);
-        break; 
-      }
-    }
-  }
-  
-  // Falls kein expliziter Aufgaben-Abschnitt gefunden, nehme den ganzen Text
-  let scoped = startIdx >= 0 ? lines.slice(startIdx + 1) : lines;
-
-  // 2) Bis zur nächsten irrelevanten Section
-  const stopAt = scoped.findIndex(l => SECTION_END.test(l));
-  if (stopAt >= 0) {
-    console.log(`Stopping at ignore section: "${scoped[stopAt]}"`);
-    scoped = scoped.slice(0, stopAt);
-  }
-
-  console.log(`Analyzing ${scoped.length} lines in responsibilities section`);
+  // ANALYZE ENTIRE TEXT - no section detection
+  console.log(`Analyzing entire text with ${lines.length} lines - NO SECTION FILTERING`);
+  // Use all lines without filtering
+  let scoped = lines;
 
   // 3) Bullets einsammeln (priorisiert) - erweitert für verschiedene Formate
   const bullets: RawTask[] = [];
