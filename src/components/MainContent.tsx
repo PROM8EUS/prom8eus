@@ -76,7 +76,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
     cacheDate?: string;
   } | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [isWordVisible, setIsWordVisible] = useState(true);
+  const [isWordVisible, setIsWordVisible] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -85,7 +85,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsWordVisible(true); // Start animation
-    }, 1000); // Start animation after 1 second
+    }, 800); // Start animation after page load
 
     return () => clearTimeout(timer);
   }, []);
@@ -117,7 +117,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
     setDebugData(null);
     
     try {
-      console.log('Starting analysis for input:', input.substring(0, 100));
+
       
       let analysisInput = input.trim();
       let extractedJobText = null;
@@ -125,7 +125,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
       // If it's a URL, try to extract job text first
       if (isUrl) {
         try {
-          console.log('Extracting job text from URL...');
+  
           extractedJobText = await extractJobTextFromUrl(input.trim());
           const composedText = extractedJobText.composeJobText();
           
@@ -150,7 +150,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
           }
           
           analysisInput = composedText;
-          console.log(`Job text extracted successfully: ${composedText.length} characters`);
+          
         } catch (extractError) {
           console.error('Job text extraction failed:', extractError);
           setAnalysisError(
@@ -171,8 +171,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
       );
       
       if (result.success && result.data) {
-        console.log('Analysis successful, navigating to results');
-        console.log('Analysis result structure:', result.data);
+
         
         // Handle both old and new data structures
         let analysisData;
@@ -245,7 +244,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
           sessionStorage.setItem('debugData', JSON.stringify(debugData));
         }
         // Navigate to results and scroll to top
-        navigate('/results');
+        navigate(`/results${lang === 'en' ? '?lang=en' : ''}`);
         // The scroll to top will be handled in the Results component
       } else {
         console.error('Analysis failed:', result.error);

@@ -1,8 +1,23 @@
+# PROM8EUS - Automatisierungspotenzial Analyse
+# https://prom8eus.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://prom8eus.com/sitemap.xml
+
+# Crawl-delay für freundliches Crawling
+Crawl-delay: 1
+
+# Spezifische Bot-Regeln
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -10,5 +25,12 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Blockiere problematische Bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /

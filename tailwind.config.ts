@@ -109,8 +109,8 @@ export default {
 					'100%': { width: 'var(--target-width, 100%)' }
 				},
 				'progress-circle': {
-					'0%': { strokeDashoffset: '283' },
-					'100%': { strokeDashoffset: 'var(--target-offset, 0)' }
+					'0%': { strokeDashoffset: 'var(--stroke-dasharray)' },
+					'100%': { strokeDashoffset: 'var(--progress-offset)' }
 				},
 				'fade-in': {
 					'0%': {
@@ -139,7 +139,7 @@ export default {
 				'spin-slow': 'spin-slow 2s linear infinite',
 				'progress-bar': 'progress-bar 3s ease-in-out infinite',
 				'progress-bar-static': 'progress-bar-static 1.2s ease-out forwards',
-				'progress-circle': 'progress-circle 1.5s ease-out forwards',
+				'progress-circle': 'progress-circle 2s ease-out forwards',
 				'fade-in': 'fade-in 0.5s ease-out',
 				'pulse-dot': 'pulse-dot 1.4s infinite ease-in-out both'
 			}

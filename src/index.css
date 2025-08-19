@@ -120,7 +120,7 @@ All colors MUST be HSL.
   /* Progress circle animation */
   @keyframes progress-circle {
     from {
-      stroke-dashoffset: 100%;
+      stroke-dashoffset: var(--stroke-dasharray);
     }
     to {
       stroke-dashoffset: var(--progress-offset);

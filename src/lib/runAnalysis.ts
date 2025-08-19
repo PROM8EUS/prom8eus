@@ -22,7 +22,7 @@ interface AnalysisResult {
 }
 
 export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): AnalysisResult {
-  console.log('Starting job analysis with text length:', jobText.length);
+  console.log('DEBUG runAnalysis: lang =', lang);
   
   // Step 1: Extract tasks using the advanced extractor
   const rawTasks = extractTasksAdvanced(jobText);
@@ -51,16 +51,13 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
   };
   
   // Debug logging to verify consistency
-  console.log('DEBUG - Score consistency check:');
-  console.log('  weightedScore:', weightedScore);
-  console.log('  overallAutomationPotential:', overallAutomationPotential);
-  console.log('  ratio.automatisierbar:', ratio.automatisierbar);
-  console.log('  ratio.mensch:', ratio.mensch);
-  console.log('  automatisierbareCount:', automatisierbareCount);
-  console.log('  menschCount:', menschCount);
+
+
 
   // Step 4: Generate summary and recommendations
+  console.log('DEBUG: Calling generateSummary with lang =', lang);
   const summary = generateSummary(overallAutomationPotential, ratio, totalTasks, lang);
+  console.log('DEBUG: Generated summary =', summary);
   const recommendations = generateRecommendations(analyzedTasks, overallAutomationPotential);
 
   return {
@@ -75,7 +72,6 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
 // Remove the old extractTasks function - now using the advanced extractor
 
 function analyzeTask(taskText: string): Task {
-  console.log(`ANALYZING TASK: "${taskText}"`);
   const lowerText = taskText.toLowerCase();
   
   // Define automation indicators (with modern AI tools consideration)
@@ -292,7 +288,7 @@ function analyzeTask(taskText: string): Task {
   Object.entries(automationSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
     if (matches.length > 0) {
-      console.log(`AUTOMATION MATCH in ${category}:`, matches);
+  
       automationScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
     }
@@ -302,13 +298,13 @@ function analyzeTask(taskText: string): Task {
   Object.entries(humanSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
     if (matches.length > 0) {
-      console.log(`HUMAN MATCH in ${category}:`, matches);
+  
       humanScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
     }
   });
 
-  console.log(`SCORES: automation=${automationScore}, human=${humanScore}, category=${detectedCategory}`);
+
 
   // Determine final score and label with AI assistance consideration
   const baseScore = 35; // Higher base score for AI assistance
@@ -395,14 +391,29 @@ function analyzeTask(taskText: string): Task {
   };
 }
 
-function generateSummary(totalScore: number, ratio: { automatisierbar: number; mensch: number }, taskCount: number, lang: 'de' | 'en' = 'de'): string {
+export function generateSummary(totalScore: number, ratio: { automatisierbar: number; mensch: number }, taskCount: number, lang: 'de' | 'en' = 'de'): string {
+  console.log('DEBUG generateSummary: lang =', lang, 'taskCount =', taskCount);
+  
+  // Handle edge case of no tasks found
+  if (taskCount === 0) {
+    if (lang === 'en') {
+      return 'No specific tasks could be identified in the provided text. Please provide a more detailed job description or task list for analysis.';
+    } else {
+      return 'Es konnten keine spezifischen Aufgaben im bereitgestellten Text identifiziert werden. Bitte geben Sie eine detailliertere Stellenbeschreibung oder Aufgabenliste für die Analyse an.';
+    }
+  }
+  
+  let summary: string;
   if (lang === 'en') {
     const scoreCategory = totalScore >= 75 ? 'high' : totalScore >= 50 ? 'medium' : 'low';
-    return `Analysis of ${taskCount} identified tasks revealed ${scoreCategory} automation potential of ${totalScore}%. ${ratio.automatisierbar}% of tasks are potentially automatable, ${ratio.mensch}% require human capabilities.`;
+    summary = `Analysis of ${taskCount} identified tasks revealed ${scoreCategory} automation potential of ${totalScore}%. ${ratio.automatisierbar}% of tasks are potentially automatable, ${ratio.mensch}% require human capabilities.`;
   } else {
     const scoreCategory = totalScore >= 75 ? 'hoch' : totalScore >= 50 ? 'mittel' : 'niedrig';
-    return `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore}%. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
+    summary = `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore}%. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
   }
+  
+  console.log('DEBUG generateSummary: returning:', summary);
+  return summary;
 }
 
 function generateRecommendations(tasks: Task[], totalScore: number): string[] {

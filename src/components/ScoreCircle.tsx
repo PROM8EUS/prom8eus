@@ -48,12 +48,12 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de' 
             strokeWidth="3"
             fill="transparent"
             strokeDasharray={smallStrokeDasharray}
-            strokeDashoffset={smallStrokeDashoffset}
+            strokeDashoffset={smallStrokeDasharray}
             strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
+            className="animate-progress-circle"
             style={{
-              '--progress-offset': `${smallStrokeDashoffset}px`,
-              animation: 'progress-circle 1.5s ease-out forwards'
+              '--stroke-dasharray': `${smallStrokeDasharray}px`,
+              '--progress-offset': `${smallStrokeDashoffset}px`
             } as React.CSSProperties}
           />
         </svg>
@@ -67,46 +67,46 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de' 
   }
 
   // Default variant
-  const circumference = 2 * Math.PI * 45; // radius = 45
+  const circumference = 2 * Math.PI * 60; // radius = 60 (increased from 45)
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <div className="relative w-32 h-32">
-        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 116 116">
+      <div className="relative w-48 h-48 md:w-56 md:h-56">
+        <svg className="w-48 h-48 md:w-56 md:h-56 transform -rotate-90" viewBox="0 0 140 140">
           {/* Background circle */}
           <circle
-            cx="58"
-            cy="58"
-            r="45"
+            cx="70"
+            cy="70"
+            r="60"
             stroke="hsl(var(--muted))"
-            strokeWidth="8"
+            strokeWidth="12"
             fill="transparent"
           />
           {/* Progress circle */}
           <circle
-            cx="58"
-            cy="58"
-            r="45"
+            cx="70"
+            cy="70"
+            r="60"
             stroke="hsl(var(--primary))"
-            strokeWidth="8"
+            strokeWidth="12"
             fill="transparent"
             strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
+            strokeDashoffset={strokeDasharray}
             strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
+            className="animate-progress-circle"
             style={{
-              '--progress-offset': `${strokeDashoffset}px`,
-              animation: 'progress-circle 1.5s ease-out forwards'
+              '--stroke-dasharray': `${strokeDasharray}px`,
+              '--progress-offset': `${strokeDashoffset}px`
             } as React.CSSProperties}
           />
         </svg>
         
         {/* Score text in center */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-foreground">{formatScore(score)}</span>
-          <span className="text-lg text-muted-foreground">/{maxScore}</span>
+          <span className="text-4xl md:text-5xl font-bold text-foreground">{formatScore(score)}</span>
+          <span className="text-xl md:text-2xl text-muted-foreground">/{maxScore}</span>
         </div>
       </div>
       

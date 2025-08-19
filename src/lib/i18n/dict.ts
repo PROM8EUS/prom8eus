@@ -100,20 +100,15 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_softwaredevelopment: "Software-Entwicklung",
     task_category_physicalinteraction: "Physische Interaktion",
     task_category_dataanalysis: "Datenanalyse",
-    task_category_documentation: "Dokumentation",
-    task_category_systemintegration: "Systemintegration",
-    task_category_accounting: "Buchhaltung",
-    task_category_collaboration: "Zusammenarbeit",
     task_category_physicaltasks: "Physische Aufgaben",
     task_category_customerinteraction: "Kundeninteraktion",
-    task_category_interpersonalcommunication: "Zwischenmenschliche Kommunikation",
-    task_category_emotionalintelligence: "Emotionale Intelligenz",
     task_category_complexdecisionmaking: "Komplexe Entscheidungsfindung",
     task_category_creativeinnovation: "Kreative Innovation",
     
     // Analysis Labels
     label_automatisierbar: "Automatisierbar",
     label_mensch: "Mensch",
+    score_label: "Automatisierungspotenzial",
     
     // Analysis UI Text
     analysis_identified_tasks: "Identifizierte Aufgaben",
@@ -372,8 +367,6 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_emotionalintelligence: "Emotionale Intelligenz",
     task_category_negotiationsales: "Verhandlung/Verkauf",
     task_category_leadershipmanagement: "Führung/Management",
-    task_category_problemsolving: "Problemlösung",
-    task_category_collaboration: "Zusammenarbeit",
     
     // History
     history_title: "Frühere Analysen",
@@ -456,9 +449,12 @@ export const DICT: Record<Lang, Record<string, string>> = {
     about_balanced_desc: "Wir wissen, dass die Zukunft der Arbeit nicht Menschen gegen Maschinen bedeutet, sondern Menschen und Maschinen, die zusammenarbeiten.",
     about_story_quote: "Wie Prometheus das Feuer zur Menschheit brachte, liefert PROM8EUS das moderne Feuer der Automatisierung.",
     about_story_vision: "Unsere Vision ist es, Unternehmen mit Klarheit zu stärken: Maschine oder Mensch – was ist die richtige Wahl für jede Aufgabe?",
-    about_cta_title: "Bereit, Ihr Automatisierungspotenzial zu entdecken?",
-    about_cta_button: "Analyse starten",
-    about_cta_desc: "Erhalten Sie Ihren PROM8EUS Score und treffen Sie fundierte Entscheidungen über Ihre Belegschaft."
+    
+    // No tasks found
+    no_tasks_found_title: "Keine Aufgaben gefunden",
+    no_tasks_found_desc: "In dem bereitgestellten Text konnten keine spezifischen Aufgaben identifiziert werden. Bitte stellen Sie eine detailliertere Stellenbeschreibung oder Aufgabenliste für die Analyse bereit.",
+    try_again: "Erneut versuchen",
+    learn_more: "Mehr erfahren"
   },
   en: {
     headline: "See your automation potential instantly", 
@@ -522,27 +518,20 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_emotionalintelligence: "Emotional Intelligence",
     task_category_negotiationsales: "Negotiation/Sales",
     task_category_leadershipmanagement: "Leadership/Management",
-    task_category_problemsolving: "Problem Solving",
-    task_category_collaboration: "Collaboration",
     task_category_mensch: "Human Required",
     task_category_allgemein: "General",
     task_category_softwaredevelopment: "Software Development",
     task_category_physicalinteraction: "Physical Interaction",
     task_category_dataanalysis: "Data Analysis",
-    task_category_documentation: "Documentation",
-    task_category_systemintegration: "System Integration",
-    task_category_accounting: "Accounting",
-    task_category_collaboration: "Collaboration",
     task_category_physicaltasks: "Physical Tasks",
     task_category_customerinteraction: "Customer Interaction",
-    task_category_interpersonalcommunication: "Interpersonal Communication",
-    task_category_emotionalintelligence: "Emotional Intelligence",
     task_category_complexdecisionmaking: "Complex Decision Making",
     task_category_creativeinnovation: "Creative Innovation",
     
     // Analysis Labels
     label_automatisierbar: "Automatable",
     label_mensch: "Human",
+    score_label: "Automation Potential",
     
     // Analysis UI Text
     analysis_identified_tasks: "Identified Tasks",
@@ -908,7 +897,13 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     about_vision_title: "Vision",
     about_vision_bridge: "PROM8EUS sees itself as a bridge between technological automation and human work.",
-    about_vision_marketplace: "In the long term, the platform should become a marketplace for human-or-machine decisions – and thus an instrument that helps companies to optimally deploy resources and design future-oriented work models."
+    about_vision_marketplace: "In the long term, the platform should become a marketplace for human-or-machine decisions – and thus an instrument that helps companies to optimally deploy resources and design future-oriented work models.",
+    
+    // No tasks found
+    no_tasks_found_title: "No Tasks Found",
+    no_tasks_found_desc: "No specific tasks could be identified in the provided text. Please provide a more detailed job description or task list for analysis.",
+    try_again: "Try Again",
+    learn_more: "Learn More"
   }
 };
 

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { resolveLang, t } from "@/lib/i18n/i18n";
 
 interface HeaderProps {
@@ -23,12 +23,12 @@ const Header = ({ showBack = false }: HeaderProps) => {
             className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Zurück</span>
+            <span>{t(lang, "back")}</span>
           </Button>
         ) : (
-          <a href="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
+          <Link to={`/${lang === 'en' ? '?lang=en' : ''}`} className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
             PROM8EUS
-          </a>
+          </Link>
         )}
 
         {/* Right side - Logo (when showing back) or Navigation */}
@@ -38,18 +38,18 @@ const Header = ({ showBack = false }: HeaderProps) => {
           </div>
         ) : (
           <nav className="flex items-center space-x-8">
-            <a 
-              href="/about" 
+            <Link 
+              to={`/about${lang === 'en' ? '?lang=en' : ''}`}
               className="text-foreground hover:text-primary transition-colors duration-200"
             >
               {t(lang, "about")}
-            </a>
-            <a 
-              href="/contact" 
+            </Link>
+            <Link 
+              to={`/contact${lang === 'en' ? '?lang=en' : ''}`}
               className="text-foreground hover:text-primary transition-colors duration-200"
             >
               {t(lang, "contact")}
-            </a>
+            </Link>
           </nav>
         )}
       </div>

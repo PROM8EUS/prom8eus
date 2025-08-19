@@ -12,6 +12,52 @@ import PageFooter from "@/components/PageFooter";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
+import { generateSummary } from "@/lib/runAnalysis";
+
+// Animated Letter Component
+const AnimatedLetter = ({ letter, index, isVisible }: { letter: string; index: number; isVisible: boolean }) => {
+  const [isHighlighted, setIsHighlighted] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        setIsHighlighted(true); // Highlight with brand color
+        const restoreTimer = setTimeout(() => {
+          setIsHighlighted(false); // Back to normal
+        }, 150);
+        return () => clearTimeout(restoreTimer);
+      }, index * 40); // Faster overlapping animation
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, index]);
+
+  return (
+    <span
+      className={`inline-block transition-colors duration-150 ease-in-out ${
+        isHighlighted ? 'text-primary' : 'text-foreground'
+      }`}
+    >
+      {letter}
+    </span>
+  );
+};
+
+// Animated Word Component
+const AnimatedWord = ({ word, isVisible }: { word: string; isVisible: boolean }) => {
+  return (
+    <span>
+      {word.split('').map((char, index) => (
+        <AnimatedLetter
+          key={index}
+          letter={char === ' ' ? '\u00A0' : char} // Use non-breaking space for better animation
+          index={index}
+          isVisible={isVisible}
+        />
+      ))}
+    </span>
+  );
+};
 
 interface AnalysisTask {
   text: string;
@@ -85,6 +131,7 @@ const Results = () => {
   const [shareUrl, setShareUrl] = useState("");
   const [isSharedView, setIsSharedView] = useState(false);
   const [jobTitle, setJobTitle] = useState("");
+  const [isJobTitleVisible, setIsJobTitleVisible] = useState(false);
 
   // Generate unique share URL for this analysis
   const generateShareUrl = (data: AnalysisResult) => {
@@ -142,11 +189,11 @@ const Results = () => {
       // Try to load real analysis results from sessionStorage
       try {
         const storedResult = sessionStorage.getItem('analysisResult');
-        console.log('Stored analysis result:', storedResult);
+
         
         if (storedResult) {
           const parsedResult: AnalysisResult = JSON.parse(storedResult);
-          console.log('Parsed analysis result:', parsedResult);
+
           setAnalysisData(parsedResult);
 
           // Extract job title from original text
@@ -168,7 +215,7 @@ const Results = () => {
               automationTrend: task.automationTrend
             }));
             
-            console.log('Transformed tasks:', transformedTasks);
+
             setDisplayTasks(transformedTasks);
             
             // Generate share URL
@@ -180,7 +227,7 @@ const Results = () => {
             }, 100);
           }
         } else {
-          console.log('No stored analysis result found, using mock data');
+  
         }
       } catch (error) {
         console.error('Error loading analysis results:', error);
@@ -201,7 +248,7 @@ const Results = () => {
     }
   }, []); // Only run once on mount, not when analysisData changes
   
-  // Update task descriptions when language changes (without scrolling)
+  // Update task descriptions and regenerate summary when language changes (without scrolling)
   useEffect(() => {
     if (analysisData && analysisData.tasks) {
       const transformedTasks: TaskForDisplay[] = analysisData.tasks.map((task, index) => ({
@@ -215,8 +262,31 @@ const Results = () => {
       }));
       
       setDisplayTasks(transformedTasks);
+      
+      // Regenerate summary in the correct language
+      const taskCount = analysisData.tasks.length;
+      const ratio = analysisData.ratio;
+      const totalScore = analysisData.totalScore;
+      
+      // Generate new summary in the correct language
+      const newSummary = generateSummary(totalScore, ratio, taskCount, lang);
+      
+      // Update the analysis data with the new summary
+      setAnalysisData(prev => prev ? {
+        ...prev,
+        summary: newSummary
+      } : null);
     }
   }, [lang, analysisData]); // Update when language changes, but don't scroll
+  
+  // Trigger job title animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsJobTitleVisible(true); // Start animation
+    }, 500); // Start animation after 500ms
+
+    return () => clearTimeout(timer);
+  }, [jobTitle]); // Trigger when jobTitle changes
   
   // Use the actual ratio percentages from analysis data, not task counts
   const automatizableTasks = analysisData?.ratio.automatisierbar || 0;
@@ -228,7 +298,7 @@ const Results = () => {
   };
 
   const handleLearnMore = () => {
-    console.log('Learn more about workflows...');
+    
   };
 
   return (
@@ -237,75 +307,108 @@ const Results = () => {
       <Header showBack={!isSharedView} />
 
       {/* Main Content */}
-      <main className="flex-1 px-6 py-12 pt-24">
+      <main className="flex-1 px-6 py-12 pt-32">
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Title */}
-          <div className="text-center animate-fade-in">
+          <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               {jobTitle 
-                ? `${t(lang, "analysis_result_for")} ${jobTitle}`
+                ? (
+                  <>
+                    {t(lang, "analysis_result_for")}
+                    <br />
+                    <AnimatedWord word={jobTitle} isVisible={isJobTitleVisible} />
+                  </>
+                )
                 : t(lang, "your_analysis")
               }
             </h1>
           </div>
 
-          {/* Analysis Summary Subheadline */}
-          {analysisData && (
-            <div className="text-center mb-12">
-              <p className="text-xl text-foreground max-w-4xl mx-auto leading-relaxed">
-                {lang === 'en' 
-                  ? analysisData.summary
-                      .replace(/hoch/, 'high')
-                      .replace(/mittel/, 'medium')
-                      .replace(/niedrig/, 'low')
-                      .replace(/Analyse von (\d+) identifizierten Aufgaben ergab ein (\w+)es Automatisierungspotenzial von ([\d.]+)%\. (\d+)% der Aufgaben sind potentiell automatisierbar, (\d+)% erfordern menschliche Fähigkeiten\./,
-                        'Analysis of $1 identified tasks revealed $2 automation potential of $3%. $4% of tasks are potentially automatable, $5% require human capabilities.')
-                  : analysisData.summary
-                }
-              </p>
+          {/* Check if tasks were found */}
+          {analysisData && analysisData.tasks && analysisData.tasks.length > 0 ? (
+            <>
+              {/* Analysis Summary Subheadline */}
+              <div className="text-center mb-12">
+                <p className="text-xl text-foreground max-w-4xl mx-auto leading-relaxed">
+                  {analysisData.summary}
+                </p>
+              </div>
+
+              {/* Score Section */}
+              <div className="flex justify-center">
+                <ScoreCircle 
+                  score={totalScore} 
+                  maxScore={100} 
+                  label={t(lang, "score_label")} 
+                />
+              </div>
+
+              {/* Info Cards */}
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                  <InfoCard
+                    title={t(lang, "landing_automatable")}
+                    value={`${automatizableTasks}%`}
+                    description={t(lang, "landing_automatable_desc")}
+                    icon={Bot}
+                    variant="primary"
+                  />
+                  
+                  <InfoCard
+                    title={t(lang, "landing_human")}
+                    value={`${humanTasks}%`}
+                    description={t(lang, "landing_human_desc")}
+                    icon={User}
+                    variant="destructive"
+                  />
+                </div>
+              </div>
+
+              {/* Task List */}
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                <TaskList tasks={displayTasks} lang={lang} />
+              </div>
+            </>
+          ) : (
+            /* No tasks found - show helpful message */
+            <div className="text-center space-y-8">
+              <div className="bg-muted/20 rounded-2xl p-8 md:p-12">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+                    <BookOpen className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-foreground">
+                    {t(lang, "no_tasks_found_title")}
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {t(lang, "no_tasks_found_desc")}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                    <Button
+                      onClick={() => navigate('/')}
+                      variant="outline"
+                      size="lg"
+                    >
+                      {t(lang, "try_again")}
+                    </Button>
+                    <Button
+                      onClick={() => navigate('/about')}
+                      size="lg"
+                    >
+                      {t(lang, "learn_more")}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-
-          {/* Score Section */}
-          <div className="flex justify-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <ScoreCircle 
-              score={totalScore} 
-              maxScore={100} 
-              label="Automatisierungspotenzial" 
-            />
-          </div>
-
-          {/* Info Cards */}
-          <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <InfoCard
-                title={t(lang, "landing_automatable")}
-                value={`${automatizableTasks}%`}
-                description={t(lang, "landing_automatable_desc")}
-                icon={Bot}
-                variant="primary"
-              />
-              
-              <InfoCard
-                title={t(lang, "landing_human")}
-                value={`${humanTasks}%`}
-                description={t(lang, "landing_human_desc")}
-                icon={User}
-                variant="destructive"
-              />
-            </div>
-          </div>
-
-          {/* Task List */}
-          <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <TaskList tasks={displayTasks} lang={lang} />
-          </div>
 
           {/* Landing Page Elements for Shared Views */}
           {isSharedView && (
             <>
               {/* Call to Action */}
-              <section className="text-center animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <section className="text-center">
                 <div className="space-y-6">
                   <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
                     <Sparkles className="w-4 h-4" />
@@ -331,7 +434,7 @@ const Results = () => {
               </section>
 
               {/* Additional Benefits */}
-              <section className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
+              <section>
                 <div className="bg-muted/40 rounded-2xl p-8 md:p-12 text-center">
                   <h3 className="text-xl md:text-2xl font-semibold text-foreground mb-4">
                     {t(lang, "landing_why_title")}
@@ -369,7 +472,7 @@ const Results = () => {
           {/* Action Buttons - Only show for non-shared views */}
           {!isSharedView && (
             <TooltipProvider>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
                 <Button 
                   onClick={handleShare}
                   size="lg"

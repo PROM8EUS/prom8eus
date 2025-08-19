@@ -147,8 +147,15 @@ export function extractJobText(html: string, url: string): ExtractedJobText {
   // Step 3: Cleanup
   const cleanText = (text: string): string => {
     return text
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
+      .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
+      .replace(/<\/li>/gi, '\n') // Convert </li> to newlines FIRST
+      .replace(/<li>/gi, '• ') // Then convert <li> to bullet points
+      .replace(/<\/ul>/gi, '\n') // Convert </ul> to newline
+      .replace(/<\/ol>/gi, '\n') // Convert </ol> to newline
+      .replace(/<ul[^>]*>/gi, '') // Remove <ul> tags
+      .replace(/<ol[^>]*>/gi, '') // Remove <ol> tags
+      .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
+      .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space (but keep newlines)
       .replace(/\n\s*\n/g, '\n') // Clean up multiple newlines
       .trim()
       .substring(0, 10000); // Limit to 10,000 characters

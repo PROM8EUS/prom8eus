@@ -45,7 +45,7 @@ export interface AnalysisResult {
 
 export async function callAnalyzeInput(input: AnalyzeInputRequest, lang: 'de' | 'en' = 'de'): Promise<AnalysisResult> {
   try {
-    console.log('Calling enhanced analysis function with:', input)
+    console.log('DEBUG callAnalyzeInput: lang =', lang);
     
     // Use local enhanced analysis engine instead of Supabase function
     const analysisText = input.rawText || '';
@@ -59,6 +59,7 @@ export async function callAnalyzeInput(input: AnalyzeInputRequest, lang: 'de' | 
 
     // Import and use the enhanced analysis engine
     const { runAnalysis } = await import('./runAnalysis');
+    console.log('DEBUG: Calling runAnalysis with lang =', lang);
     const result = runAnalysis(analysisText.slice(0, 10000), lang);
 
     return {
