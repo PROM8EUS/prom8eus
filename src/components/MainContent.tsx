@@ -1,21 +1,28 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import LoadingPage from "./LoadingPage";
 
 const MainContent = () => {
   const [text, setText] = useState("");
+  const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  // URL validation regex
+  const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+  const isValidUrl = url === "" || urlRegex.test(url);
+  const hasUrl = url.trim() !== "";
+
   const handleAnalyze = () => {
-    if (text.trim()) {
+    if (hasUrl || text.trim()) {
       setIsLoading(true);
       
       // Simulate analysis process
       setTimeout(() => {
-        console.log("Analysis complete:", text);
+        console.log("Analysis complete:", hasUrl ? `URL: ${url}` : `Text: ${text}`);
         setIsLoading(false);
         // Navigate to results page
         navigate('/results');
@@ -43,18 +50,38 @@ const MainContent = () => {
 
         {/* Input Section */}
         <div className="space-y-6">
+          {/* URL Input */}
+          <div className="space-y-2">
+            <Input
+              type="url"
+              placeholder="URL einfügen (optional)"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className={`text-base ${!isValidUrl ? "border-destructive focus:ring-destructive/20" : "focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30"} transition-colors`}
+            />
+            {!isValidUrl && url !== "" && (
+              <p className="text-sm text-destructive">Ungültiges URL-Format</p>
+            )}
+          </div>
+
+          {/* Text Area */}
           <div className="relative">
             <Textarea
-              placeholder="Aufgabenbeschreibung oder Stellenanzeige hier einfügen …"
+              placeholder={hasUrl ? "Der Inhalt wird automatisch importiert" : "Aufgabenbeschreibung oder Stellenanzeige hier einfügen …"}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="min-h-[300px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors"
+              disabled={hasUrl}
+              className={`min-h-[300px] text-lg resize-none transition-colors ${
+                hasUrl 
+                  ? "bg-muted text-muted-foreground cursor-not-allowed" 
+                  : "focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30"
+              }`}
             />
           </div>
 
           <Button
             onClick={handleAnalyze}
-            disabled={!text.trim()}
+            disabled={(!hasUrl && !text.trim()) || !isValidUrl}
             size="lg"
             className="px-12 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200 disabled:hover:scale-100"
           >
