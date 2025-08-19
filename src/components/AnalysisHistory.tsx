@@ -16,9 +16,10 @@ interface AnalysisHistoryItem {
 
 interface AnalysisHistoryProps {
   lang: "de" | "en";
+  isAdminMode?: boolean;
 }
 
-const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
+const AnalysisHistory = ({ lang, isAdminMode = false }: AnalysisHistoryProps) => {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const navigate = useNavigate();
 
@@ -149,15 +150,29 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
                     </div>
                   </div>
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => deleteAnalysis(e, item.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 hover:bg-destructive/20 hover:text-destructive"
-                    aria-label={t(lang, 'history_delete')}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {isAdminMode && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={(e) => deleteAnalysis(e, item.id)}
+                      className="flex-shrink-0"
+                      aria-label={t(lang, 'history_delete')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                  
+                  {!isAdminMode && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => deleteAnalysis(e, item.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 hover:bg-destructive/20 hover:text-destructive"
+                      aria-label={t(lang, 'history_delete')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
