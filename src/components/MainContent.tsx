@@ -152,11 +152,6 @@ const MainContent = () => {
           sessionStorage.setItem('debugData', JSON.stringify(debugData));
         }
         navigate('/results');
-        
-        toast({
-          title: "Analyse erfolgreich",
-          description: analysisData.summary,
-        });
       } else {
         console.error('Analysis failed:', result.error);
         setAnalysisError(result.error || "Ein unbekannter Fehler ist bei der Analyse aufgetreten");
