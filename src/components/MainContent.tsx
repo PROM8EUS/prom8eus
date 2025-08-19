@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "react-router-dom";
 import LoadingPage from "./LoadingPage";
 
 const MainContent = () => {
   const [text, setText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleAnalyze = () => {
     if (text.trim()) {
@@ -15,7 +17,8 @@ const MainContent = () => {
       setTimeout(() => {
         console.log("Analysis complete:", text);
         setIsLoading(false);
-        // TODO: Show results or navigate to results page
+        // Navigate to results page
+        navigate('/results');
       }, 4000);
     }
   };

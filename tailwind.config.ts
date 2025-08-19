@@ -94,6 +94,14 @@ export default {
 					'50%': { width: '60%' },
 					'100%': { width: '90%' }
 				},
+				'progress-bar-static': {
+					'0%': { width: '0%' },
+					'100%': { width: 'var(--target-width, 100%)' }
+				},
+				'progress-circle': {
+					'0%': { strokeDashoffset: '283' },
+					'100%': { strokeDashoffset: 'var(--target-offset, 0)' }
+				},
 				'fade-in': {
 					'0%': {
 						opacity: '0',
@@ -120,6 +128,8 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'spin-slow': 'spin-slow 2s linear infinite',
 				'progress-bar': 'progress-bar 3s ease-in-out infinite',
+				'progress-bar-static': 'progress-bar-static 1.2s ease-out forwards',
+				'progress-circle': 'progress-circle 1.5s ease-out forwards',
 				'fade-in': 'fade-in 0.5s ease-out',
 				'pulse-dot': 'pulse-dot 1.4s infinite ease-in-out both'
 			}
