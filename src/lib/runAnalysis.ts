@@ -114,6 +114,18 @@ function analyzeTask(taskText: string): Task {
 
   // Define human-required indicators (with English keywords added)
   const humanSignals = {
+    interpersonal: {
+      keywords: [
+        // German - interpersonal skills, personality traits, social abilities
+        'freundlich', 'professionell', 'auftreten', 'erscheinungsbild', 'kommunikativ', 'empathie', 'einfühlungsvermögen',
+        'geduld', 'höflichkeit', 'respekt', 'verständnis', 'zwischenmenschlich', 'sozial', 'charisma', 'ausstrahlung',
+        'persönlichkeit', 'menschlich', 'emotional', 'diplomatie', 'takt', 'fingerspitzengefühl',
+        // English
+        'friendly', 'professional', 'demeanor', 'appearance', 'interpersonal', 'empathy', 'patience', 
+        'courtesy', 'respect', 'understanding', 'social', 'charisma', 'personality', 'emotional', 'diplomacy'
+      ],
+      weight: 40
+    },
     creative: {
       keywords: [
         // German
@@ -187,11 +199,12 @@ function analyzeTask(taskText: string): Task {
   const netScore = Math.max(0, Math.min(100, automationScore - humanScore + 50)); // Base score of 50
   const confidence = Math.abs(netScore - 50) * 2; // Confidence based on deviation from neutral
   
-  // Conservative labeling: 
-  // - If confidence is 0%, always label as "Mensch" (no confidence = human intervention needed)
-  // - Only label as "Automatisierbar" if we have reasonable confidence and score
-  const label = (confidence === 0) ? "Mensch" :
-                (netScore >= 60 || (netScore >= 50 && confidence >= 20)) ? "Automatisierbar" : "Mensch";
+  // More conservative labeling: 
+  // - If we detect human-specific keywords, strongly bias towards "Mensch"
+  // - Only label as "Automatisierbar" if we have strong automation signals AND no human signals
+  // - If no keywords match at all, default to "Mensch" (be conservative)
+  const label = (humanScore > 0) ? "Mensch" :
+                (automationScore > 0 && netScore >= 65) ? "Automatisierbar" : "Mensch";
 
   return {
     text: taskText,
