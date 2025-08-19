@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { resolveLang, t } from "@/lib/i18n/i18n";
 
-const HomePageFooter = () => {
+const PageFooter = () => {
   const [searchParams] = useSearchParams();
   const lang = resolveLang(searchParams.get("lang") || undefined);
   const currentYear = new Date().getFullYear();
@@ -30,4 +30,4 @@ const HomePageFooter = () => {
   );
 };
 
-export default HomePageFooter;
+export default PageFooter;

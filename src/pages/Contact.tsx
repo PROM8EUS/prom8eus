@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import PageFooter from "@/components/PageFooter";
 import { resolveLang, t } from "@/lib/i18n/i18n";
 import { Mail, Phone, MapPin } from "lucide-react";
 
@@ -9,10 +10,10 @@ const Contact = () => {
   const lang = resolveLang(searchParams.get("lang") || undefined);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="bg-background">
       <Header />
       
-      <main className="flex-1 flex items-center justify-center px-6 py-20">
+      <main className="min-h-screen flex items-center justify-center px-6 py-20">
         <div className="w-full max-w-2xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -84,6 +85,8 @@ const Contact = () => {
           </div>
         </div>
       </main>
+      
+      <PageFooter />
       
       <div className="fixed bottom-6 right-6">
         <LanguageSwitcher current={lang} />

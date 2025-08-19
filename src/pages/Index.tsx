@@ -2,7 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import MainContent from "@/components/MainContent";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import HomePageFooter from "@/components/HomePageFooter";
+import PageFooter from "@/components/PageFooter";
 import { resolveLang, t } from "@/lib/i18n/i18n";
 
 const Index = () => {
@@ -20,7 +20,7 @@ const Index = () => {
           lang={lang}
         />
       </div>
-      <HomePageFooter />
+      <PageFooter />
       <div className="fixed bottom-6 right-6">
         <LanguageSwitcher current={lang} />
       </div>
