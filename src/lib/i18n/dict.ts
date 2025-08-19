@@ -7,7 +7,7 @@ export type Lang = "de" | "en";
 
 export const DICT: Record<Lang, Record<string, string>> = {
   de: {
-    headline: "Automatisierungspotenzial sofort erkennen",
+    headline: "Automatisierungs­potenzial sofort erkennen",
     sub: "Fügen Sie Ihre Aufgabenbeschreibung oder Stellenanzeige ein – unsere KI zeigt Ihnen, welche Teile automatisierbar sind.",
     start: "Analyse starten",
     lang_switch: "EN",    // shows opposite language
