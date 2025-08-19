@@ -1,12 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-// These environment variables are automatically provided by Lovable's Supabase integration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
+// Temporäre Konfiguration - diese Werte müssen aus der Supabase Integration bezogen werden
+// TODO: Diese durch echte Supabase Projekt-URLs ersetzen
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
@@ -30,6 +27,14 @@ export interface AnalysisResult {
 
 export async function callAnalyzeInput(input: AnalyzeInputRequest): Promise<AnalysisResult> {
   try {
+    // Prüfe, ob Supabase korrekt konfiguriert ist
+    if (supabaseUrl.includes('your-project') || supabaseAnonKey.includes('your-anon-key')) {
+      return {
+        success: false,
+        error: 'Supabase ist noch nicht konfiguriert. Bitte fügen Sie die Projekt-URLs in src/lib/supabase.ts hinzu.'
+      }
+    }
+
     const { data, error } = await supabase.functions.invoke('analyze-input', {
       body: input
     })
