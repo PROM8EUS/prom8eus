@@ -8,7 +8,7 @@ import ShareModal from "@/components/ShareModal";
 import PageFooter from "@/components/PageFooter";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { resolveLang, t } from "@/lib/i18n/i18n";
+import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
 
 interface AnalysisTask {
   text: string;
@@ -109,7 +109,7 @@ const Results = () => {
             name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
             score: Math.round(task.score),
             category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
-            description: `${task.category} (Confidence: ${Math.round(task.confidence)}%)`
+            description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`
           }));
           
           console.log('Transformed tasks:', transformedTasks);

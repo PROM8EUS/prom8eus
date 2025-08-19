@@ -33,3 +33,11 @@ export function resolveLang(param?: string): "de" | "en" {
 export function t(lang: "de" | "en", key: string): string {
   return DICT[lang]?.[key] || key;
 }
+
+/**
+ * Helper function to translate task categories
+ */
+export function translateCategory(lang: Lang, category: string): string {
+  const categoryKey = `task_category_${category.toLowerCase()}`;
+  return t(lang, categoryKey);
+}

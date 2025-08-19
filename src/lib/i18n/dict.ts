@@ -33,7 +33,18 @@ export const DICT: Record<Lang, Record<string, string>> = {
     landing_future: "Zukunft gestalten",
     landing_future_desc: "Bereiten Sie sich auf die Arbeitswelt von morgen vor",
     
-    // Footer
+    // Task descriptions
+    task_confidence: "Vertrauen",
+    task_category_physical: "Körperlich",
+    task_category_cognitive: "Kognitiv", 
+    task_category_creative: "Kreativ",
+    task_category_analytical: "Analytisch",
+    task_category_administrative: "Administrativ",
+    task_category_communication: "Kommunikation",
+    task_category_technical: "Technisch",
+    task_category_management: "Management",
+    task_category_automatisierbar: "Automatisierbar",
+    task_category_mensch: "Mensch erfordert",
     copyright: "Alle Rechte vorbehalten.",
     
     // MainContent
@@ -105,7 +116,18 @@ export const DICT: Record<Lang, Record<string, string>> = {
     landing_future: "Shape the Future",
     landing_future_desc: "Prepare for tomorrow's work environment",
     
-    // Footer
+    // Task descriptions  
+    task_confidence: "Confidence",
+    task_category_physical: "Physical",
+    task_category_cognitive: "Cognitive",
+    task_category_creative: "Creative", 
+    task_category_analytical: "Analytical",
+    task_category_administrative: "Administrative",
+    task_category_communication: "Communication",
+    task_category_technical: "Technical",
+    task_category_management: "Management",
+    task_category_automatisierbar: "Automatable",
+    task_category_mensch: "Human Required",
     copyright: "All rights reserved.",
     
     // MainContent
