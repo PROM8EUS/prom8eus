@@ -54,7 +54,7 @@ const Contact = () => {
                     <Mail className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">E-Mail</h3>
+                    <h3 className="font-semibold mb-1">{t(lang, "email")}</h3>
                     <a 
                       href="mailto:mail@prom8eus.de" 
                       className="text-primary hover:text-primary/80 transition-colors"
