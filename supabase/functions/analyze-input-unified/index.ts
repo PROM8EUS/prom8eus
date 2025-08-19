@@ -17,15 +17,6 @@ interface AnalyzeInputRequest {
   rawText?: string;
 }
 
-interface ExtractedJob {
-  title?: string;
-  description?: string;
-  responsibilities?: string;
-  qualifications?: string;
-  fulltext?: string;
-  source?: string;
-}
-
 interface Task {
   text: string;
   score: number;
@@ -45,6 +36,11 @@ interface AnalysisResult {
   recommendations: string[];
 }
 
+interface RawTask { 
+  text: string; 
+  source: "bullet" | "verbline" | "sentence"; 
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -58,64 +54,23 @@ serve(async (req) => {
 
     let analysisText = rawText || '';
 
-    // If URL is provided, extract job text
-    if (isUrl(url)) {
-      console.log('Extracting job text from URL:', url);
-      
-      // Check cache first
-      const urlHash = await generateUrlHash(url!);
-      const cachedData = await getCachedUrlData(urlHash);
-      
-      if (cachedData) {
-        console.log('Using cached data for URL');
-        analysisText = cachedData.composedText;
-      } else {
-        console.log('Fetching fresh content from URL');
-        // Fetch HTML content
-        let html = '';
-        try {
-          const response = await fetch(url!, {
-            headers: { 
-              "User-Agent": "Mozilla/5.0 Prom8eusBot/1.0",
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            },
-            signal: AbortSignal.timeout(10000)
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Fetch failed: ${response.status}`);
-          }
-          
-          html = await response.text();
-        } catch (error) {
-          console.error('Error fetching URL:', error);
-          throw new Error("Seite konnte nicht automatisch gelesen werden. Bitte Text manuell einfügen.");
-        }
-
-        // Extract job text from HTML
-        const extracted = extractJobText(html, url!);
-        analysisText = composeJobText(extracted);
-        
-        // Cache the results
-        if (analysisText.length > 100) {
-          await setCachedUrlData(urlHash, url!, {
-            ...extracted,
-            composedText: analysisText
-          }, analysisText.length);
-        }
-      }
-    }
-
-    // Validate content length - allow shorter inputs for single tasks
+    // For now, just handle rawText (URL processing can be added later)
     if (!analysisText || analysisText.trim().length < 5) {
-      throw new Error("Zu wenig Inhalt gefunden. Bitte fügen Sie mehr Text ein oder wählen Sie eine andere Quelle.");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Zu wenig Inhalt gefunden. Bitte fügen Sie mehr Text ein." 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // For very short inputs (likely single tasks), create a simple task structure
-    let isSimpleTask = false;
     if (analysisText.length < 100 && !analysisText.includes('\n') && analysisText.split(' ').length <= 10) {
       console.log('Detected simple task input, analyzing as single task');
-      isSimpleTask = true;
       // Wrap single task in a structure that the analysis can work with
       analysisText = `Aufgabe: ${analysisText.trim()}`;
     }
@@ -156,176 +111,6 @@ serve(async (req) => {
     );
   }
 });
-
-function isUrl(s?: string): boolean {
-  return !!s && /^https?:\/\/\S+/i.test(s.trim());
-}
-
-// Generate SHA-256 hash from URL
-async function generateUrlHash(url: string): Promise<string> {
-  const normalizedUrl = url.trim().toLowerCase();
-  const encoder = new TextEncoder();
-  const data = encoder.encode(normalizedUrl);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Check cached URL data
-async function getCachedUrlData(urlHash: string): Promise<{ composedText: string } | null> {
-  try {
-    const { data, error } = await supabase.rpc('get_cached_url_data', {
-      url_hash_param: urlHash
-    });
-    
-    if (error || !data || data.length === 0) return null;
-    
-    return {
-      composedText: data[0].extracted_data.composedText || ''
-    };
-  } catch (error) {
-    console.error('Error fetching cached data:', error);
-    return null;
-  }
-}
-
-// Cache URL data
-async function setCachedUrlData(
-  urlHash: string, 
-  url: string, 
-  data: ExtractedJob & { composedText: string }, 
-  textLength: number
-): Promise<void> {
-  try {
-    await supabase.from('url_cache').insert({
-      url_hash: urlHash,
-      original_url: url,
-      extracted_data: data,
-      text_length: textLength,
-      was_rendered: false
-    });
-  } catch (error) {
-    console.error('Error caching URL data:', error);
-  }
-}
-
-function extractJobText(html: string, url: string): ExtractedJob {
-  const $ = cheerio.load(html);
-  
-  let title = '';
-  let description = '';
-  let responsibilities = '';
-  let qualifications = '';
-  let fulltext = '';
-
-  // Extract JSON-LD structured data
-  $('script[type="application/ld+json"]').each((_, element) => {
-    try {
-      const jsonLd = JSON.parse($(element).html() || '');
-      const jobPosting = Array.isArray(jsonLd) 
-        ? jsonLd.find(item => item['@type'] === 'JobPosting')
-        : jsonLd['@type'] === 'JobPosting' ? jsonLd : null;
-
-      if (jobPosting) {
-        title = jobPosting.title || '';
-        description = jobPosting.description || '';
-        responsibilities = jobPosting.responsibilities || '';
-        qualifications = jobPosting.qualifications || '';
-      }
-    } catch (e) {
-      // Invalid JSON-LD, continue with fallback
-    }
-  });
-
-  // Fallback extraction
-  if (!title) {
-    title = $('title').text() || '';
-  }
-
-  if (!description) {
-    description = $('meta[name="description"]').attr('content') || '';
-  }
-
-  // Extract main content
-  if (!fulltext) {
-    const contentSelectors = [
-      'main', 'article', '[role="main"]', '#content', '.content', 
-      '.job-description', '.job-details'
-    ];
-
-    const contentElements: string[] = [];
-    contentSelectors.forEach(selector => {
-      $(selector).each((_, element) => {
-        $(element).find('nav, footer, script, style, .navigation, .nav').remove();
-        const text = $(element).text();
-        if (text && text.trim().length > 50) {
-          contentElements.push(text);
-        }
-      });
-    });
-
-    fulltext = contentElements.join('\n\n');
-  }
-
-  // Clean up text
-  const cleanText = (text: string): string => {
-    return text
-      .replace(/<[^>]*>/g, '')
-      .replace(/\s+/g, ' ')
-      .replace(/\n\s*\n/g, '\n')
-      .trim()
-      .substring(0, 10000);
-  };
-
-  return {
-    title: cleanText(title),
-    description: cleanText(description),
-    responsibilities: cleanText(responsibilities),
-    qualifications: cleanText(qualifications),
-    fulltext: cleanText(fulltext),
-    source: url
-  };
-}
-
-function composeJobText(j: ExtractedJob): string {
-  const parts: string[] = [];
-  if (j.title) parts.push(j.title.trim());
-
-  const pushBlock = (label: string, body?: string) => {
-    let clean = (body ?? "")
-      .replace(/<[^>]+>/g, " ")
-      // Comprehensive HTML entity decoding
-      .replace(/&ouml;/gi, 'ö')
-      .replace(/&auml;/gi, 'ä')
-      .replace(/&uuml;/gi, 'ü')
-      .replace(/&Ouml;/gi, 'Ö')
-      .replace(/&Auml;/gi, 'Ä')
-      .replace(/&Uuml;/gi, 'Ü')
-      .replace(/&szlig;/gi, 'ß')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&quot;/gi, '"')
-      .replace(/&amp;/gi, '&')
-      .replace(/&lt;/gi, '<')
-      .replace(/&gt;/gi, '>')
-      .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
-      .replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
-      .replace(/\s{2,}/g, " ")
-      .trim();
-    if (clean) parts.push(`${label}:\n${clean}`);
-  };
-
-  // Auto-detect German/English
-  const text = [j.responsibilities, j.qualifications, j.description, j.fulltext].join(" ");
-  const de = /aufgaben|anforderungen|verantwortlichkeiten|qualifikationen/i.test(text);
-
-  pushBlock(de ? "AUFGABEN" : "RESPONSIBILITIES", j.responsibilities);
-  pushBlock(de ? "ANFORDERUNGEN" : "QUALIFICATIONS", j.qualifications);
-  pushBlock(de ? "BESCHREIBUNG" : "DESCRIPTION", j.description || j.fulltext);
-
-  if (j.source) parts.push(`\nQuelle: ${j.source}`);
-
-  return parts.join("\n\n").trim();
-}
 
 function runAnalysis(jobText: string): AnalysisResult {
   console.log('Starting job analysis with text length:', jobText.length);
@@ -400,92 +185,21 @@ function extractTasks(text: string): RawTask[] {
       }
       continue;
     }
-    
-    // Enhanced detection for lines that start with action verbs (paragraph format)
-    const ACTION_STARTS = /^(write|create|develop|design|build|maintain|manage|lead|coordinate|support|implement|analyze|optimize|collaborate|partner|help|assist|ensure|provide|deliver|execute|plan|organize|monitor|review|evaluate|establish|enhance|improve|facilitate|guide|mentor|supervise|oversee|direct|control|handle|process|generate|produce|publish|distribute|communicate|present|report|document|research|investigate|identify|recommend|advise|consult|negotiate|sell|market|promote|train|teach|educate|install|configure|deploy|test|debug|troubleshoot|resolve|fix|update|upgrade|integrate|connect|link|sync|backup|restore|archive|store|retrieve|fetch|collect|gather|compile|summarize|translate|convert|transform|adapt|customize|personalize|tailor|schreiben|erstellen|entwickeln|gestalten|bauen|pflegen|verwalten|leiten|koordinieren|unterstützen|implementieren|analysieren|optimieren|zusammenarbeiten|helfen|sicherstellen|bereitstellen|liefern|ausführen|planen|organisieren|überwachen|überprüfen|bewerten|etablieren|verbessern|erleichtern|führen|betreuen|beaufsichtigen|überwachen|dirigieren|kontrollieren|handhaben|verarbeiten|generieren|produzieren|veröffentlichen|verteilen|kommunizieren|präsentieren|berichten|dokumentieren|recherchieren|untersuchen|identifizieren|empfehlen|beraten|konsultieren|verhandeln|verkaufen|vermarkten|bewerben|trainieren|lehren|bilden|installieren|konfigurieren|einsetzen|testen|debuggen|beheben|lösen|reparieren|aktualisieren|upgraden|integrieren|verbinden|verknüpfen|synchronisieren|sichern|wiederherstellen|archivieren|speichern|abrufen|sammeln|zusammenstellen|zusammenfassen|übersetzen|konvertieren|transformieren|anpassen|personalisieren|maßschneidern)\b/i;
-    
-    if (l.length >= 20 && ACTION_STARTS.test(l) && !isQualification(l)) {
-      const txt = shorten(clean(l));
-      if (txt.length >= 15 && !isQualification(txt)) bullets.push({ text: txt, source: "action" as any });
-    }
   }
 
   console.log(`Found ${bullets.length} bullet points`);
 
-  // 4) Enhanced sentence-based extraction for paragraph-form responsibilities
-  const sentenceTasks: RawTask[] = [];
-  if (bullets.length === 0) {
-    console.log('No bullet points found, trying sentence-based extraction');
-    
-    // Join scoped lines and split by sentence endings
-    const fullText = scoped.join(' ').replace(/\s+/g, ' ');
-    const sentences = fullText.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
-    
-    const ACTION_VERBS = new RegExp(
-      [
-        // English action verbs (common in job descriptions)
-        "\\b(write|edit|create|develop|design|build|maintain|manage|lead|coordinate|support|implement|analyze|optimize|collaborate|partner|help|assist|ensure|provide|deliver|execute|plan|organize|monitor|review|evaluate|establish|enhance|improve|facilitate|guide|mentor|supervise|oversee|direct|control|handle|process|generate|produce|publish|distribute|communicate|present|report|document|research|investigate|identify|recommend|advise|consult|negotiate|sell|market|promote|train|teach|educate|install|configure|deploy|test|debug|troubleshoot|resolve|fix|update|upgrade|integrate|connect|link|sync|backup|restore|archive|store|retrieve|fetch|collect|gather|compile|summarize|translate|convert|transform|adapt|customize|personalize|tailor)\\b",
-        // German action verbs
-        "\\b(schreiben|bearbeiten|erstellen|entwickeln|gestalten|bauen|pflegen|verwalten|leiten|koordinieren|unterstützen|implementieren|analysieren|optimieren|zusammenarbeiten|helfen|sicherstellen|bereitstellen|liefern|ausführen|planen|organisieren|überwachen|überprüfen|bewerten|etablieren|verbessern|erleichtern|führen|betreuen|beaufsichtigen|überwachen|dirigieren|kontrollieren|handhaben|verarbeiten|generieren|produzieren|veröffentlichen|verteilen|kommunizieren|präsentieren|berichten|dokumentieren|recherchieren|untersuchen|identifizieren|empfehlen|beraten|konsultieren|verhandeln|verkaufen|vermarkten|bewerben|trainieren|lehren|bilden|installieren|konfigurieren|einsetzen|testen|debuggen|beheben|lösen|reparieren|aktualisieren|upgraden|integrieren|verbinden|verknüpfen|synchronisieren|sichern|wiederherstellen|archivieren|speichern|abrufen|sammeln|zusammenstellen|zusammenfassen|übersetzen|konvertieren|transformieren|anpassen|personalisieren|maßschneidern)\\b"
-      ].join("|"),
-      "i"
-    );
-
-    for (const sentence of sentences) {
-      if (sentence.length >= 20 && ACTION_VERBS.test(sentence) && !isFluff(sentence) && !isQualification(sentence)) {
-        // Split compound sentences on conjunctions
-        const parts = sentence.split(/\b(?:and|und|sowie|oder|or)\b/i);
-        for (const part of parts) {
-          const cleanPart = clean(part.trim());
-          if (cleanPart.length >= 15 && ACTION_VERBS.test(cleanPart) && !isQualification(cleanPart)) {
-            sentenceTasks.push({ text: shorten(cleanPart), source: "sentence" as any });
-          }
-        }
-      }
-    }
-  }
-
-  console.log(`Found ${sentenceTasks.length} sentence-based tasks`);
-
-  // 5) Fallback: Verb-Linien (nur falls keine oder wenige Bullets und Sentences)
-  const VERB_LINE_ENHANCED = new RegExp(
-    [
-      // DE (Erweiterte Verben am Satzanfang)
-      "^(?:du\\s+|sie\\s+|wir\\s+)?(?:entwickelst|entwickeln|planst|planen|gestaltest|gestalten|führst|führen|koordinierst|koordinieren|optimierst|optimieren|automatisierst|automatisieren|dokumentierst|dokumentieren|betreust|betreuen|repräsentierst|repräsentieren)\\b",
-      // DE (Du/Sie/Wir Form direkt)
-      "^(?:du|sie|wir)\\s+(?:entwickelst|entwickeln|planst|planen|gestaltest|gestalten|führst|führen|koordinierst|koordinieren|optimierst|optimieren|automatisierst|automatisieren|dokumentierst|dokumentieren|betreust|betreuen|repräsentierst|repräsentieren)",
-      // EN (Imperative/3rd Person - erweitert)
-      "^(?:develop|design|maintain|build|coordinate|lead|create|plan|optimi[sz]e|automate|represent)\\b",
-      // Fallback für weitere Verben
-      "^(?:[–—-]\\s*)?(?:du\\s+)?(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)\\b"
-    ].join("|"),
-    "i"
-  );
-
-  const verbLines: RawTask[] = (bullets.length + sentenceTasks.length) >= 3 
-    ? []
-    : scoped
-        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && !isQualification(l) && VERB_LINE_ENHANCED.test(l))
-        .map(l => ({ text: shorten(clean(l)), source: "verbline" as const }))
-        .filter(t => t.text.length >= 10 && !isQualification(t.text));
-
-  console.log(`Found ${verbLines.length} verb lines with enhanced detection as fallback`);
-
   // 6) Kombinieren + deduplizieren
   const dedup = new Map<string, RawTask>();
-  for (const t of [...bullets, ...sentenceTasks, ...verbLines]) {
+  for (const t of bullets) {
     const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
     if (!dedup.has(key) && !isFluff(t.text) && !isQualification(t.text)) {
       dedup.set(key, t);
     }
   }
 
-  // 7) Filter für generische Titel/Meta-Informationen
-  const GENERIC_TITLES = /(hard facts|details|profil|anforderungen|qualifikationen|benefits|wir bieten|about you|requirements|what we offer|company|unternehmen|zur person|dein profil|ihr profil|das bieten wir|leistungen|perks)/i;
-  
   // 8) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
   const result = Array.from(dedup.values())
-    .filter(t => !GENERIC_TITLES.test(t.text)) // Generische Titel entfernen
     .sort((a, b) => b.text.length - a.text.length)
     .slice(0, 20); // Max 20 Tasks
 
@@ -535,14 +249,6 @@ function isQualification(text: string): boolean {
   return QUALIFICATION_PATTERNS.some(pattern => pattern.test(text));
 }
 
-// Floskeln und überflüssige Begriffe
-const FLUFF_PATTERNS = [
-  /\b(hard facts|details|benefits|profil|qualifikationen|anforderungen|requirement|qualification|benefit|perk|nice to have|plus|bonus)\b/i,
-  /^\s*(?:weitere|additional|other|more)\s+/i, // "Weitere Aufgaben", "Additional duties"
-  /^\s*(?:sonstige|miscellaneous|various)\s+/i,
-  /\b(?:etc\.?|usw\.?|and more|and similar)\s*$/i
-];
-
 function isFluff(text: string): boolean {
   const fluffPatterns = [
     // Generic headings and meta information
@@ -588,11 +294,6 @@ function clean(s: string): string {
 
 function shorten(s: string, n = 140): string {
   return s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s;
-}
-
-interface RawTask { 
-  text: string; 
-  source: "bullet" | "verbline" | "sentence"; 
 }
 
 function analyzeTask(taskText: string): Task {
@@ -832,11 +533,4 @@ function generateRecommendations(tasks: Task[], totalScore: number): string[] {
   }
 
   return recommendations.length > 0 ? recommendations : ['Individuelle Analyse der Arbeitsprozesse für spezifische Empfehlungen durchführen'];
-}
-
-function calculateSimilarity(str1: string, str2: string): number {
-  const words1 = str1.split(/\s+/);
-  const words2 = str2.split(/\s+/);
-  const commonWords = words1.filter(word => words2.includes(word)).length;
-  return commonWords / Math.max(words1.length, words2.length);
 }

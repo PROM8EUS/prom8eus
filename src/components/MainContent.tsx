@@ -326,6 +326,50 @@ ANFORDERUNGEN:
 • Kenntnisse in DATEV oder vergleichbarer Software
 • Genauigkeit und Zuverlässigkeit
 • Steuerrechtliche Kenntnisse`
+        },
+        {
+          title: "HR Manager",
+          preview: "Personalplanung und Recruiting...",
+          content: `HR Manager (m/w/d)
+
+AUFGABEN:
+• Personalplanung und -entwicklung
+• Recruiting und Bewerbermanagement
+• Führung von Mitarbeitergesprächen
+• Erstellung von Arbeitsverträgen
+• Gehaltsabrechnung und Benefits-Management
+• Konfliktlösung und Mediation
+• Schulungsplanung und Weiterbildung
+• Compliance und Arbeitsrecht
+
+ANFORDERUNGEN:
+• Studium der Betriebswirtschaft oder Psychologie
+• Erfahrung im Personalwesen
+• Sehr gute Menschenkenntnis
+• Empathie und Kommunikationsstärke
+• Kenntnisse im Arbeitsrecht`
+        },
+        {
+          title: "Data Scientist",
+          preview: "Datenanalyse und Machine Learning...",
+          content: `Data Scientist (m/w/d)
+
+AUFGABEN:
+• Datensammlung und -aufbereitung
+• Statistische Analysen und Modellierung
+• Entwicklung von Machine Learning Algorithmen
+• Erstellung von Dashboards und Berichten
+• Datenvisualisierung und Präsentation
+• A/B Testing und Experimente
+• Automatisierung von Analyseprozessen
+• Zusammenarbeit mit Fachbereichen
+
+ANFORDERUNGEN:
+• Studium in Mathematik, Statistik oder Informatik
+• Erfahrung mit Python, R und SQL
+• Kenntnisse in Machine Learning
+• Analytisches Denken
+• Präsentationsfähigkeiten`
         }
       ];
     } else {
@@ -417,6 +461,50 @@ QUALIFICATIONS:
 • Knowledge of accounting software
 • Accuracy and reliability
 • Tax law knowledge`
+        },
+        {
+          title: "HR Manager",
+          preview: "Manage human resources...",
+          content: `HR Manager
+
+RESPONSIBILITIES:
+• Human resource planning and development
+• Recruiting and applicant management
+• Conduct employee interviews
+• Create employment contracts
+• Payroll processing and benefits management
+• Conflict resolution and mediation
+• Training planning and continuing education
+• Compliance and labor law
+
+QUALIFICATIONS:
+• Business Administration or Psychology degree
+• Human resources experience
+• Excellent people skills
+• Empathy and communication skills
+• Knowledge of labor law`
+        },
+        {
+          title: "Data Scientist",
+          preview: "Analyze data and build models...",
+          content: `Data Scientist
+
+RESPONSIBILITIES:
+• Data collection and preparation
+• Statistical analysis and modeling
+• Develop machine learning algorithms
+• Create dashboards and reports
+• Data visualization and presentation
+• A/B testing and experiments
+• Automate analysis processes
+• Collaborate with business units
+
+QUALIFICATIONS:
+• Degree in Mathematics, Statistics or Computer Science
+• Experience with Python, R and SQL
+• Machine learning knowledge
+• Analytical thinking
+• Presentation skills`
         }
       ];
     }
