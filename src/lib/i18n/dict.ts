@@ -37,6 +37,9 @@ export const DICT: Record<Lang, Record<string, string>> = {
     contact_subtitle: "Nehmen Sie Kontakt mit uns auf",
     address: "Adresse",
     phone: "Telefon",
+    city: "Köln",
+    country: "Deutschland",
+    phone_number: "0221 2592 7541",
     
     // Error messages
     page_not_readable: "Die Seite konnte nicht automatisch gelesen werden",
@@ -76,6 +79,9 @@ export const DICT: Record<Lang, Record<string, string>> = {
     contact_subtitle: "Get in touch with us",
     address: "Address",
     phone: "Phone",
+    city: "Cologne",
+    country: "Germany",
+    phone_number: "+49 221 2592 7541",
     
     // Error messages
     page_not_readable: "The page could not be read automatically",

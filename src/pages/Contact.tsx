@@ -42,8 +42,8 @@ const Contact = () => {
                     <h3 className="font-semibold mb-1">{t(lang, "address")}</h3>
                     <div className="text-muted-foreground">
                       <p>Niehler Straße 44a</p>
-                      <p>50733 Köln</p>
-                      <p>Deutschland</p>
+                      <p>50733 {t(lang, "city")}</p>
+                      <p>{t(lang, "country")}</p>
                     </div>
                   </div>
                 </div>
@@ -75,7 +75,7 @@ const Contact = () => {
                       href="tel:+4922125927541" 
                       className="text-primary hover:text-primary/80 transition-colors"
                     >
-                      0221 2592 7541
+                      {t(lang, "phone_number")}
                     </a>
                   </div>
                 </div>
