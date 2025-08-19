@@ -371,7 +371,9 @@ function extractTasks(text: string): RawTask[] {
       // EN - erweiterte Responsibility-Überschriften  
       "\\b(responsibilities|duties|role|your role|tasks|what you will do|what you'll do|job duties|key responsibilities|main responsibilities|primary responsibilities)\\b",
       // Single word matches for sections
-      "^responsibilities\\s*$|^duties\\s*$|^tasks\\s*$|^aufgaben\\s*$"
+      "^responsibilities\\s*$|^duties\\s*$|^tasks\\s*$|^aufgaben\\s*$",
+      // German specific patterns
+      "zur rolle\\s*/\\s*aufgaben|^zur rolle$|^aufgaben$"
     ].join("|"),
     "i"
   );
@@ -379,23 +381,25 @@ function extractTasks(text: string): RawTask[] {
   const SECTION_END = new RegExp(
     [
       // DE - Abschnitte die Aufgaben beenden
-      "\\b(profil|dein profil|ihr profil|anforderungen|qualifikationen|voraussetzungen|hard facts|details zum jobangebot|benefits|leistungen|wir bieten|das bieten wir|kontakt|über uns|unternehmen|standort|arbeitsplatz)\\b",
-      // EN - Abschnitte die Aufgaben beenden - REMOVED salary and benefits that come before responsibilities
+      "\\b(dein profil|ihr profil|anforderungen|qualifikationen|voraussetzungen|benefits|leistungen|wir bieten|das bieten wir|kontakt|über uns|unternehmen|standort|arbeitsplatz)\\b",
+      // EN - Abschnitte die Aufgaben beenden
       "\\b(profile|about you|requirements|qualifications|prerequisites|skills|experience|contact|about us|company|location|workplace|nice to have)\\b",
+      // Specific German patterns
+      "^dein profil$|^benefits$|^kontakt"
     ].join("|"),
     "i"
   );
 
-  // 1) Find responsibilities section more precisely - look for the actual "Responsibilities" heading
+  // 1) Find responsibilities section more precisely - look for the actual section
   let startIdx = -1;
   let responsibilitiesStartIdx = -1;
   
-  // First pass: look for explicit "Responsibilities" section
+  // First pass: look for explicit German/English responsibilities sections
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (/^responsibilities\s*$/i.test(line)) {
+    const line = lines[i].trim().toLowerCase();
+    if (/^(responsibilities\s*$|zur rolle\s*\/?\s*aufgaben\s*$|^aufgaben\s*$)/i.test(line)) {
       responsibilitiesStartIdx = i;
-      console.log(`Found explicit "Responsibilities" section at line ${i}: "${line}"`);
+      console.log(`Found explicit responsibilities section at line ${i}: "${lines[i]}"`);
       break;
     }
   }
