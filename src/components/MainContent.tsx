@@ -196,8 +196,8 @@ const MainContent = ({ buttonText }: MainContentProps) => {
 
   return (
     <>
-      <main className="flex-1 flex items-center justify-center px-6">
-        <div className="w-full max-w-4xl mx-auto text-center space-y-8">
+      <main className="flex-1 flex items-center justify-center px-6 -mt-8">
+        <div className="w-full max-w-4xl mx-auto text-center space-y-6">
           {/* Input Section */}
           <div className="space-y-6">
             {/* Combined Input Field */}
