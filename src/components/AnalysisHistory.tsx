@@ -16,10 +16,11 @@ interface AnalysisHistoryItem {
 
 interface AnalysisHistoryProps {
   lang: "de" | "en";
-  isAdminMode?: boolean;
+  isLoggedIn?: boolean;
+  onClearAll?: () => void;
 }
 
-const AnalysisHistory = ({ lang, isAdminMode = false }: AnalysisHistoryProps) => {
+const AnalysisHistory = ({ lang, isLoggedIn = false, onClearAll }: AnalysisHistoryProps) => {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const navigate = useNavigate();
 
@@ -54,22 +55,45 @@ const AnalysisHistory = ({ lang, isAdminMode = false }: AnalysisHistoryProps) =>
     }
   };
 
+  const clearAllAnalyses = () => {
+    if (!window.confirm(lang === 'de' ? 'ALLE Analysen löschen? Diese Aktion kann nicht rückgängig gemacht werden!' : 'Delete ALL analyses? This action cannot be undone!')) {
+      return;
+    }
+
+    try {
+      // Remove all individual analysis data
+      history.forEach(analysis => {
+        localStorage.removeItem(analysis.id);
+      });
+      
+      // Clear the history
+      localStorage.removeItem('analysisHistory');
+      setHistory([]);
+      
+      if (onClearAll) {
+        onClearAll();
+      }
+    } catch (error) {
+      console.error('Error clearing all analyses:', error);
+    }
+  };
+
   const deleteAnalysis = (e: React.MouseEvent, itemId: string) => {
     e.stopPropagation();
     e.preventDefault();
     
-    console.log('Attempting to delete analysis:', itemId);
+    if (!window.confirm(lang === 'de' ? 'Analyse wirklich löschen?' : 'Really delete analysis?')) {
+      return;
+    }
     
     try {
       // Remove from history
       const newHistory = history.filter(item => item.id !== itemId);
-      console.log('New history length:', newHistory.length);
       setHistory(newHistory);
       localStorage.setItem('analysisHistory', JSON.stringify(newHistory));
       
       // Remove the full analysis data
       localStorage.removeItem(itemId);
-      console.log('Analysis deleted successfully');
     } catch (error) {
       console.error('Error deleting analysis:', error);
     }
@@ -104,12 +128,25 @@ const AnalysisHistory = ({ lang, isAdminMode = false }: AnalysisHistoryProps) =>
     <section className="w-full max-w-4xl mx-auto mt-16 px-6 mb-20">
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-foreground mb-2">
-            {t(lang, 'history_title')}
-          </h2>
-          <p className="text-muted-foreground">
-            {t(lang, 'history_subtitle')}
-          </p>
+          <div className="flex items-center justify-center gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-foreground mb-2">
+                {t(lang, 'history_title')}
+              </h2>
+              <p className="text-muted-foreground">
+                {t(lang, 'history_subtitle')}
+              </p>
+            </div>
+            {isLoggedIn && history.length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={clearAllAnalyses}
+                className="ml-4"
+              >
+                {lang === 'de' ? 'Alle löschen' : 'Delete All'}
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 max-h-96 overflow-y-auto">
@@ -150,24 +187,12 @@ const AnalysisHistory = ({ lang, isAdminMode = false }: AnalysisHistoryProps) =>
                     </div>
                   </div>
                   
-                  {isAdminMode && (
+                  {isLoggedIn && (
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={(e) => deleteAnalysis(e, item.id)}
                       className="flex-shrink-0"
-                      aria-label={t(lang, 'history_delete')}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                  
-                  {!isAdminMode && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => deleteAnalysis(e, item.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 hover:bg-destructive/20 hover:text-destructive"
                       aria-label={t(lang, 'history_delete')}
                     >
                       <Trash2 className="w-4 h-4" />

@@ -16,9 +16,11 @@ interface MainContentProps {
   headline: string;
   subtitle: string;
   lang: "de" | "en";
+  isLoggedIn?: boolean;
+  onLogout?: () => void;
 }
 
-const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps) => {
+const MainContent = ({ buttonText, headline, subtitle, lang, isLoggedIn = false, onLogout }: MainContentProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [debugModalOpen, setDebugModalOpen] = useState(false);
@@ -361,7 +363,26 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
       />
 
       {/* Analysis History */}
-      <AnalysisHistory lang={lang} />
+      <AnalysisHistory lang={lang} isLoggedIn={isLoggedIn} />
+
+      {/* Login Status and Logout */}
+      {isLoggedIn && (
+        <div className="w-full max-w-4xl mx-auto px-6 mb-8">
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              {lang === 'de' ? 'Als Admin angemeldet' : 'Logged in as admin'}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onLogout}
+            >
+              {lang === 'de' ? 'Abmelden' : 'Logout'}
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 };
