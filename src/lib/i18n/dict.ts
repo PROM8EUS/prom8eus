@@ -34,7 +34,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     landing_future_desc: "Bereiten Sie sich auf die Arbeitswelt von morgen vor",
     
     // Task descriptions
-    task_confidence: "Vertrauen",
+    task_confidence: "Sicherheit",
     task_category_physical: "Körperlich",
     task_category_cognitive: "Kognitiv", 
     task_category_creative: "Kreativ",
@@ -45,6 +45,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_management: "Management",
     task_category_automatisierbar: "Automatisierbar",
     task_category_mensch: "Mensch erfordert",
+    task_category_allgemein: "Allgemein",
     copyright: "Alle Rechte vorbehalten.",
     
     // MainContent
@@ -128,6 +129,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_management: "Management",
     task_category_automatisierbar: "Automatable",
     task_category_mensch: "Human Required",
+    task_category_allgemein: "General",
     copyright: "All rights reserved.",
     
     // MainContent
