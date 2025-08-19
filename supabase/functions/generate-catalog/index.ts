@@ -137,7 +137,7 @@ Output: JSON array only.
 `;
 
 async function generateTasksForRole(role: string, openAIApiKey: string, retryCount = 0): Promise<CatalogTask[]> {
-  const maxRetries = 2;
+  const maxRetries = 3; // Increased retries
   
   try {
     console.log(`🤖 Generating tasks for: ${role} (attempt ${retryCount + 1})`);
@@ -238,7 +238,10 @@ async function generateTasksForRole(role: string, openAIApiKey: string, retryCou
     
     if (retryCount < maxRetries) {
       console.log(`🔄 Retrying ${retryCount + 1}/${maxRetries} for ${role}`);
-      await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1)));
+      // Exponential backoff with longer delays for rate limits
+      const delay = Math.min(5000 * Math.pow(2, retryCount), 30000); // Cap at 30 seconds
+      console.log(`⏳ Waiting ${delay/1000} seconds before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
       return generateTasksForRole(role, openAIApiKey, retryCount + 1);
     }
     
@@ -273,29 +276,45 @@ serve(async (req) => {
 
     console.log(`🚀 Generating catalogs for ${rolesToGenerate.length} roles...`);
 
-    // Generate catalogs for all roles
+    // Generate catalogs for all roles with better rate limiting
     const catalogs: Catalog[] = [];
     
-    for (const role of rolesToGenerate) {
-      const tasks = await generateTasksForRole(role, openAIApiKey);
+    // Process roles in smaller batches to avoid rate limits
+    const batchSize = 3; // Process 3 roles at a time
+    const batches = [];
+    for (let i = 0; i < rolesToGenerate.length; i += batchSize) {
+      batches.push(rolesToGenerate.slice(i, i + batchSize));
+    }
+    
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`📦 Processing batch ${batchIndex + 1}/${batches.length}: ${batch.join(', ')}`);
       
-      if (tasks.length > 0) {
-        const catalog: Catalog = {
-          role,
-          roleSlug: slugify(role),
-          version: 1,
-          generatedAt: new Date().toISOString(),
-          source: 'gpt5',
-          items: tasks
-        };
+      for (const role of batch) {
+        const tasks = await generateTasksForRole(role, openAIApiKey);
         
-        catalogs.push(catalog);
-        console.log(`📊 ${role}: ${tasks.length} tasks`);
+        if (tasks.length > 0) {
+          const catalog: Catalog = {
+            role,
+            roleSlug: slugify(role),
+            version: 1,
+            generatedAt: new Date().toISOString(),
+            source: 'gpt5',
+            items: tasks
+          };
+          
+          catalogs.push(catalog);
+          console.log(`📊 ${role}: ${tasks.length} tasks`);
+        }
+        
+        // Longer delay between requests to respect rate limits
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       
-      // Rate limiting between requests
-      if (rolesToGenerate.length > 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      // Even longer delay between batches
+      if (batchIndex < batches.length - 1) {
+        console.log(`⏳ Waiting 10 seconds before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
     }
 
