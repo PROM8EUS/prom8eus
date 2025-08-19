@@ -59,6 +59,9 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_automatisierbar: "Automatisierbar",
     task_category_mensch: "Mensch erfordert",
     task_category_allgemein: "Allgemein",
+    task_category_softwaredevelopment: "Software-Entwicklung",
+    task_category_systemwork: "Systemarbeit",
+    task_category_interpersonal: "Zwischenmenschlich",
     
     // History
     history_title: "Frühere Analysen",
@@ -197,6 +200,9 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_automatisierbar: "Automatable",
     task_category_mensch: "Human Required",
     task_category_allgemein: "General",
+    task_category_softwaredevelopment: "Software Development",
+    task_category_systemwork: "System Work",
+    task_category_interpersonal: "Interpersonal",
     
     // History
     history_title: "Previous Analyses",
