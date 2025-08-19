@@ -8,14 +8,16 @@ import { extractJobTextFromUrl } from "@/lib/extractJobText";
 import LoadingPage from "./LoadingPage";
 import { DebugModal } from "./DebugModal";
 import { AlertTriangle, Bug } from "lucide-react";
+import { t } from "@/lib/i18n/i18n";
 
 interface MainContentProps {
   buttonText: string;
   headline: string;
   subtitle: string;
+  lang: "de" | "en";
 }
 
-const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
+const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [debugModalOpen, setDebugModalOpen] = useState(false);
@@ -84,8 +86,8 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
           // Check if extracted text is sufficient
           if (composedText.length < 500) {
             setAnalysisError(
-              `Die Seite konnte nicht automatisch gelesen werden (nur ${composedText.length} Zeichen extrahiert). ` +
-              "Bitte fügen Sie den Text manuell ein oder prüfen Sie den Debug-Modus."
+              `${t(lang, "page_not_readable")} (nur ${composedText.length} Zeichen extrahiert). ` +
+              t(lang, "paste_manually")
             );
             setIsLoading(false);
             return;
@@ -96,8 +98,7 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
         } catch (extractError) {
           console.error('Job text extraction failed:', extractError);
           setAnalysisError(
-            "Die Seite konnte nicht automatisch gelesen werden. " +
-            "Bitte fügen Sie den Stellentext manuell ein."
+            `${t(lang, "page_not_readable")}. ${t(lang, "paste_manually")}`
           );
           setIsLoading(false);
           return;
@@ -175,11 +176,11 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
         navigate('/results');
       } else {
         console.error('Analysis failed:', result.error);
-        setAnalysisError(result.error || "Ein unbekannter Fehler ist bei der Analyse aufgetreten");
+        setAnalysisError(result.error || t(lang, "analysis_error"));
       }
     } catch (error) {
       console.error('Error during analysis:', error);
-      setAnalysisError("Verbindungsfehler: Die Analyse konnte nicht durchgeführt werden");
+      setAnalysisError(t(lang, "connection_error"));
     } finally {
       setIsLoading(false);
     }
@@ -216,7 +217,7 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
             <div className="relative">
               <Textarea
                 ref={textareaRef}
-                placeholder="URL oder Aufgabenbeschreibung hier einfügen …"
+                placeholder={t(lang, "placeholder")}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="min-h-[60px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors overflow-hidden"
@@ -225,7 +226,7 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
               {isUrl && hasInput && !analysisError && (
                 <div className="absolute top-3 right-3">
                   <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                    URL erkannt
+                    {t(lang, "url_detected")}
                   </span>
                 </div>
               )}
@@ -246,13 +247,13 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
                         className="mt-2"
                       >
                         <Bug className="h-4 w-4 mr-2" />
-                        Rohtext anzeigen (Debug)
+                        {t(lang, "show_debug")}
                       </Button>
                     )}
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg">
-                  <p><strong>Tipp:</strong> Kopieren Sie den Stellentext manuell von der Website und fügen Sie ihn direkt hier ein.</p>
+                  <p><strong>{t(lang, "tip")}</strong> {t(lang, "paste_text_tip")}</p>
                 </div>
               </div>
             )}
@@ -275,7 +276,7 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
                 className="w-full"
               >
                 <Bug className="h-4 w-4 mr-2" />
-                Rohtext anzeigen (Debug)
+                {t(lang, "show_debug")}
               </Button>
             )}
           </div>
@@ -283,8 +284,8 @@ const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
           {/* Features hint */}
           <div className="text-sm text-muted-foreground">
             {isUrl && hasInput && !analysisError ? 
-              "URL erkannt – der Inhalt wird automatisch analysiert." : 
-              "KI-gestützte Analyse für klare Einblicke in Ihre Aufgaben."
+              t(lang, "url_detected_hint") : 
+              t(lang, "ai_hint")
             }
           </div>
         </div>

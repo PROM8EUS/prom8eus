@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import MainContent from "@/components/MainContent";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { resolveLang, t } from "@/lib/i18n/i18n";
@@ -15,7 +16,9 @@ const Index = () => {
         buttonText={t(lang, "start")}
         headline={t(lang, "headline")}
         subtitle={t(lang, "sub")}
+        lang={lang}
       />
+      <Footer />
       <div className="fixed bottom-6 right-6">
         <LanguageSwitcher current={lang} />
       </div>

@@ -1,5 +1,10 @@
+import { useSearchParams } from "react-router-dom";
+import { resolveLang, t } from "@/lib/i18n/i18n";
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [searchParams] = useSearchParams();
+  const lang = resolveLang(searchParams.get("lang") || undefined);
 
   return (
     <footer className="bg-muted/30 border-t border-border py-8">
@@ -12,7 +17,7 @@ const Footer = () => {
           
           {/* Copyright */}
           <div className="text-sm text-muted-foreground">
-            © {currentYear} PROM8EUS. Alle Rechte vorbehalten.
+            © {currentYear} PROM8EUS. {t(lang, "copyright")}
           </div>
         </div>
       </div>
