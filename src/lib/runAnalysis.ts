@@ -65,6 +65,17 @@ function analyzeTask(taskText: string): Task {
   
   // Define automation indicators (with English keywords added)
   const automationSignals = {
+    accounting: {
+      keywords: [
+        // German - spezifische Buchhaltungsaufgaben
+        'buchhaltung', 'finanzbuchhaltung', 'kontierung', 'belege', 'rechnungswesen', 'bilanzierung',
+        'abschluss', 'monatsabschluss', 'jahresabschluss', 'umsatzsteuer', 'steuervoranmeldung',
+        'mahnwesen', 'zahlungsverkehr', 'kontoabstimmung', 'abstimmung', 'buchen', 'verbuchen',
+        // English
+        'bookkeeping', 'accounting', 'posting', 'vouchers', 'invoicing', 'reconciliation', 'entries'
+      ],
+      weight: 40
+    },
     dataProcessing: {
       keywords: [
         // German
@@ -73,15 +84,25 @@ function analyzeTask(taskText: string): Task {
         // English  
         'data entry', 'data processing', 'analytics', 'metrics', 'dashboard', 'input', 'processing', 'reporting'
       ],
-      weight: 30
+      weight: 35
     },
     systemWork: {
       keywords: [
         // German
         'auftragserfassung', 'systembearbeitung', 'crm', 'erp', 'software', 'datenbank', 'system',
-        'buchung', 'rechnung', 'fakturierung', 'bestellung', 'verwaltung im system',
+        'buchung', 'rechnung', 'fakturierung', 'bestellung', 'verwaltung im system', 'datev',
         // English
         'order processing', 'system entry', 'database', 'invoicing', 'billing', 'system management'
+      ],
+      weight: 35
+    },
+    budgetingPlanning: {
+      keywords: [
+        // German
+        'budgetplanung', 'controlling', 'kostenrechnung', 'planung', 'kalkulation', 'budgetkontrolle',
+        'finanzplanung', 'liquiditätsplanung', 'kennzahlen', 'analyse', 'auswertung',
+        // English
+        'budget planning', 'controlling', 'cost accounting', 'financial planning', 'analysis'
       ],
       weight: 30
     },
@@ -94,21 +115,22 @@ function analyzeTask(taskText: string): Task {
         'email processing', 'scheduling', 'calendar management', 'notifications', 'status updates'
       ],
       weight: 25
-    },
-    routine: {
-      keywords: [
-        // German
-        'routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess',
-        'abwicklung', 'bearbeitung von', 'durchführung von',
-        // English
-        'routine', 'recurring', 'daily', 'weekly', 'regular', 'standard', 'process', 'workflow'
-      ],
-      weight: 20
     }
   };
 
   // Define human-required indicators (with English keywords added)
   const humanSignals = {
+    collaboration: {
+      keywords: [
+        // German - Zusammenarbeit mit Menschen
+        'zusammenarbeit', 'kooperation', 'abstimmung mit', 'rücksprache', 'koordination mit',
+        'besprechung', 'meeting', 'teamarbeit', 'steuerberater', 'externe partner',
+        'kunde', 'kunden', 'mandant', 'mandanten', 'lieferant', 'lieferanten',
+        // English
+        'collaboration', 'cooperation', 'coordination with', 'meeting', 'teamwork', 'client', 'supplier'
+      ],
+      weight: 50
+    },
     interpersonal: {
       keywords: [
         // German - interpersonal skills, personality traits, social abilities
@@ -122,7 +144,7 @@ function analyzeTask(taskText: string): Task {
         'friendly', 'professional', 'demeanor', 'appearance', 'interpersonal', 'empathy', 'patience', 
         'courtesy', 'respect', 'understanding', 'social', 'charisma', 'personality', 'emotional', 'diplomacy'
       ],
-      weight: 50
+      weight: 45
     },
     salesNegotiation: {
       keywords: [
@@ -187,23 +209,24 @@ function analyzeTask(taskText: string): Task {
   });
 
   // Determine final score and label
-  const baseScore = 30; // Niedrigerer Basis-Score für konservativere Bewertung
+  const baseScore = 25; // Noch niedrigerer Basis-Score
   const netScore = Math.max(0, Math.min(100, automationScore - humanScore + baseScore));
   
-  // Bessere Confidence-Berechnung basierend auf tatsächlichen Matches
-  const totalMatches = Math.max(automationScore, humanScore) / 25; // Durchschnittliches Gewicht
-  const confidence = Math.min(95, Math.max(10, totalMatches * 25)); // Mindestens 10%, max 95%
+  // Verbesserte Confidence-Berechnung
+  const totalSignalStrength = Math.max(automationScore, humanScore);
+  const confidence = Math.min(95, Math.max(15, (totalSignalStrength / 25) * 50)); // Realistischere Confidence
   
-  // Noch konservativere Bewertung:
-  // - Wenn human signals erkannt werden, immer "Mensch"
-  // - Nur als "Automatisierbar" wenn klare automation signals UND keine human signals
+  // Deutlich konservativere Bewertung:
   let label: "Automatisierbar" | "Mensch";
   if (humanScore > 0) {
+    // Jede menschliche Komponente → Mensch  
     label = "Mensch";
-  } else if (automationScore >= 25 && netScore >= 60) {
+  } else if (automationScore >= 30 && netScore >= 70) {
+    // Nur bei starken Automation-Signalen → Automatisierbar
     label = "Automatisierbar";
   } else {
-    label = "Mensch"; // Default zu Mensch bei Unsicherheit
+    // Bei Zweifel → Mensch (konservativ)
+    label = "Mensch";
   }
 
   return {

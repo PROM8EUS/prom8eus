@@ -49,21 +49,40 @@ const FLUFF_PATTERNS = [
 
 // Qualifikations-Keywords die keine Aufgaben sind
 const QUALIFICATION_PATTERNS = [
+  // Bildung & Abschlüsse
   /\b(ausbildung|studium|abschluss|degree|education|background|certified|certification)\b/i,
+  /\b(steuerfachangestellte|buchhalter|accountant|tax specialist|steuerberatung)\b/i,
+  
+  // Erfahrung & Zeit
   /\b(erfahrung|experience|jahre|years|berufserfahrung|work experience)\b/i,
-  /\b(kenntnisse|knowledge|skills|fähigkeiten|fertigkeiten|competence|proficiency)\b/i,
-  /\b(voraussetzung|requirement|must have|should have|preferred|wünschenswert)\b/i,
-  /\b(berechtigung|lizenz|license|permit|authorization)\b/i,
+  /\b(mehrjährig|langjährig|long-term|several years)\b/i,
+  
+  // Kenntnisse & Fähigkeiten (erweitert)
+  /\b(kenntnisse|knowledge|skills|fähigkeiten|fertigkeiten|competence|proficiency|vertraut|familiar)\b/i,
+  /\b(datev|sap|software kenntnisse|tool kenntnisse|system kenntnisse|application knowledge)\b/i,
+  /\b(pc-kenntnisse|computer skills|it-kenntnisse|software skills|ms office)\b/i,
   /\b(sprachkenntnisse|language|englisch|deutsch|english|german|französisch|french)\b/i,
+  
+  // Eigenschaften & Soft Skills (erweitert)
+  /\b(genauigkeit|zuverlässigkeit|accuracy|reliability|sorgfalt|precision)\b/i,
+  /\b(kommunikationsstärke|communication skills|soft skills|social skills)\b/i,
+  /\b(teamfähigkeit|team player|leadership skills|führungskompetenz)\b/i,
+  /\b(belastbarkeit|stress resistance|flexibilität|flexibility)\b/i,
+  /\b(geduld|patience|empathie|empathy|freundlich|friendly|höflich|polite)\b/i,
+  /\b(professionell|professional)\s+(auftreten|demeanor|erscheinung|behavior)\b/i,
+  
+  // Rechtliche & fachliche Kenntnisse
+  /\b(steuerrechtlich|tax law|rechtlich|legal|compliance|regulatory)\b/i,
+  /\b(bilanzierung|accounting standards|gaap|ifrs|hgb)\b/i,
+  
+  // Voraussetzungen
+  /\b(voraussetzung|requirement|must have|should have|preferred|wünschenswert|nice to have)\b/i,
+  /\b(berechtigung|lizenz|license|permit|authorization|zertifikat|certificate)\b/i,
   /^\s*(?:mindestens|minimum|at least)\s+\d+/i, // "Mindestens 3 Jahre"
-  /\b(?:bachelor|master|diplom|phd|dr\.|mba)\b/i,
-  /\b(?:kaufmännisch|commercial|business|wirtschafts)/i,
-  /\b(?:pc-kenntnisse|computer skills|it-kenntnisse|software kenntnisse)/i,
-  /\b(?:crm-erfahrung|crm experience|system erfahrung)/i,
-  /\b(?:kommunikationsstärke|communication skills|soft skills)/i,
-  /\b(?:geduld|patience|belastbarkeit|stress resistance)/i,
-  /\b(?:teamfähigkeit|team player|leadership skills)/i,
-  /\b(?:freundlich|friendly|professionell|professional)\s+(?:auftreten|demeanor|erscheinung)/i
+  
+  // Bildungsabschlüsse
+  /\b(?:bachelor|master|diplom|phd|dr\.|mba|fachhochschule|universität|university)\b/i,
+  /\b(?:kaufmännisch|commercial|business|wirtschafts|betriebswirt)\b/i
 ];
 
 function clean(s: string): string {
