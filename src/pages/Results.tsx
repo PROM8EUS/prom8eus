@@ -174,20 +174,6 @@ const Results = () => {
             <TaskList tasks={displayTasks} />
           </div>
 
-          {/* Recommendations */}
-          {analysisData?.recommendations && analysisData.recommendations.length > 0 && (
-            <div className="animate-fade-in bg-muted/30 rounded-lg p-6" style={{ animationDelay: '0.7s' }}>
-              <h3 className="text-lg font-semibold mb-4">Empfehlungen</h3>
-              <ul className="space-y-2">
-                {analysisData.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <span className="text-primary">•</span>
-                    <span className="text-sm">{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-fade-in" style={{ animationDelay: '0.8s' }}>
