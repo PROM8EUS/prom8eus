@@ -380,19 +380,37 @@ function extractTasks(text: string): RawTask[] {
     [
       // DE - Abschnitte die Aufgaben beenden
       "\\b(profil|dein profil|ihr profil|anforderungen|qualifikationen|voraussetzungen|hard facts|details zum jobangebot|benefits|leistungen|wir bieten|das bieten wir|kontakt|über uns|unternehmen|standort|arbeitsplatz)\\b",
-      // EN - Abschnitte die Aufgaben beenden
-      "\\b(profile|about you|requirements|qualifications|prerequisites|skills|experience|benefits|perks|what we offer|we offer|contact|about us|company|location|workplace|nice to have)\\b",
+      // EN - Abschnitte die Aufgaben beenden - REMOVED salary and benefits that come before responsibilities
+      "\\b(profile|about you|requirements|qualifications|prerequisites|skills|experience|contact|about us|company|location|workplace|nice to have)\\b",
     ].join("|"),
     "i"
   );
 
-  // 1) Find relevant section: from "Aufgaben/Responsibilities" until next ignore section
+  // 1) Find responsibilities section more precisely - look for the actual "Responsibilities" heading
   let startIdx = -1;
+  let responsibilitiesStartIdx = -1;
+  
+  // First pass: look for explicit "Responsibilities" section
   for (let i = 0; i < lines.length; i++) {
-    if (SECTION_START.test(lines[i])) { 
-      startIdx = i; 
-      console.log(`Found responsibilities section at line ${i}: "${lines[i]}"`);
-      break; 
+    const line = lines[i].trim();
+    if (/^responsibilities\s*$/i.test(line)) {
+      responsibilitiesStartIdx = i;
+      console.log(`Found explicit "Responsibilities" section at line ${i}: "${line}"`);
+      break;
+    }
+  }
+  
+  // If we found explicit responsibilities section, use that
+  if (responsibilitiesStartIdx >= 0) {
+    startIdx = responsibilitiesStartIdx;
+  } else {
+    // Fallback: look for general responsibility indicators
+    for (let i = 0; i < lines.length; i++) {
+      if (SECTION_START.test(lines[i])) { 
+        startIdx = i; 
+        console.log(`Found responsibilities section at line ${i}: "${lines[i]}"`);
+        break; 
+      }
     }
   }
   
