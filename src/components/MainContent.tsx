@@ -9,7 +9,11 @@ import LoadingPage from "./LoadingPage";
 import { DebugModal } from "./DebugModal";
 import { AlertTriangle, Bug } from "lucide-react";
 
-const MainContent = () => {
+interface MainContentProps {
+  buttonText: string;
+}
+
+const MainContent = ({ buttonText }: MainContentProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [debugModalOpen, setDebugModalOpen] = useState(false);
@@ -179,16 +183,6 @@ const MainContent = () => {
     <>
       <main className="min-h-screen flex items-center justify-center px-6 py-20">
         <div className="w-full max-w-4xl mx-auto text-center space-y-8">
-          {/* Headline */}
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
-              Automatisierungspotenzial sofort erkennen
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Fügen Sie Ihre Aufgabenbeschreibung oder Stellenanzeige ein – unsere KI zeigt Ihnen, welche Teile automatisierbar sind.
-            </p>
-          </div>
-
           {/* Input Section */}
           <div className="space-y-6">
             {/* Combined Input Field */}
@@ -240,7 +234,7 @@ const MainContent = () => {
               size="lg"
               className="px-12 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200 disabled:hover:scale-100"
             >
-              Analyse starten
+              {buttonText}
             </Button>
 
             {/* Debug button for successful extractions */}

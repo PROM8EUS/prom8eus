@@ -18,11 +18,8 @@ const Index = () => {
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
           {t(lang, "sub")}
         </p>
-        <button className="bg-primary text-primary-foreground px-6 py-3 rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors">
-          {t(lang, "start")}
-        </button>
       </div>
-      <MainContent />
+      <MainContent buttonText={t(lang, "start")} />
       <LanguageSwitcher current={lang} />
     </div>
   );
