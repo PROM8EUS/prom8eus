@@ -200,21 +200,21 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
   return (
     <>
       <main className="flex-1 flex items-center justify-center px-6">
-        <div className="w-full max-w-4xl mx-auto text-center space-y-8">
+        <div className="w-full max-w-4xl mx-auto text-center space-y-16">
           {/* Title and Subtitle */}
-          <div className="pt-8">
-            <h1 className="text-4xl md:text-6xl font-bold mb-8">
+          <div className="space-y-12">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
               {headline}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               {subtitle}
             </p>
           </div>
 
           {/* Input Section */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Combined Input Field */}
-            <div className="relative">
+            <div className="relative max-w-2xl mx-auto">
               <Textarea
                 ref={textareaRef}
                 placeholder={t(lang, "placeholder")}
@@ -262,7 +262,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
               onClick={handleAnalyze}
               disabled={!hasInput}
               size="lg"
-              className="px-12 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200 disabled:hover:scale-100"
+              className="px-16 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200 disabled:hover:scale-100 shadow-lg"
             >
               {buttonText}
             </Button>
@@ -282,7 +282,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
           </div>
 
           {/* Features hint */}
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground max-w-lg mx-auto">
             {isUrl && hasInput && !analysisError ? 
               t(lang, "url_detected_hint") : 
               t(lang, "ai_hint")
