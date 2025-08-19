@@ -1,20 +1,76 @@
 import { Button } from "@/components/ui/button";
 import { Bot, User, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import LandingScoreCircle from "@/components/LandingScoreCircle";
 import InfoCard from "@/components/InfoCard";
 import PageFooter from "@/components/PageFooter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { resolveLang } from "@/lib/i18n/i18n";
 
+interface AnalysisResult {
+  totalScore: number;
+  ratio: {
+    automatisierbar: number;
+    mensch: number;
+  };
+  tasks: Array<{
+    text: string;
+    score: number;
+    label: "Automatisierbar" | "Mensch";
+    category: string;
+    confidence: number;
+  }>;
+  summary: string;
+  recommendations: string[];
+  originalText?: string;
+}
+
 const Landing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const lang = resolveLang(searchParams.get("lang") || undefined);
+  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+
+  useEffect(() => {
+    // Try to load real analysis results from sessionStorage
+    try {
+      const storedResult = sessionStorage.getItem('analysisResult');
+      if (storedResult) {
+        const parsedResult: AnalysisResult = JSON.parse(storedResult);
+        setAnalysisData(parsedResult);
+      }
+    } catch (error) {
+      console.error('Error loading analysis results for landing page:', error);
+    }
+  }, []);
 
   const handleStartAnalysis = () => {
     navigate('/');
   };
+
+  // Get job title from analysis or use default
+  const getJobTitle = () => {
+    if (!analysisData?.originalText) return "Marketing Manager";
+    
+    // Simple extraction of job title from original text
+    const text = analysisData.originalText;
+    const lines = text.split('\n');
+    const firstLine = lines[0]?.trim();
+    
+    // If first line looks like a job title (reasonable length)
+    if (firstLine && firstLine.length > 5 && firstLine.length < 60 && !firstLine.includes('http')) {
+      return firstLine;
+    }
+    
+    return "Ihre Position";
+  };
+
+  // Use real data or fallback to demo values
+  const displayScore = analysisData?.totalScore || 80;
+  const displayAutomatable = analysisData?.ratio.automatisierbar || 65;
+  const displayHuman = analysisData?.ratio.mensch || 35;
+  const displayJobTitle = getJobTitle();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -24,9 +80,9 @@ const Landing = () => {
           {/* Hero Section with Score */}
           <section className="animate-fade-in">
             <LandingScoreCircle 
-              score={80} 
+              score={displayScore} 
               maxScore={100} 
-              jobTitle="Marketing Manager"
+              jobTitle={displayJobTitle}
             />
           </section>
 
@@ -35,7 +91,7 @@ const Landing = () => {
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <InfoCard
                 title="Automatisierbar"
-                value="65%"
+                value={`${displayAutomatable}%`}
                 description="Aufgaben können durch KI und Automatisierung übernommen werden"
                 icon={Bot}
                 variant="primary"
@@ -43,7 +99,7 @@ const Landing = () => {
               
               <InfoCard
                 title="Mensch notwendig"
-                value="35%"
+                value={`${displayHuman}%`}
                 description="Aufgaben erfordern menschliche Kreativität und Entscheidungsfindung"
                 icon={User}
                 variant="destructive"
