@@ -146,6 +146,9 @@ const About = () => {
               <h2 className="text-2xl font-bold text-foreground">
                 {t(lang, "about_cta_title")}
               </h2>
+              <p className="text-lg text-muted-foreground">
+                {t(lang, "about_cta_desc")}
+              </p>
               <Button
                 size="lg"
                 className="px-8 py-6 font-semibold hover:scale-105 transition-transform duration-200"
