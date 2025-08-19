@@ -114,7 +114,13 @@ function isFluff(text: string): boolean {
 }
 
 function isQualification(text: string): boolean {
-  return QUALIFICATION_PATTERNS.some(pattern => pattern.test(text));
+  const result = QUALIFICATION_PATTERNS.some(pattern => pattern.test(text));
+  if (result) {
+    console.log(`QUALIFICATION DETECTED: "${text}"`);
+  } else {
+    console.log(`NOT QUALIFICATION: "${text}"`);
+  }
+  return result;
 }
 
 function isHeadingOrIntro(text: string): boolean {

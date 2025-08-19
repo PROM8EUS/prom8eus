@@ -61,6 +61,7 @@ export function runAnalysis(jobText: string): AnalysisResult {
 // Remove the old extractTasks function - now using the advanced extractor
 
 function analyzeTask(taskText: string): Task {
+  console.log(`ANALYZING TASK: "${taskText}"`);
   const lowerText = taskText.toLowerCase();
   
   // Define automation indicators (with English keywords added)
@@ -192,21 +193,25 @@ function analyzeTask(taskText: string): Task {
 
   // Calculate automation score
   Object.entries(automationSignals).forEach(([category, signal]) => {
-    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
-    if (matches > 0) {
-      automationScore += signal.weight * Math.min(matches, 3); // Erhöht auf max 3 matches
+    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
+    if (matches.length > 0) {
+      console.log(`AUTOMATION MATCH in ${category}:`, matches);
+      automationScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
     }
   });
 
   // Calculate human score  
   Object.entries(humanSignals).forEach(([category, signal]) => {
-    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
-    if (matches > 0) {
-      humanScore += signal.weight * Math.min(matches, 3); // Erhöht auf max 3 matches
+    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
+    if (matches.length > 0) {
+      console.log(`HUMAN MATCH in ${category}:`, matches);
+      humanScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
     }
   });
+
+  console.log(`SCORES: automation=${automationScore}, human=${humanScore}, category=${detectedCategory}`);
 
   // Determine final score and label
   const baseScore = 25; // Noch niedrigerer Basis-Score
