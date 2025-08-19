@@ -58,8 +58,8 @@ const Results = () => {
   const humanTasks = mockTasks.filter(task => task.category === 'mensch').length;
 
   const handleShare = () => {
-    // TODO: Implement sharing functionality
-    console.log('Sharing results...');
+    // Navigate to landing page for sharing
+    navigate('/landing');
   };
 
   const handleLearnMore = () => {
