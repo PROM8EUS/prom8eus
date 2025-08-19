@@ -68,47 +68,42 @@ function analyzeTask(taskText: string): Task {
     dataProcessing: {
       keywords: [
         // German
-        'excel', 'daten', 'tabelle', 'reporting', 'report', 'statistik', 'auswertung', 'eingabe', 'erfassung',
-        // English
-        'data', 'database', 'spreadsheet', 'analytics', 'metrics', 'dashboard', 'entry', 'input', 'processing'
+        'datenerfassung', 'dateneingabe', 'datenverarbeitung', 'auswertung', 'statistik', 'reporting', 'report',
+        'excel', 'tabelle', 'eingabe', 'erfassung', 'archivierung', 'verwaltung', 'aktualisierung',
+        // English  
+        'data entry', 'data processing', 'analytics', 'metrics', 'dashboard', 'input', 'processing', 'reporting'
       ],
-      weight: 25
+      weight: 30
+    },
+    systemWork: {
+      keywords: [
+        // German
+        'auftragserfassung', 'systembearbeitung', 'crm', 'erp', 'software', 'datenbank', 'system',
+        'buchung', 'rechnung', 'fakturierung', 'bestellung', 'verwaltung im system',
+        // English
+        'order processing', 'system entry', 'database', 'invoicing', 'billing', 'system management'
+      ],
+      weight: 30
     },
     communication: {
       keywords: [
-        // German
-        'email', 'e-mail', 'nachricht', 'benachrichtigung', 'terminplanung', 'kalender', 'erinnerung',
+        // German - nur automatisierbare Kommunikation
+        'e-mail bearbeitung', 'email bearbeitung', 'terminplanung', 'kalender', 'erinnerung', 'benachrichtigung',
+        'nachricht versenden', 'status updates', 'dokumentation', 'protokoll',
         // English
-        'notification', 'scheduling', 'calendar', 'reminder', 'message', 'communication', 'coordination'
+        'email processing', 'scheduling', 'calendar management', 'notifications', 'status updates'
       ],
-      weight: 20
+      weight: 25
     },
     routine: {
       keywords: [
         // German
         'routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess',
+        'abwicklung', 'bearbeitung von', 'durchführung von',
         // English
-        'routine', 'recurring', 'daily', 'weekly', 'regular', 'standard', 'process', 'workflow', 'systematic'
+        'routine', 'recurring', 'daily', 'weekly', 'regular', 'standard', 'process', 'workflow'
       ],
       weight: 20
-    },
-    systems: {
-      keywords: [
-        // German
-        'crm', 'erp', 'system', 'software', 'tool', 'plattform', 'dashboard', 'datenbank',
-        // English
-        'platform', 'infrastructure', 'integration', 'api', 'automation', 'deployment', 'monitoring'
-      ],
-      weight: 15
-    },
-    documentation: {
-      keywords: [
-        // German
-        'dokumentation', 'protokoll', 'liste', 'archivierung', 'ablage', 'verwaltung',
-        // English
-        'documentation', 'logging', 'tracking', 'maintenance', 'updating', 'management'
-      ],
-      weight: 15
     }
   };
 
@@ -117,59 +112,55 @@ function analyzeTask(taskText: string): Task {
     interpersonal: {
       keywords: [
         // German - interpersonal skills, personality traits, social abilities
+        'beratung', 'kundenberatung', 'telefonische beratung', 'persönliche beratung', 'verkaufsgespräch',
         'freundlich', 'professionell', 'auftreten', 'erscheinungsbild', 'kommunikativ', 'empathie', 'einfühlungsvermögen',
         'geduld', 'höflichkeit', 'respekt', 'verständnis', 'zwischenmenschlich', 'sozial', 'charisma', 'ausstrahlung',
         'persönlichkeit', 'menschlich', 'emotional', 'diplomatie', 'takt', 'fingerspitzengefühl',
+        'kundenservice', 'kundenkontakt', 'beziehungsaufbau',
         // English
+        'customer service', 'consultation', 'personal advice', 'sales conversation', 'relationship building',
         'friendly', 'professional', 'demeanor', 'appearance', 'interpersonal', 'empathy', 'patience', 
         'courtesy', 'respect', 'understanding', 'social', 'charisma', 'personality', 'emotional', 'diplomacy'
       ],
-      weight: 40
+      weight: 50
+    },
+    salesNegotiation: {
+      keywords: [
+        // German
+        'verkauf', 'verkaufen', 'vertrieb', 'akquise', 'verhandlung', 'überzeugung', 'produktberatung',
+        'abschluss', 'deal', 'verkaufsgespräch', 'kundengewinnung', 'umsatz',
+        // English
+        'sales', 'selling', 'negotiation', 'persuasion', 'closing', 'deal', 'revenue', 'acquisition'
+      ],
+      weight: 45
     },
     creative: {
       keywords: [
         // German
-        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming',
+        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming', 'entwicklung',
         // English
         'creative', 'innovation', 'strategy', 'design', 'conceptual', 'vision', 'ideation', 'brainstorm'
       ],
-      weight: 30
+      weight: 35
     },
     leadership: {
       keywords: [
         // German
-        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung',
+        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung', 'koordination',
         // English
         'leadership', 'manage', 'lead', 'mentor', 'guide', 'supervise', 'coordinate', 'stakeholder'
       ],
-      weight: 25
+      weight: 30
     },
-    consultation: {
+    problemSolving: {
       keywords: [
         // German
-        'beratung', 'beratend', 'empfehlung', 'expertise', 'fachlich', 'spezialist',
+        'reklamation', 'beschwerde', 'problemlösung', 'konflikt', 'schwierige situation', 'komplexe fälle',
+        'entscheidung', 'kritisch', 'herausfordernd', 'individuell',
         // English
-        'consultation', 'advise', 'recommend', 'expertise', 'specialist', 'counsel', 'guidance'
+        'complaint', 'problem solving', 'conflict', 'complex cases', 'decision making', 'critical', 'challenging'
       ],
-      weight: 25
-    },
-    negotiation: {
-      keywords: [
-        // German
-        'verhandlung', 'verkauf', 'akquise', 'überzeugung', 'kundenbeziehung', 'networking',
-        // English
-        'negotiation', 'sales', 'persuasion', 'relationship', 'networking', 'client', 'customer'
-      ],
-      weight: 20
-    },
-    complex: {
-      keywords: [
-        // German
-        'komplex', 'schwierig', 'herausfordernd', 'problemlösung', 'entscheidung', 'kritisch',
-        // English
-        'complex', 'difficult', 'challenging', 'problem-solving', 'decision', 'critical', 'judgment'
-      ],
-      weight: 15
+      weight: 30
     }
   };
 
@@ -181,30 +172,39 @@ function analyzeTask(taskText: string): Task {
   Object.entries(automationSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
     if (matches > 0) {
-      automationScore += signal.weight * Math.min(matches, 2); // Cap at 2 matches per category
+      automationScore += signal.weight * Math.min(matches, 3); // Erhöht auf max 3 matches
       detectedCategory = category;
     }
   });
 
-  // Calculate human score
+  // Calculate human score  
   Object.entries(humanSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
     if (matches > 0) {
-      humanScore += signal.weight * Math.min(matches, 2);
+      humanScore += signal.weight * Math.min(matches, 3); // Erhöht auf max 3 matches
       detectedCategory = category;
     }
   });
 
   // Determine final score and label
-  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + 50)); // Base score of 50
-  const confidence = Math.abs(netScore - 50) * 2; // Confidence based on deviation from neutral
+  const baseScore = 30; // Niedrigerer Basis-Score für konservativere Bewertung
+  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + baseScore));
   
-  // More conservative labeling: 
-  // - If we detect human-specific keywords, strongly bias towards "Mensch"
-  // - Only label as "Automatisierbar" if we have strong automation signals AND no human signals
-  // - If no keywords match at all, default to "Mensch" (be conservative)
-  const label = (humanScore > 0) ? "Mensch" :
-                (automationScore > 0 && netScore >= 65) ? "Automatisierbar" : "Mensch";
+  // Bessere Confidence-Berechnung basierend auf tatsächlichen Matches
+  const totalMatches = Math.max(automationScore, humanScore) / 25; // Durchschnittliches Gewicht
+  const confidence = Math.min(95, Math.max(10, totalMatches * 25)); // Mindestens 10%, max 95%
+  
+  // Noch konservativere Bewertung:
+  // - Wenn human signals erkannt werden, immer "Mensch"
+  // - Nur als "Automatisierbar" wenn klare automation signals UND keine human signals
+  let label: "Automatisierbar" | "Mensch";
+  if (humanScore > 0) {
+    label = "Mensch";
+  } else if (automationScore >= 25 && netScore >= 60) {
+    label = "Automatisierbar";
+  } else {
+    label = "Mensch"; // Default zu Mensch bei Unsicherheit
+  }
 
   return {
     text: taskText,

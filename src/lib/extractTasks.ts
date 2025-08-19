@@ -57,7 +57,13 @@ const QUALIFICATION_PATTERNS = [
   /\b(sprachkenntnisse|language|englisch|deutsch|english|german|französisch|french)\b/i,
   /^\s*(?:mindestens|minimum|at least)\s+\d+/i, // "Mindestens 3 Jahre"
   /\b(?:bachelor|master|diplom|phd|dr\.|mba)\b/i,
-  /\b(?:kaufmännisch|commercial|business|wirtschafts)/i
+  /\b(?:kaufmännisch|commercial|business|wirtschafts)/i,
+  /\b(?:pc-kenntnisse|computer skills|it-kenntnisse|software kenntnisse)/i,
+  /\b(?:crm-erfahrung|crm experience|system erfahrung)/i,
+  /\b(?:kommunikationsstärke|communication skills|soft skills)/i,
+  /\b(?:geduld|patience|belastbarkeit|stress resistance)/i,
+  /\b(?:teamfähigkeit|team player|leadership skills)/i,
+  /\b(?:freundlich|friendly|professionell|professional)\s+(?:auftreten|demeanor|erscheinung)/i
 ];
 
 function clean(s: string): string {
