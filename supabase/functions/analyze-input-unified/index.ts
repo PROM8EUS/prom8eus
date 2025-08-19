@@ -112,6 +112,7 @@ serve(async (req) => {
     }
 
     console.log(`Analyzing text with ${analysisText.length} characters`);
+    console.log('Analysis text sample:', analysisText.substring(0, 300));
 
     // Run analysis on the text (hard cap at 10,000 characters)
     const result = runAnalysis(analysisText.slice(0, 10000));
@@ -338,50 +339,82 @@ function runAnalysis(jobText: string): AnalysisResult {
 }
 
 function extractTasks(text: string): string[] {
+  console.log('=== EXTRACT TASKS DEBUG ===');
+  console.log('Input text length:', text.length);
+  console.log('First 200 chars:', text.substring(0, 200));
+  
   const tasks: string[] = [];
   
   // Split into sentences
   const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
+  console.log('Total sentences found:', sentences.length);
   
   // Extract bullet points
   const bulletRegex = /(?:^|\n)\s*[-•*]\s*(.+?)(?=\n|$)/gm;
   let match;
+  let bulletCount = 0;
   while ((match = bulletRegex.exec(text)) !== null) {
     if (match[1].trim().length > 15) {
       tasks.push(match[1].trim());
+      bulletCount++;
     }
   }
+  console.log('Bullet points found:', bulletCount);
 
   // Extract numbered lists
   const numberedRegex = /(?:^|\n)\s*\d+\.?\s*(.+?)(?=\n|$)/gm;
+  let numberedCount = 0;
   while ((match = numberedRegex.exec(text)) !== null) {
     if (match[1].trim().length > 15) {
       tasks.push(match[1].trim());
+      numberedCount++;
     }
+  }
+  console.log('Numbered items found:', numberedCount);
+
+  // Look for "Responsibilities" section specifically
+  const responsibilitiesMatch = text.match(/Responsibilities\s*\n([\s\S]*?)(?=\n\n|\n[A-Z]|$)/i);
+  if (responsibilitiesMatch) {
+    console.log('Found Responsibilities section:', responsibilitiesMatch[1].substring(0, 100));
+    const respLines = responsibilitiesMatch[1].split('\n').filter(line => line.trim().length > 20);
+    respLines.forEach(line => {
+      const cleanLine = line.trim();
+      if (cleanLine && !tasks.includes(cleanLine)) {
+        tasks.push(cleanLine);
+      }
+    });
   }
 
   // Extract action verb sentences
   const actionVerbs = [
+    'write', 'develop', 'build', 'create', 'maintain', 'design', 'implement', 'review', 'participate',
+    'lead', 'contribute', 'triage', 'debug', 'analyze', 'provide', 'ensure', 'track', 'resolve',
     'planen', 'koordinieren', 'erstellen', 'entwickeln', 'verwalten', 'organisieren',
     'durchführen', 'bearbeiten', 'überwachen', 'analysieren', 'dokumentieren',
     'pflegen', 'betreuen', 'unterstützen', 'leiten', 'führen',
     'beraten', 'kommunizieren', 'präsentieren', 'verhandeln', 'verkaufen'
   ];
 
+  let verbMatches = 0;
   sentences.forEach(sentence => {
     const hasActionVerb = actionVerbs.some(verb => 
-      sentence.toLowerCase().includes(verb)
+      sentence.toLowerCase().includes(verb.toLowerCase())
     );
     
     if (hasActionVerb && sentence.length > 20 && sentence.length < 200) {
       tasks.push(sentence);
+      verbMatches++;
     }
   });
+  console.log('Action verb sentences found:', verbMatches);
 
   // Remove duplicates
   const uniqueTasks = tasks.filter((task, index, arr) => {
     return arr.findIndex(t => calculateSimilarity(t.toLowerCase(), task.toLowerCase()) > 0.8) === index;
   });
+
+  console.log('Total unique tasks extracted:', uniqueTasks.length);
+  console.log('Sample tasks:', uniqueTasks.slice(0, 3));
 
   return uniqueTasks.slice(0, 15);
 }
