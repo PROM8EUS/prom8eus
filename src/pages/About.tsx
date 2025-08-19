@@ -18,7 +18,7 @@ const About = () => {
         <div className="max-w-3xl mx-auto space-y-16">
           
           {/* Hero Section */}
-          <section className="text-center space-y-8">
+          <section className="text-center space-y-8 pt-12">
             <h1 className="text-5xl md:text-6xl font-bold text-foreground">
               {t(lang, "about_page_title")}
             </h1>
