@@ -423,14 +423,16 @@ function extractTasks(text: string): RawTask[] {
   console.log(`Found ${bullets.length} bullet points`);
 
   // 4) Fallback: Verb-Linien (nur falls keine oder wenige Bullets)
-  const VERB_LINE = new RegExp(
+  const VERB_LINE_ENHANCED = new RegExp(
     [
-      // DE (Infinitiv/Verb am Satzanfang oder nach Gedankenstrich)
-      "^(?:[–—-]\\s*)?(?:du\\s+)?(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)\\b",
-      // DE (Du-Form)
-      "^du\\s+(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)",
-      // EN (Imperativ/3rd Person)
-      "^(?:[–—-]\\s*)?(?:develop|design|plan|coordinate|analy[sz]e|implement|maintain|migrate|lead|mentor|own|optimi[sz]e|automate|document|monitor|integrate|create|manage|support|handle|execute|ensure|oversee|build|test|deploy)\\b",
+      // DE (Erweiterte Verben am Satzanfang)
+      "^(?:du\\s+|sie\\s+|wir\\s+)?(?:entwickelst|entwickeln|planst|planen|gestaltest|gestalten|führst|führen|koordinierst|koordinieren|optimierst|optimieren|automatisierst|automatisieren|dokumentierst|dokumentieren|betreust|betreuen|repräsentierst|repräsentieren)\\b",
+      // DE (Du/Sie/Wir Form direkt)
+      "^(?:du|sie|wir)\\s+(?:entwickelst|entwickeln|planst|planen|gestaltest|gestalten|führst|führen|koordinierst|koordinieren|optimierst|optimieren|automatisierst|automatisieren|dokumentierst|dokumentieren|betreust|betreuen|repräsentierst|repräsentieren)",
+      // EN (Imperative/3rd Person - erweitert)
+      "^(?:develop|design|maintain|build|coordinate|lead|create|plan|optimi[sz]e|automate|represent)\\b",
+      // Fallback für weitere Verben
+      "^(?:[–—-]\\s*)?(?:du\\s+)?(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)\\b"
     ].join("|"),
     "i"
   );
@@ -438,11 +440,11 @@ function extractTasks(text: string): RawTask[] {
   const verbLines: RawTask[] = bullets.length >= 3 
     ? []
     : scoped
-        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && VERB_LINE.test(l))
+        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && VERB_LINE_ENHANCED.test(l))
         .map(l => ({ text: shorten(clean(l)), source: "verbline" as const }))
         .filter(t => t.text.length >= 10);
 
-  console.log(`Found ${verbLines.length} verb lines as fallback`);
+  console.log(`Found ${verbLines.length} verb lines with enhanced detection as fallback`);
 
   // 5) Kombinieren + deduplizieren
   const dedup = new Map<string, RawTask>();
