@@ -9,17 +9,11 @@ const PageFooter = () => {
   return (
     <footer className="bg-background border-t border-border py-8">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center space-y-4">
-          {/* Logo and Copyright */}
+        <div className="text-center">
           <div className="text-sm text-muted-foreground">
-            PROM8EUS © 2015
-          </div>
-          
-          {/* Legal Link */}
-          <div>
-            <a 
+            PROM8EUS © 2025 · <a 
               href="/legal" 
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="hover:text-primary transition-colors"
             >
               {t(lang, "legal_notice")}
             </a>
