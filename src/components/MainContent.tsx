@@ -203,7 +203,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
         <div className="w-full max-w-4xl mx-auto text-center space-y-16">
           {/* Title and Subtitle */}
           <div className="space-y-12">
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight break-words hyphens-auto">
               {headline}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
