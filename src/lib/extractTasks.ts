@@ -47,6 +47,19 @@ const FLUFF_PATTERNS = [
   /\b(?:etc\.?|usw\.?|and more|and similar)\s*$/i
 ];
 
+// Qualifikations-Keywords die keine Aufgaben sind
+const QUALIFICATION_PATTERNS = [
+  /\b(ausbildung|studium|abschluss|degree|education|background|certified|certification)\b/i,
+  /\b(erfahrung|experience|jahre|years|berufserfahrung|work experience)\b/i,
+  /\b(kenntnisse|knowledge|skills|fähigkeiten|fertigkeiten|competence|proficiency)\b/i,
+  /\b(voraussetzung|requirement|must have|should have|preferred|wünschenswert)\b/i,
+  /\b(berechtigung|lizenz|license|permit|authorization)\b/i,
+  /\b(sprachkenntnisse|language|englisch|deutsch|english|german|französisch|french)\b/i,
+  /^\s*(?:mindestens|minimum|at least)\s+\d+/i, // "Mindestens 3 Jahre"
+  /\b(?:bachelor|master|diplom|phd|dr\.|mba)\b/i,
+  /\b(?:kaufmännisch|commercial|business|wirtschafts)/i
+];
+
 function clean(s: string): string {
   return s
     .replace(/[*_`#>]+/g, " ")        // Markdown-Reste
@@ -73,6 +86,10 @@ function shorten(s: string, n = MAX_TASK_LEN): string {
 
 function isFluff(text: string): boolean {
   return FLUFF_PATTERNS.some(pattern => pattern.test(text));
+}
+
+function isQualification(text: string): boolean {
+  return QUALIFICATION_PATTERNS.some(pattern => pattern.test(text));
 }
 
 function isHeadingOrIntro(text: string): boolean {
@@ -107,12 +124,15 @@ export function extractTasks(text: string): RawTask[] {
   // 3) Bullets einsammeln (priorisiert)
   const bullets: RawTask[] = [];
   for (const l of scoped) {
-    if (isHeadingOrIntro(l) || isFluff(l)) continue;
+    if (isHeadingOrIntro(l) || isFluff(l) || isQualification(l)) continue;
     
     const m = l.match(BULLET);
     if (m && m[1] && m[1].length >= 10) { // Mindestlänge für sinnvolle Tasks
-      const txt = shorten(clean(m[1]));
-      if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
+      const cleanText = clean(m[1]);
+      if (!isQualification(cleanText)) { // Doppelte Prüfung nach dem Cleaning
+        const txt = shorten(cleanText);
+        if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
+      }
     }
   }
 
@@ -120,15 +140,15 @@ export function extractTasks(text: string): RawTask[] {
   const verbLines: RawTask[] = bullets.length >= 3 
     ? []
     : scoped
-        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && VERB_LINE.test(l))
+        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && !isQualification(l) && VERB_LINE.test(l))
         .map(l => ({ text: shorten(clean(l)), source: "verbline" as const }))
-        .filter(t => t.text.length >= 10);
+        .filter(t => t.text.length >= 10 && !isQualification(t.text));
 
   // 5) Kombinieren + deduplizieren
   const dedup = new Map<string, RawTask>();
   for (const t of [...bullets, ...verbLines]) {
     const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
-    if (!dedup.has(key) && !isFluff(t.text)) {
+    if (!dedup.has(key) && !isFluff(t.text) && !isQualification(t.text)) {
       dedup.set(key, t);
     }
   }
