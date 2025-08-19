@@ -43,7 +43,7 @@ export interface AnalysisResult {
   error?: string
 }
 
-export async function callAnalyzeInput(input: AnalyzeInputRequest): Promise<AnalysisResult> {
+export async function callAnalyzeInput(input: AnalyzeInputRequest, lang: 'de' | 'en' = 'de'): Promise<AnalysisResult> {
   try {
     console.log('Calling enhanced analysis function with:', input)
     
@@ -59,7 +59,7 @@ export async function callAnalyzeInput(input: AnalyzeInputRequest): Promise<Anal
 
     // Import and use the enhanced analysis engine
     const { runAnalysis } = await import('./runAnalysis');
-    const result = runAnalysis(analysisText.slice(0, 10000));
+    const result = runAnalysis(analysisText.slice(0, 10000), lang);
 
     return {
       success: true,

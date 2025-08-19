@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, BarChart3, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { t } from "@/lib/i18n/i18n";
+import ScoreCircle from "./ScoreCircle";
 
 interface AnalysisHistoryItem {
   id: string;
@@ -139,7 +140,7 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
           </div>
         </div>
 
-        <div className="grid gap-4 max-h-96 overflow-y-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
           {history.map((item) => (
             <Card 
               key={item.id} 
@@ -150,9 +151,13 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 flex-1 min-w-0">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <BarChart3 className="w-6 h-6 text-primary" />
-                      </div>
+                      <ScoreCircle 
+                        score={item.score} 
+                        maxScore={100} 
+                        label="" 
+                        variant="small"
+                        lang={lang}
+                      />
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -160,9 +165,6 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
                         <h3 className="font-medium text-foreground truncate">
                           {item.jobTitle}
                         </h3>
-                        <span className="text-sm font-semibold text-primary">
-                          {item.score}%
-                        </span>
                       </div>
                       
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">

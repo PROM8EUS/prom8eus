@@ -14,6 +14,16 @@ interface Task {
   description?: string;
   complexity?: 'low' | 'medium' | 'high';
   automationTrend?: 'increasing' | 'stable' | 'decreasing';
+  humanRatio?: number;
+  automationRatio?: number;
+}
+
+interface AIAgent {
+  name: string;
+  technology: string;
+  implementation: string;
+  difficulty: "Einfach" | "Mittel" | "Schwer";
+  setupTime: string;
 }
 
 interface TaskListProps {
@@ -70,62 +80,91 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
     }
   };
 
-    const getAIAgentsForTask = (task: Task) => {
+  const getAIAgentsForTask = (task: Task) => {
     const agents = [];
     const taskText = (task.name || task.text || '').toLowerCase();
     
     if (task.category === 'automatisierbar') {
-      if (taskText.includes('daten') || taskText.includes('data') || taskText.includes('excel') || taskText.includes('tabelle')) {
+      // Software Development with AI assistance
+      if (taskText.includes('entwicklung') || taskText.includes('programmierung') || taskText.includes('coding') || 
+          taskText.includes('react') || taskText.includes('node.js') || taskText.includes('api') || 
+          taskText.includes('debugging') || taskText.includes('testing') || taskText.includes('code review')) {
         agents.push({
-          name: t(lang, "agent_excel_name"),
-          technology: t(lang, "agent_excel_tech"),
-          implementation: `${t(lang, "agent_excel_step1")}\n${t(lang, "agent_excel_step2")}\n${t(lang, "agent_excel_step3")}\n${t(lang, "agent_excel_step4")}`
+          name: "AI-Entwicklungs-Assistent",
+          technology: "ChatGPT + GitHub Copilot + Claude",
+          implementation: "1. Installiere GitHub Copilot in deiner IDE\n2. Erstelle ChatGPT-Prompts für Code-Reviews\n3. Nutze Claude für Debugging-Hilfe\n4. Überprüfe und validiere AI-generierte Lösungen",
+          difficulty: "Mittel",
+          setupTime: "2-4 Stunden"
         });
       }
-      if (taskText.includes('email') || taskText.includes('mail') || taskText.includes('kommunikation')) {
+      
+      // Data Analysis and Processing
+      if (taskText.includes('daten') || taskText.includes('data') || taskText.includes('excel') || 
+          taskText.includes('auswertung') || taskText.includes('statistik') || taskText.includes('reporting')) {
         agents.push({
-          name: t(lang, "agent_email_name"),
-          technology: t(lang, "agent_email_tech"),
-          implementation: `${t(lang, "agent_email_step1")}\n${t(lang, "agent_email_step2")}\n${t(lang, "agent_email_step3")}\n${t(lang, "agent_email_step4")}`
+          name: "Datenanalyse-Agent",
+          technology: "ChatGPT + Claude + Excel AI",
+          implementation: "1. Nutze ChatGPT für Datenanalyse-Strategien\n2. Verwende Claude für komplexe Berechnungen\n3. Aktiviere Excel AI für automatische Formeln\n4. Erstelle automatisierte Reports mit AI"
         });
       }
-      if (taskText.includes('report') || taskText.includes('bericht') || taskText.includes('auswertung')) {
+      
+      // Documentation and Communication
+      if (taskText.includes('dokumentation') || taskText.includes('protokoll') || taskText.includes('kommunikation') ||
+          taskText.includes('email') || taskText.includes('bericht')) {
         agents.push({
-          name: t(lang, "agent_report_name"),
-          technology: t(lang, "agent_report_tech"),
-          implementation: `${t(lang, "agent_report_step1")}\n${t(lang, "agent_report_step2")}\n${t(lang, "agent_report_step3")}\n${t(lang, "agent_report_step4")}`
+          name: "Dokumentations-Agent",
+          technology: "ChatGPT + Claude + Grammarly",
+          implementation: "1. Erstelle Dokumentations-Templates mit ChatGPT\n2. Nutze Claude für technische Dokumentation\n3. Verwende Grammarly für Qualitätskontrolle\n4. Automatisiere regelmäßige Updates"
         });
       }
-      if (taskText.includes('buchhaltung') || taskText.includes('rechnung') || taskText.includes('finanz')) {
+      
+      // System Integration
+      if (taskText.includes('integration') || taskText.includes('system') || taskText.includes('crm') || 
+          taskText.includes('erp') || taskText.includes('datenbank')) {
         agents.push({
-          name: t(lang, "agent_accounting_name"),
-          technology: t(lang, "agent_accounting_tech"),
-          implementation: `${t(lang, "agent_accounting_step1")}\n${t(lang, "agent_accounting_step2")}\n${t(lang, "agent_accounting_step3")}\n${t(lang, "agent_accounting_step4")}`
+          name: "System-Integrations-Agent",
+          technology: "ChatGPT + Zapier + n8n",
+          implementation: "1. Nutze ChatGPT für API-Design und Integration\n2. Erstelle Zapier-Workflows für einfache Verbindungen\n3. Verwende n8n für komplexe Automatisierungen\n4. Automatisiere Datenübertragungen"
         });
       }
-      if (taskText.includes('system') || taskText.includes('crm') || taskText.includes('erp')) {
+      
+      // Collaboration and Team Work
+      if (taskText.includes('zusammenarbeit') || taskText.includes('team') || taskText.includes('agil') ||
+          taskText.includes('meeting') || taskText.includes('koordination')) {
         agents.push({
-          name: t(lang, "agent_system_name"),
-          technology: t(lang, "agent_system_tech"),
-          implementation: `${t(lang, "agent_system_step1")}\n${t(lang, "agent_system_step2")}\n${t(lang, "agent_system_step3")}\n${t(lang, "agent_system_step4")}`
+          name: "Team-Kollaborations-Agent",
+          technology: "ChatGPT + Slack AI + Microsoft Teams AI",
+          implementation: "1. Nutze ChatGPT für Meeting-Vorbereitung und -Nachbereitung\n2. Aktiviere Slack AI für automatische Antworten\n3. Verwende Teams AI für Terminplanung\n4. Überwache und steuere automatische Kommunikation"
         });
       }
-      if (taskText.includes('termin') || taskText.includes('kalender') || taskText.includes('planung')) {
+      
+      // Physical Tasks with Automation Potential
+      // Physical tasks - only show for complex industrial processes
+      if ((taskText.includes('schneiden') || taskText.includes('packen') || taskText.includes('sortieren') ||
+          taskText.includes('bearbeiten') || taskText.includes('verarbeiten') || taskText.includes('kontrollieren') ||
+          taskText.includes('transportieren') || taskText.includes('liefern') || taskText.includes('versenden') ||
+          taskText.includes('verpacken') || taskText.includes('etikettieren') || taskText.includes('montieren') ||
+          taskText.includes('produzieren') || taskText.includes('fertigen') || taskText.includes('reparieren') ||
+          taskText.includes('installieren') || taskText.includes('testen')) &&
+          (taskText.includes('industriell') || taskText.includes('groß') || taskText.includes('masse') ||
+           taskText.includes('industrial') || taskText.includes('large') || taskText.includes('mass'))) {
         agents.push({
-          name: t(lang, "agent_calendar_name"),
-          technology: t(lang, "agent_calendar_tech"),
-          implementation: `${t(lang, "agent_calendar_step1")}\n${t(lang, "agent_calendar_step2")}\n${t(lang, "agent_calendar_step3")}\n${t(lang, "agent_calendar_step4")}`
+          name: "Industrielle Automatisierungs-Agent",
+          technology: "Robotics + IoT + Computer Vision",
+          implementation: "1. Analysiere Automatisierungspotenzial mit Computer Vision\n2. Implementiere Roboter-gestützte Prozesse\n3. Nutze IoT-Sensoren für Qualitätskontrolle\n4. Überwache und optimiere automatisierte Abläufe",
+          difficulty: "Schwer",
+          setupTime: "Wochen bis Monate"
         });
       }
-    }
-    
-    // Default agent if none specific
-    if (agents.length === 0 && task.category === 'automatisierbar') {
-      agents.push({
-        name: t(lang, "agent_general_name"),
-        technology: t(lang, "agent_general_tech"),
-        implementation: `${t(lang, "agent_general_step1")}\n${t(lang, "agent_general_step2")}\n${t(lang, "agent_general_step3")}\n${t(lang, "agent_general_step4")}`
-      });
+      
+      // General AI Assistant for any task
+      if (agents.length === 0) {
+        agents.push({
+          name: "Allzweck-AI-Assistent",
+          technology: "ChatGPT + Claude + Grok",
+          implementation: "1. Erstelle spezifische Prompts für deine Aufgabe\n2. Nutze ChatGPT für allgemeine Unterstützung\n3. Verwende Claude für detaillierte Analysen\n4. Überprüfe und validiere AI-Empfehlungen"
+        });
+      }
     }
     
     return agents;
@@ -136,57 +175,65 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
     const taskText = (task.name || task.text || '').toLowerCase();
     
     if (task.category === 'automatisierbar') {
-      if (taskText.includes('daten') || taskText.includes('data') || taskText.includes('excel') || taskText.includes('tabelle')) {
+      // Software Development Workflows
+      if (taskText.includes('entwicklung') || taskText.includes('programmierung') || taskText.includes('coding') || 
+          taskText.includes('react') || taskText.includes('node.js') || taskText.includes('api') || 
+          taskText.includes('debugging') || taskText.includes('testing')) {
         workflows.push({
-          name: "Datenverarbeitungs-Pipeline",
-          technology: "Apache Airflow (kostenlos)",
-          implementation: "Installiere Docker Desktop\nFühre aus: docker run apache/airflow\nErstelle DAG für Datenverarbeitung\nKonfiguriere tägliche Ausführung"
+          name: "AI-gestützter Entwicklungs-Workflow",
+          technology: "GitHub Actions + ChatGPT API",
+          implementation: "1. Erstelle GitHub Actions Workflow\n2. Integriere ChatGPT API für Code-Reviews\n3. Überprüfe AI-generierte Tests vor Deployment\n4. Setze manuelle Freigabe für kritische Änderungen"
         });
       }
-      if (taskText.includes('email') || taskText.includes('mail') || taskText.includes('kommunikation')) {
+      
+      // Data Processing Workflows
+      if (taskText.includes('daten') || taskText.includes('data') || taskText.includes('excel') || 
+          taskText.includes('auswertung') || taskText.includes('statistik') || taskText.includes('reporting')) {
         workflows.push({
-          name: "Email-Management-Workflow",
-          technology: "n8n (kostenlos, self-hosted)",
-          implementation: "Lade n8n herunter: npm install n8n\nStarte n8n: npx n8n\nErstelle Email-Trigger und Aktionen\nAktiviere Workflow"
+          name: "Datenanalyse-Automatisierung",
+          technology: "Apache Airflow + ChatGPT API",
+          implementation: "1. Installiere Apache Airflow mit Docker\n2. Integriere ChatGPT API für Datenanalyse\n3. Erstelle automatisierte Reporting-Pipeline\n4. Setze tägliche Ausführung"
         });
       }
-      if (taskText.includes('report') || taskText.includes('bericht') || taskText.includes('auswertung')) {
+      
+      // Documentation Workflows
+      if (taskText.includes('dokumentation') || taskText.includes('protokoll') || taskText.includes('kommunikation') ||
+          taskText.includes('email') || taskText.includes('bericht')) {
         workflows.push({
-          name: "Berichtsautomatisierung",
-          technology: "Power Automate + SharePoint",
-          implementation: "Erstelle Power Automate-Konto\nVerbinde SharePoint als Datenquelle\nErstelle Workflow für Berichtserstellung\nSetze Zeitplan für automatische Ausführung"
+          name: "Dokumentations-Automatisierung",
+          technology: "n8n + ChatGPT API",
+          implementation: "1. Installiere n8n: npm install n8n\n2. Integriere ChatGPT API für automatische Dokumentation\n3. Erstelle Trigger für neue Dokumente\n4. Automatisiere Qualitätskontrolle"
         });
       }
-      if (taskText.includes('buchhaltung') || taskText.includes('rechnung') || taskText.includes('finanz')) {
+      
+      // System Integration Workflows
+      if (taskText.includes('integration') || taskText.includes('system') || taskText.includes('crm') || 
+          taskText.includes('erp') || taskText.includes('datenbank')) {
         workflows.push({
-          name: "Buchhaltungs-Workflow",
-          technology: "Datev + Power Automate",
-          implementation: "Aktiviere Datev-API in Ihrem System\nErstelle Power Automate Workflow\nKonfiguriere automatische Belegverarbeitung\nSetze Regeln für Kontierung und Buchung"
+          name: "System-Integrations-Pipeline",
+          technology: "Zapier + n8n + ChatGPT API",
+          implementation: "1. Erstelle Zapier-Konto für einfache Verbindungen\n2. Nutze n8n für komplexe Automatisierungen\n3. Integriere ChatGPT API für intelligente Entscheidungen\n4. Automatisiere Datenübertragungen"
         });
       }
-      if (taskText.includes('system') || taskText.includes('crm') || taskText.includes('erp')) {
+      
+      // Collaboration Workflows
+      if (taskText.includes('zusammenarbeit') || taskText.includes('team') || taskText.includes('agil') ||
+          taskText.includes('meeting') || taskText.includes('koordination')) {
         workflows.push({
-          name: "System-Integrations-Workflow",
-          technology: "Microsoft Power Automate",
-          implementation: "Erstelle Power Automate-Konto\nVerbinde Quell- und Zielsysteme über Connectors\nErstelle Workflow für Datenübertragung\nTeste und aktiviere automatische Ausführung"
+          name: "Team-Kollaborations-Automatisierung",
+          technology: "Slack + Microsoft Teams + ChatGPT API",
+          implementation: "1. Aktiviere Slack/Teams Integrationen\n2. Integriere ChatGPT API für Meeting-Vorbereitung\n3. Überwache automatische Status-Updates\n4. Erstelle intelligente Benachrichtigungen mit manueller Kontrolle"
         });
       }
-      if (taskText.includes('termin') || taskText.includes('kalender') || taskText.includes('planung')) {
+      
+      // General AI-Powered Workflow
+      if (workflows.length === 0) {
         workflows.push({
-          name: "Terminplanungs-Workflow",
-          technology: "Zapier + Google Calendar",
-          implementation: "Erstelle kostenloses Zapier-Konto\nVerbinde Google Calendar\nErstelle Workflow für automatische Terminplanung\nKonfiguriere Verfügbarkeitszeiten und Regeln"
+          name: "AI-gestützter Automatisierungs-Workflow",
+          technology: "ChatGPT API + Zapier + n8n",
+          implementation: "1. Erstelle ChatGPT API-Konto\n2. Nutze Zapier für einfache Automatisierungen\n3. Verwende n8n für komplexe Workflows\n4. Integriere AI für intelligente Entscheidungen"
         });
       }
-    }
-    
-    // Default workflow if none specific
-    if (workflows.length === 0 && task.category === 'automatisierbar') {
-      workflows.push({
-        name: "Standard-Automatisierungs-Workflow",
-        technology: "Zapier (kostenlos bis 100 Tasks/Monat)",
-                  implementation: "Erstelle kostenloses Zapier-Konto\nWähle Trigger-App (z.B. Gmail, Google Sheets)\nWähle Action-App (z.B. Slack, Trello)\nTeste und aktiviere Workflow"
-      });
     }
     
     return workflows;
@@ -195,7 +242,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-foreground">
-        Identifizierte Aufgaben
+        {t(lang, "analysis_identified_tasks")}
       </h3>
       
       <div className="space-y-3">
@@ -263,10 +310,22 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       </div>
                     )}
                     
-                    {/* Score */}
+                    {/* Score and Ratios */}
                     <div className="text-right">
                       <div className="text-lg font-bold text-foreground">{task.score}</div>
                       <div className="text-xs text-muted-foreground">Score</div>
+                      {task.humanRatio !== undefined && task.automationRatio !== undefined && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          <div className="flex items-center space-x-1">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span>{task.humanRatio}%</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span>{task.automationRatio}%</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Category badge */}
@@ -308,6 +367,9 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                                <div className="font-medium text-sm mb-2">{agent.name}</div>
                                <div className="text-xs text-muted-foreground mb-2">
                                  <strong>Technologie:</strong> {agent.technology}
+                               </div>
+                               <div className="text-xs text-muted-foreground mb-2">
+                                 <strong>Schwierigkeit:</strong> {agent.difficulty || "Mittel"} • <strong>Setup-Zeit:</strong> {agent.setupTime || "2-4 Stunden"}
                                </div>
                                <div className="text-xs text-muted-foreground">
                                  <strong>Schritte zur Umsetzung:</strong>
@@ -355,13 +417,38 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       </div>
                     )}
                     
+                    {/* Task Ratio Breakdown */}
+                    {task.humanRatio !== undefined && task.automationRatio !== undefined && (
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <h5 className="font-medium text-gray-900 mb-2">{t(lang, "analysis_task_distribution")}</h5>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-700">{t(lang, "analysis_human_work")}:</span>
+                            <span className="text-sm font-medium text-blue-600">{task.humanRatio}%</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-700">{t(lang, "analysis_automation")}:</span>
+                            <span className="text-sm font-medium text-green-600">{task.automationRatio}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                            <div 
+                              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                              style={{ 
+                                width: `${task.automationRatio}%`,
+                                background: `linear-gradient(to right, #3b82f6 ${task.humanRatio}%, #10b981 ${task.humanRatio}%)`
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Human tasks info */}
                     {taskCategory === 'mensch' && (
                       <div className="bg-blue-50 p-3 rounded-lg">
-                        <h5 className="font-medium text-blue-900 mb-1">Menschliche Expertise erforderlich</h5>
+                        <h5 className="font-medium text-blue-900 mb-1">{t(lang, "analysis_human_expertise_required")}</h5>
                         <p className="text-sm text-blue-700">
-                          Diese Aufgabe erfordert menschliche Fähigkeiten wie Kreativität, 
-                          emotionale Intelligenz oder komplexe Entscheidungsfindung.
+                          {t(lang, "analysis_human_expertise_desc")}
                         </p>
                       </div>
                     )}

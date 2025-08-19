@@ -1,5 +1,5 @@
 // lib/extractTasks.ts
-export type RawTask = { text: string; source: "bullet" | "verbline"; };
+export type RawTask = { text: string; source: "bullet" | "verbline" | "simple"; };
 
 const SECTION_START = new RegExp(
   [
@@ -28,11 +28,11 @@ const BULLET = /^\s*(?:[-–—*•●▪▫◦‣⁃]|[0-9]+\.|\([0-9]+\)|[a-z]
 const VERB_LINE = new RegExp(
   [
     // DE (Infinitiv/Verb am Satzanfang oder nach Gedankenstrich)
-    "^(?:[–—-]\\s*)?(?:du\\s+)?(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)\\b",
+    "^(?:[–—-]\\s*)?(?:du\\s+)?(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest|schneidest|schneiden|bearbeitest|bearbeiten|verarbeitest|verarbeiten|sortierst|sortieren|packst|packen|lagerst|lagern|transportierst|transportieren|lieferst|liefern|kontrollierst|kontrollieren|prüfst|prüfen|testest|testen|reparierst|reparieren|wartest|warten|installierst|installieren|montierst|montieren|produzierst|produzieren|fertigst|fertigen|assemblierst|assemblieren|verpackst|verpacken|etikettierst|etikettieren|versendest|versenden|verschickst|verschicken|empfängst|empfangen|annahmst|annahme|annahmen|annahmst|annahme|annahmen)\\b",
     // DE (Du-Form)
-    "^du\\s+(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)",
+    "^du\\s+(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest|schneidest|schneiden|bearbeitest|bearbeiten|verarbeitest|verarbeiten|sortierst|sortieren|packst|packen|lagerst|lagern|transportierst|transportieren|lieferst|liefern|kontrollierst|kontrollieren|prüfst|prüfen|testest|testen|reparierst|reparieren|wartest|warten|installierst|installieren|montierst|montieren|produzierst|produzieren|fertigst|fertigen|assemblierst|assemblieren|verpackst|verpacken|etikettierst|etikettieren|versendest|versenden|verschickst|verschicken|empfängst|empfangen|annahmst|annahme|annahmen|annahmst|annahme|annahmen)",
     // EN (Imperativ/3rd Person)
-    "^(?:[–—-]\\s*)?(?:develop|design|plan|coordinate|analy[sz]e|implement|maintain|migrate|lead|mentor|own|optimi[sz]e|automate|document|monitor|integrate|create|manage|support|handle|execute|ensure|oversee|build|test|deploy)\\b",
+    "^(?:[–—-]\\s*)?(?:develop|design|plan|coordinate|analy[sz]e|implement|maintain|migrate|lead|mentor|own|optimi[sz]e|automate|document|monitor|integrate|create|manage|support|handle|execute|ensure|oversee|build|test|deploy|cut|cutting|process|processing|sort|sorting|pack|packing|store|storing|transport|transporting|deliver|delivering|check|checking|inspect|inspecting|repair|repairing|maintain|maintaining|install|installing|assemble|assembling|produce|producing|manufacture|manufacturing|package|packaging|label|labeling|ship|shipping|receive|receiving|handle|handling)\\b",
   ].join("|"),
   "i"
 );
@@ -167,7 +167,7 @@ export function extractTasks(text: string): RawTask[] {
     }
   }
 
-  // 4) Fallback: Verb-Linien (nur falls keine oder wenige Bullets)
+  // 4) Fallback: Verb-Linien und einfache Aktivitäten
   const verbLines: RawTask[] = bullets.length >= 3 
     ? []
     : scoped
@@ -175,9 +175,30 @@ export function extractTasks(text: string): RawTask[] {
         .map(l => ({ text: shorten(clean(l)), source: "verbline" as const }))
         .filter(t => t.text.length >= 10 && !isQualification(t.text));
 
-  // 5) Kombinieren + deduplizieren
+  // 5) Fallback für einfache Aktivitäten (wenn keine anderen Tasks gefunden)
+  const simpleActivities: RawTask[] = [];
+  if (bullets.length === 0 && verbLines.length === 0) {
+    for (const l of scoped) {
+      if (!isHeadingOrIntro(l) && !isFluff(l) && !isQualification(l) && l.length >= 5 && l.length <= 100) {
+        // Erkenne einfache Aktivitäten wie "Papier schneiden", "Kisten packen", etc.
+        const simpleActivityPatterns = [
+          /\b(?:papier|karton|kiste|material|ware|produkt|teil|komponente|dokument|brief|formular|etikett|verpackung|box|container|item|product|material|document|label|package)\s+(?:schneiden|schneidet|schneidest|packen|packt|packst|sortieren|sortiert|sortierst|bearbeiten|bearbeitet|bearbeitest|verarbeiten|verarbeitet|verarbeitest|kontrollieren|kontrolliert|kontrollierst|prüfen|prüft|prüfst|lagerst|lagerst|lagert|transportieren|transportiert|transportierst|liefern|liefert|lieferst|versenden|versendet|versendest|verpacken|verpackt|verpackst|etikettieren|etikettiert|etikettierst|montieren|montiert|montierst|assemblieren|assembliert|assemblierst|produzieren|produziert|produzierst|fertigen|fertigt|fertigst|reparieren|repariert|reparierst|installieren|installiert|installierst|wartet|wartest|wartet|testen|testet|testest)\b/i,
+          /\b(?:cut|cutting|pack|packing|sort|sorting|process|processing|check|checking|inspect|inspecting|store|storing|transport|transporting|deliver|delivering|ship|shipping|package|packaging|label|labeling|assemble|assembling|produce|producing|manufacture|manufacturing|repair|repairing|install|installing|maintain|maintaining|test|testing)\s+(?:paper|cardboard|box|material|ware|product|part|component|document|letter|form|label|package|container|item)\b/i
+        ];
+        
+        if (simpleActivityPatterns.some(pattern => pattern.test(l))) {
+          const cleanText = clean(l);
+          if (cleanText.length >= 5) {
+            simpleActivities.push({ text: shorten(cleanText), source: "simple" as const });
+          }
+        }
+      }
+    }
+  }
+
+  // 6) Kombinieren + deduplizieren
   const dedup = new Map<string, RawTask>();
-  for (const t of [...bullets, ...verbLines]) {
+  for (const t of [...bullets, ...verbLines, ...simpleActivities]) {
     const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
     if (!dedup.has(key) && !isFluff(t.text) && !isQualification(t.text)) {
       dedup.set(key, t);

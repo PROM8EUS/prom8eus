@@ -116,4 +116,34 @@ All colors MUST be HSL.
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Progress circle animation */
+  @keyframes progress-circle {
+    from {
+      stroke-dashoffset: 100%;
+    }
+    to {
+      stroke-dashoffset: var(--progress-offset);
+    }
+  }
+
+  /* Letter animation for headline */
+  @keyframes letter-fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(1rem) scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-0.2rem) scale(1.1);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .letter-animate {
+    animation: letter-fade-in 0.8s ease-out forwards;
+  }
 }

@@ -17,7 +17,7 @@ const StaticPageTemplate = ({ title, children, maxWidth = "lg" }: StaticPageTemp
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <main className="flex-1 px-6 py-24">
+      <main className="flex-1 px-6 py-32">
         <div className={`${maxWidthClasses[maxWidth]} mx-auto space-y-12`}>
           
           {/* Page Title */}

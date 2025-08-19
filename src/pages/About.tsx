@@ -28,7 +28,7 @@ const About = () => {
           </div>
 
           {/* Our Approach */}
-          <div className="mb-40">
+          <div className="mb-80">
             <div className="flex items-center justify-center space-x-3 mb-12">
               <Target className="w-8 h-8 text-primary" />
               <h2 className="text-3xl font-bold text-foreground">{t(lang, "about_approach_title")}</h2>
@@ -77,7 +77,7 @@ const About = () => {
 
           {/* Scientific Background */}
           <div className="mb-20">
-            <div className="flex items-center justify-center space-x-3 mb-12">
+            <div className="flex items-center justify-center space-x-3 mb-12 mt-20">
               <BookOpen className="w-8 h-8 text-primary" />
               <h2 className="text-3xl font-bold text-foreground">{t(lang, "about_scientific_title")}</h2>
             </div>

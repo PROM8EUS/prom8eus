@@ -7,7 +7,7 @@ export type Lang = "de" | "en";
 
 export const DICT: Record<Lang, Record<string, string>> = {
   de: {
-    headline: "Automatisierungs­potenzial sofort erkennen",
+    headline: "Automatisierungspotenzial sofort erkennen",
     sub: "Fügen Sie Ihre Aufgabenbeschreibung oder Stellenanzeige ein – unsere KI zeigt Ihnen, welche Teile automatisierbar sind.",
     start: "Analyse starten",
     lang_switch: "EN",    // shows opposite language
@@ -98,6 +98,34 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_mensch: "Mensch erfordert",
     task_category_allgemein: "Allgemein",
     task_category_softwaredevelopment: "Software-Entwicklung",
+    task_category_physicalinteraction: "Physische Interaktion",
+    task_category_dataanalysis: "Datenanalyse",
+    task_category_documentation: "Dokumentation",
+    task_category_systemintegration: "Systemintegration",
+    task_category_accounting: "Buchhaltung",
+    task_category_collaboration: "Zusammenarbeit",
+    task_category_physicaltasks: "Physische Aufgaben",
+    task_category_customerinteraction: "Kundeninteraktion",
+    task_category_interpersonalcommunication: "Zwischenmenschliche Kommunikation",
+    task_category_emotionalintelligence: "Emotionale Intelligenz",
+    task_category_complexdecisionmaking: "Komplexe Entscheidungsfindung",
+    task_category_creativeinnovation: "Kreative Innovation",
+    
+    // Analysis Labels
+    label_automatisierbar: "Automatisierbar",
+    label_mensch: "Mensch",
+    
+    // Analysis UI Text
+    analysis_identified_tasks: "Identifizierte Aufgaben",
+    analysis_task_distribution: "Aufgabenverteilung",
+    analysis_human_expertise_required: "Menschliche Expertise erforderlich",
+    analysis_human_expertise_desc: "Diese Aufgabe erfordert menschliche Fähigkeiten wie Kreativität, emotionale Intelligenz oder komplexe Entscheidungsfindung.",
+    analysis_automation_score: "Automatisierungsscore",
+    analysis_human_work: "Menschliche Arbeit",
+    analysis_automation: "Automatisierung",
+    
+    // Analysis Result Page
+    analysis_result_for: "Analyse-Ergebnis für",
     
     // AI Agents and Workflows - German
     ai_agents_title: "Empfohlene AI-Agents",
@@ -196,6 +224,128 @@ export const DICT: Record<Lang, Record<string, string>> = {
     workflow_system_step3: "Erstelle Workflow für Datenübertragung",
     workflow_system_step4: "Teste und aktiviere automatische Ausführung",
     
+    // AI Agents für Software-Entwicklung
+    agent_software_name: "KI-gestützter Software-Entwicklungs-Agent",
+    agent_software_tech: "GitHub Copilot + ChatGPT + Claude",
+    agent_software_difficulty: "Mittel",
+    agent_software_setup: "4-8 Stunden",
+    agent_software_step1: "Installiere GitHub Copilot in deiner IDE",
+    agent_software_step2: "Richte ChatGPT API für Code-Generierung ein",
+    agent_software_step3: "Konfiguriere Claude für Code-Reviews und Debugging",
+    agent_software_step4: "Erstelle spezifische Prompts für deine Aufgaben",
+    agent_software_step5: "Überprüfe und validiere AI-generierten Code",
+    agent_software_step6: "Setze manuelle Freigabe für kritische Änderungen",
+    
+    // AI Agents für Datenanalyse
+    agent_data_name: "KI-gestützter Datenanalyse-Agent",
+    agent_data_tech: "ChatGPT + Claude + Python-Bibliotheken",
+    agent_data_difficulty: "Mittel",
+    agent_data_setup: "3-6 Stunden",
+    agent_data_step1: "Richte Python-Umgebung mit Data-Science-Bibliotheken ein",
+    agent_data_step2: "Konfiguriere ChatGPT für Dateninterpretation",
+    agent_data_step3: "Verwende Claude für statistische Analysen",
+    agent_data_step4: "Erstelle automatisierte Datenverarbeitungs-Pipelines",
+    agent_data_step5: "Validiere AI-generierte Erkenntnisse",
+    agent_data_step6: "Setze menschliche Überwachung für kritische Entscheidungen",
+    
+    // AI Agents für Dokumentation
+    agent_doc_name: "KI-Dokumentations-Assistent",
+    agent_doc_tech: "ChatGPT + Notion AI + Grammarly",
+    agent_doc_difficulty: "Einfach",
+    agent_doc_setup: "1-2 Stunden",
+    agent_doc_step1: "Richte Notion AI für Dokumentenerstellung ein",
+    agent_doc_step2: "Konfiguriere ChatGPT für technisches Schreiben",
+    agent_doc_step3: "Integriere Grammarly für Qualitätskontrolle",
+    agent_doc_step4: "Erstelle Vorlagen für konsistente Dokumentation",
+    agent_doc_step5: "Überprüfe und genehmige AI-generierte Inhalte",
+    
+    // AI Agents für Systemintegration
+    agent_integration_name: "KI-Systemintegrations-Agent",
+    agent_integration_tech: "ChatGPT + Zapier + n8n",
+    agent_integration_difficulty: "Mittel",
+    agent_integration_setup: "4-6 Stunden",
+    agent_integration_step1: "Richte Zapier für einfache Integrationen ein",
+    agent_integration_step2: "Konfiguriere n8n für komplexe Workflows",
+    agent_integration_step3: "Verwende ChatGPT für Integrationsplanung",
+    agent_integration_step4: "Erstelle automatisierte Testverfahren",
+    agent_integration_step5: "Implementiere menschliche Überwachung für kritische Integrationen",
+    
+    // AI Agents für Zusammenarbeit
+    agent_collab_name: "KI-Zusammenarbeits-Assistent",
+    agent_collab_tech: "Slack AI + Microsoft Teams AI + ChatGPT",
+    agent_collab_difficulty: "Einfach",
+    agent_collab_setup: "2-3 Stunden",
+    agent_collab_step1: "Aktiviere AI-Funktionen in Slack und Teams",
+    agent_collab_step2: "Konfiguriere ChatGPT für Meeting-Zusammenfassungen",
+    agent_collab_step3: "Richte automatisierte Aufgabenvergabe ein",
+    agent_collab_step4: "Erstelle KI-gestütztes Projekt-Tracking",
+    agent_collab_step5: "Behalte menschliche Kontrolle über Team-Entscheidungen",
+    
+    // AI Agents für physische Aufgaben
+    agent_physical_name: "Industrieller Automatisierungs-Agent",
+    agent_physical_tech: "Robotik + IoT + Computer Vision",
+    agent_physical_difficulty: "Schwer",
+    agent_physical_setup: "8-16 Stunden",
+    agent_physical_step1: "Beurteile Anforderungen für physische Aufgaben",
+    agent_physical_step2: "Wähle passende Robotik-Lösung",
+    agent_physical_step3: "Implementiere IoT-Sensoren für Überwachung",
+    agent_physical_step4: "Richte Computer Vision für Qualitätskontrolle ein",
+    agent_physical_step5: "Stelle Sicherheitsprotokolle und menschliche Überwachung sicher",
+    
+    // Workflows für Software-Entwicklung
+    workflow_software_name: "KI-gestützter Software-Entwicklungs-Workflow",
+    workflow_software_tech: "GitHub Copilot + ChatGPT API + CI/CD",
+    workflow_software_step1: "Richte GitHub Copilot in deiner Entwicklungsumgebung ein",
+    workflow_software_step2: "Konfiguriere ChatGPT API für Code-Generierung und -Review",
+    workflow_software_step3: "Integriere mit CI/CD-Pipeline für automatisierte Tests",
+    workflow_software_step4: "Erstelle Code-Review-Automatisierung mit menschlicher Freigabe",
+    workflow_software_step5: "Implementiere automatisierte Bereitstellung mit Rollback-Funktion",
+    
+    // Workflows für Datenanalyse
+    workflow_data_analysis_name: "KI-gestützter Datenanalyse-Workflow",
+    workflow_data_analysis_tech: "ChatGPT + Python + Jupyter + Airflow",
+    workflow_data_analysis_step1: "Richte Jupyter-Umgebung mit AI-Plugins ein",
+    workflow_data_analysis_step2: "Konfiguriere ChatGPT für Dateninterpretation",
+    workflow_data_analysis_step3: "Erstelle automatisierte Datenverarbeitungs-Pipelines",
+    workflow_data_analysis_step4: "Implementiere automatisierte Berichterstattung und Visualisierung",
+    workflow_data_analysis_step5: "Richte menschliche Validierung für kritische Erkenntnisse ein",
+    
+    // Workflows für Dokumentation
+    workflow_doc_name: "KI-Dokumentations-Workflow",
+    workflow_doc_tech: "Notion AI + ChatGPT + Grammarly API",
+    workflow_doc_step1: "Richte Notion AI für Dokumentenerstellung ein",
+    workflow_doc_step2: "Konfiguriere ChatGPT für technische Schreibunterstützung",
+    workflow_doc_step3: "Integriere Grammarly für Qualitätskontrolle",
+    workflow_doc_step4: "Erstelle automatisierte Dokumentationsvorlagen",
+    workflow_doc_step5: "Implementiere Review- und Genehmigungsprozess",
+    
+    // Workflows für Systemintegration
+    workflow_integration_name: "KI-Systemintegrations-Workflow",
+    workflow_integration_tech: "Zapier + n8n + ChatGPT API",
+    workflow_integration_step1: "Richte Zapier für einfache Systemverbindungen ein",
+    workflow_integration_step2: "Konfiguriere n8n für komplexe Integrations-Workflows",
+    workflow_integration_step3: "Verwende ChatGPT für Integrationsplanung und -fehlerbehebung",
+    workflow_integration_step4: "Erstelle automatisierte Tests und Überwachung",
+    workflow_integration_step5: "Implementiere menschliche Überwachung für kritische Integrationen",
+    
+    // Workflows für Zusammenarbeit
+    workflow_collab_name: "KI-Zusammenarbeits-Workflow",
+    workflow_collab_tech: "Slack AI + Teams AI + ChatGPT",
+    workflow_collab_step1: "Aktiviere AI-Funktionen in Slack und Microsoft Teams",
+    workflow_collab_step2: "Konfiguriere ChatGPT für Meeting-Zusammenfassungen und Follow-ups",
+    workflow_collab_step3: "Richte automatisierte Aufgabenvergabe und -verfolgung ein",
+    workflow_collab_step4: "Erstelle KI-gestütztes Projektmanagement",
+    workflow_collab_step5: "Behalte menschliche Kontrolle über Team-Entscheidungen und Prioritäten",
+    
+    // Workflows für physische Aufgaben
+    workflow_physical_name: "Industrieller Automatisierungs-Workflow",
+    workflow_physical_tech: "Robotik + IoT + Computer Vision + SPS",
+    workflow_physical_step1: "Beurteile Anforderungen für physische Aufgaben und Sicherheitsaspekte",
+    workflow_physical_step2: "Wähle und konfiguriere passende Robotik-Lösung",
+    workflow_physical_step3: "Implementiere IoT-Sensoren für Echtzeit-Überwachung",
+    workflow_physical_step4: "Richte Computer Vision für Qualitätskontrolle und Sicherheit ein",
+    workflow_physical_step5: "Stelle umfassende Sicherheitsprotokolle und menschliche Überwachung sicher",
+    
     workflow_calendar_name: "Terminplanungs-Workflow",
     workflow_calendar_tech: "Zapier + Google Calendar",
     workflow_calendar_step1: "Erstelle kostenloses Zapier-Konto",
@@ -250,6 +400,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     // Contact page
     contact_title: "Kontakt",
     contact_subtitle: "Nehmen Sie Kontakt mit uns auf",
+    contact_description: "Haben Sie Fragen oder möchten Sie mehr über unsere Automatisierungs-Analysen erfahren? Wir freuen uns auf Ihre Nachricht.",
     address: "Adresse",
     phone: "Telefon",
     email: "E-Mail",
@@ -273,7 +424,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     your_analysis: "Ihre Automatisierungs-Analyse",
     detailed_evaluation: "Detaillierte Auswertung Ihrer Aufgabenbeschreibung",
     share_landing: "Analyse teilen",
-    learn_workflows: "Mehr über Workflows erfahren",
+    learn_workflows: "Mehr über Agenten und Workflows",
     coming_soon: "Demnächst verfügbar",
     
     // About page
@@ -376,6 +527,34 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_mensch: "Human Required",
     task_category_allgemein: "General",
     task_category_softwaredevelopment: "Software Development",
+    task_category_physicalinteraction: "Physical Interaction",
+    task_category_dataanalysis: "Data Analysis",
+    task_category_documentation: "Documentation",
+    task_category_systemintegration: "System Integration",
+    task_category_accounting: "Accounting",
+    task_category_collaboration: "Collaboration",
+    task_category_physicaltasks: "Physical Tasks",
+    task_category_customerinteraction: "Customer Interaction",
+    task_category_interpersonalcommunication: "Interpersonal Communication",
+    task_category_emotionalintelligence: "Emotional Intelligence",
+    task_category_complexdecisionmaking: "Complex Decision Making",
+    task_category_creativeinnovation: "Creative Innovation",
+    
+    // Analysis Labels
+    label_automatisierbar: "Automatable",
+    label_mensch: "Human",
+    
+    // Analysis UI Text
+    analysis_identified_tasks: "Identified Tasks",
+    analysis_task_distribution: "Task Distribution",
+    analysis_human_expertise_required: "Human Expertise Required",
+    analysis_human_expertise_desc: "This task requires human capabilities such as creativity, emotional intelligence, or complex decision-making.",
+    analysis_automation_score: "Automation Score",
+    analysis_human_work: "Human Work",
+    analysis_automation: "Automation",
+    
+    // Analysis Result Page
+    analysis_result_for: "Analysis Result for",
     task_category_systemwork: "System Work",
     task_category_interpersonal: "Interpersonal",
     
@@ -490,6 +669,128 @@ export const DICT: Record<Lang, Record<string, string>> = {
     workflow_standard_step3: "Choose action app (e.g., Slack, Trello)",
     workflow_standard_step4: "Test and activate workflow",
     
+    // AI Agents for Software Development
+    agent_software_name: "AI-Powered Software Development Agent",
+    agent_software_tech: "GitHub Copilot + ChatGPT + Claude",
+    agent_software_difficulty: "Medium",
+    agent_software_setup: "4-8 hours",
+    agent_software_step1: "Install GitHub Copilot in your IDE",
+    agent_software_step2: "Set up ChatGPT API for code generation",
+    agent_software_step3: "Configure Claude for code review and debugging",
+    agent_software_step4: "Create custom prompts for your specific tasks",
+    agent_software_step5: "Review and validate AI-generated code",
+    agent_software_step6: "Set up manual approval for critical changes",
+    
+    // AI Agents for Data Analysis
+    agent_data_name: "AI-Enhanced Data Analysis Agent",
+    agent_data_tech: "ChatGPT + Claude + Python Libraries",
+    agent_data_difficulty: "Medium",
+    agent_data_setup: "3-6 hours",
+    agent_data_step1: "Set up Python environment with data science libraries",
+    agent_data_step2: "Configure ChatGPT for data interpretation",
+    agent_data_step3: "Use Claude for statistical analysis",
+    agent_data_step4: "Create automated data processing pipelines",
+    agent_data_step5: "Validate AI-generated insights",
+    agent_data_step6: "Set up human oversight for critical decisions",
+    
+    // AI Agents for Documentation
+    agent_doc_name: "AI Documentation Assistant",
+    agent_doc_tech: "ChatGPT + Notion AI + Grammarly",
+    agent_doc_difficulty: "Easy",
+    agent_doc_setup: "1-2 hours",
+    agent_doc_step1: "Set up Notion AI for document creation",
+    agent_doc_step2: "Configure ChatGPT for technical writing",
+    agent_doc_step3: "Integrate Grammarly for quality control",
+    agent_doc_step4: "Create templates for consistent documentation",
+    agent_doc_step5: "Review and approve AI-generated content",
+    
+    // AI Agents for System Integration
+    agent_integration_name: "AI System Integration Agent",
+    agent_integration_tech: "ChatGPT + Zapier + n8n",
+    agent_integration_difficulty: "Medium",
+    agent_integration_setup: "4-6 hours",
+    agent_integration_step1: "Set up Zapier for simple integrations",
+    agent_integration_step2: "Configure n8n for complex workflows",
+    agent_integration_step3: "Use ChatGPT for integration planning",
+    agent_integration_step4: "Create automated testing procedures",
+    agent_integration_step5: "Implement human oversight for critical integrations",
+    
+    // AI Agents for Collaboration
+    agent_collab_name: "AI Collaboration Assistant",
+    agent_collab_tech: "Slack AI + Microsoft Teams AI + ChatGPT",
+    agent_collab_difficulty: "Easy",
+    agent_collab_setup: "2-3 hours",
+    agent_collab_step1: "Enable AI features in Slack and Teams",
+    agent_collab_step2: "Configure ChatGPT for meeting summaries",
+    agent_collab_step3: "Set up automated task assignment",
+    agent_collab_step4: "Create AI-powered project tracking",
+    agent_collab_step5: "Maintain human control over team decisions",
+    
+    // AI Agents for Physical Tasks
+    agent_physical_name: "Industrial Automation Agent",
+    agent_physical_tech: "Robotics + IoT + Computer Vision",
+    agent_physical_difficulty: "Hard",
+    agent_physical_setup: "8-16 hours",
+    agent_physical_step1: "Assess physical task requirements",
+    agent_physical_step2: "Select appropriate robotics solution",
+    agent_physical_step3: "Implement IoT sensors for monitoring",
+    agent_physical_step4: "Set up computer vision for quality control",
+    agent_physical_step5: "Ensure safety protocols and human oversight",
+    
+    // Workflows for Software Development
+    workflow_software_name: "AI-Enhanced Software Development Workflow",
+    workflow_software_tech: "GitHub Copilot + ChatGPT API + CI/CD",
+    workflow_software_step1: "Set up GitHub Copilot in your development environment",
+    workflow_software_step2: "Configure ChatGPT API for code generation and review",
+    workflow_software_step3: "Integrate with CI/CD pipeline for automated testing",
+    workflow_software_step4: "Create code review automation with human approval",
+    workflow_software_step5: "Implement automated deployment with rollback capability",
+    
+    // Workflows for Data Analysis
+    workflow_data_analysis_name: "AI-Powered Data Analysis Workflow",
+    workflow_data_analysis_tech: "ChatGPT + Python + Jupyter + Airflow",
+    workflow_data_analysis_step1: "Set up Jupyter environment with AI plugins",
+    workflow_data_analysis_step2: "Configure ChatGPT for data interpretation",
+    workflow_data_analysis_step3: "Create automated data processing pipelines",
+    workflow_data_analysis_step4: "Implement automated reporting and visualization",
+    workflow_data_analysis_step5: "Set up human validation for critical insights",
+    
+    // Workflows for Documentation
+    workflow_doc_name: "AI Documentation Workflow",
+    workflow_doc_tech: "Notion AI + ChatGPT + Grammarly API",
+    workflow_doc_step1: "Set up Notion AI for document creation",
+    workflow_doc_step2: "Configure ChatGPT for technical writing assistance",
+    workflow_doc_step3: "Integrate Grammarly for quality control",
+    workflow_doc_step4: "Create automated documentation templates",
+    workflow_doc_step5: "Implement review and approval process",
+    
+    // Workflows for System Integration
+    workflow_integration_name: "AI System Integration Workflow",
+    workflow_integration_tech: "Zapier + n8n + ChatGPT API",
+    workflow_integration_step1: "Set up Zapier for simple system connections",
+    workflow_integration_step2: "Configure n8n for complex integration workflows",
+    workflow_integration_step3: "Use ChatGPT for integration planning and troubleshooting",
+    workflow_integration_step4: "Create automated testing and monitoring",
+    workflow_integration_step5: "Implement human oversight for critical integrations",
+    
+    // Workflows for Collaboration
+    workflow_collab_name: "AI Collaboration Workflow",
+    workflow_collab_tech: "Slack AI + Teams AI + ChatGPT",
+    workflow_collab_step1: "Enable AI features in Slack and Microsoft Teams",
+    workflow_collab_step2: "Configure ChatGPT for meeting summaries and follow-ups",
+    workflow_collab_step3: "Set up automated task assignment and tracking",
+    workflow_collab_step4: "Create AI-powered project management",
+    workflow_collab_step5: "Maintain human control over team decisions and priorities",
+    
+    // Workflows for Physical Tasks
+    workflow_physical_name: "Industrial Automation Workflow",
+    workflow_physical_tech: "Robotics + IoT + Computer Vision + PLC",
+    workflow_physical_step1: "Assess physical task requirements and safety considerations",
+    workflow_physical_step2: "Select and configure appropriate robotics solution",
+    workflow_physical_step3: "Implement IoT sensors for real-time monitoring",
+    workflow_physical_step4: "Set up computer vision for quality control and safety",
+    workflow_physical_step5: "Ensure comprehensive safety protocols and human oversight",
+    
     // History
     history_title: "Previous Analyses",
     history_subtitle: "Click on an analysis to view it again",
@@ -515,6 +816,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     // Contact page
     contact_title: "Contact",
     contact_subtitle: "Get in touch with us",
+    contact_description: "Do you have questions or would you like to learn more about our automation analyses? We look forward to hearing from you.",
     address: "Address",
     phone: "Phone",
     email: "Email",
@@ -538,7 +840,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     your_analysis: "Your Automation Analysis",
     detailed_evaluation: "Detailed evaluation of your task description",
     share_landing: "Share Analysis", 
-    learn_workflows: "Learn More About Workflows",
+    learn_workflows: "More About Agents and Workflows",
     coming_soon: "Coming Soon",
     
     // About page

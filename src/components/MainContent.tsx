@@ -11,6 +11,51 @@ import { DebugModal } from "./DebugModal";
 import { AlertTriangle, Bug } from "lucide-react";
 import { t } from "@/lib/i18n/i18n";
 
+// Animated Letter Component
+const AnimatedLetter = ({ letter, index, isVisible }: { letter: string; index: number; isVisible: boolean }) => {
+  const [isHighlighted, setIsHighlighted] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        setIsHighlighted(true); // Highlight with brand color
+        const restoreTimer = setTimeout(() => {
+          setIsHighlighted(false); // Back to normal
+        }, 150);
+        return () => clearTimeout(restoreTimer);
+      }, index * 40); // Faster overlapping animation
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, index]);
+
+  return (
+    <span
+      className={`inline-block transition-colors duration-150 ease-in-out ${
+        isHighlighted ? 'text-primary' : 'text-foreground'
+      }`}
+    >
+      {letter}
+    </span>
+  );
+};
+
+// Animated Word Component
+const AnimatedWord = ({ word, isVisible }: { word: string; isVisible: boolean }) => {
+  return (
+    <span className="break-words hyphens-auto">
+      {word.split('').map((char, index) => (
+        <AnimatedLetter
+          key={index}
+          letter={char === ' ' ? '\u00A0' : char} // Use non-breaking space for better animation
+          index={index}
+          isVisible={isVisible}
+        />
+      ))}
+    </span>
+  );
+};
+
 interface MainContentProps {
   buttonText: string;
   headline: string;
@@ -31,9 +76,19 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
     cacheDate?: string;
   } | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isWordVisible, setIsWordVisible] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Trigger word animation on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsWordVisible(true); // Start animation
+    }, 1000); // Start animation after 1 second
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Auto-resize textarea
   const adjustTextareaHeight = () => {
@@ -111,7 +166,8 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
           ? { rawText: analysisInput }
           : isUrl 
             ? { url: input.trim() }
-            : { rawText: analysisInput }
+            : { rawText: analysisInput },
+        lang
       );
       
       if (result.success && result.data) {
@@ -546,8 +602,16 @@ QUALIFICATIONS:
         <div className="w-full max-w-4xl mx-auto text-center space-y-16">
           {/* Title and Subtitle */}
           <div className="space-y-12">
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight break-words hyphens-auto">
-              {headline}
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+              {lang === 'de' ? (
+                <>
+                  <AnimatedWord word="Automatisierungspotenzial" isVisible={isWordVisible} /> sofort erkennen
+                </>
+              ) : (
+                <>
+                  See your <AnimatedWord word="automation potential" isVisible={isWordVisible} /> instantly
+                </>
+              )}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               {subtitle}

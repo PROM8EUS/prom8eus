@@ -11,7 +11,7 @@ interface InfoCardProps {
 
 const InfoCard = ({ title, value, description, icon: Icon, variant }: InfoCardProps) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card>
       <CardContent className="p-6 text-center space-y-4">
         <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
           variant === 'primary' 
