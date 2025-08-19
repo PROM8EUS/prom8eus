@@ -16,6 +16,23 @@ export const DICT: Record<Lang, Record<string, string>> = {
     about: "Über uns",
     contact: "Kontakt",
     
+    // Landing page
+    landing_automatable: "Automatisierbar",
+    landing_human: "Mensch notwendig", 
+    landing_automatable_desc: "Aufgaben können durch KI und Automatisierung übernommen werden",
+    landing_human_desc: "Aufgaben erfordern menschliche Kreativität und Entscheidungsfindung",
+    landing_ai_analysis: "KI-gestützte Analyse",
+    landing_discover: "Entdecken Sie das Automatisierungspotenzial Ihrer Position",
+    landing_desc: "Lassen Sie unsere KI Ihre Stellenbeschreibung oder Aufgabenliste analysieren und erfahren Sie, welche Tätigkeiten automatisiert werden können.",
+    landing_start: "Eigene Analyse starten",
+    landing_why_title: "Warum eine Automatisierungs-Analyse?",
+    landing_precise: "Präzise Einschätzung",
+    landing_precise_desc: "Erhalten Sie eine detaillierte Bewertung Ihrer Aufgaben",
+    landing_efficiency: "Effizienz steigern", 
+    landing_efficiency_desc: "Identifizieren Sie Potenziale für Prozessoptimierung",
+    landing_future: "Zukunft gestalten",
+    landing_future_desc: "Bereiten Sie sich auf die Arbeitswelt von morgen vor",
+    
     // Footer
     copyright: "Alle Rechte vorbehalten.",
     
@@ -70,6 +87,23 @@ export const DICT: Record<Lang, Record<string, string>> = {
     // Header
     about: "About us",
     contact: "Contact",
+    
+    // Landing page
+    landing_automatable: "Automatable",
+    landing_human: "Human Required", 
+    landing_automatable_desc: "Tasks can be handled by AI and automation",
+    landing_human_desc: "Tasks require human creativity and decision-making",
+    landing_ai_analysis: "AI-powered Analysis",
+    landing_discover: "Discover Your Position's Automation Potential",
+    landing_desc: "Let our AI analyze your job description or task list and learn which activities can be automated.",
+    landing_start: "Start Your Own Analysis",
+    landing_why_title: "Why an Automation Analysis?",
+    landing_precise: "Precise Assessment",
+    landing_precise_desc: "Get a detailed evaluation of your tasks",
+    landing_efficiency: "Increase Efficiency", 
+    landing_efficiency_desc: "Identify opportunities for process optimization",
+    landing_future: "Shape the Future",
+    landing_future_desc: "Prepare for tomorrow's work environment",
     
     // Footer
     copyright: "All rights reserved.",

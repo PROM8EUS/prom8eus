@@ -4,9 +4,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import LandingScoreCircle from "@/components/LandingScoreCircle";
 import InfoCard from "@/components/InfoCard";
+import TaskList from "@/components/TaskList";
+import BarChart from "@/components/BarChart";
 import PageFooter from "@/components/PageFooter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { resolveLang } from "@/lib/i18n/i18n";
+import { resolveLang, t } from "@/lib/i18n/i18n";
 
 interface AnalysisResult {
   totalScore: number;
@@ -24,6 +26,14 @@ interface AnalysisResult {
   summary: string;
   recommendations: string[];
   originalText?: string;
+}
+
+interface TaskForDisplay {
+  id: string;
+  name: string;
+  score: number;
+  category: 'automatisierbar' | 'mensch';
+  description: string;
 }
 
 const Landing = () => {
@@ -66,11 +76,52 @@ const Landing = () => {
     return "Ihre Position";
   };
 
+  // Get display tasks for TaskList component
+  const getDisplayTasks = (): TaskForDisplay[] => {
+    if (!analysisData?.tasks || analysisData.tasks.length === 0) {
+      // Return demo tasks if no real data
+      return [
+        {
+          id: '1',
+          name: 'Datenerfassung und -eingabe',
+          score: 95,
+          category: 'automatisierbar',
+          description: 'Strukturierte Dateneingabe in Systeme'
+        },
+        {
+          id: '2',
+          name: 'Berichtserstellung', 
+          score: 88,
+          category: 'automatisierbar',
+          description: 'Automatische Generierung von Standardberichten'
+        },
+        {
+          id: '3',
+          name: 'Kundenberatung',
+          score: 35,
+          category: 'mensch',
+          description: 'Persönliche Beratung und Problemlösung'
+        }
+      ];
+    }
+
+    return analysisData.tasks.map((task, index) => ({
+      id: String(index + 1),
+      name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
+      score: Math.round(task.score),
+      category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
+      description: `${task.category} (Confidence: ${Math.round(task.confidence)}%)`
+    }));
+  };
+
   // Use real data or fallback to demo values
   const displayScore = analysisData?.totalScore || 80;
   const displayAutomatable = analysisData?.ratio.automatisierbar || 65;
   const displayHuman = analysisData?.ratio.mensch || 35;
   const displayJobTitle = getJobTitle();
+  const displayTasks = getDisplayTasks();
+  const automatizableTasks = displayTasks.filter(task => task.category === 'automatisierbar').length;
+  const humanTasks = displayTasks.filter(task => task.category === 'mensch').length;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -90,38 +141,55 @@ const Landing = () => {
           <section className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <InfoCard
-                title="Automatisierbar"
+                title={t(lang, "landing_automatable")}
                 value={`${displayAutomatable}%`}
-                description="Aufgaben können durch KI und Automatisierung übernommen werden"
+                description={t(lang, "landing_automatable_desc")}
                 icon={Bot}
                 variant="primary"
               />
               
               <InfoCard
-                title="Mensch notwendig"
+                title={t(lang, "landing_human")}
                 value={`${displayHuman}%`}
-                description="Aufgaben erfordern menschliche Kreativität und Entscheidungsfindung"
+                description={t(lang, "landing_human_desc")}
                 icon={User}
                 variant="destructive"
               />
             </div>
           </section>
 
+          {/* Task Analysis Breakdown - Only show if we have real analysis data */}
+          {analysisData && analysisData.tasks && analysisData.tasks.length > 0 && (
+            <>
+              {/* Bar Chart */}
+              <section className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <BarChart 
+                  automatizable={automatizableTasks} 
+                  humanRequired={humanTasks} 
+                />
+              </section>
+
+              {/* Task List */}
+              <section className="animate-fade-in" style={{ animationDelay: '0.5s' }}>
+                <TaskList tasks={displayTasks} />
+              </section>
+            </>
+          )}
+
           {/* Call to Action */}
           <section className="text-center animate-fade-in" style={{ animationDelay: '0.6s' }}>
             <div className="space-y-6">
               <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
                 <Sparkles className="w-4 h-4" />
-                <span className="text-sm font-medium">KI-gestützte Analyse</span>
+                <span className="text-sm font-medium">{t(lang, "landing_ai_analysis")}</span>
               </div>
               
               <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                Entdecken Sie das Automatisierungspotenzial Ihrer Position
+                {t(lang, "landing_discover")}
               </h2>
               
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Lassen Sie unsere KI Ihre Stellenbeschreibung oder Aufgabenliste analysieren 
-                und erfahren Sie, welche Tätigkeiten automatisiert werden können.
+                {t(lang, "landing_desc")}
               </p>
               
               <Button
@@ -129,7 +197,7 @@ const Landing = () => {
                 size="lg"
                 className="px-8 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200"
               >
-                Eigene Analyse starten
+                {t(lang, "landing_start")}
               </Button>
             </div>
           </section>
@@ -138,28 +206,28 @@ const Landing = () => {
           <section className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
             <div className="bg-muted/20 rounded-2xl p-8 md:p-12 text-center">
               <h3 className="text-xl md:text-2xl font-semibold text-foreground mb-4">
-                Warum eine Automatisierungs-Analyse?
+                {t(lang, "landing_why_title")}
               </h3>
               <div className="grid md:grid-cols-3 gap-6 mt-8">
                 <div className="space-y-2">
                   <div className="text-3xl">🎯</div>
-                  <h4 className="font-semibold text-foreground">Präzise Einschätzung</h4>
+                  <h4 className="font-semibold text-foreground">{t(lang, "landing_precise")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Erhalten Sie eine detaillierte Bewertung Ihrer Aufgaben
+                    {t(lang, "landing_precise_desc")}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <div className="text-3xl">⚡</div>
-                  <h4 className="font-semibold text-foreground">Effizienz steigern</h4>
+                  <h4 className="font-semibold text-foreground">{t(lang, "landing_efficiency")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Identifizieren Sie Potenziale für Prozessoptimierung
+                    {t(lang, "landing_efficiency_desc")}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <div className="text-3xl">🚀</div>
-                  <h4 className="font-semibold text-foreground">Zukunft gestalten</h4>
+                  <h4 className="font-semibold text-foreground">{t(lang, "landing_future")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Bereiten Sie sich auf die Arbeitswelt von morgen vor
+                    {t(lang, "landing_future_desc")}
                   </p>
                 </div>
               </div>
