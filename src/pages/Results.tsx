@@ -88,7 +88,7 @@ const Results = () => {
     
     // Generate shareable URL
     const baseUrl = window.location.origin;
-    return `${baseUrl}/landing?share=${analysisId}&lang=${lang}`;
+    return `${baseUrl}/share?share=${analysisId}&lang=${lang}`;
   };
 
   useEffect(() => {

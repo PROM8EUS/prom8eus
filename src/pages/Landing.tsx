@@ -44,22 +44,29 @@ const Landing = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
-    // Check if this is a shared analysis URL
     const shareId = searchParams.get('share');
+    console.log('Landing page - shareId from URL:', shareId);
     
     if (shareId) {
       // Load shared analysis data from localStorage
       try {
+        console.log('Loading shared analysis data for ID:', shareId);
         const sharedData = localStorage.getItem(shareId);
+        console.log('Found shared data:', sharedData);
+        
         if (sharedData) {
           const parsedResult: AnalysisResult = JSON.parse(sharedData);
+          console.log('Successfully loaded shared analysis:', parsedResult);
           setAnalysisData(parsedResult);
-          console.log('Loaded shared analysis:', parsedResult);
           return;
+        } else {
+          console.log('No shared data found in localStorage for ID:', shareId);
         }
       } catch (error) {
         console.error('Error loading shared analysis:', error);
       }
+    } else {
+      console.log('No shareId parameter found in URL');
     }
 
     // Fallback: Try to load analysis results from sessionStorage (current session)
@@ -80,18 +87,36 @@ const Landing = () => {
 
   // Get job title from analysis or use default
   const getJobTitle = () => {
-    if (!analysisData?.originalText) return "Marketing Manager";
+    console.log('Getting job title from analysisData:', analysisData);
+    
+    if (!analysisData?.originalText) {
+      console.log('No originalText found, using default');
+      return "Marketing Manager";
+    }
     
     // Simple extraction of job title from original text
     const text = analysisData.originalText;
+    console.log('Original text for job title extraction:', text);
+    
+    // Extract the actual task/job from formats like "Aufgabe: baseball" or "Position: Marketing Manager"
+    if (text.includes('Aufgabe:')) {
+      const taskText = text.replace('Aufgabe:', '').trim();
+      if (taskText.length > 0 && taskText.length < 80) {
+        console.log('Extracted job title from Aufgabe:', taskText);
+        return taskText;
+      }
+    }
+    
     const lines = text.split('\n');
     const firstLine = lines[0]?.trim();
     
     // If first line looks like a job title (reasonable length)
     if (firstLine && firstLine.length > 5 && firstLine.length < 60 && !firstLine.includes('http')) {
+      console.log('Using first line as job title:', firstLine);
       return firstLine;
     }
     
+    console.log('No suitable job title found, using fallback');
     return "Ihre Position";
   };
 
