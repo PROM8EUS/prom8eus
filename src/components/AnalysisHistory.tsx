@@ -16,11 +16,9 @@ interface AnalysisHistoryItem {
 
 interface AnalysisHistoryProps {
   lang: "de" | "en";
-  isLoggedIn?: boolean;
-  onClearAll?: () => void;
 }
 
-const AnalysisHistory = ({ lang, isLoggedIn = false, onClearAll }: AnalysisHistoryProps) => {
+const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const navigate = useNavigate();
 
@@ -137,15 +135,7 @@ const AnalysisHistory = ({ lang, isLoggedIn = false, onClearAll }: AnalysisHisto
                 {t(lang, 'history_subtitle')}
               </p>
             </div>
-            {isLoggedIn && history.length > 0 && (
-              <Button
-                variant="destructive"
-                onClick={clearAllAnalyses}
-                className="ml-4"
-              >
-                {lang === 'de' ? 'Alle löschen' : 'Delete All'}
-              </Button>
-            )}
+
           </div>
         </div>
 
@@ -187,17 +177,7 @@ const AnalysisHistory = ({ lang, isLoggedIn = false, onClearAll }: AnalysisHisto
                     </div>
                   </div>
                   
-                  {isLoggedIn && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={(e) => deleteAnalysis(e, item.id)}
-                      className="flex-shrink-0"
-                      aria-label={t(lang, 'history_delete')}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
+
                 </div>
               </CardContent>
             </Card>

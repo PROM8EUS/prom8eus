@@ -156,7 +156,7 @@ function runAnalysis(jobText: string): AnalysisResult {
   const automationTrends = analyzeAutomationTrends(analyzedTasks);
 
   return {
-    totalScore: Math.round(weightedScore),
+    totalScore: Math.round(weightedScore * 100) / 100,
     ratio,
     tasks: analyzedTasks,
     summary,
@@ -565,7 +565,7 @@ function generateEnhancedSummary(totalScore: number, ratio: { automatisierbar: n
   const trendAnalysis = tasks.filter(t => t.automationTrend === 'increasing').length;
   const trendText = trendAnalysis > taskCount * 0.5 ? 'mit steigendem Automatisierungspotenzial' : 'mit stabiler Automatisierungsentwicklung';
   
-  return `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore}% ${trendText}. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
+  return `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore.toFixed(2)}% ${trendText}. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
 }
 
 function generateEnhancedRecommendations(tasks: Task[], totalScore: number): string[] {

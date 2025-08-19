@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ScoreCircle from "@/components/ScoreCircle";
 import BarChart from "@/components/BarChart";
 import TaskList from "@/components/TaskList";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 import ShareModal from "@/components/ShareModal";
 import PageFooter from "@/components/PageFooter";
@@ -95,6 +96,9 @@ const Results = () => {
   };
 
   useEffect(() => {
+    // Smooth scroll to top when component mounts (only on initial load)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     // Try to load real analysis results from sessionStorage
     try {
       const storedResult = sessionStorage.getItem('analysisResult');
@@ -122,6 +126,11 @@ const Results = () => {
           
           // Generate share URL
           setShareUrl(generateShareUrl(parsedResult));
+          
+          // Smooth scroll to top after data is loaded (only on initial load)
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 100);
         }
       } else {
         console.log('No stored analysis result found, using mock data');
@@ -130,7 +139,36 @@ const Results = () => {
       console.error('Error loading analysis results:', error);
       // Keep using mock data as fallback
     }
-  }, []);
+  }, []); // Remove lang dependency to prevent scrolling on language switch
+  
+  // Additional effect to ensure smooth scroll after component is fully rendered (only on initial load)
+  useEffect(() => {
+    if (analysisData) {
+      // Small delay to ensure all content is rendered
+      const timer = setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []); // Only run once on mount, not when analysisData changes
+  
+  // Update task descriptions when language changes (without scrolling)
+  useEffect(() => {
+    if (analysisData && analysisData.tasks) {
+      const transformedTasks: TaskForDisplay[] = analysisData.tasks.map((task, index) => ({
+        id: String(index + 1),
+        name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
+        score: Math.round(task.score),
+        category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
+        description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`,
+        complexity: task.complexity,
+        automationTrend: task.automationTrend
+      }));
+      
+      setDisplayTasks(transformedTasks);
+    }
+  }, [lang, analysisData]); // Update when language changes, but don't scroll
   
   const automatizableTasks = displayTasks.filter(task => task.category === 'automatisierbar').length;
   const humanTasks = displayTasks.filter(task => task.category === 'mensch').length;
@@ -199,7 +237,7 @@ const Results = () => {
 
           {/* Task List */}
           <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <TaskList tasks={displayTasks} />
+            <TaskList tasks={displayTasks} lang={lang} />
           </div>
 
 
@@ -241,6 +279,9 @@ const Results = () => {
 
       {/* Footer */}
       <PageFooter />
+      
+      {/* Language Switcher */}
+      <LanguageSwitcher current={lang} />
       
       {/* Share Modal */}
       <ShareModal

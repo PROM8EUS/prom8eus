@@ -400,3 +400,4 @@ if (require.main === module) {
 }
 
 module.exports = { analyzeJobEnhanced, testJobs };
+

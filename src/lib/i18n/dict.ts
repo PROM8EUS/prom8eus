@@ -12,6 +12,44 @@ export const DICT: Record<Lang, Record<string, string>> = {
     start: "Analyse starten",
     lang_switch: "EN",    // shows opposite language
     
+    // New About page content
+    about_new_page_title: "Über PROM8EUS",
+    about_intro_main: "PROM8EUS ist eine Forschungs- und Entwicklungsplattform im Bereich Workflow Automation und Workforce-Matching.",
+    about_intro_goal: "Unser Ziel ist es, Unternehmen eine evidenzbasierte Einschätzung darüber zu ermöglichen, ob spezifische Aufgaben oder ganze Stellenprofile durch Automatisierung effizient abbildbar sind – oder ob menschliche Expertise unverzichtbar bleibt.",
+    
+    about_approach_title: "Unser Ansatz",
+    about_approach_desc: "Die Plattform verbindet Methoden der Natural Language Processing (NLP), regelbasierte Analysesysteme und heuristische Bewertungsmodelle.",
+    about_approach_input: "Input",
+    about_approach_input_desc: "Unternehmen können Aufgabenbeschreibungen oder Stellenausschreibungen manuell eingeben oder über Schnittstellen importieren.",
+    about_approach_analysis: "Analyse", 
+    about_approach_analysis_desc: "Texte werden in Einzeltasks segmentiert. Jeder Task wird anhand definierter Kriterien hinsichtlich seiner Automatisierbarkeit bewertet (0–100 Score).",
+    about_approach_output: "Output",
+    about_approach_output_desc: "Das Ergebnis ist ein differenzierter Automatisierungs-Score, ergänzt um eine klare Segmentierung in Automatisierbar und Mensch notwendig.",
+    
+    about_scientific_title: "Wissenschaftlicher Hintergrund",
+    about_scientific_hypothesis: "Die Kernidee basiert auf der Hypothese, dass sich der Automatisierbarkeitsgrad einer Tätigkeit entlang von Wiederholbarkeit, Standardisierbarkeit, kognitiver Komplexität und sozialer Interaktion messen lässt.",
+    about_scientific_foundations: "Unsere Modelle orientieren sich an folgenden Grundlagen:",
+    about_scientific_research: "Forschung zu Task Automation und Human Factors (z. B. Frey & Osborne, 2017; Brynjolfsson & McAfee, 2014).",
+    about_scientific_theory: "Theorien der Arbeitsorganisation und Prozesstheorie, insbesondere zur Zerlegung von Tätigkeiten in Basiseinheiten.",
+    about_scientific_models: "Praktische Referenzmodelle aus Workflow Automation Tools (z. B. n8n, Zapier, RPA-Systeme).",
+    
+    about_application_title: "Anwendung und Nutzen",
+    about_application_desc: "PROM8EUS bietet Unternehmen:",
+    about_application_transparency: "Transparenz",
+    about_application_transparency_desc: "Eine objektive Analyse, ob Automatisierung oder menschliche Arbeitskraft der effizienteste Weg ist.",
+    about_application_actionable: "Handlungsoptionen",
+    about_application_actionable_desc: "Zugang zu Automatisierungs-Blueprints (Workflows, Scripts, KI-Agenten) oder die Möglichkeit, eine Jobanzeige gezielt zu veröffentlichen.",
+    about_application_scientific: "Wissenschaftliche Grundlage",
+    about_application_scientific_desc: "Entscheidungen werden nicht aus dem Bauchgefühl, sondern aus systematischer Analyse heraus getroffen.",
+    
+    about_vision_title: "Vision",
+    about_vision_bridge: "PROM8EUS versteht sich als Brücke zwischen technologischer Automatisierung und menschlicher Arbeit.",
+    about_vision_marketplace: "Langfristig soll die Plattform zu einem Marktplatz für Mensch-oder-Maschine-Entscheidungen werden – und damit zu einem Instrument, das Unternehmen hilft, Ressourcen optimal einzusetzen und zukunftsfähige Arbeitsmodelle zu gestalten.",
+    
+    about_cta_title: "Bereit für die Zukunft der Arbeit?",
+    about_cta_desc: "Entdecken Sie das Automatisierungspotenzial Ihrer Aufgaben mit PROM8EUS.",
+    about_cta_button: "Jetzt analysieren",
+    
     // Header
     about: "Über uns",
     contact: "Kontakt",
@@ -60,6 +98,117 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_mensch: "Mensch erfordert",
     task_category_allgemein: "Allgemein",
     task_category_softwaredevelopment: "Software-Entwicklung",
+    
+    // AI Agents and Workflows - German
+    ai_agents_title: "Empfohlene AI-Agents",
+    workflows_title: "Empfohlene Workflows",
+    implementation_steps: "Schritte zur Umsetzung:",
+    
+    // Excel Data Processing
+    agent_excel_name: "Excel-Datenverarbeitung",
+    agent_excel_tech: "Python + Pandas + openpyxl",
+    agent_excel_step1: "Installiere Python und pip",
+    agent_excel_step2: "Führe aus: pip install pandas openpyxl",
+    agent_excel_step3: "Erstelle Skript für automatische Excel-Verarbeitung",
+    agent_excel_step4: "Setze Cron-Job für tägliche Ausführung",
+    
+    // Email Automation
+    agent_email_name: "Email-Automatisierung",
+    agent_email_tech: "Zapier (kostenlos bis 100 Tasks/Monat)",
+    agent_email_step1: "Erstelle kostenloses Zapier-Konto",
+    agent_email_step2: "Verbinde Gmail/Outlook",
+    agent_email_step3: "Erstelle Trigger für eingehende Emails",
+    agent_email_step4: "Konfiguriere automatische Antworten/Klassifizierung",
+    
+    // Report Generation
+    agent_report_name: "Automatische Berichtserstellung",
+    agent_report_tech: "Power BI + Power Automate",
+    agent_report_step1: "Importiere Datenquellen in Power BI",
+    agent_report_step2: "Erstelle Berichtsvorlagen",
+    agent_report_step3: "Setze Power Automate für automatische Versendung",
+    agent_report_step4: "Konfiguriere Zeitplan (täglich/wöchentlich)",
+    
+    // Accounting Automation
+    agent_accounting_name: "Buchhaltungsautomatisierung",
+    agent_accounting_tech: "Datev + Power Automate",
+    agent_accounting_step1: "Aktiviere Datev-API-Zugang",
+    agent_accounting_step2: "Erstelle Power Automate Workflow",
+    agent_accounting_step3: "Konfiguriere automatische Belegverarbeitung",
+    agent_accounting_step4: "Setze Regeln für Kontierung",
+    
+    // System Integration
+    agent_system_name: "System-Integration",
+    agent_system_tech: "Microsoft Power Automate",
+    agent_system_step1: "Erstelle Power Automate-Konto",
+    agent_system_step2: "Verbinde Quell- und Zielsysteme",
+    agent_system_step3: "Konfiguriere Datenübertragungsregeln",
+    agent_system_step4: "Teste und aktiviere Workflow",
+    
+    // Calendar Automation
+    agent_calendar_name: "Terminplanungsautomatisierung",
+    agent_calendar_tech: "Google Calendar + Zapier",
+    agent_calendar_step1: "Verbinde Google Calendar mit Zapier",
+    agent_calendar_step2: "Erstelle Regeln für automatische Terminplanung",
+    agent_calendar_step3: "Konfiguriere Verfügbarkeitszeiten",
+    agent_calendar_step4: "Aktiviere automatische Bestätigungen",
+    
+    // General Automation
+    agent_general_name: "Allgemeine Prozessautomatisierung",
+    agent_general_tech: "UiPath Community Edition (kostenlos)",
+    agent_general_step1: "Lade UiPath Studio kostenlos herunter",
+    agent_general_step2: "Erstelle ersten Workflow mit Drag & Drop",
+    agent_general_step3: "Teste mit Beispieldaten",
+    agent_general_step4: "Deploye auf UiPath Orchestrator",
+    
+    // Workflows
+    workflow_data_name: "Datenverarbeitungs-Pipeline",
+    workflow_data_tech: "Apache Airflow (kostenlos)",
+    workflow_data_step1: "Installiere Docker Desktop",
+    workflow_data_step2: "Führe aus: docker run apache/airflow",
+    workflow_data_step3: "Erstelle DAG für Datenverarbeitung",
+    workflow_data_step4: "Konfiguriere tägliche Ausführung",
+    
+    workflow_email_name: "Email-Management-Workflow",
+    workflow_email_tech: "n8n (kostenlos, self-hosted)",
+    workflow_email_step1: "Lade n8n herunter: npm install n8n",
+    workflow_email_step2: "Starte n8n: npx n8n",
+    workflow_email_step3: "Erstelle Email-Trigger und Aktionen",
+    workflow_email_step4: "Aktiviere Workflow",
+    
+    workflow_report_name: "Berichtsautomatisierung",
+    workflow_report_tech: "Power Automate + SharePoint",
+    workflow_report_step1: "Erstelle Power Automate-Konto",
+    workflow_report_step2: "Verbinde SharePoint als Datenquelle",
+    workflow_report_step3: "Erstelle Workflow für Berichtserstellung",
+    workflow_report_step4: "Setze Zeitplan für automatische Ausführung",
+    
+    workflow_accounting_name: "Buchhaltungs-Workflow",
+    workflow_accounting_tech: "Datev + Power Automate",
+    workflow_accounting_step1: "Aktiviere Datev-API in Ihrem System",
+    workflow_accounting_step2: "Erstelle Power Automate Workflow",
+    workflow_accounting_step3: "Konfiguriere automatische Belegverarbeitung",
+    workflow_accounting_step4: "Setze Regeln für Kontierung und Buchung",
+    
+    workflow_system_name: "System-Integrations-Workflow",
+    workflow_system_tech: "Microsoft Power Automate",
+    workflow_system_step1: "Erstelle Power Automate-Konto",
+    workflow_system_step2: "Verbinde Quell- und Zielsysteme über Connectors",
+    workflow_system_step3: "Erstelle Workflow für Datenübertragung",
+    workflow_system_step4: "Teste und aktiviere automatische Ausführung",
+    
+    workflow_calendar_name: "Terminplanungs-Workflow",
+    workflow_calendar_tech: "Zapier + Google Calendar",
+    workflow_calendar_step1: "Erstelle kostenloses Zapier-Konto",
+    workflow_calendar_step2: "Verbinde Google Calendar",
+    workflow_calendar_step3: "Erstelle Workflow für automatische Terminplanung",
+    workflow_calendar_step4: "Konfiguriere Verfügbarkeitszeiten und Regeln",
+    
+    workflow_standard_name: "Standard-Automatisierungs-Workflow",
+    workflow_standard_tech: "Zapier (kostenlos bis 100 Tasks/Monat)",
+    workflow_standard_step1: "Erstelle kostenloses Zapier-Konto",
+    workflow_standard_step2: "Wähle Trigger-App (z.B. Gmail, Google Sheets)",
+    workflow_standard_step3: "Wähle Action-App (z.B. Slack, Trello)",
+    workflow_standard_step4: "Teste und aktiviere Workflow",
     task_category_systemwork: "Systemarbeit",
     task_category_interpersonal: "Zwischenmenschlich",
     task_category_reporting: "Berichterstattung",
@@ -230,6 +379,117 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_systemwork: "System Work",
     task_category_interpersonal: "Interpersonal",
     
+    // AI Agents and Workflows - English
+    ai_agents_title: "Recommended AI Agents",
+    workflows_title: "Recommended Workflows",
+    implementation_steps: "Implementation Steps:",
+    
+    // Excel Data Processing
+    agent_excel_name: "Excel Data Processing",
+    agent_excel_tech: "Python + Pandas + openpyxl",
+    agent_excel_step1: "Install Python and pip",
+    agent_excel_step2: "Run: pip install pandas openpyxl",
+    agent_excel_step3: "Create script for automatic Excel processing",
+    agent_excel_step4: "Set up cron job for daily execution",
+    
+    // Email Automation
+    agent_email_name: "Email Automation",
+    agent_email_tech: "Zapier (free up to 100 tasks/month)",
+    agent_email_step1: "Create free Zapier account",
+    agent_email_step2: "Connect Gmail/Outlook",
+    agent_email_step3: "Create trigger for incoming emails",
+    agent_email_step4: "Configure automatic responses/classification",
+    
+    // Report Generation
+    agent_report_name: "Automatic Report Generation",
+    agent_report_tech: "Power BI + Power Automate",
+    agent_report_step1: "Import data sources into Power BI",
+    agent_report_step2: "Create report templates",
+    agent_report_step3: "Set up Power Automate for automatic sending",
+    agent_report_step4: "Configure schedule (daily/weekly)",
+    
+    // Accounting Automation
+    agent_accounting_name: "Accounting Automation",
+    agent_accounting_tech: "Datev + Power Automate",
+    agent_accounting_step1: "Activate Datev API access",
+    agent_accounting_step2: "Create Power Automate workflow",
+    agent_accounting_step3: "Configure automatic document processing",
+    agent_accounting_step4: "Set rules for account assignment",
+    
+    // System Integration
+    agent_system_name: "System Integration",
+    agent_system_tech: "Microsoft Power Automate",
+    agent_system_step1: "Create Power Automate account",
+    agent_system_step2: "Connect source and target systems",
+    agent_system_step3: "Configure data transfer rules",
+    agent_system_step4: "Test and activate workflow",
+    
+    // Calendar Automation
+    agent_calendar_name: "Calendar Scheduling Automation",
+    agent_calendar_tech: "Google Calendar + Zapier",
+    agent_calendar_step1: "Connect Google Calendar with Zapier",
+    agent_calendar_step2: "Create rules for automatic scheduling",
+    agent_calendar_step3: "Configure availability times",
+    agent_calendar_step4: "Activate automatic confirmations",
+    
+    // General Automation
+    agent_general_name: "General Process Automation",
+    agent_general_tech: "UiPath Community Edition (free)",
+    agent_general_step1: "Download UiPath Studio for free",
+    agent_general_step2: "Create first workflow with drag & drop",
+    agent_general_step3: "Test with sample data",
+    agent_general_step4: "Deploy to UiPath Orchestrator",
+    
+    // Workflows
+    workflow_data_name: "Data Processing Pipeline",
+    workflow_data_tech: "Apache Airflow (free)",
+    workflow_data_step1: "Install Docker Desktop",
+    workflow_data_step2: "Run: docker run apache/airflow",
+    workflow_data_step3: "Create DAG for data processing",
+    workflow_data_step4: "Configure daily execution",
+    
+    workflow_email_name: "Email Management Workflow",
+    workflow_email_tech: "n8n (free, self-hosted)",
+    workflow_email_step1: "Download n8n: npm install n8n",
+    workflow_email_step2: "Start n8n: npx n8n",
+    workflow_email_step3: "Create email triggers and actions",
+    workflow_email_step4: "Activate workflow",
+    
+    workflow_report_name: "Report Automation",
+    workflow_report_tech: "Power Automate + SharePoint",
+    workflow_report_step1: "Create Power Automate account",
+    workflow_report_step2: "Connect SharePoint as data source",
+    workflow_report_step3: "Create workflow for report generation",
+    workflow_report_step4: "Set schedule for automatic execution",
+    
+    workflow_accounting_name: "Accounting Workflow",
+    workflow_accounting_tech: "Datev + Power Automate",
+    workflow_accounting_step1: "Activate Datev API in your system",
+    workflow_accounting_step2: "Create Power Automate workflow",
+    workflow_accounting_step3: "Configure automatic document processing",
+    workflow_accounting_step4: "Set rules for account assignment and booking",
+    
+    workflow_system_name: "System Integration Workflow",
+    workflow_system_tech: "Microsoft Power Automate",
+    workflow_system_step1: "Create Power Automate account",
+    workflow_system_step2: "Connect source and target systems via connectors",
+    workflow_system_step3: "Create workflow for data transfer",
+    workflow_system_step4: "Test and activate automatic execution",
+    
+    workflow_calendar_name: "Calendar Scheduling Workflow",
+    workflow_calendar_tech: "Zapier + Google Calendar",
+    workflow_calendar_step1: "Create free Zapier account",
+    workflow_calendar_step2: "Connect Google Calendar",
+    workflow_calendar_step3: "Create workflow for automatic scheduling",
+    workflow_calendar_step4: "Configure availability times and rules",
+    
+    workflow_standard_name: "Standard Automation Workflow",
+    workflow_standard_tech: "Zapier (free up to 100 tasks/month)",
+    workflow_standard_step1: "Create free Zapier account",
+    workflow_standard_step2: "Choose trigger app (e.g., Gmail, Google Sheets)",
+    workflow_standard_step3: "Choose action app (e.g., Slack, Trello)",
+    workflow_standard_step4: "Test and activate workflow",
+    
     // History
     history_title: "Previous Analyses",
     history_subtitle: "Click on an analysis to view it again",
@@ -310,8 +570,43 @@ export const DICT: Record<Lang, Record<string, string>> = {
     about_balanced_desc: "Humans and machines together",
     about_story_quote: "Like Prometheus brought fire to mankind, PROM8EUS delivers the modern fire of automation.",
     about_story_vision: "Machine or human – what's the right choice for each task?",
-    about_cta_title: "Ready to get your score?",
-    about_cta_button: "Start Analysis"
+    about_cta_title: "Ready for the Future of Work?",
+    about_cta_desc: "Discover the automation potential of your tasks with PROM8EUS.",
+    about_cta_button: "Analyze Now",
+    
+    // New About page content
+    about_new_page_title: "About PROM8EUS",
+    about_intro_main: "PROM8EUS is a research and development platform in the field of Workflow Automation and Workforce-Matching.",
+    about_intro_goal: "Our goal is to provide companies with evidence-based assessments of whether specific tasks or entire job profiles can be efficiently mapped through automation – or whether human expertise remains indispensable.",
+    
+    about_approach_title: "Our Approach",
+    about_approach_desc: "The platform combines methods of Natural Language Processing (NLP), rule-based analysis systems, and heuristic evaluation models.",
+    about_approach_input: "Input",
+    about_approach_input_desc: "Companies can manually enter task descriptions or job postings or import them via interfaces.",
+    about_approach_analysis: "Analysis", 
+    about_approach_analysis_desc: "Texts are segmented into individual tasks. Each task is evaluated for its automatability based on defined criteria (0–100 score).",
+    about_approach_output: "Output",
+    about_approach_output_desc: "The result is a differentiated automation score, supplemented by a clear segmentation into automatable and human-necessary.",
+    
+    about_scientific_title: "Scientific Background",
+    about_scientific_hypothesis: "The core idea is based on the hypothesis that the degree of automatability of an activity can be measured along repeatability, standardizability, cognitive complexity, and social interaction.",
+    about_scientific_foundations: "Our models are based on the following foundations:",
+    about_scientific_research: "Research on Task Automation and Human Factors (e.g., Frey & Osborne, 2017; Brynjolfsson & McAfee, 2014).",
+    about_scientific_theory: "Theories of work organization and process theory, particularly for breaking down activities into basic units.",
+    about_scientific_models: "Practical reference models from Workflow Automation Tools (e.g., n8n, Zapier, RPA systems).",
+    
+    about_application_title: "Application and Benefits",
+    about_application_desc: "PROM8EUS offers companies:",
+    about_application_transparency: "Transparency",
+    about_application_transparency_desc: "An objective analysis of whether automation or human workforce is the most efficient path.",
+    about_application_actionable: "Action Options",
+    about_application_actionable_desc: "Access to automation blueprints (workflows, scripts, AI agents) or the ability to publish job postings in a targeted manner.",
+    about_application_scientific: "Scientific Foundation",
+    about_application_scientific_desc: "Decisions are made from systematic analysis rather than gut feeling.",
+    
+    about_vision_title: "Vision",
+    about_vision_bridge: "PROM8EUS sees itself as a bridge between technological automation and human work.",
+    about_vision_marketplace: "In the long term, the platform should become a marketplace for human-or-machine decisions – and thus an instrument that helps companies to optimally deploy resources and design future-oriented work models."
   }
 };
 

@@ -1,8 +1,12 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { resolveLang } from "@/lib/i18n/i18n";
 
 const NotFound = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const lang = resolveLang(searchParams.get("lang") || undefined);
 
   useEffect(() => {
     console.error(
@@ -19,6 +23,10 @@ const NotFound = () => {
         <a href="/" className="text-blue-500 hover:text-blue-700 underline">
           Return to Home
         </a>
+      </div>
+      
+      <div className="fixed bottom-6 right-6">
+        <LanguageSwitcher current={lang} />
       </div>
     </div>
   );

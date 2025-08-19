@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import PageFooter from "@/components/PageFooter";
+import StaticPageTemplate from "@/components/StaticPageTemplate";
 import { resolveLang, t } from "@/lib/i18n/i18n";
 import { Mail, Phone, MapPin } from "lucide-react";
 
@@ -13,18 +14,11 @@ const Contact = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <main className="flex-1 flex items-center justify-center px-6 py-20">
-        <div className="w-full max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              {t(lang, "contact_title")}
-            </h1>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-8 space-y-8">
-            <div className="space-y-8 text-left">
+      <StaticPageTemplate title={t(lang, "contact_title")} maxWidth="md">
+        <div className="space-y-8">
+                        <div className="space-y-8 text-left">
               {/* Address Section */}
-              <section>
+              <div>
                 <h2 className="text-xl font-semibold mb-4">{t(lang, "address")}</h2>
                 <div className="space-y-2 text-muted-foreground">
                   <p className="font-medium">PROM8EUS GbR</p>
@@ -33,10 +27,10 @@ const Contact = () => {
                   <p>50733 Köln</p>
                   <p>Deutschland</p>
                 </div>
-              </section>
+              </div>
 
               {/* Email Section */}
-              <section>
+              <div>
                 <h2 className="text-xl font-semibold mb-4">{t(lang, "email")}</h2>
                 <div className="space-y-2 text-muted-foreground">
                   <p>
@@ -48,10 +42,10 @@ const Contact = () => {
                     </a>
                   </p>
                 </div>
-              </section>
+              </div>
 
               {/* Phone Section */}
-              <section>
+              <div>
                 <h2 className="text-xl font-semibold mb-4">{t(lang, "phone")}</h2>
                 <div className="space-y-2 text-muted-foreground">
                   <p>
@@ -63,11 +57,10 @@ const Contact = () => {
                     </a>
                   </p>
                 </div>
-              </section>
+              </div>
             </div>
-          </div>
         </div>
-      </main>
+      </StaticPageTemplate>
       
       <PageFooter />
       

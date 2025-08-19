@@ -110,3 +110,4 @@ const AutomationTrends = ({ trends, lang }: AutomationTrendsProps) => {
 };
 
 export default AutomationTrends;
+

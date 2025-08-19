@@ -6,8 +6,6 @@ interface Task {
   label: "Automatisierbar" | "Mensch";
   category: string;
   confidence: number;
-  complexity: "low" | "medium" | "high";
-  automationTrend: "increasing" | "stable" | "decreasing";
 }
 
 interface AnalysisResult {
@@ -19,15 +17,10 @@ interface AnalysisResult {
   tasks: Task[];
   summary: string;
   recommendations: string[];
-  automationTrends: {
-    highPotential: string[];
-    mediumPotential: string[];
-    lowPotential: string[];
-  };
 }
 
 export function runAnalysis(jobText: string): AnalysisResult {
-  console.log('Starting enhanced job analysis with text length:', jobText.length);
+  console.log('Starting job analysis with text length:', jobText.length);
   
   // Step 1: Extract tasks using the advanced extractor
   const rawTasks = extractTasksAdvanced(jobText);
@@ -37,355 +30,259 @@ export function runAnalysis(jobText: string): AnalysisResult {
   const extractedTasks = rawTasks.map(t => t.text);
   console.log('Tasks for analysis:', extractedTasks.length);
 
-  // Step 2: Analyze and score each task with enhanced logic
-  const analyzedTasks = extractedTasks.map(taskText => analyzeTaskEnhanced(taskText));
+  // Step 2: Analyze and score each task
+  const analyzedTasks = extractedTasks.map(taskText => analyzeTask(taskText));
 
-  // Step 3: Calculate aggregated scores with complexity weighting
+  // Step 3: Calculate aggregated scores
   const totalTasks = analyzedTasks.length;
   const automatisierbareCount = analyzedTasks.filter(t => t.label === "Automatisierbar").length;
   const menschCount = analyzedTasks.filter(t => t.label === "Mensch").length;
 
-  // Weighted score calculation considering complexity
-  const complexityWeights = { low: 1, medium: 1.2, high: 1.5 };
-  const weightedScore = totalTasks > 0 
-    ? analyzedTasks.reduce((sum, task) => sum + (task.score * complexityWeights[task.complexity]), 0) / 
-      analyzedTasks.reduce((sum, task) => sum + complexityWeights[task.complexity], 0)
-    : 0;
+  const weightedScore = totalTasks > 0 ? analyzedTasks.reduce((sum, task) => sum + task.score, 0) / totalTasks : 0;
   
   const ratio = {
     automatisierbar: totalTasks > 0 ? Math.round((automatisierbareCount / totalTasks) * 100) : 0,
     mensch: totalTasks > 0 ? Math.round((menschCount / totalTasks) * 100) : 0
   };
 
-  // Step 4: Generate enhanced summary and recommendations
-  const summary = generateEnhancedSummary(weightedScore, ratio, totalTasks, analyzedTasks);
-  const recommendations = generateEnhancedRecommendations(analyzedTasks, weightedScore);
-  const automationTrends = analyzeAutomationTrends(analyzedTasks);
+  // Step 4: Generate summary and recommendations
+  const summary = generateSummary(weightedScore, ratio, totalTasks);
+  const recommendations = generateRecommendations(analyzedTasks, weightedScore);
 
   return {
     totalScore: Math.round(weightedScore),
     ratio,
     tasks: analyzedTasks,
     summary,
-    recommendations,
-    automationTrends
+    recommendations
   };
 }
 
-function analyzeTaskEnhanced(taskText: string): Task {
-  console.log(`ENHANCED ANALYZING TASK: "${taskText}"`);
+// Remove the old extractTasks function - now using the advanced extractor
+
+function analyzeTask(taskText: string): Task {
+  console.log(`ANALYZING TASK: "${taskText}"`);
   const lowerText = taskText.toLowerCase();
   
-  // Enhanced automation indicators with technology trends
+  // Define automation indicators (with English keywords added)
   const automationSignals = {
-    // High automation potential categories
-    dataEntry: {
-      keywords: [
-        'datenerfassung', 'dateneingabe', 'eingabe', 'erfassung', 'eintragung',
-        'data entry', 'input', 'entry', 'recording', 'logging'
-      ],
-      weight: 45,
-      complexity: "low" as const,
-      trend: "increasing" as const
-    },
-    reporting: {
-      keywords: [
-        'bericht', 'report', 'auswertung', 'statistik', 'kennzahlen', 'dashboard',
-        'reporting', 'analytics', 'metrics', 'statistics', 'kpi'
-      ],
-      weight: 40,
-      complexity: "medium" as const,
-      trend: "increasing" as const
-    },
-    systemIntegration: {
-      keywords: [
-        'api', 'integration', 'synchronisation', 'datenübertragung', 'systemverbindung',
-        'system integration', 'data transfer', 'synchronization', 'interface'
-      ],
-      weight: 50,
-      complexity: "high" as const,
-      trend: "increasing" as const
-    },
-    routineProcessing: {
-      keywords: [
-        'routine', 'standard', 'wiederkehrend', 'automatisch', 'batch', 'massenvorgang',
-        'routine processing', 'standardized', 'recurring', 'automated', 'batch processing'
-      ],
-      weight: 35,
-      complexity: "low" as const,
-      trend: "increasing" as const
-    },
-    // Medium automation potential
-    documentation: {
-      keywords: [
-        'dokumentation', 'protokoll', 'aufzeichnung', 'dokumentieren', 'notieren',
-        'documentation', 'recording', 'logging', 'documenting', 'noting'
-      ],
-      weight: 30,
-      complexity: "medium" as const,
-      trend: "stable" as const
-    },
-    monitoring: {
-      keywords: [
-        'überwachung', 'monitoring', 'kontrolle', 'prüfung', 'inspektion',
-        'monitoring', 'surveillance', 'inspection', 'checking', 'verification'
-      ],
-      weight: 35,
-      complexity: "medium" as const,
-      trend: "increasing" as const
-    },
-    // Traditional automation categories
     accounting: {
       keywords: [
-        'buchhaltung', 'finanzbuchhaltung', 'kontierung', 'belege', 'rechnungswesen',
-        'bookkeeping', 'accounting', 'posting', 'vouchers', 'invoicing'
+        // German - spezifische Buchhaltungsaufgaben
+        'buchhaltung', 'finanzbuchhaltung', 'kontierung', 'belege', 'rechnungswesen', 'bilanzierung',
+        'abschluss', 'monatsabschluss', 'jahresabschluss', 'umsatzsteuer', 'steuervoranmeldung',
+        'mahnwesen', 'zahlungsverkehr', 'kontoabstimmung', 'abstimmung', 'buchen', 'verbuchen',
+        // English
+        'bookkeeping', 'accounting', 'posting', 'vouchers', 'invoicing', 'reconciliation', 'entries'
       ],
-      weight: 40,
-      complexity: "medium" as const,
-      trend: "increasing" as const
+      weight: 40
     },
     dataProcessing: {
       keywords: [
-        'datenverarbeitung', 'auswertung', 'verarbeitung', 'transformation',
-        'data processing', 'analysis', 'processing', 'transformation'
+        // German
+        'datenerfassung', 'dateneingabe', 'datenverarbeitung', 'auswertung', 'statistik', 'reporting', 'report',
+        'excel', 'tabelle', 'eingabe', 'erfassung', 'archivierung', 'verwaltung', 'aktualisierung',
+        // English  
+        'data entry', 'data processing', 'analytics', 'metrics', 'dashboard', 'input', 'processing', 'reporting'
       ],
-      weight: 35,
-      complexity: "medium" as const,
-      trend: "increasing" as const
+      weight: 35
+    },
+    systemWork: {
+      keywords: [
+        // German
+        'auftragserfassung', 'systembearbeitung', 'crm', 'erp', 'software', 'datenbank', 'system',
+        'buchung', 'rechnung', 'fakturierung', 'bestellung', 'verwaltung im system', 'datev',
+        // English
+        'order processing', 'system entry', 'database', 'invoicing', 'billing', 'system management'
+      ],
+      weight: 35
+    },
+    budgetingPlanning: {
+      keywords: [
+        // German
+        'budgetplanung', 'controlling', 'kostenrechnung', 'planung', 'kalkulation', 'budgetkontrolle',
+        'finanzplanung', 'liquiditätsplanung', 'kennzahlen', 'analyse', 'auswertung',
+        // English
+        'budget planning', 'controlling', 'cost accounting', 'financial planning', 'analysis'
+      ],
+      weight: 30
+    },
+    communication: {
+      keywords: [
+        // German - nur automatisierbare Kommunikation
+        'e-mail bearbeitung', 'email bearbeitung', 'terminplanung', 'kalender', 'erinnerung', 'benachrichtigung',
+        'nachricht versenden', 'status updates', 'dokumentation', 'protokoll',
+        // English
+        'email processing', 'scheduling', 'calendar management', 'notifications', 'status updates'
+      ],
+      weight: 25
     }
   };
 
-  // Enhanced human-required indicators with context awareness
+  // Define human-required indicators (with English keywords added)
   const humanSignals = {
-    // High human requirement categories
-    creativeStrategy: {
+    collaboration: {
       keywords: [
-        'kreativ', 'innovation', 'strategie', 'vision', 'konzept', 'entwicklung',
-        'creative', 'innovation', 'strategy', 'vision', 'concept', 'development'
+        // German - Zusammenarbeit mit Menschen
+        'zusammenarbeit', 'kooperation', 'abstimmung mit', 'rücksprache', 'koordination mit',
+        'besprechung', 'meeting', 'teamarbeit', 'steuerberater', 'externe partner',
+        'kunde', 'kunden', 'mandant', 'mandanten', 'lieferant', 'lieferanten',
+        // English
+        'collaboration', 'cooperation', 'coordination with', 'meeting', 'teamwork', 'client', 'supplier'
       ],
-      weight: 60,
-      complexity: "high" as const,
-      trend: "decreasing" as const
+      weight: 50
     },
-    interpersonalCommunication: {
+    interpersonal: {
       keywords: [
-        'beratung', 'kundenberatung', 'telefonische beratung', 'persönliche beratung',
-        'consultation', 'customer service', 'phone consultation', 'personal advice'
+        // German - interpersonal skills, personality traits, social abilities
+        'beratung', 'kundenberatung', 'telefonische beratung', 'persönliche beratung', 'verkaufsgespräch',
+        'freundlich', 'professionell', 'auftreten', 'erscheinungsbild', 'kommunikativ', 'empathie', 'einfühlungsvermögen',
+        'geduld', 'höflichkeit', 'respekt', 'verständnis', 'zwischenmenschlich', 'sozial', 'charisma', 'ausstrahlung',
+        'persönlichkeit', 'menschlich', 'emotional', 'diplomatie', 'takt', 'fingerspitzengefühl',
+        'kundenservice', 'kundenkontakt', 'beziehungsaufbau',
+        // English
+        'customer service', 'consultation', 'personal advice', 'sales conversation', 'relationship building',
+        'friendly', 'professional', 'demeanor', 'appearance', 'interpersonal', 'empathy', 'patience', 
+        'courtesy', 'respect', 'understanding', 'social', 'charisma', 'personality', 'emotional', 'diplomacy'
       ],
-      weight: 55,
-      complexity: "medium" as const,
-      trend: "stable" as const
+      weight: 45
     },
-    emotionalIntelligence: {
+    salesNegotiation: {
       keywords: [
-        'empathie', 'einfühlungsvermögen', 'emotional', 'menschlich', 'verständnis',
-        'empathy', 'emotional intelligence', 'understanding', 'human', 'compassion'
+        // German
+        'verkauf', 'verkaufen', 'vertrieb', 'akquise', 'verhandlung', 'überzeugung', 'produktberatung',
+        'abschluss', 'deal', 'verkaufsgespräch', 'kundengewinnung', 'umsatz',
+        // English
+        'sales', 'selling', 'negotiation', 'persuasion', 'closing', 'deal', 'revenue', 'acquisition'
       ],
-      weight: 65,
-      complexity: "high" as const,
-      trend: "decreasing" as const
+      weight: 45
     },
-    negotiationSales: {
+    creative: {
       keywords: [
-        'verkauf', 'verhandlung', 'überzeugung', 'abschluss', 'deal', 'umsatz',
-        'sales', 'negotiation', 'persuasion', 'closing', 'deal', 'revenue'
+        // German
+        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming', 'entwicklung',
+        // English
+        'creative', 'innovation', 'strategy', 'design', 'conceptual', 'vision', 'ideation', 'brainstorm'
       ],
-      weight: 50,
-      complexity: "high" as const,
-      trend: "stable" as const
+      weight: 35
     },
-    leadershipManagement: {
+    leadership: {
       keywords: [
-        'führung', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung',
-        'leadership', 'management', 'supervision', 'mentoring', 'team leadership'
+        // German
+        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung', 'koordination',
+        // English
+        'leadership', 'manage', 'lead', 'mentor', 'guide', 'supervise', 'coordinate', 'stakeholder'
       ],
-      weight: 45,
-      complexity: "high" as const,
-      trend: "stable" as const
+      weight: 30
     },
     problemSolving: {
       keywords: [
-        'problemlösung', 'konflikt', 'schwierige situation', 'entscheidung', 'kritisch',
-        'problem solving', 'conflict resolution', 'difficult situation', 'decision making', 'critical'
+        // German
+        'reklamation', 'beschwerde', 'problemlösung', 'konflikt', 'schwierige situation', 'komplexe fälle',
+        'entscheidung', 'kritisch', 'herausfordernd', 'individuell',
+        // English
+        'complaint', 'problem solving', 'conflict', 'complex cases', 'decision making', 'critical', 'challenging'
       ],
-      weight: 40,
-      complexity: "high" as const,
-      trend: "decreasing" as const
-    },
-    collaboration: {
-      keywords: [
-        'zusammenarbeit', 'kooperation', 'teamarbeit', 'abstimmung', 'koordination',
-        'collaboration', 'cooperation', 'teamwork', 'coordination', 'partnership'
-      ],
-      weight: 35,
-      complexity: "medium" as const,
-      trend: "stable" as const
+      weight: 30
     }
   };
 
   let automationScore = 0;
   let humanScore = 0;
   let detectedCategory = 'Allgemein';
-  let complexity = "medium" as const;
-  let automationTrend = "stable" as const;
 
-  // Calculate automation score with context awareness
+  // Calculate automation score
   Object.entries(automationSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
     if (matches.length > 0) {
       console.log(`AUTOMATION MATCH in ${category}:`, matches);
       automationScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
-      complexity = signal.complexity;
-      automationTrend = signal.trend;
     }
   });
 
-  // Calculate human score with context awareness
+  // Calculate human score  
   Object.entries(humanSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
     if (matches.length > 0) {
       console.log(`HUMAN MATCH in ${category}:`, matches);
       humanScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
-      complexity = signal.complexity;
-      automationTrend = signal.trend;
     }
   });
 
-  console.log(`ENHANCED SCORES: automation=${automationScore}, human=${humanScore}, category=${detectedCategory}`);
+  console.log(`SCORES: automation=${automationScore}, human=${humanScore}, category=${detectedCategory}`);
 
-  // Enhanced scoring algorithm with context consideration
-  const baseScore = 20; // Lower base score for more conservative assessment
-  const contextMultiplier = getContextMultiplier(lowerText);
-  const netScore = Math.max(0, Math.min(100, (automationScore - humanScore) * contextMultiplier + baseScore));
+  // Determine final score and label
+  const baseScore = 25; // Noch niedrigerer Basis-Score
+  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + baseScore));
   
-  // Enhanced confidence calculation
+  // Verbesserte Confidence-Berechnung
   const totalSignalStrength = Math.max(automationScore, humanScore);
-  const confidence = Math.min(95, Math.max(20, (totalSignalStrength / 30) * 60));
+  const confidence = Math.min(95, Math.max(15, (totalSignalStrength / 25) * 50)); // Realistischere Confidence
   
-  // Improved labeling logic with context awareness
+  // Ausgewogenere Bewertung:
   let label: "Automatisierbar" | "Mensch";
-  if (humanScore > automationScore * 1.2) {
-    // Strong human signals
-    label = "Mensch";
-  } else if (automationScore > humanScore * 1.5 && netScore >= 60) {
-    // Strong automation signals
+  if (automationScore > humanScore && netScore >= 50) {
+    // Wenn Automation-Signale stärker sind und Score >= 50 → Automatisierbar
     label = "Automatisierbar";
-  } else if (automationScore >= 40 && netScore >= 50) {
-    // Moderate automation signals
+  } else if (humanScore > automationScore * 2) {
+    // Nur bei sehr starken menschlichen Signalen → Mensch
+    label = "Mensch";
+  } else if (automationScore >= 20) {
+    // Bei moderaten Automation-Signalen → Automatisierbar
     label = "Automatisierbar";
   } else {
-    // Conservative default
+    // Bei Zweifel → Mensch (aber weniger konservativ)
     label = "Mensch";
   }
 
   return {
     text: taskText,
-    score: Math.round(netScore),
+    score: netScore,
     label,
     category: detectedCategory,
-    confidence: Math.round(confidence),
-    complexity,
-    automationTrend
+    confidence: Math.min(100, confidence)
   };
 }
 
-function getContextMultiplier(text: string): number {
-  // Context-aware multiplier based on task characteristics
-  if (text.includes('ai') || text.includes('machine learning') || text.includes('automatisier')) {
-    return 1.3; // Higher automation potential for AI/ML tasks
-  }
-  if (text.includes('kreativ') || text.includes('strategie') || text.includes('innovation')) {
-    return 0.7; // Lower automation potential for creative/strategic tasks
-  }
-  if (text.includes('routine') || text.includes('standard') || text.includes('wiederkehrend')) {
-    return 1.2; // Higher automation potential for routine tasks
-  }
-  if (text.includes('kunde') || text.includes('beratung') || text.includes('persönlich')) {
-    return 0.6; // Lower automation potential for customer-facing tasks
-  }
-  return 1.0; // Default multiplier
+function generateSummary(totalScore: number, ratio: { automatisierbar: number; mensch: number }, taskCount: number): string {
+  const scoreCategory = totalScore >= 75 ? 'hoch' : totalScore >= 50 ? 'mittel' : 'niedrig';
+  
+  return `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore}%. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
 }
 
-function generateEnhancedSummary(totalScore: number, ratio: { automatisierbar: number; mensch: number }, taskCount: number, tasks: Task[]): string {
-  const scoreCategory = totalScore >= 70 ? 'hoch' : totalScore >= 50 ? 'mittel' : 'niedrig';
-  const complexityBreakdown = tasks.reduce((acc, task) => {
-    acc[task.complexity] = (acc[task.complexity] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const trendAnalysis = tasks.filter(t => t.automationTrend === 'increasing').length;
-  const trendText = trendAnalysis > taskCount * 0.5 ? 'mit steigendem Automatisierungspotenzial' : 'mit stabiler Automatisierungsentwicklung';
-  
-  return `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore}% ${trendText}. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
-}
-
-function generateEnhancedRecommendations(tasks: Task[], totalScore: number): string[] {
+function generateRecommendations(tasks: Task[], totalScore: number): string[] {
   const recommendations: string[] = [];
   
-  // Analyze task categories and trends
+  // Count task categories
   const automationTasks = tasks.filter(t => t.label === "Automatisierbar");
-  const highComplexityTasks = tasks.filter(t => t.complexity === "high");
-  const increasingTrendTasks = tasks.filter(t => t.automationTrend === "increasing");
-  
   const categories = automationTasks.reduce((acc, task) => {
     acc[task.category] = (acc[task.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  // High automation potential recommendations
   if (totalScore >= 70) {
-    recommendations.push('Hohe Automatisierungseignung - Implementierung von RPA und Workflow-Automatisierung empfohlen');
+    recommendations.push('Hohe Automatisierungseignung - Implementierung von Workflow-Tools empfohlen');
   }
   
-  if (categories['dataEntry'] >= 2) {
-    recommendations.push('OCR und intelligente Datenerfassung für Dokumentenverarbeitung einsetzen');
+  if (categories['dataProcessing'] >= 2) {
+    recommendations.push('Excel-Automatisierung oder Business Intelligence Tools einsetzen');
   }
   
-  if (categories['reporting'] >= 2) {
-    recommendations.push('Business Intelligence Tools und automatisierte Reporting-Pipelines implementieren');
+  if (categories['communication'] >= 2) {
+    recommendations.push('Email-Automatisierung und Terminplanungstools implementieren');
   }
   
-  if (categories['systemIntegration'] >= 2) {
-    recommendations.push('API-First Architektur und Microservices für Systemintegration entwickeln');
+  if (categories['systems'] >= 2) {
+    recommendations.push('API-Integrationen zwischen bestehenden Systemen prüfen');
   }
   
-  if (increasingTrendTasks.length >= 3) {
-    recommendations.push('KI-gestützte Automatisierung für Aufgaben mit steigendem Automatisierungspotenzial prüfen');
-  }
-  
-  // Medium automation potential
-  if (totalScore >= 40 && totalScore < 70) {
-    recommendations.push('Selektive Automatisierung - Fokus auf Routineaufgaben und unterstützende Prozesse');
-  }
-  
-  if (categories['monitoring'] >= 2) {
-    recommendations.push('Predictive Analytics und proaktive Monitoring-Systeme einführen');
-  }
-  
-  // Low automation potential
   if (totalScore < 40) {
-    recommendations.push('Fokus auf menschliche Stärken - Automatisierung nur für administrative Unterstützung');
-  }
-  
-  if (highComplexityTasks.length >= 3) {
-    recommendations.push('Hybrid-Ansatz: Automatisierung für Routineaufgaben, menschliche Expertise für komplexe Entscheidungen');
+    recommendations.push('Fokus auf menschliche Stärken - Automatisierung nur für unterstützende Prozesse');
   }
 
-  return recommendations.length > 0 ? recommendations : ['Individuelle Prozessanalyse für maßgeschneiderte Automatisierungsstrategie durchführen'];
-}
-
-function analyzeAutomationTrends(tasks: Task[]) {
-  const highPotential = tasks.filter(t => t.automationTrend === "increasing" && t.label === "Automatisierbar").map(t => t.text);
-  const mediumPotential = tasks.filter(t => t.automationTrend === "stable" && t.label === "Automatisierbar").map(t => t.text);
-  const lowPotential = tasks.filter(t => t.automationTrend === "decreasing" || t.label === "Mensch").map(t => t.text);
-  
-  return {
-    highPotential: highPotential.slice(0, 5), // Top 5
-    mediumPotential: mediumPotential.slice(0, 5),
-    lowPotential: lowPotential.slice(0, 5)
-  };
+  return recommendations.length > 0 ? recommendations : ['Individuelle Analyse der Arbeitsprozesse für spezifische Empfehlungen durchführen'];
 }
 
 function calculateSimilarity(str1: string, str2: string): number {
