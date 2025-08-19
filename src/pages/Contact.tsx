@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import PageFooter from "@/components/PageFooter";
 import { resolveLang, t } from "@/lib/i18n/i18n";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 const Contact = () => {
   const [searchParams] = useSearchParams();

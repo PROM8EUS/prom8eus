@@ -1,12 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Bot, User, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LandingScoreCircle from "@/components/LandingScoreCircle";
 import InfoCard from "@/components/InfoCard";
 import PageFooter from "@/components/PageFooter";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { resolveLang } from "@/lib/i18n/i18n";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const lang = resolveLang(searchParams.get("lang") || undefined);
 
   const handleStartAnalysis = () => {
     navigate('/');
@@ -110,6 +114,10 @@ const Landing = () => {
 
       {/* Footer */}
       <PageFooter />
+      
+      <div className="fixed bottom-6 right-6">
+        <LanguageSwitcher current={lang} />
+      </div>
     </div>
   );
 };
