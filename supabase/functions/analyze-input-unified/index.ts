@@ -600,6 +600,26 @@ function analyzeTask(taskText: string): Task {
   
   // Define automation indicators (with English keywords added)
   const automationSignals = {
+    softwareDevelopment: {
+      keywords: [
+        // German - development tasks with high automation potential
+        'debugging', 'fehlerbehebung', 'bug fixing', 'testing', 'testen', 'unit test', 'integration test',
+        'code review', 'code-review', 'code analyse', 'static analysis', 'linting', 'refactoring',
+        'deployment', 'continuous integration', 'ci/cd', 'automatisierung', 'automation',
+        'dokumentation', 'code documentation', 'api documentation', 'logging', 'monitoring',
+        'performance optimierung', 'performance tuning', 'profiling', 'benchmarking',
+        'versionskontrolle', 'git', 'version control', 'merge', 'pull request', 'commit',
+        'build', 'kompilierung', 'packaging', 'bundling', 'minification',
+        'linter', 'formatter', 'prettier', 'eslint', 'quality gates',
+        // English
+        'debugging', 'bug fixing', 'testing', 'unit testing', 'integration testing', 'e2e testing',
+        'code review', 'static analysis', 'linting', 'refactoring', 'deployment',
+        'continuous integration', 'automation', 'documentation', 'logging', 'monitoring',
+        'performance optimization', 'profiling', 'benchmarking', 'version control',
+        'build process', 'compilation', 'packaging', 'quality assurance'
+      ],
+      weight: 50
+    },
     accounting: {
       keywords: [
         // German - spezifische Buchhaltungsaufgaben
