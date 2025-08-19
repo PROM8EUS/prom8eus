@@ -34,10 +34,10 @@ const MainContent = () => {
         {/* Headline */}
         <div className="space-y-4">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
-            Intelligente Textanalyse
+            Automatisierungspotenzial sofort erkennen
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Fügen Sie Ihre Aufgabenbeschreibung oder Stellenanzeige ein und lassen Sie sie von unserer KI analysieren.
+            Fügen Sie Ihre Aufgabenbeschreibung oder Stellenanzeige ein – unsere KI zeigt Ihnen, welche Teile automatisierbar sind.
           </p>
         </div>
 
@@ -45,7 +45,7 @@ const MainContent = () => {
         <div className="space-y-6">
           <div className="relative">
             <Textarea
-              placeholder="Fügen Sie hier Ihre Aufgabenbeschreibung oder Stellenanzeige ein…"
+              placeholder="Aufgabenbeschreibung oder Stellenanzeige hier einfügen …"
               value={text}
               onChange={(e) => setText(e.target.value)}
               className="min-h-[300px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors"
@@ -64,7 +64,7 @@ const MainContent = () => {
 
         {/* Features hint */}
         <div className="text-sm text-muted-foreground">
-          Nutzen Sie unsere KI-gestützte Analyse für präzise Einblicke in Ihre Texte
+          KI-gestützte Analyse für klare Einblicke in Ihre Aufgaben.
         </div>
       </div>
     </main>
