@@ -106,9 +106,18 @@ serve(async (req) => {
       }
     }
 
-    // Validate content length
-    if (!analysisText || analysisText.length < 200) {
+    // Validate content length - allow shorter inputs for single tasks
+    if (!analysisText || analysisText.trim().length < 5) {
       throw new Error("Zu wenig Inhalt gefunden. Bitte fügen Sie mehr Text ein oder wählen Sie eine andere Quelle.");
+    }
+
+    // For very short inputs (likely single tasks), create a simple task structure
+    let isSimpleTask = false;
+    if (analysisText.length < 100 && !analysisText.includes('\n') && analysisText.split(' ').length <= 10) {
+      console.log('Detected simple task input, analyzing as single task');
+      isSimpleTask = true;
+      // Wrap single task in a structure that the analysis can work with
+      analysisText = `Aufgabe: ${analysisText.trim()}`;
     }
 
     console.log(`Analyzing text with ${analysisText.length} characters`);
@@ -345,23 +354,32 @@ function runAnalysis(jobText: string): AnalysisResult {
 function extractTasks(text: string): RawTask[] {
   const lines = text.split(/\r?\n/).map(l => clean(l)).filter(Boolean);
 
+  // Check if this is a simple wrapped task (e.g., "Aufgabe: boden fegen")
+  if (lines.length === 1 && lines[0].match(/^aufgabe:\s*/i)) {
+    const taskText = lines[0].replace(/^aufgabe:\s*/i, '').trim();
+    if (taskText) {
+      console.log('Detected single wrapped task:', taskText);
+      return [{ text: taskText, source: "verbline" }];
+    }
+  }
+
   // Section detection patterns
   const SECTION_START = new RegExp(
     [
-      // DE
-      "\\b(aufgaben|verantwortlichkeiten|zuständigkeiten|tätigkeiten|zur rolle|rolle|deine aufgaben)\\b",
-      // EN
-      "\\b(responsibilities|duties|what you will do|role|your role|tasks)\\b",
+      // DE - erweiterte Aufgaben-Überschriften
+      "\\b(aufgaben|deine aufgaben|ihre aufgaben|zur rolle|rolle|verantwortlichkeiten|zuständigkeiten|tätigkeiten|das machst du|du machst|du übernimmst|hauptaufgaben)\\b",
+      // EN - erweiterte Responsibility-Überschriften  
+      "\\b(responsibilities|duties|role|your role|tasks|what you will do|what you'll do|job duties|key responsibilities|main responsibilities|primary responsibilities)\\b",
     ].join("|"),
     "i"
   );
 
-  const SECTION_IGNORE = new RegExp(
+  const SECTION_END = new RegExp(
     [
-      // DE
-      "\\b(hard facts|details zum jobangebot|benefits|leistungen|profil|dein profil|anforderungen|qualifikationen|kontakt)\\b",
-      // EN
-      "\\b(benefits|perks|about you|requirements|qualifications|contact|about us|company)\\b",
+      // DE - Abschnitte die Aufgaben beenden
+      "\\b(profil|dein profil|ihr profil|anforderungen|qualifikationen|voraussetzungen|hard facts|details zum jobangebot|benefits|leistungen|wir bieten|das bieten wir|kontakt|über uns|unternehmen|standort|arbeitsplatz)\\b",
+      // EN - Abschnitte die Aufgaben beenden
+      "\\b(profile|about you|requirements|qualifications|prerequisites|skills|experience|benefits|perks|what we offer|we offer|contact|about us|company|location|workplace|nice to have)\\b",
     ].join("|"),
     "i"
   );
@@ -375,9 +393,12 @@ function extractTasks(text: string): RawTask[] {
       break; 
     }
   }
+  
+  // Falls kein expliziter Aufgaben-Abschnitt gefunden, nehme den ganzen Text
   let scoped = startIdx >= 0 ? lines.slice(startIdx + 1) : lines;
 
-  const stopAt = scoped.findIndex(l => SECTION_IGNORE.test(l));
+  // 2) Bis zur nächsten irrelevanten Section
+  const stopAt = scoped.findIndex(l => SECTION_END.test(l));
   if (stopAt >= 0) {
     console.log(`Stopping at ignore section: "${scoped[stopAt]}"`);
     scoped = scoped.slice(0, stopAt);
@@ -385,54 +406,81 @@ function extractTasks(text: string): RawTask[] {
 
   console.log(`Analyzing ${scoped.length} lines in responsibilities section`);
 
-  // 2) Collect bullets
+  // 3) Bullets einsammeln (priorisiert)
   const bullets: RawTask[] = [];
-  const BULLET = /^\s*(?:[-–*•●▪]|[0-9]+\.)\s+(.+)$/i;
+  const BULLET = /^\s*(?:[-–—*•●▪▫◦‣⁃]|[0-9]+\.|\([0-9]+\)|[a-z]\.|\([a-z]\))\s+(.+)$/i;
   
   for (const l of scoped) {
+    if (isHeadingOrIntro(l) || isFluff(l)) continue;
+    
     const m = l.match(BULLET);
-    if (m && m[1]) {
+    if (m && m[1] && m[1].length >= 10) { // Mindestlänge für sinnvolle Tasks
       const txt = shorten(clean(m[1]));
-      if (txt.length >= 6) bullets.push({ text: txt, source: "bullet" });
+      if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
     }
   }
 
   console.log(`Found ${bullets.length} bullet points`);
 
-  // 3) Fallback: Verb lines (if no bullets found)
+  // 4) Fallback: Verb-Linien (nur falls keine oder wenige Bullets)
   const VERB_LINE = new RegExp(
     [
       // DE (Infinitiv/Verb am Satzanfang oder nach Gedankenstrich)
-      "^(?:[–—-]\\s*)?(?:entwickeln|gestalten|planen|koordinieren|analysieren|implementieren|pflegen|migrieren|übernehmen|führen|mentoren|betreuen|optimieren|automatisieren|dokumentieren|überwachen|integrieren)\\b",
-      // EN
-      "^(?:[–—-]\\s*)?(?:develop|design|plan|coordinate|analy[sz]e|implement|maintain|migrate|lead|mentor|own|optimi[sz]e|automate|document|monitor|integrate|write|build|create|review|participate|contribute|triage|debug|provide|ensure|track|resolve)\\b",
+      "^(?:[–—-]\\s*)?(?:du\\s+)?(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)\\b",
+      // DE (Du-Form)
+      "^du\\s+(?:entwickelst|gestaltest|planst|koordinierst|analysierst|implementierst|pflegst|migrierst|übernimmst|führst|mentorst|betreust|optimierst|automatisierst|dokumentierst|überwachst|integrierst|erstellst|verwaltst|unterstützt|leitest|bearbeitest|durchführst|sicherstellst|verantwortest)",
+      // EN (Imperativ/3rd Person)
+      "^(?:[–—-]\\s*)?(?:develop|design|plan|coordinate|analy[sz]e|implement|maintain|migrate|lead|mentor|own|optimi[sz]e|automate|document|monitor|integrate|create|manage|support|handle|execute|ensure|oversee|build|test|deploy)\\b",
     ].join("|"),
     "i"
   );
 
-  const verbLines: RawTask[] = bullets.length
+  const verbLines: RawTask[] = bullets.length >= 3 
     ? []
     : scoped
-        .filter(l => VERB_LINE.test(l))
-        .map(l => ({ text: shorten(clean(l)), source: "verbline" }));
+        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && VERB_LINE.test(l))
+        .map(l => ({ text: shorten(clean(l)), source: "verbline" as const }))
+        .filter(t => t.text.length >= 10);
 
   console.log(`Found ${verbLines.length} verb lines as fallback`);
 
-  // 4) Combine and deduplicate
+  // 5) Kombinieren + deduplizieren
   const dedup = new Map<string, RawTask>();
   for (const t of [...bullets, ...verbLines]) {
-    const key = t.text.toLowerCase();
-    if (!dedup.has(key)) dedup.set(key, t);
+    const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
+    if (!dedup.has(key) && !isFluff(t.text)) {
+      dedup.set(key, t);
+    }
   }
 
-  // 5) Filter noise
-  const NOISE = /\b(hard facts|details|benefits|profil|qualifikationen|anforderungen|requirement|qualification|benefit|perk)\b/i;
+  // 6) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
   const result = Array.from(dedup.values())
-    .filter(t => !NOISE.test(t.text))
-    .slice(0, 30);
+    .sort((a, b) => b.text.length - a.text.length)
+    .slice(0, 20); // Max 20 Tasks
 
   console.log(`Final extracted tasks: ${result.length}`);
   return result;
+}
+
+// Floskeln und überflüssige Begriffe
+const FLUFF_PATTERNS = [
+  /\b(hard facts|details|benefits|profil|qualifikationen|anforderungen|requirement|qualification|benefit|perk|nice to have|plus|bonus)\b/i,
+  /^\s*(?:weitere|additional|other|more)\s+/i, // "Weitere Aufgaben", "Additional duties"
+  /^\s*(?:sonstige|miscellaneous|various)\s+/i,
+  /\b(?:etc\.?|usw\.?|and more|and similar)\s*$/i
+];
+
+function isFluff(text: string): boolean {
+  return FLUFF_PATTERNS.some(pattern => pattern.test(text));
+}
+
+function isHeadingOrIntro(text: string): boolean {
+  const headingPatterns = [
+    /^(?:aufgaben|deine aufgaben|responsibilities|duties|role|tasks):?\s*$/i,
+    /^(?:zu|in|for|as)\s+(?:dieser|your|this|the)\s+(?:stelle|position|role)/i,
+    /^(?:als|as)\s+(?:unser|our)/i
+  ];
+  return headingPatterns.some(pattern => pattern.test(text));
 }
 
 function clean(s: string): string {
