@@ -26,7 +26,7 @@ const Legal = () => {
                 <section>
                   <h2 className="text-xl font-semibold mb-4">Angaben gemäß § 5 TMG</h2>
                   <div className="space-y-2 text-muted-foreground">
-                    <p className="font-medium text-foreground">prom8eus GbR</p>
+                    <p className="font-medium text-foreground">PROM8EUS GbR</p>
                     <p>vertreten durch Thomas Fritsch und André Sheydin</p>
                     <p>c/o ABCDATA</p>
                     <p>Niehler Straße 44a</p>
