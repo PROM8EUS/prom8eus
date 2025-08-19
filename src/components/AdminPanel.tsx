@@ -5,15 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Shield, Eye, EyeOff } from "lucide-react";
 
-// Geheimer Admin-Schlüssel - in Produktion über Environment Variable setzen
-const ADMIN_SECRET = "admin123"; // Ändern Sie diesen Wert!
+// Sicherer Admin-Schlüssel - wird bei jedem App-Start neu generiert
+const generateSecretKey = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let result = '';
+  for (let i = 0; i < 16; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// Generiere bei App-Start einen neuen Admin-Schlüssel
+const ADMIN_SECRET = generateSecretKey();
+console.log('🔐 Admin-Schlüssel für diese Session:', ADMIN_SECRET);
 
 interface AdminPanelProps {
   lang: "de" | "en";
-  onAdminModeChange: (isAdmin: boolean) => void;
+  isVisible: boolean;
+  onClose: () => void;
 }
 
-const AdminPanel = ({ lang, onAdminModeChange }: AdminPanelProps) => {
+const AdminPanel = ({ lang, isVisible, onClose }: AdminPanelProps) => {
   const [adminKey, setAdminKey] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -22,7 +34,6 @@ const AdminPanel = ({ lang, onAdminModeChange }: AdminPanelProps) => {
   const checkAdminKey = () => {
     if (adminKey === ADMIN_SECRET) {
       setIsAdmin(true);
-      onAdminModeChange(true);
       loadAllAnalyses();
     } else {
       alert(lang === 'de' ? 'Falscher Admin-Schlüssel!' : 'Wrong admin key!');
@@ -81,7 +92,7 @@ const AdminPanel = ({ lang, onAdminModeChange }: AdminPanelProps) => {
   const exitAdminMode = () => {
     setIsAdmin(false);
     setAdminKey("");
-    onAdminModeChange(false);
+    onClose();
   };
 
   const formatDate = (timestamp: number) => {
@@ -95,10 +106,14 @@ const AdminPanel = ({ lang, onAdminModeChange }: AdminPanelProps) => {
     });
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   if (!isAdmin) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <Card className="w-80">
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <Card className="w-96">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
@@ -106,6 +121,12 @@ const AdminPanel = ({ lang, onAdminModeChange }: AdminPanelProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              {lang === 'de' 
+                ? `Schlüssel wurde in der Konsole angezeigt. Drücke F12 → Console`
+                : `Key was shown in console. Press F12 → Console`
+              }
+            </div>
             <div className="relative">
               <Input
                 type={showKey ? "text" : "password"}
@@ -123,9 +144,14 @@ const AdminPanel = ({ lang, onAdminModeChange }: AdminPanelProps) => {
                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             </div>
-            <Button onClick={checkAdminKey} className="w-full">
-              {lang === 'de' ? 'Anmelden' : 'Login'}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={checkAdminKey} className="flex-1">
+                {lang === 'de' ? 'Anmelden' : 'Login'}
+              </Button>
+              <Button variant="outline" onClick={onClose}>
+                {lang === 'de' ? 'Abbrechen' : 'Cancel'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

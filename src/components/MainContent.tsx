@@ -8,6 +8,7 @@ import { extractJobTextFromUrl } from "@/lib/extractJobText";
 import LoadingPage from "./LoadingPage";
 import AnalysisHistory from "./AnalysisHistory";
 import AdminPanel from "./AdminPanel";
+import Footer from "./Footer";
 import { DebugModal } from "./DebugModal";
 import { AlertTriangle, Bug } from "lucide-react";
 import { t } from "@/lib/i18n/i18n";
@@ -22,7 +23,7 @@ interface MainContentProps {
 const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [adminModalVisible, setAdminModalVisible] = useState(false);
   const [debugModalOpen, setDebugModalOpen] = useState(false);
   const [debugData, setDebugData] = useState<{
     rawText: string;
@@ -363,10 +364,17 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
       />
 
       {/* Analysis History */}
-      <AnalysisHistory lang={lang} isAdminMode={isAdminMode} />
+      <AnalysisHistory lang={lang} />
 
       {/* Admin Panel */}
-      <AdminPanel lang={lang} onAdminModeChange={setIsAdminMode} />
+      <AdminPanel 
+        lang={lang} 
+        isVisible={adminModalVisible}
+        onClose={() => setAdminModalVisible(false)}
+      />
+
+      {/* Footer with Admin Trigger */}
+      <Footer onAdminTrigger={() => setAdminModalVisible(true)} />
     </>
   );
 };
