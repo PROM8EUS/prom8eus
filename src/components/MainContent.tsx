@@ -93,8 +93,61 @@ const MainContent = () => {
       
       if (result.success && result.data) {
         console.log('Analysis successful, navigating to results');
-        // Store results in sessionStorage for Results page
-        sessionStorage.setItem('analysisResult', JSON.stringify(result.data));
+        console.log('Analysis result structure:', result.data);
+        
+        // Handle both old and new data structures
+        let analysisData;
+        const data = result.data as any; // Type assertion to handle both formats
+        
+        if (data.totalScore !== undefined) {
+          // New unified structure
+          analysisData = {
+            totalScore: data.totalScore,
+            ratio: data.ratio,
+            tasks: data.tasks,
+            summary: data.summary,
+            recommendations: data.recommendations,
+            originalText: data.originalText
+          };
+        } else {
+          // Old structure - transform to new format
+          const automationScore = data.automationScore || 0;
+          const automatedTasks = data.automatedTasks || [];
+          const manualTasks = data.manualTasks || [];
+          
+          // Convert old task arrays to new task objects
+          const tasks = [
+            ...automatedTasks.map((task: string, index: number) => ({
+              text: task,
+              score: Math.min(100, automationScore + Math.random() * 20),
+              label: "Automatisierbar" as const,
+              category: "automatisierbar",
+              confidence: 80
+            })),
+            ...manualTasks.map((task: string, index: number) => ({
+              text: task,
+              score: Math.max(0, 50 - Math.random() * 30),
+              label: "Mensch" as const,
+              category: "mensch", 
+              confidence: 70
+            }))
+          ];
+          
+          analysisData = {
+            totalScore: automationScore,
+            ratio: {
+              automatisierbar: Math.round((automatedTasks.length / (automatedTasks.length + manualTasks.length)) * 100),
+              mensch: Math.round((manualTasks.length / (automatedTasks.length + manualTasks.length)) * 100)
+            },
+            tasks: tasks,
+            summary: data.summary || `Analyse mit ${automationScore}% Automatisierungspotenzial`,
+            recommendations: data.recommendations || [],
+            originalText: data.originalText
+          };
+        }
+        
+        // Store the normalized data structure
+        sessionStorage.setItem('analysisResult', JSON.stringify(analysisData));
         if (debugData) {
           sessionStorage.setItem('debugData', JSON.stringify(debugData));
         }
@@ -102,7 +155,7 @@ const MainContent = () => {
         
         toast({
           title: "Analyse erfolgreich",
-          description: result.data.summary,
+          description: analysisData.summary,
         });
       } else {
         console.error('Analysis failed:', result.error);

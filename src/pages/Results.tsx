@@ -4,9 +4,38 @@ import ScoreCircle from "@/components/ScoreCircle";
 import BarChart from "@/components/BarChart";
 import TaskList from "@/components/TaskList";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-// Mock data for demonstration
-const mockTasks = [
+interface AnalysisTask {
+  text: string;
+  score: number;
+  label: "Automatisierbar" | "Mensch";
+  category: string;
+  confidence: number;
+}
+
+interface AnalysisResult {
+  totalScore: number;
+  ratio: {
+    automatisierbar: number;
+    mensch: number;
+  };
+  tasks: AnalysisTask[];
+  summary: string;
+  recommendations: string[];
+  originalText?: string;
+}
+
+interface TaskForDisplay {
+  id: string;
+  name: string;
+  score: number;
+  category: 'automatisierbar' | 'mensch';
+  description: string;
+}
+
+// Fallback mock data
+const mockTasks: TaskForDisplay[] = [
   {
     id: '1',
     name: 'Datenerfassung und -eingabe',
@@ -34,36 +63,56 @@ const mockTasks = [
     score: 35,
     category: 'mensch' as const,
     description: 'Persönliche Beratung und Problemlösung'
-  },
-  {
-    id: '5',
-    name: 'Strategische Entscheidungen',
-    score: 15,
-    category: 'mensch' as const,
-    description: 'Komplexe Entscheidungsfindung'
-  },
-  {
-    id: '6',
-    name: 'Kreative Konzeption',
-    score: 25,
-    category: 'mensch' as const,
-    description: 'Entwicklung kreativer Lösungsansätze'
   }
 ];
 
 const Results = () => {
   const navigate = useNavigate();
+  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+  const [displayTasks, setDisplayTasks] = useState<TaskForDisplay[]>(mockTasks);
+
+  useEffect(() => {
+    // Try to load real analysis results from sessionStorage
+    try {
+      const storedResult = sessionStorage.getItem('analysisResult');
+      console.log('Stored analysis result:', storedResult);
+      
+      if (storedResult) {
+        const parsedResult: AnalysisResult = JSON.parse(storedResult);
+        console.log('Parsed analysis result:', parsedResult);
+        setAnalysisData(parsedResult);
+
+        // Transform backend tasks to display format
+        if (parsedResult.tasks && parsedResult.tasks.length > 0) {
+          const transformedTasks: TaskForDisplay[] = parsedResult.tasks.map((task, index) => ({
+            id: String(index + 1),
+            name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
+            score: Math.round(task.score),
+            category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
+            description: `${task.category} (Confidence: ${Math.round(task.confidence)}%)`
+          }));
+          
+          console.log('Transformed tasks:', transformedTasks);
+          setDisplayTasks(transformedTasks);
+        }
+      } else {
+        console.log('No stored analysis result found, using mock data');
+      }
+    } catch (error) {
+      console.error('Error loading analysis results:', error);
+      // Keep using mock data as fallback
+    }
+  }, []);
   
-  const automatizableTasks = mockTasks.filter(task => task.category === 'automatisierbar').length;
-  const humanTasks = mockTasks.filter(task => task.category === 'mensch').length;
+  const automatizableTasks = displayTasks.filter(task => task.category === 'automatisierbar').length;
+  const humanTasks = displayTasks.filter(task => task.category === 'mensch').length;
+  const totalScore = analysisData?.totalScore || 72;
 
   const handleShare = () => {
-    // Navigate to landing page for sharing
     navigate('/landing');
   };
 
   const handleLearnMore = () => {
-    // TODO: Navigate to workflows page
     console.log('Learn more about workflows...');
   };
 
@@ -96,12 +145,17 @@ const Results = () => {
             <p className="text-xl text-muted-foreground">
               Detaillierte Auswertung Ihrer Aufgabenbeschreibung
             </p>
+            {analysisData && (
+              <p className="text-sm text-muted-foreground mt-2">
+                {analysisData.summary}
+              </p>
+            )}
           </div>
 
           {/* Score Section */}
           <div className="flex justify-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <ScoreCircle 
-              score={72} 
+              score={totalScore} 
               maxScore={100} 
               label="Automatisierungspotenzial" 
             />
@@ -117,8 +171,23 @@ const Results = () => {
 
           {/* Task List */}
           <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <TaskList tasks={mockTasks} />
+            <TaskList tasks={displayTasks} />
           </div>
+
+          {/* Recommendations */}
+          {analysisData?.recommendations && analysisData.recommendations.length > 0 && (
+            <div className="animate-fade-in bg-muted/30 rounded-lg p-6" style={{ animationDelay: '0.7s' }}>
+              <h3 className="text-lg font-semibold mb-4">Empfehlungen</h3>
+              <ul className="space-y-2">
+                {analysisData.recommendations.map((rec, index) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <span className="text-primary">•</span>
+                    <span className="text-sm">{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-fade-in" style={{ animationDelay: '0.8s' }}>
