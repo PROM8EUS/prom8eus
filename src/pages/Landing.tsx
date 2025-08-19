@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Bot, User, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import Header from "@/components/Header";
 import LandingScoreCircle from "@/components/LandingScoreCircle";
 import InfoCard from "@/components/InfoCard";
 import TaskList from "@/components/TaskList";
@@ -125,8 +126,11 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <Header />
+      
       {/* Main Content */}
-      <main className="flex-1 px-6 py-12">
+      <main className="flex-1 px-6 py-12 pt-24">
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section with Score */}
           <section className="animate-fade-in">
