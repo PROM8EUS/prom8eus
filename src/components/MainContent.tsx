@@ -532,7 +532,7 @@ QUALIFICATIONS:
 
   return (
     <>
-      <main className="min-h-screen flex items-center justify-center px-6">
+      <main className="min-h-screen flex items-center justify-center px-6 pt-24">
         <div className="w-full max-w-4xl mx-auto text-center space-y-16">
           {/* Title and Subtitle */}
           <div className="space-y-12">
