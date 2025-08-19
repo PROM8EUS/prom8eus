@@ -1,0 +1,185 @@
+{
+  "role": "Sales Manager",
+  "roleSlug": "sales-manager",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "develop-sales-strategies",
+      "title": "Develop sales strategies",
+      "description": "Create comprehensive sales plans and approaches to achieve revenue targets and market goals.",
+      "category": "Creative & Strategy",
+      "tags": ["strategy", "planning", "revenue", "goals"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-sales-team",
+      "title": "Manage sales team",
+      "description": "Lead, motivate, and coordinate sales representatives to maximize team performance and results.",
+      "category": "Customer & Advisory",
+      "tags": ["leadership", "management", "team", "performance"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "track-sales-metrics",
+      "title": "Track sales performance metrics",
+      "description": "Monitor KPIs, conversion rates, and revenue data to measure team and individual performance.",
+      "category": "Reporting & Analytics",
+      "tags": ["metrics", "kpis", "tracking", "performance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-client-meetings",
+      "title": "Conduct client meetings",
+      "description": "Meet with prospects and existing customers to build relationships and close deals.",
+      "category": "Customer & Advisory",
+      "tags": ["meetings", "clients", "relationships", "deals"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "negotiate-contracts",
+      "title": "Negotiate contracts and deals",
+      "description": "Discuss terms, pricing, and agreements with clients to secure profitable business arrangements.",
+      "category": "Customer & Advisory",
+      "tags": ["negotiation", "contracts", "pricing", "agreements"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "analyze-market-opportunities",
+      "title": "Analyze market opportunities",
+      "description": "Research target markets and identify new business opportunities for revenue growth.",
+      "category": "Reporting & Analytics",
+      "tags": ["market-analysis", "opportunities", "research", "growth"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "train-sales-representatives",
+      "title": "Train sales representatives",
+      "description": "Provide coaching, product knowledge, and sales technique training to team members.",
+      "category": "Customer & Advisory",
+      "tags": ["training", "coaching", "development", "techniques"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-sales-pipeline",
+      "title": "Manage sales pipeline",
+      "description": "Oversee lead qualification, opportunity progression, and deal forecasting processes.",
+      "category": "Creative & Strategy",
+      "tags": ["pipeline", "leads", "forecasting", "opportunities"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "generate-sales-reports",
+      "title": "Generate sales reports",
+      "description": "Create regular reports on team performance, revenue trends, and market activities.",
+      "category": "Reporting & Analytics",
+      "tags": ["reporting", "analysis", "trends", "activities"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-marketing-campaigns",
+      "title": "Coordinate with marketing",
+      "description": "Collaborate with marketing team to align lead generation and promotional activities.",
+      "category": "Communication & Scheduling",
+      "tags": ["coordination", "marketing", "collaboration", "campaigns"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "set-sales-quotas",
+      "title": "Set sales quotas",
+      "description": "Establish realistic yet challenging revenue targets for individual team members and territories.",
+      "category": "Creative & Strategy",
+      "tags": ["quotas", "targets", "territories", "planning"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "conduct-territory-planning",
+      "title": "Conduct territory planning",
+      "description": "Analyze and assign geographic or market territories to optimize coverage and performance.",
+      "category": "Creative & Strategy",
+      "tags": ["territory", "planning", "coverage", "optimization"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "handle-customer-escalations",
+      "title": "Handle customer escalations",
+      "description": "Resolve complex customer issues and complaints that require managerial intervention.",
+      "category": "Customer & Advisory",
+      "tags": ["escalations", "resolution", "complaints", "intervention"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "forecast-sales-revenue",
+      "title": "Forecast sales revenue",
+      "description": "Predict future sales performance based on pipeline data and market trends.",
+      "category": "Reporting & Analytics",
+      "tags": ["forecasting", "revenue", "prediction", "trends"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "recruit-sales-talent",
+      "title": "Recruit sales talent",
+      "description": "Interview, evaluate, and hire new sales representatives to build team capacity.",
+      "category": "Customer & Advisory",
+      "tags": ["recruitment", "hiring", "talent", "capacity"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "develop-pricing-strategies",
+      "title": "Develop pricing strategies",
+      "description": "Create competitive pricing models and discount structures to maximize profitability.",
+      "category": "Creative & Strategy",
+      "tags": ["pricing", "strategies", "profitability", "competition"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "monitor-competitor-activities",
+      "title": "Monitor competitor activities",
+      "description": "Track competitive landscape and adjust sales strategies based on market dynamics.",
+      "category": "Reporting & Analytics",
+      "tags": ["competition", "monitoring", "market", "dynamics"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "schedule-team-meetings",
+      "title": "Schedule team meetings",
+      "description": "Organize regular sales meetings, one-on-ones, and performance reviews with team members.",
+      "category": "Communication & Scheduling",
+      "tags": ["scheduling", "meetings", "reviews", "organization"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-customer-relationships",
+      "title": "Manage key customer relationships",
+      "description": "Maintain strategic relationships with high-value clients and key business partners.",
+      "category": "Customer & Advisory",
+      "tags": ["relationships", "clients", "partnerships", "strategic"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "optimize-sales-processes",
+      "title": "Optimize sales processes",
+      "description": "Streamline sales workflows, reduce friction, and improve conversion efficiency.",
+      "category": "Creative & Strategy",
+      "tags": ["optimization", "processes", "efficiency", "conversion"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "present-to-executives",
+      "title": "Present to executives",
+      "description": "Deliver sales performance updates and strategic recommendations to senior leadership.",
+      "category": "Communication & Scheduling",
+      "tags": ["presentations", "executives", "leadership", "updates"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-sales-budget",
+      "title": "Manage sales budget",
+      "description": "Allocate and control departmental spending on tools, training, and promotional activities.",
+      "category": "Creative & Strategy",
+      "tags": ["budget", "allocation", "spending", "control"],
+      "defaultAutomation": "Automatable"
+    }
+  ]
+}

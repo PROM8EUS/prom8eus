@@ -1,0 +1,177 @@
+{
+  "role": "Customer Support Specialist",
+  "roleSlug": "customer-support-specialist",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "respond-customer-inquiries",
+      "title": "Respond to customer inquiries",
+      "description": "Answer customer questions via phone, email, chat, and social media channels promptly and accurately.",
+      "category": "Customer & Advisory",
+      "tags": ["inquiries", "communication", "multichannel", "support"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "troubleshoot-technical-issues",
+      "title": "Troubleshoot technical issues",
+      "description": "Diagnose and resolve customer technical problems through systematic problem-solving approaches.",
+      "category": "Quality & Security",
+      "tags": ["troubleshooting", "technical", "problem-solving", "resolution"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "document-support-tickets",
+      "title": "Document support tickets",
+      "description": "Record customer issues, solutions, and interactions in ticketing systems for tracking and analysis.",
+      "category": "Data Processing",
+      "tags": ["documentation", "tickets", "tracking", "records"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "escalate-complex-issues",
+      "title": "Escalate complex issues",
+      "description": "Identify when problems require specialized expertise and transfer cases to appropriate teams.",
+      "category": "Communication & Scheduling",
+      "tags": ["escalation", "complex-issues", "transfer", "coordination"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "follow-up-customers",
+      "title": "Follow up with customers",
+      "description": "Contact customers after issue resolution to ensure satisfaction and gather feedback.",
+      "category": "Customer & Advisory",
+      "tags": ["follow-up", "satisfaction", "feedback", "retention"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "update-knowledge-base",
+      "title": "Update knowledge base",
+      "description": "Contribute to and maintain support documentation, FAQs, and troubleshooting guides.",
+      "category": "Communication & Scheduling",
+      "tags": ["knowledge-base", "documentation", "faqs", "guides"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "monitor-support-metrics",
+      "title": "Monitor support metrics",
+      "description": "Track response times, resolution rates, and customer satisfaction scores to maintain service quality.",
+      "category": "Reporting & Analytics",
+      "tags": ["metrics", "monitoring", "satisfaction", "quality"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "handle-billing-inquiries",
+      "title": "Handle billing inquiries",
+      "description": "Assist customers with account issues, payment problems, and subscription management.",
+      "category": "Customer & Advisory",
+      "tags": ["billing", "accounts", "payments", "subscriptions"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "provide-product-training",
+      "title": "Provide product training",
+      "description": "Educate customers on product features, best practices, and optimal usage strategies.",
+      "category": "Customer & Advisory",
+      "tags": ["training", "education", "features", "best-practices"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "collaborate-product-team",
+      "title": "Collaborate with product team",
+      "description": "Share customer feedback and feature requests with product development teams.",
+      "category": "Communication & Scheduling",
+      "tags": ["collaboration", "feedback", "product-team", "features"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-live-chat",
+      "title": "Manage live chat support",
+      "description": "Provide real-time assistance through website chat systems and instant messaging platforms.",
+      "category": "Customer & Advisory",
+      "tags": ["live-chat", "real-time", "messaging", "assistance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "process-returns-refunds",
+      "title": "Process returns and refunds",
+      "description": "Handle customer requests for product returns, exchanges, and refund processing.",
+      "category": "Customer & Advisory",
+      "tags": ["returns", "refunds", "exchanges", "processing"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-customer-surveys",
+      "title": "Conduct customer surveys",
+      "description": "Gather customer feedback through surveys and interviews to improve service quality.",
+      "category": "Customer & Advisory",
+      "tags": ["surveys", "feedback", "interviews", "improvement"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "train-new-support-staff",
+      "title": "Train new support staff",
+      "description": "Mentor and train new team members on support processes, tools, and customer service skills.",
+      "category": "Customer & Advisory",
+      "tags": ["training", "mentoring", "onboarding", "skills"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "maintain-crm-records",
+      "title": "Maintain CRM records",
+      "description": "Update customer relationship management systems with accurate contact and interaction data.",
+      "category": "Data Processing",
+      "tags": ["crm", "records", "data", "maintenance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "handle-social-media",
+      "title": "Handle social media support",
+      "description": "Respond to customer complaints and inquiries on social media platforms professionally.",
+      "category": "Communication & Scheduling",
+      "tags": ["social-media", "complaints", "professional", "response"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-support-reports",
+      "title": "Create support reports",
+      "description": "Generate regular reports on ticket volumes, common issues, and team performance metrics.",
+      "category": "Reporting & Analytics",
+      "tags": ["reports", "volumes", "performance", "metrics"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-technical-support",
+      "title": "Coordinate with technical support",
+      "description": "Work with technical teams to resolve complex issues requiring specialized knowledge.",
+      "category": "Communication & Scheduling",
+      "tags": ["coordination", "technical", "specialized", "resolution"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-support-queue",
+      "title": "Manage support queue",
+      "description": "Prioritize and distribute incoming support requests to ensure timely responses.",
+      "category": "Communication & Scheduling",
+      "tags": ["queue", "prioritization", "distribution", "responses"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "develop-support-processes",
+      "title": "Develop support processes",
+      "description": "Improve and streamline customer service workflows and standard operating procedures.",
+      "category": "Creative & Strategy",
+      "tags": ["processes", "improvement", "workflows", "procedures"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "identify-service-improvements",
+      "title": "Identify service improvements",
+      "description": "Analyze customer feedback and support trends to recommend service enhancements.",
+      "category": "Creative & Strategy",
+      "tags": ["improvements", "analysis", "feedback", "enhancements"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

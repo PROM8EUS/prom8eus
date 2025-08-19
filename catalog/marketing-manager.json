@@ -1,0 +1,185 @@
+{
+  "role": "Marketing Manager",
+  "roleSlug": "marketing-manager",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "develop-marketing-strategies",
+      "title": "Develop marketing strategies",
+      "description": "Create comprehensive marketing plans to promote products and achieve business objectives.",
+      "category": "Creative & Strategy",
+      "tags": ["strategy", "planning", "promotion", "objectives"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-advertising-campaigns",
+      "title": "Manage advertising campaigns",
+      "description": "Plan, execute, and optimize paid advertising across digital and traditional channels.",
+      "category": "Creative & Strategy",
+      "tags": ["advertising", "campaigns", "optimization", "channels"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "analyze-market-research",
+      "title": "Analyze market research",
+      "description": "Interpret consumer behavior data and market trends to inform marketing decisions.",
+      "category": "Reporting & Analytics",
+      "tags": ["research", "analysis", "consumer-behavior", "trends"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "create-content-strategies",
+      "title": "Create content strategies",
+      "description": "Develop editorial calendars and content plans to engage target audiences effectively.",
+      "category": "Creative & Strategy",
+      "tags": ["content", "strategy", "editorial", "engagement"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-social-media",
+      "title": "Manage social media presence",
+      "description": "Oversee brand representation and engagement across social media platforms.",
+      "category": "Communication & Scheduling",
+      "tags": ["social-media", "engagement", "brand", "platforms"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-events",
+      "title": "Coordinate marketing events",
+      "description": "Plan and execute trade shows, webinars, and promotional events for brand exposure.",
+      "category": "Communication & Scheduling",
+      "tags": ["events", "coordination", "trade-shows", "webinars"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "track-campaign-performance",
+      "title": "Track campaign performance",
+      "description": "Monitor marketing metrics, ROI, and conversion rates to measure campaign effectiveness.",
+      "category": "Reporting & Analytics",
+      "tags": ["tracking", "metrics", "roi", "performance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-marketing-budget",
+      "title": "Manage marketing budget",
+      "description": "Allocate resources across channels and campaigns to maximize marketing impact and efficiency.",
+      "category": "Creative & Strategy",
+      "tags": ["budget", "allocation", "efficiency", "resources"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "collaborate-sales-team",
+      "title": "Collaborate with sales team",
+      "description": "Align marketing efforts with sales objectives to generate qualified leads and support revenue goals.",
+      "category": "Communication & Scheduling",
+      "tags": ["collaboration", "sales", "alignment", "leads"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "develop-brand-messaging",
+      "title": "Develop brand messaging",
+      "description": "Create consistent brand voice, positioning, and messaging across all marketing materials.",
+      "category": "Creative & Strategy",
+      "tags": ["branding", "messaging", "positioning", "voice"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "conduct-competitor-analysis",
+      "title": "Conduct competitor analysis",
+      "description": "Research competitive landscape and marketing strategies to identify opportunities and threats.",
+      "category": "Reporting & Analytics",
+      "tags": ["competition", "analysis", "research", "opportunities"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-email-campaigns",
+      "title": "Manage email campaigns",
+      "description": "Create, segment, and optimize email marketing campaigns for customer retention and acquisition.",
+      "category": "Communication & Scheduling",
+      "tags": ["email", "campaigns", "segmentation", "retention"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "oversee-creative-production",
+      "title": "Oversee creative production",
+      "description": "Manage design team and external agencies to produce marketing materials and creative assets.",
+      "category": "Creative & Strategy",
+      "tags": ["creative", "production", "design", "assets"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "optimize-website-conversion",
+      "title": "Optimize website conversion",
+      "description": "Improve website performance, user experience, and conversion rates through testing and optimization.",
+      "category": "Reporting & Analytics",
+      "tags": ["optimization", "conversion", "website", "testing"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-customer-surveys",
+      "title": "Conduct customer surveys",
+      "description": "Design and execute customer feedback surveys to gather insights for marketing improvements.",
+      "category": "Customer & Advisory",
+      "tags": ["surveys", "feedback", "insights", "customers"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-public-relations",
+      "title": "Manage public relations",
+      "description": "Handle media relationships, press releases, and crisis communication to maintain brand reputation.",
+      "category": "Communication & Scheduling",
+      "tags": ["public-relations", "media", "reputation", "communication"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "implement-marketing-automation",
+      "title": "Implement marketing automation",
+      "description": "Set up automated workflows for lead nurturing, customer onboarding, and retention campaigns.",
+      "category": "Integration & DevOps",
+      "tags": ["automation", "workflows", "nurturing", "retention"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "analyze-customer-segments",
+      "title": "Analyze customer segments",
+      "description": "Identify and profile target customer groups to personalize marketing approaches and messaging.",
+      "category": "Reporting & Analytics",
+      "tags": ["segmentation", "profiling", "personalization", "targeting"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-product-launches",
+      "title": "Coordinate product launches",
+      "description": "Plan and execute go-to-market strategies for new product releases and feature updates.",
+      "category": "Communication & Scheduling",
+      "tags": ["launches", "go-to-market", "coordination", "products"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-influencer-partnerships",
+      "title": "Manage influencer partnerships",
+      "description": "Identify, negotiate, and coordinate with influencers and brand ambassadors for promotional campaigns.",
+      "category": "Customer & Advisory",
+      "tags": ["influencers", "partnerships", "ambassadors", "campaigns"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "generate-marketing-reports",
+      "title": "Generate marketing reports",
+      "description": "Create regular performance reports and data visualizations for stakeholders and executive teams.",
+      "category": "Reporting & Analytics",
+      "tags": ["reporting", "visualization", "stakeholders", "executives"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "train-marketing-team",
+      "title": "Train marketing team",
+      "description": "Provide coaching, skill development, and training on marketing tools and best practices.",
+      "category": "Customer & Advisory",
+      "tags": ["training", "coaching", "development", "best-practices"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

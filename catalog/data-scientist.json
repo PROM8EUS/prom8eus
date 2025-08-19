@@ -1,0 +1,201 @@
+{
+  "role": "Data Scientist",
+  "roleSlug": "data-scientist",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "collect-clean-data",
+      "title": "Collect and clean data",
+      "description": "Gather raw data from various sources and process it for analysis by removing inconsistencies.",
+      "category": "Data Processing",
+      "tags": ["data-collection", "cleaning", "preprocessing", "etl"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "build-predictive-models",
+      "title": "Build predictive models",
+      "description": "Develop machine learning algorithms to forecast trends and predict future outcomes.",
+      "category": "Creative & Strategy",
+      "tags": ["machine-learning", "modeling", "prediction", "algorithms"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "analyze-statistical-trends",
+      "title": "Analyze statistical trends",
+      "description": "Examine data patterns and statistical relationships to identify meaningful insights.",
+      "category": "Reporting & Analytics",
+      "tags": ["statistics", "trends", "analysis", "insights"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "create-data-visualizations",
+      "title": "Create data visualizations",
+      "description": "Design charts, graphs, and dashboards to communicate findings to stakeholders effectively.",
+      "category": "Reporting & Analytics",
+      "tags": ["visualization", "dashboards", "charts", "communication"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "design-experiments",
+      "title": "Design statistical experiments",
+      "description": "Plan A/B tests and controlled experiments to validate hypotheses and measure impact.",
+      "category": "Creative & Strategy",
+      "tags": ["experiments", "ab-testing", "hypothesis", "validation"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "optimize-data-pipelines",
+      "title": "Optimize data pipelines",
+      "description": "Improve data processing workflows for better performance, reliability, and scalability.",
+      "category": "Data Processing",
+      "tags": ["pipelines", "optimization", "workflow", "scalability"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "present-findings-stakeholders",
+      "title": "Present findings to stakeholders",
+      "description": "Communicate analytical results and recommendations to business leaders and decision makers.",
+      "category": "Communication & Scheduling",
+      "tags": ["presentation", "stakeholders", "communication", "recommendations"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "validate-model-accuracy",
+      "title": "Validate model accuracy",
+      "description": "Test machine learning models using cross-validation and performance metrics to ensure reliability.",
+      "category": "Quality & Security",
+      "tags": ["validation", "accuracy", "testing", "performance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "feature-engineering",
+      "title": "Perform feature engineering",
+      "description": "Transform and create relevant variables to improve model performance and interpretability.",
+      "category": "Data Processing",
+      "tags": ["feature-engineering", "transformation", "variables", "modeling"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "collaborate-business-teams",
+      "title": "Collaborate with business teams",
+      "description": "Work with domain experts to understand requirements and translate business problems into analytical solutions.",
+      "category": "Communication & Scheduling",
+      "tags": ["collaboration", "business", "requirements", "translation"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "monitor-model-performance",
+      "title": "Monitor model performance",
+      "description": "Track deployed models for accuracy degradation and data drift in production environments.",
+      "category": "Quality & Security",
+      "tags": ["monitoring", "performance", "drift", "production"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "research-algorithms",
+      "title": "Research new algorithms",
+      "description": "Explore cutting-edge machine learning techniques and evaluate their applicability to current projects.",
+      "category": "Creative & Strategy",
+      "tags": ["research", "algorithms", "innovation", "evaluation"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "automate-reporting",
+      "title": "Automate reporting processes",
+      "description": "Create scheduled reports and alerts to deliver regular insights to business stakeholders.",
+      "category": "Reporting & Analytics",
+      "tags": ["automation", "reporting", "scheduling", "alerts"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "handle-missing-data",
+      "title": "Handle missing data",
+      "description": "Implement imputation strategies and data recovery techniques for incomplete datasets.",
+      "category": "Data Processing",
+      "tags": ["missing-data", "imputation", "recovery", "preprocessing"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "deploy-models-production",
+      "title": "Deploy models to production",
+      "description": "Integrate trained models into production systems using APIs and containerization technologies.",
+      "category": "Integration & DevOps",
+      "tags": ["deployment", "production", "apis", "containerization"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "document-methodology",
+      "title": "Document analytical methodology",
+      "description": "Create comprehensive documentation of data sources, assumptions, and analytical approaches used.",
+      "category": "Communication & Scheduling",
+      "tags": ["documentation", "methodology", "assumptions", "processes"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-peer-reviews",
+      "title": "Conduct analytical peer reviews",
+      "description": "Review team members' analyses, models, and code for accuracy and best practices.",
+      "category": "Quality & Security",
+      "tags": ["peer-review", "quality", "accuracy", "collaboration"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "integrate-data-sources",
+      "title": "Integrate multiple data sources",
+      "description": "Combine data from databases, APIs, and external sources to create unified datasets.",
+      "category": "Integration & DevOps",
+      "tags": ["integration", "data-sources", "unification", "etl"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "interpret-business-metrics",
+      "title": "Interpret business metrics",
+      "description": "Analyze KPIs and business performance indicators to provide actionable insights.",
+      "category": "Reporting & Analytics", 
+      "tags": ["metrics", "kpis", "business", "insights"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "tune-hyperparameters",
+      "title": "Tune model hyperparameters",
+      "description": "Optimize model configuration settings through systematic testing and validation approaches.",
+      "category": "Data Processing",
+      "tags": ["hyperparameters", "optimization", "tuning", "validation"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "ensure-data-privacy",
+      "title": "Ensure data privacy compliance",
+      "description": "Implement data anonymization and security measures to comply with privacy regulations.",
+      "category": "Quality & Security",
+      "tags": ["privacy", "compliance", "anonymization", "security"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "mentor-junior-analysts",
+      "title": "Mentor junior analysts",
+      "description": "Guide and train junior team members on analytical techniques and data science best practices.",
+      "category": "Communication & Scheduling",
+      "tags": ["mentoring", "training", "guidance", "best-practices"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "evaluate-data-quality",
+      "title": "Evaluate data quality",
+      "description": "Assess data completeness, accuracy, and consistency to determine fitness for analysis.",
+      "category": "Quality & Security",
+      "tags": ["data-quality", "assessment", "completeness", "accuracy"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "prototype-solutions",
+      "title": "Prototype analytical solutions",
+      "description": "Create proof-of-concept models and analyses to demonstrate feasibility and value.",
+      "category": "Creative & Strategy",
+      "tags": ["prototyping", "proof-of-concept", "feasibility", "innovation"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

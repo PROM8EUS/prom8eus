@@ -1,0 +1,201 @@
+{
+  "role": "Product Manager",
+  "roleSlug": "product-manager",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "define-product-strategy",
+      "title": "Define product strategy",
+      "description": "Establish long-term product vision, goals, and roadmap aligned with business objectives.",
+      "category": "Creative & Strategy",
+      "tags": ["strategy", "vision", "roadmap", "planning"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "gather-user-requirements",
+      "title": "Gather user requirements",
+      "description": "Collect and analyze customer feedback, needs, and pain points through research and interviews.",
+      "category": "Customer & Advisory",
+      "tags": ["requirements", "customer-feedback", "research", "interviews"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "prioritize-product-features",
+      "title": "Prioritize product features",
+      "description": "Rank feature importance based on user value, business impact, and development effort.",
+      "category": "Creative & Strategy",
+      "tags": ["prioritization", "features", "value", "impact"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-user-stories",
+      "title": "Create user stories",
+      "description": "Write detailed user stories with acceptance criteria to guide development teams.",
+      "category": "Communication & Scheduling",
+      "tags": ["user-stories", "requirements", "documentation", "agile"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "analyze-market-trends",
+      "title": "Analyze market trends",
+      "description": "Research industry developments, competitor activities, and emerging market opportunities.",
+      "category": "Reporting & Analytics",
+      "tags": ["market-research", "trends", "competition", "analysis"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-cross-functional-teams",
+      "title": "Coordinate cross-functional teams",
+      "description": "Facilitate collaboration between engineering, design, marketing, and sales teams.",
+      "category": "Communication & Scheduling",
+      "tags": ["coordination", "collaboration", "cross-functional", "teamwork"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "track-product-metrics",
+      "title": "Track product performance metrics",
+      "description": "Monitor KPIs, usage analytics, and success metrics to measure product effectiveness.",
+      "category": "Reporting & Analytics",
+      "tags": ["metrics", "analytics", "kpis", "performance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-stakeholder-meetings",
+      "title": "Conduct stakeholder meetings",
+      "description": "Present product updates, gather feedback, and align expectations with key stakeholders.",
+      "category": "Communication & Scheduling",
+      "tags": ["stakeholders", "meetings", "updates", "alignment"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-product-backlog",
+      "title": "Manage product backlog",
+      "description": "Maintain and refine the prioritized list of features and improvements for development.",
+      "category": "Creative & Strategy",
+      "tags": ["backlog", "management", "prioritization", "refinement"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "validate-product-concepts",
+      "title": "Validate product concepts",
+      "description": "Test product ideas through prototypes, user testing, and market validation techniques.",
+      "category": "Quality & Security",
+      "tags": ["validation", "testing", "prototypes", "concepts"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "write-product-specifications",
+      "title": "Write product specifications",
+      "description": "Create detailed technical and functional requirements documents for development teams.",
+      "category": "Communication & Scheduling",
+      "tags": ["specifications", "documentation", "requirements", "technical"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "plan-product-launches",
+      "title": "Plan product launches",
+      "description": "Coordinate go-to-market strategies, marketing campaigns, and launch timelines.",
+      "category": "Creative & Strategy",
+      "tags": ["launch", "go-to-market", "planning", "coordination"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "analyze-user-feedback",
+      "title": "Analyze user feedback",
+      "description": "Process customer reviews, support tickets, and survey responses to identify improvement areas.",
+      "category": "Customer & Advisory",
+      "tags": ["feedback", "analysis", "customers", "improvement"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "negotiate-with-vendors",
+      "title": "Negotiate with vendors",
+      "description": "Discuss partnerships, integrations, and third-party service agreements for product features.",
+      "category": "Customer & Advisory",
+      "tags": ["negotiation", "vendors", "partnerships", "agreements"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "monitor-competitor-products",
+      "title": "Monitor competitor products",
+      "description": "Track competitive landscape and analyze rival products for feature gaps and opportunities.",
+      "category": "Reporting & Analytics",
+      "tags": ["competition", "monitoring", "analysis", "benchmarking"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "facilitate-sprint-planning",
+      "title": "Facilitate sprint planning",
+      "description": "Lead agile ceremonies to define sprint goals and select backlog items for development.",
+      "category": "Communication & Scheduling",
+      "tags": ["sprint-planning", "agile", "facilitation", "goals"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-product-roadmaps",
+      "title": "Create product roadmaps",
+      "description": "Develop visual timelines showing planned features, milestones, and strategic initiatives.",
+      "category": "Creative & Strategy",
+      "tags": ["roadmap", "planning", "timeline", "strategy"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-user-interviews",
+      "title": "Conduct user interviews",
+      "description": "Interview customers to understand their needs, workflows, and pain points directly.",
+      "category": "Customer & Advisory",
+      "tags": ["interviews", "user-research", "insights", "feedback"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "optimize-conversion-funnels",
+      "title": "Optimize conversion funnels",
+      "description": "Analyze user journey data to improve conversion rates and reduce drop-off points.",
+      "category": "Reporting & Analytics",
+      "tags": ["optimization", "conversion", "funnels", "analytics"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-product-pricing",
+      "title": "Manage product pricing",
+      "description": "Develop and adjust pricing strategies based on market research and competitive analysis.",
+      "category": "Creative & Strategy",
+      "tags": ["pricing", "strategy", "market-research", "revenue"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "ensure-regulatory-compliance",
+      "title": "Ensure regulatory compliance",
+      "description": "Verify product features meet industry standards and regulatory requirements.",
+      "category": "Quality & Security",
+      "tags": ["compliance", "regulations", "standards", "verification"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-beta-testing",
+      "title": "Coordinate beta testing",
+      "description": "Organize and manage beta user programs to test new features before public release.",
+      "category": "Quality & Security",
+      "tags": ["beta-testing", "coordination", "users", "feedback"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "develop-business-cases",
+      "title": "Develop business cases",
+      "description": "Create financial justifications and ROI analyses for new product investments and initiatives.",
+      "category": "Creative & Strategy",
+      "tags": ["business-case", "roi", "justification", "investment"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "mentor-junior-pms",
+      "title": "Mentor junior product managers",
+      "description": "Guide and train less experienced product managers on best practices and methodologies.",
+      "category": "Customer & Advisory",
+      "tags": ["mentoring", "training", "guidance", "development"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

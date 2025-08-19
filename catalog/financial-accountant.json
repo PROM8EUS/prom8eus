@@ -1,0 +1,185 @@
+{
+  "role": "Financial Accountant",
+  "roleSlug": "financial-accountant",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "prepare-financial-statements",
+      "title": "Prepare financial statements",
+      "description": "Create monthly, quarterly, and annual financial reports including balance sheets and income statements.",
+      "category": "Reporting & Analytics",
+      "tags": ["statements", "reports", "balance-sheet", "income"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "reconcile-bank-accounts",
+      "title": "Reconcile bank accounts",
+      "description": "Match company records with bank statements to ensure accuracy and identify discrepancies.",
+      "category": "Data Processing",
+      "tags": ["reconciliation", "banking", "accuracy", "discrepancies"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "process-accounts-payable",
+      "title": "Process accounts payable",
+      "description": "Review, approve, and process vendor invoices and payments according to company policies.",
+      "category": "Data Processing",
+      "tags": ["payable", "invoices", "payments", "vendors"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-accounts-receivable",
+      "title": "Manage accounts receivable",
+      "description": "Track customer payments, send invoices, and follow up on overdue accounts.",
+      "category": "Data Processing",
+      "tags": ["receivable", "collections", "invoicing", "overdue"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-budget-analysis",
+      "title": "Conduct budget analysis",
+      "description": "Compare actual financial performance against budgets and forecasts to identify variances.",
+      "category": "Reporting & Analytics",
+      "tags": ["budget", "analysis", "variances", "forecasting"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "prepare-tax-returns",
+      "title": "Prepare tax returns",
+      "description": "Calculate tax liabilities, prepare filings, and ensure compliance with tax regulations.",
+      "category": "Quality & Security",
+      "tags": ["tax", "compliance", "filings", "regulations"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "maintain-general-ledger",
+      "title": "Maintain general ledger",
+      "description": "Record and categorize all financial transactions in the company's accounting system.",
+      "category": "Data Processing",
+      "tags": ["ledger", "transactions", "categorization", "recording"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-financial-audits",
+      "title": "Conduct internal audits",
+      "description": "Review financial processes and controls to ensure accuracy and identify improvement opportunities.",
+      "category": "Quality & Security",
+      "tags": ["audits", "controls", "accuracy", "compliance"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "analyze-cost-structures",
+      "title": "Analyze cost structures",
+      "description": "Examine operational expenses and identify opportunities for cost reduction and efficiency improvements.",
+      "category": "Reporting & Analytics",
+      "tags": ["cost-analysis", "expenses", "efficiency", "reduction"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "prepare-month-end-close",
+      "title": "Prepare month-end close",
+      "description": "Complete monthly accounting procedures including journal entries and account reconciliations.",
+      "category": "Data Processing",
+      "tags": ["month-end", "journal-entries", "procedures", "close"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-fixed-assets",
+      "title": "Manage fixed assets",
+      "description": "Track company assets, calculate depreciation, and maintain asset registers.",
+      "category": "Data Processing",
+      "tags": ["assets", "depreciation", "registers", "tracking"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-external-audits",
+      "title": "Coordinate external audits",
+      "description": "Work with external auditors to provide documentation and support audit processes.",
+      "category": "Communication & Scheduling",
+      "tags": ["external-audits", "coordination", "documentation", "support"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-financial-forecasts",
+      "title": "Create financial forecasts",
+      "description": "Develop projections and models to predict future financial performance and cash flow needs.",
+      "category": "Creative & Strategy",
+      "tags": ["forecasting", "projections", "modeling", "cash-flow"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "ensure-regulatory-compliance",
+      "title": "Ensure regulatory compliance",
+      "description": "Monitor adherence to accounting standards, regulations, and reporting requirements.",
+      "category": "Quality & Security",
+      "tags": ["compliance", "standards", "regulations", "reporting"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "analyze-profitability",
+      "title": "Analyze profitability",
+      "description": "Examine revenue streams and profit margins to identify most profitable business areas.",
+      "category": "Reporting & Analytics",
+      "tags": ["profitability", "margins", "revenue", "analysis"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-cash-flow",
+      "title": "Manage cash flow",
+      "description": "Monitor cash position, predict funding needs, and optimize working capital management.",
+      "category": "Creative & Strategy",
+      "tags": ["cash-flow", "funding", "working-capital", "optimization"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "prepare-board-reports",
+      "title": "Prepare board reports",
+      "description": "Create executive-level financial summaries and presentations for board meetings.",
+      "category": "Communication & Scheduling",
+      "tags": ["board", "reports", "presentations", "executives"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "review-contracts",
+      "title": "Review financial contracts",
+      "description": "Analyze contracts for financial implications, revenue recognition, and accounting treatment.",
+      "category": "Creative & Strategy",
+      "tags": ["contracts", "revenue-recognition", "analysis", "treatment"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "implement-accounting-software",
+      "title": "Implement accounting software",
+      "description": "Configure and optimize financial systems to improve accuracy and efficiency.",
+      "category": "Integration & DevOps",
+      "tags": ["software", "implementation", "systems", "optimization"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "train-staff",
+      "title": "Train accounting staff",
+      "description": "Provide guidance and training to junior accountants on procedures and best practices.",
+      "category": "Customer & Advisory",
+      "tags": ["training", "guidance", "procedures", "best-practices"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "monitor-financial-risks",
+      "title": "Monitor financial risks",
+      "description": "Identify and assess potential financial risks and recommend mitigation strategies.",
+      "category": "Quality & Security",
+      "tags": ["risk", "assessment", "mitigation", "monitoring"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "coordinate-budget-planning",
+      "title": "Coordinate budget planning",
+      "description": "Work with departments to develop annual budgets and financial planning processes.",
+      "category": "Communication & Scheduling",
+      "tags": ["budget", "planning", "coordination", "departments"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

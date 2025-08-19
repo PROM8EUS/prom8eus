@@ -1,0 +1,209 @@
+{
+  "role": "Software Engineer",
+  "roleSlug": "software-engineer",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "write-clean-code",
+      "title": "Write clean maintainable code",
+      "description": "Develop readable, well-structured code following established patterns and conventions.",
+      "category": "Creative & Strategy",
+      "tags": ["coding", "development", "best-practices", "maintainability"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "debug-application-issues",
+      "title": "Debug application issues",
+      "description": "Identify and resolve software bugs through systematic troubleshooting and testing.",
+      "category": "Quality & Security", 
+      "tags": ["debugging", "troubleshooting", "testing", "bug-fixing"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "implement-unit-tests",
+      "title": "Implement unit tests",
+      "description": "Create automated test cases to verify individual components and functions work correctly.",
+      "category": "Quality & Security",
+      "tags": ["testing", "automation", "unit-tests", "verification"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "design-system-architecture",
+      "title": "Design system architecture",
+      "description": "Plan and structure software systems for scalability, maintainability, and performance.",
+      "category": "Creative & Strategy",
+      "tags": ["architecture", "design", "scalability", "planning"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "optimize-database-queries",
+      "title": "Optimize database queries",
+      "description": "Improve query performance through indexing, restructuring, and execution plan analysis.",
+      "category": "Data Processing",
+      "tags": ["database", "optimization", "performance", "sql"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "configure-ci-cd-pipelines",
+      "title": "Configure CI/CD pipelines", 
+      "description": "Set up automated build, test, and deployment workflows for continuous integration.",
+      "category": "Integration & DevOps",
+      "tags": ["ci-cd", "automation", "deployment", "pipelines"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-code-reviews",
+      "title": "Conduct code reviews",
+      "description": "Examine team members' code for quality, standards compliance, and potential improvements.",
+      "category": "Quality & Security",
+      "tags": ["code-review", "quality", "collaboration", "standards"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "document-apis",
+      "title": "Document API specifications",
+      "description": "Create comprehensive documentation for application programming interfaces and endpoints.",
+      "category": "Communication & Scheduling",
+      "tags": ["documentation", "api", "specifications", "technical-writing"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "monitor-application-performance",
+      "title": "Monitor application performance",
+      "description": "Track system metrics, response times, and resource usage to identify bottlenecks.",
+      "category": "Reporting & Analytics",
+      "tags": ["monitoring", "performance", "metrics", "analysis"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "refactor-legacy-code",
+      "title": "Refactor legacy code",
+      "description": "Improve existing codebase structure and efficiency while maintaining functionality.",
+      "category": "Creative & Strategy",
+      "tags": ["refactoring", "legacy", "improvement", "modernization"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "implement-security-measures",
+      "title": "Implement security measures",
+      "description": "Add authentication, authorization, and data protection features to applications.",
+      "category": "Quality & Security",
+      "tags": ["security", "authentication", "authorization", "protection"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "collaborate-with-designers",
+      "title": "Collaborate with UI/UX designers",
+      "description": "Work with design team to implement user interfaces that match specifications and requirements.",
+      "category": "Communication & Scheduling",
+      "tags": ["collaboration", "ui-ux", "design", "implementation"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "migrate-data-systems",
+      "title": "Migrate data between systems",
+      "description": "Transfer and transform data from legacy systems to new platforms or databases.",
+      "category": "Data Processing",
+      "tags": ["migration", "data-transfer", "transformation", "systems"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "analyze-user-requirements",
+      "title": "Analyze user requirements",
+      "description": "Break down business needs into technical specifications and implementation plans.",
+      "category": "Creative & Strategy",
+      "tags": ["requirements", "analysis", "planning", "specifications"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "setup-development-environment",
+      "title": "Setup development environment",
+      "description": "Configure local and cloud development tools, dependencies, and testing frameworks.",
+      "category": "Integration & DevOps",
+      "tags": ["environment", "setup", "configuration", "tools"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "generate-test-reports",
+      "title": "Generate automated test reports",
+      "description": "Create comprehensive reports showing test coverage, results, and performance metrics.",
+      "category": "Reporting & Analytics",
+      "tags": ["reporting", "testing", "automation", "metrics"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "mentor-junior-developers",
+      "title": "Mentor junior developers",
+      "description": "Guide and train less experienced team members on coding practices and problem-solving.",
+      "category": "Communication & Scheduling",
+      "tags": ["mentoring", "training", "leadership", "guidance"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "integrate-third-party-apis",
+      "title": "Integrate third-party APIs",
+      "description": "Connect external services and APIs to extend application functionality and features.",
+      "category": "Integration & DevOps",
+      "tags": ["integration", "apis", "third-party", "services"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "optimize-frontend-performance",
+      "title": "Optimize frontend performance",
+      "description": "Improve web application loading times through code splitting, caching, and asset optimization.",
+      "category": "Data Processing",
+      "tags": ["optimization", "frontend", "performance", "caching"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "participate-in-agile-ceremonies",
+      "title": "Participate in agile ceremonies",
+      "description": "Attend sprint planning, daily standups, and retrospectives to coordinate team activities.",
+      "category": "Communication & Scheduling",
+      "tags": ["agile", "ceremonies", "coordination", "teamwork"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "backup-database-systems",
+      "title": "Backup database systems",
+      "description": "Create and schedule automated backups to ensure data recovery and business continuity.",
+      "category": "Data Processing",
+      "tags": ["backup", "database", "recovery", "automation"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "research-new-technologies",
+      "title": "Research emerging technologies",
+      "description": "Evaluate new tools, frameworks, and methodologies for potential adoption in projects.",
+      "category": "Creative & Strategy",
+      "tags": ["research", "technology", "evaluation", "innovation"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "fix-production-incidents",
+      "title": "Fix production incidents",
+      "description": "Respond to and resolve critical system failures and outages in live environments.",
+      "category": "Quality & Security",
+      "tags": ["incident-response", "production", "troubleshooting", "emergency"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "automate-deployment-processes",
+      "title": "Automate deployment processes",
+      "description": "Create scripts and workflows to streamline application deployment and release management.",
+      "category": "Integration & DevOps",
+      "tags": ["automation", "deployment", "scripts", "release-management"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "validate-data-integrity",
+      "title": "Validate data integrity",
+      "description": "Implement checks and constraints to ensure data consistency and accuracy across systems.",
+      "category": "Data Processing",
+      "tags": ["validation", "data-integrity", "consistency", "quality"],
+      "defaultAutomation": "Automatable"
+    }
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "role": "DevOps Engineer",
+  "roleSlug": "devops-engineer",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "setup-ci-cd-pipelines",
+      "title": "Setup CI/CD pipelines",
+      "description": "Configure automated build, test, and deployment workflows using tools like Jenkins or GitLab.",
+      "category": "Integration & DevOps",
+      "tags": ["ci-cd", "automation", "pipelines", "deployment"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-cloud-infrastructure",
+      "title": "Manage cloud infrastructure",
+      "description": "Provision and maintain cloud resources using infrastructure-as-code principles and best practices.",
+      "category": "Integration & DevOps",
+      "tags": ["cloud", "infrastructure", "iac", "provisioning"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "monitor-system-performance",
+      "title": "Monitor system performance",
+      "description": "Track application metrics, server health, and resource utilization using monitoring tools.",
+      "category": "Reporting & Analytics",
+      "tags": ["monitoring", "performance", "metrics", "health"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "automate-deployment-processes",
+      "title": "Automate deployment processes",
+      "description": "Create scripts and tools to streamline application releases and reduce manual intervention.",
+      "category": "Integration & DevOps",
+      "tags": ["automation", "deployment", "scripting", "releases"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "implement-security-policies",
+      "title": "Implement security policies",
+      "description": "Configure access controls, network security, and compliance measures across infrastructure.",
+      "category": "Quality & Security",
+      "tags": ["security", "policies", "compliance", "access-control"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-container-orchestration",
+      "title": "Manage container orchestration",
+      "description": "Deploy and maintain containerized applications using Kubernetes or similar platforms.",
+      "category": "Integration & DevOps",
+      "tags": ["containers", "kubernetes", "orchestration", "docker"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "troubleshoot-production-issues",
+      "title": "Troubleshoot production issues",
+      "description": "Diagnose and resolve system failures, performance problems, and service outages.",
+      "category": "Quality & Security",
+      "tags": ["troubleshooting", "production", "incidents", "debugging"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "backup-disaster-recovery",
+      "title": "Setup backup disaster recovery",
+      "description": "Implement automated backup systems and disaster recovery procedures for business continuity.",
+      "category": "Quality & Security",
+      "tags": ["backup", "disaster-recovery", "continuity", "automation"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "configure-load-balancers",
+      "title": "Configure load balancers",
+      "description": "Set up traffic distribution and failover mechanisms to ensure high availability.",
+      "category": "Integration & DevOps",
+      "tags": ["load-balancing", "traffic", "availability", "failover"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "optimize-resource-costs",
+      "title": "Optimize resource costs",
+      "description": "Analyze and reduce cloud spending through right-sizing, scheduling, and resource optimization.",
+      "category": "Reporting & Analytics",
+      "tags": ["cost-optimization", "resource-management", "efficiency", "cloud"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "maintain-development-environments",
+      "title": "Maintain development environments",
+      "description": "Provision and update development, staging, and testing environments for development teams.",
+      "category": "Integration & DevOps",
+      "tags": ["environments", "development", "staging", "testing"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "collaborate-development-teams",
+      "title": "Collaborate with development teams",
+      "description": "Work with developers to optimize build processes and resolve deployment challenges.",
+      "category": "Communication & Scheduling",
+      "tags": ["collaboration", "development", "optimization", "support"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "implement-logging-systems",
+      "title": "Implement logging systems",
+      "description": "Set up centralized logging, log aggregation, and log analysis for system observability.",
+      "category": "Integration & DevOps",
+      "tags": ["logging", "observability", "aggregation", "analysis"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-secrets-configuration",
+      "title": "Manage secrets and configuration",
+      "description": "Securely store and distribute application secrets, API keys, and configuration data.",
+      "category": "Quality & Security",
+      "tags": ["secrets", "configuration", "security", "management"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "automate-testing-workflows",
+      "title": "Automate testing workflows",
+      "description": "Integrate automated testing into deployment pipelines for quality assurance.",
+      "category": "Quality & Security",
+      "tags": ["automation", "testing", "qa", "workflows"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "scale-applications-dynamically",
+      "title": "Scale applications dynamically",
+      "description": "Configure auto-scaling policies to handle varying loads and traffic patterns automatically.",
+      "category": "Integration & DevOps",
+      "tags": ["scaling", "auto-scaling", "load", "performance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "document-infrastructure-processes",
+      "title": "Document infrastructure processes",
+      "description": "Create runbooks, architecture diagrams, and operational procedures for team reference.",
+      "category": "Communication & Scheduling",
+      "tags": ["documentation", "runbooks", "procedures", "architecture"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-security-audits",
+      "title": "Conduct security audits",
+      "description": "Review system configurations and access patterns to identify security vulnerabilities.",
+      "category": "Quality & Security",
+      "tags": ["security", "audits", "vulnerabilities", "compliance"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "migrate-legacy-systems",
+      "title": "Migrate legacy systems",
+      "description": "Plan and execute migration of legacy applications to modern cloud infrastructure.",
+      "category": "Integration & DevOps",
+      "tags": ["migration", "legacy", "modernization", "planning"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "setup-alerting-systems",
+      "title": "Setup alerting systems",
+      "description": "Configure automated alerts and notifications for system failures and performance issues.",
+      "category": "Integration & DevOps",
+      "tags": ["alerting", "notifications", "monitoring", "automation"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-network-security",
+      "title": "Manage network security",
+      "description": "Configure firewalls, VPNs, and network policies to protect infrastructure from threats.",
+      "category": "Quality & Security",
+      "tags": ["network", "security", "firewalls", "vpn"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "optimize-build-times",
+      "title": "Optimize build times",
+      "description": "Improve CI/CD pipeline performance through caching, parallelization, and optimization techniques.",
+      "category": "Integration & DevOps",
+      "tags": ["optimization", "build", "performance", "caching"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "mentor-operations-team",
+      "title": "Mentor operations team",
+      "description": "Train team members on DevOps practices, tools, and incident response procedures.",
+      "category": "Communication & Scheduling",
+      "tags": ["mentoring", "training", "devops", "procedures"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

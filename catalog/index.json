@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "roles": [
+    {
+      "role": "Software Engineer",
+      "roleSlug": "software-engineer",
+      "file": "software-engineer.json",
+      "items": 25,
+      "version": 1
+    },
+    {
+      "role": "Data Scientist", 
+      "roleSlug": "data-scientist",
+      "file": "data-scientist.json",
+      "items": 24,
+      "version": 1
+    },
+    {
+      "role": "Product Manager",
+      "roleSlug": "product-manager", 
+      "file": "product-manager.json",
+      "items": 24,
+      "version": 1
+    },
+    {
+      "role": "DevOps Engineer",
+      "roleSlug": "devops-engineer",
+      "file": "devops-engineer.json",
+      "items": 23,
+      "version": 1
+    },
+    {
+      "role": "UX/UI Designer",
+      "roleSlug": "ux-ui-designer",
+      "file": "ux-ui-designer.json",
+      "items": 22,
+      "version": 1
+    },
+    {
+      "role": "Sales Manager",
+      "roleSlug": "sales-manager",
+      "file": "sales-manager.json",
+      "items": 22,
+      "version": 1
+    },
+    {
+      "role": "Marketing Manager",
+      "roleSlug": "marketing-manager",
+      "file": "marketing-manager.json",
+      "items": 22,
+      "version": 1
+    },
+    {
+      "role": "Customer Support Specialist",
+      "roleSlug": "customer-support-specialist",
+      "file": "customer-support-specialist.json",
+      "items": 21,
+      "version": 1
+    },
+    {
+      "role": "HR Manager",
+      "roleSlug": "hr-manager",
+      "file": "hr-manager.json",
+      "items": 22,
+      "version": 1
+    },
+    {
+      "role": "Financial Accountant",
+      "roleSlug": "financial-accountant",
+      "file": "financial-accountant.json",
+      "items": 22,
+      "version": 1
+    }
+  ]
+}

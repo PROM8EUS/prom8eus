@@ -1,0 +1,185 @@
+{
+  "role": "HR Manager",
+  "roleSlug": "hr-manager",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "recruit-hire-employees",
+      "title": "Recruit and hire employees",
+      "description": "Manage the full recruitment process from job posting to candidate selection and onboarding.",
+      "category": "Customer & Advisory",
+      "tags": ["recruitment", "hiring", "candidates", "onboarding"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "develop-hr-policies",
+      "title": "Develop HR policies",
+      "description": "Create and update company policies, procedures, and employee handbook guidelines.",
+      "category": "Creative & Strategy",
+      "tags": ["policies", "procedures", "handbook", "guidelines"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "manage-employee-relations",
+      "title": "Manage employee relations",
+      "description": "Handle workplace conflicts, grievances, and maintain positive employee relationships.",
+      "category": "Customer & Advisory",
+      "tags": ["relations", "conflicts", "grievances", "workplace"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "process-payroll",
+      "title": "Process payroll",
+      "description": "Calculate wages, deductions, and benefits to ensure accurate and timely employee payments.",
+      "category": "Data Processing",
+      "tags": ["payroll", "wages", "benefits", "payments"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-performance-reviews",
+      "title": "Conduct performance reviews",
+      "description": "Coordinate annual reviews, goal setting, and performance improvement plans with managers.",
+      "category": "Customer & Advisory",
+      "tags": ["performance", "reviews", "goals", "improvement"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "ensure-legal-compliance",
+      "title": "Ensure legal compliance",
+      "description": "Monitor employment laws and regulations to maintain company compliance and avoid violations.",
+      "category": "Quality & Security",
+      "tags": ["compliance", "legal", "regulations", "employment"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "organize-training-programs",
+      "title": "Organize training programs",
+      "description": "Plan and coordinate employee development, skills training, and professional growth initiatives.",
+      "category": "Communication & Scheduling",
+      "tags": ["training", "development", "skills", "growth"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "maintain-employee-records",
+      "title": "Maintain employee records",
+      "description": "Keep accurate personnel files, documentation, and confidential employee information secure.",
+      "category": "Data Processing",
+      "tags": ["records", "documentation", "personnel", "confidential"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "administer-benefits",
+      "title": "Administer employee benefits",
+      "description": "Manage health insurance, retirement plans, and other employee benefit programs.",
+      "category": "Data Processing",
+      "tags": ["benefits", "insurance", "retirement", "programs"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "handle-disciplinary-actions",
+      "title": "Handle disciplinary actions",
+      "description": "Investigate misconduct, document violations, and implement appropriate corrective measures.",
+      "category": "Customer & Advisory",
+      "tags": ["discipline", "misconduct", "investigation", "corrective"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "coordinate-employee-surveys",
+      "title": "Coordinate employee surveys",
+      "description": "Conduct engagement surveys and analyze feedback to improve workplace culture and satisfaction.",
+      "category": "Communication & Scheduling",
+      "tags": ["surveys", "engagement", "feedback", "culture"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-workforce-planning",
+      "title": "Manage workforce planning",
+      "description": "Analyze staffing needs, forecast hiring requirements, and plan organizational structure changes.",
+      "category": "Creative & Strategy",
+      "tags": ["workforce", "planning", "staffing", "forecasting"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "process-leave-requests",
+      "title": "Process leave requests",
+      "description": "Handle vacation, sick leave, and FMLA requests while ensuring adequate coverage.",
+      "category": "Data Processing",
+      "tags": ["leave", "vacation", "fmla", "coverage"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-exit-interviews",
+      "title": "Conduct exit interviews",
+      "description": "Interview departing employees to gather feedback and identify retention improvement opportunities.",
+      "category": "Customer & Advisory",
+      "tags": ["exit", "interviews", "retention", "feedback"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "generate-hr-reports",
+      "title": "Generate HR reports",
+      "description": "Create regular reports on turnover, diversity, compensation, and other HR metrics.",
+      "category": "Reporting & Analytics",
+      "tags": ["reports", "turnover", "diversity", "metrics"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "coordinate-onboarding",
+      "title": "Coordinate employee onboarding",
+      "description": "Facilitate new hire orientation, documentation completion, and integration into company culture.",
+      "category": "Communication & Scheduling",
+      "tags": ["onboarding", "orientation", "integration", "culture"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-compensation",
+      "title": "Manage compensation programs",
+      "description": "Develop salary structures, conduct pay equity analyses, and manage merit increase processes.",
+      "category": "Creative & Strategy",
+      "tags": ["compensation", "salary", "equity", "increases"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "handle-workers-compensation",
+      "title": "Handle workers compensation",
+      "description": "Manage workplace injury claims, return-to-work programs, and safety compliance requirements.",
+      "category": "Quality & Security",
+      "tags": ["workers-comp", "safety", "claims", "compliance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "facilitate-team-building",
+      "title": "Facilitate team building",
+      "description": "Organize team activities, company events, and initiatives to improve employee engagement.",
+      "category": "Communication & Scheduling",
+      "tags": ["team-building", "events", "engagement", "activities"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "analyze-hr-metrics",
+      "title": "Analyze HR metrics",
+      "description": "Review workforce analytics, retention rates, and performance data to identify trends and improvements.",
+      "category": "Reporting & Analytics",
+      "tags": ["analytics", "retention", "performance", "trends"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "manage-vendor-relationships",
+      "title": "Manage vendor relationships",
+      "description": "Coordinate with benefits providers, recruitment agencies, and other HR service vendors.",
+      "category": "Customer & Advisory",
+      "tags": ["vendors", "providers", "agencies", "coordination"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "implement-diversity-programs",
+      "title": "Implement diversity programs",
+      "description": "Develop and execute diversity, equity, and inclusion initiatives throughout the organization.",
+      "category": "Creative & Strategy",
+      "tags": ["diversity", "equity", "inclusion", "initiatives"],
+      "defaultAutomation": "Human"
+    }
+  ]
+}

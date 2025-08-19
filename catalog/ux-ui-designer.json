@@ -1,0 +1,185 @@
+{
+  "role": "UX/UI Designer",
+  "roleSlug": "ux-ui-designer",
+  "version": 1,
+  "generatedAt": "2025-08-19T11:40:00.000Z",
+  "source": "manual",
+  "items": [
+    {
+      "id": "conduct-user-research",
+      "title": "Conduct user research",
+      "description": "Interview users, create surveys, and gather insights to understand user needs and behaviors.",
+      "category": "Customer & Advisory",
+      "tags": ["research", "interviews", "surveys", "user-insights"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-wireframes-mockups",
+      "title": "Create wireframes and mockups",
+      "description": "Design low and high-fidelity prototypes to visualize interface layouts and interactions.",
+      "category": "Creative & Strategy",
+      "tags": ["wireframes", "mockups", "prototyping", "design"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "design-user-interfaces",
+      "title": "Design user interfaces",
+      "description": "Create visually appealing and functional interface designs following design system guidelines.",
+      "category": "Creative & Strategy",
+      "tags": ["ui-design", "interfaces", "visual-design", "systems"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "develop-user-personas",
+      "title": "Develop user personas",
+      "description": "Create detailed user personas based on research data to guide design decisions.",
+      "category": "Creative & Strategy",
+      "tags": ["personas", "user-profiles", "research", "guidance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "map-user-journeys",
+      "title": "Map user journeys",
+      "description": "Document user workflows and touchpoints to identify pain points and optimization opportunities.",
+      "category": "Creative & Strategy",
+      "tags": ["user-journeys", "workflows", "touchpoints", "optimization"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-usability-testing",
+      "title": "Conduct usability testing",
+      "description": "Test prototypes with real users to identify usability issues and gather feedback.",
+      "category": "Quality & Security",
+      "tags": ["usability", "testing", "feedback", "validation"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "collaborate-developers",
+      "title": "Collaborate with developers",
+      "description": "Work closely with engineering teams to ensure design implementation matches specifications.",
+      "category": "Communication & Scheduling",
+      "tags": ["collaboration", "developers", "implementation", "specifications"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "maintain-design-systems",
+      "title": "Maintain design systems",
+      "description": "Create and update component libraries, style guides, and design tokens for consistency.",
+      "category": "Creative & Strategy",
+      "tags": ["design-systems", "components", "style-guides", "consistency"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "analyze-user-analytics",
+      "title": "Analyze user analytics",
+      "description": "Review user behavior data and metrics to inform design decisions and improvements.",
+      "category": "Reporting & Analytics",
+      "tags": ["analytics", "user-behavior", "metrics", "insights"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "create-information-architecture",
+      "title": "Create information architecture",
+      "description": "Organize content and navigation structures for optimal user comprehension and flow.",
+      "category": "Creative & Strategy",
+      "tags": ["information-architecture", "navigation", "content", "structure"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "design-responsive-layouts",
+      "title": "Design responsive layouts",
+      "description": "Create adaptive designs that work seamlessly across different devices and screen sizes.",
+      "category": "Creative & Strategy",
+      "tags": ["responsive", "adaptive", "mobile", "layouts"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "conduct-competitive-analysis",
+      "title": "Conduct competitive analysis",
+      "description": "Research competitor products and industry standards to identify design opportunities.",
+      "category": "Reporting & Analytics",
+      "tags": ["competitive-analysis", "research", "benchmarking", "opportunities"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "facilitate-design-workshops",
+      "title": "Facilitate design workshops",
+      "description": "Lead brainstorming sessions and design sprints with stakeholders and team members.",
+      "category": "Communication & Scheduling",
+      "tags": ["workshops", "brainstorming", "facilitation", "collaboration"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-accessibility-guidelines",
+      "title": "Create accessibility guidelines",
+      "description": "Ensure designs meet accessibility standards and are usable by people with disabilities.",
+      "category": "Quality & Security",
+      "tags": ["accessibility", "inclusion", "standards", "compliance"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "present-design-concepts",
+      "title": "Present design concepts",
+      "description": "Communicate design rationale and solutions to stakeholders and decision makers.",
+      "category": "Communication & Scheduling",
+      "tags": ["presentations", "stakeholders", "communication", "concepts"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "optimize-conversion-flows",
+      "title": "Optimize conversion flows",
+      "description": "Improve user journey paths to increase conversion rates and reduce abandonment.",
+      "category": "Reporting & Analytics",
+      "tags": ["optimization", "conversion", "flows", "improvement"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "design-micro-interactions",
+      "title": "Design micro-interactions",
+      "description": "Create subtle animations and feedback mechanisms to enhance user experience.",
+      "category": "Creative & Strategy",
+      "tags": ["micro-interactions", "animations", "feedback", "experience"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "validate-design-decisions",
+      "title": "Validate design decisions",
+      "description": "Use A/B testing and user feedback to measure design effectiveness and impact.",
+      "category": "Quality & Security",
+      "tags": ["validation", "ab-testing", "effectiveness", "measurement"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "create-design-documentation",
+      "title": "Create design documentation",
+      "description": "Document design processes, decisions, and specifications for team reference.",
+      "category": "Communication & Scheduling",
+      "tags": ["documentation", "processes", "specifications", "reference"],
+      "defaultAutomation": "Automatable"
+    },
+    {
+      "id": "mentor-junior-designers",
+      "title": "Mentor junior designers",
+      "description": "Guide and train less experienced designers on best practices and design methodologies.",
+      "category": "Customer & Advisory",
+      "tags": ["mentoring", "training", "guidance", "methodologies"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "coordinate-user-testing",
+      "title": "Coordinate user testing",
+      "description": "Plan, schedule, and manage user testing sessions to gather actionable insights.",
+      "category": "Communication & Scheduling",
+      "tags": ["coordination", "user-testing", "planning", "insights"],
+      "defaultAutomation": "Human"
+    },
+    {
+      "id": "design-brand-guidelines",
+      "title": "Design brand guidelines",
+      "description": "Establish visual identity standards including colors, typography, and brand elements.",
+      "category": "Creative & Strategy",
+      "tags": ["branding", "guidelines", "identity", "standards"],
+      "defaultAutomation": "Automatable"
+    }
+  ]
+}
