@@ -42,6 +42,10 @@ export const DICT: Record<Lang, Record<string, string>> = {
     country: "Deutschland",
     phone_number: "0221 2592 7541",
     
+    // Legal
+    legal_notice: "Impressum",
+    legal_title: "Impressum",
+    
     // Error messages
     page_not_readable: "Die Seite konnte nicht automatisch gelesen werden",
     paste_manually: "Bitte fügen Sie den Stellentext manuell ein oder prüfen Sie den Debug-Modus.",
@@ -84,6 +88,10 @@ export const DICT: Record<Lang, Record<string, string>> = {
     city: "Cologne",
     country: "Germany",
     phone_number: "+49 221 2592 7541",
+    
+    // Legal
+    legal_notice: "Legal notice",
+    legal_title: "Legal Notice",
     
     // Error messages
     page_not_readable: "The page could not be read automatically",
