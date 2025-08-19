@@ -12,12 +12,6 @@ const Header = () => {
         {/* Navigation */}
         <nav className="flex items-center space-x-8">
           <a 
-            href="/catalog" 
-            className="text-foreground hover:text-primary transition-colors duration-200"
-          >
-            Begriffskatalog
-          </a>
-          <a 
             href="#about" 
             className="text-foreground hover:text-primary transition-colors duration-200"
           >

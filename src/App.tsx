@@ -8,7 +8,6 @@ import Results from "./pages/Results";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import TestAnalysis from "./components/TestAnalysis";
-import TermCatalog from "./components/TermCatalog";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +21,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/results" element={<Results />} />
           <Route path="/landing" element={<Landing />} />
-          <Route path="/catalog" element={<TermCatalog />} />
           <Route path="/test" element={<TestAnalysis />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
