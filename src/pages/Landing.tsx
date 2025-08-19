@@ -3,7 +3,7 @@ import { Bot, User, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LandingScoreCircle from "@/components/LandingScoreCircle";
 import InfoCard from "@/components/InfoCard";
-import Footer from "@/components/Footer";
+import PageFooter from "@/components/PageFooter";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -109,7 +109,7 @@ const Landing = () => {
       </main>
 
       {/* Footer */}
-      <Footer />
+      <PageFooter />
     </div>
   );
 };

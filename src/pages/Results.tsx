@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Share2, BookOpen, ArrowLeft } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ScoreCircle from "@/components/ScoreCircle";
 import BarChart from "@/components/BarChart";
 import TaskList from "@/components/TaskList";
-import { useNavigate } from "react-router-dom";
+import PageFooter from "@/components/PageFooter";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { resolveLang, t } from "@/lib/i18n/i18n";
 
 interface AnalysisTask {
   text: string;
@@ -68,6 +71,8 @@ const mockTasks: TaskForDisplay[] = [
 
 const Results = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const lang = resolveLang(searchParams.get("lang") || undefined);
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
   const [displayTasks, setDisplayTasks] = useState<TaskForDisplay[]>(mockTasks);
 
@@ -117,7 +122,7 @@ const Results = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="px-6 py-6 border-b border-border">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -127,7 +132,7 @@ const Results = () => {
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Zurück</span>
+            <span>{t(lang, "back")}</span>
           </Button>
           
           <div className="text-xl font-bold text-primary">PROM8EUS</div>
@@ -135,15 +140,15 @@ const Results = () => {
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-12">
+      <main className="flex-1 px-6 py-12">
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Title */}
           <div className="text-center animate-fade-in">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Ihre Automatisierungs-Analyse
+              {t(lang, "your_analysis")}
             </h1>
             <p className="text-xl text-muted-foreground">
-              Detaillierte Auswertung Ihrer Aufgabenbeschreibung
+              {t(lang, "detailed_evaluation")}
             </p>
             {analysisData && (
               <p className="text-sm text-muted-foreground mt-2">
@@ -174,30 +179,43 @@ const Results = () => {
             <TaskList tasks={displayTasks} />
           </div>
 
-
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-            <Button 
-              onClick={handleShare}
-              size="lg"
-              className="flex items-center space-x-2 px-8"
-            >
-              <Share2 className="w-5 h-5" />
-              <span>Landingpage teilen</span>
-            </Button>
-            
-            <Button 
-              variant="secondary"
-              onClick={handleLearnMore}
-              size="lg"
-              className="flex items-center space-x-2 px-8"
-            >
-              <BookOpen className="w-5 h-5" />
-              <span>Mehr über Workflows erfahren</span>
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <Button 
+                onClick={handleShare}
+                size="lg"
+                className="flex items-center space-x-2 px-8"
+              >
+                <Share2 className="w-5 h-5" />
+                <span>{t(lang, "share_landing")}</span>
+              </Button>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button 
+                      variant="secondary"
+                      disabled
+                      size="lg"
+                      className="flex items-center space-x-2 px-8"
+                    >
+                      <BookOpen className="w-5 h-5" />
+                      <span>{t(lang, "learn_workflows")}</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t(lang, "coming_soon")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
       </main>
+
+      {/* Footer */}
+      <PageFooter />
     </div>
   );
 };

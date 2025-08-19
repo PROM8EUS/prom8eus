@@ -51,7 +51,15 @@ export const DICT: Record<Lang, Record<string, string>> = {
     paste_manually: "Bitte fügen Sie den Stellentext manuell ein oder prüfen Sie den Debug-Modus.",
     paste_text_tip: "Kopieren Sie den Stellentext manuell von der Website und fügen Sie ihn direkt hier ein.",
     connection_error: "Verbindungsfehler: Die Analyse konnte nicht durchgeführt werden",
-    analysis_error: "Ein unbekannter Fehler ist bei der Analyse aufgetreten"
+    analysis_error: "Ein unbekannter Fehler ist bei der Analyse aufgetreten",
+    
+    // Results page
+    back: "Zurück",
+    your_analysis: "Ihre Automatisierungs-Analyse",
+    detailed_evaluation: "Detaillierte Auswertung Ihrer Aufgabenbeschreibung",
+    share_landing: "Landingpage teilen",
+    learn_workflows: "Mehr über Workflows erfahren",
+    coming_soon: "Demnächst verfügbar"
   },
   en: {
     headline: "See your automation potential instantly", 
@@ -98,7 +106,15 @@ export const DICT: Record<Lang, Record<string, string>> = {
     paste_manually: "Please paste the job text manually or check debug mode.",
     paste_text_tip: "Copy the job text manually from the website and paste it directly here.",
     connection_error: "Connection error: Analysis could not be performed",
-    analysis_error: "An unknown error occurred during analysis"
+    analysis_error: "An unknown error occurred during analysis",
+    
+    // Results page
+    back: "Back",
+    your_analysis: "Your Automation Analysis",
+    detailed_evaluation: "Detailed evaluation of your task description",
+    share_landing: "Share Landing Page", 
+    learn_workflows: "Learn More About Workflows",
+    coming_soon: "Coming Soon"
   }
 };
 
