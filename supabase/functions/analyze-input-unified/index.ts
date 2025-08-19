@@ -370,6 +370,8 @@ function extractTasks(text: string): RawTask[] {
       "\\b(aufgaben|deine aufgaben|ihre aufgaben|zur rolle|rolle|verantwortlichkeiten|zuständigkeiten|tätigkeiten|das machst du|du machst|du übernimmst|hauptaufgaben)\\b",
       // EN - erweiterte Responsibility-Überschriften  
       "\\b(responsibilities|duties|role|your role|tasks|what you will do|what you'll do|job duties|key responsibilities|main responsibilities|primary responsibilities)\\b",
+      // Single word matches for sections
+      "^responsibilities\\s*$|^duties\\s*$|^tasks\\s*$|^aufgaben\\s*$"
     ].join("|"),
     "i"
   );
@@ -406,17 +408,27 @@ function extractTasks(text: string): RawTask[] {
 
   console.log(`Analyzing ${scoped.length} lines in responsibilities section`);
 
-  // 3) Bullets einsammeln (priorisiert)
+  // 3) Bullets einsammeln (priorisiert) - erweitert für verschiedene Formate
   const bullets: RawTask[] = [];
   const BULLET = /^\s*(?:[-–—*•●▪▫◦‣⁃]|[0-9]+\.|\([0-9]+\)|[a-z]\.|\([a-z]\))\s+(.+)$/i;
   
   for (const l of scoped) {
     if (isHeadingOrIntro(l) || isFluff(l)) continue;
     
+    // Standard bullet point matching
     const m = l.match(BULLET);
-    if (m && m[1] && m[1].length >= 10) { // Mindestlänge für sinnvolle Tasks
+    if (m && m[1] && m[1].length >= 10) {
       const txt = shorten(clean(m[1]));
       if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
+      continue;
+    }
+    
+    // Enhanced detection for lines that start with action verbs (paragraph format)
+    const ACTION_STARTS = /^(write|create|develop|design|build|maintain|manage|lead|coordinate|support|implement|analyze|optimize|collaborate|partner|help|assist|ensure|provide|deliver|execute|plan|organize|monitor|review|evaluate|establish|enhance|improve|facilitate|guide|mentor|supervise|oversee|direct|control|handle|process|generate|produce|publish|distribute|communicate|present|report|document|research|investigate|identify|recommend|advise|consult|negotiate|sell|market|promote|train|teach|educate|install|configure|deploy|test|debug|troubleshoot|resolve|fix|update|upgrade|integrate|connect|link|sync|backup|restore|archive|store|retrieve|fetch|collect|gather|compile|summarize|translate|convert|transform|adapt|customize|personalize|tailor|schreiben|erstellen|entwickeln|gestalten|bauen|pflegen|verwalten|leiten|koordinieren|unterstützen|implementieren|analysieren|optimieren|zusammenarbeiten|helfen|sicherstellen|bereitstellen|liefern|ausführen|planen|organisieren|überwachen|überprüfen|bewerten|etablieren|verbessern|erleichtern|führen|betreuen|beaufsichtigen|überwachen|dirigieren|kontrollieren|handhaben|verarbeiten|generieren|produzieren|veröffentlichen|verteilen|kommunizieren|präsentieren|berichten|dokumentieren|recherchieren|untersuchen|identifizieren|empfehlen|beraten|konsultieren|verhandeln|verkaufen|vermarkten|bewerben|trainieren|lehren|bilden|installieren|konfigurieren|einsetzen|testen|debuggen|beheben|lösen|reparieren|aktualisieren|upgraden|integrieren|verbinden|verknüpfen|synchronisieren|sichern|wiederherstellen|archivieren|speichern|abrufen|sammeln|zusammenstellen|zusammenfassen|übersetzen|konvertieren|transformieren|anpassen|personalisieren|maßschneidern)\b/i;
+    
+    if (l.length >= 20 && ACTION_STARTS.test(l)) {
+      const txt = shorten(clean(l));
+      if (txt.length >= 15) bullets.push({ text: txt, source: "action" as any });
     }
   }
 
