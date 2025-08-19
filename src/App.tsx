@@ -8,6 +8,7 @@ import Results from "./pages/Results";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import TestAnalysis from "./components/TestAnalysis";
+import CatalogAdmin from "./pages/admin/Catalog";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/results" element={<Results />} />
           <Route path="/landing" element={<Landing />} />
           <Route path="/test" element={<TestAnalysis />} />
+          <Route path="/admin/catalog" element={<CatalogAdmin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
