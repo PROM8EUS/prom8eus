@@ -556,6 +556,7 @@ QUALIFICATIONS:
                 onKeyDown={handleKeyDown}
                 className="min-h-[45px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors overflow-hidden"
                 rows={1}
+                autoFocus
               />
               {isUrl && hasInput && !analysisError && (
                 <div className="absolute top-3 right-3">
