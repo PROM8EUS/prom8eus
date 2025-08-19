@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { supabase } from '@/integrations/supabase/client';
 import { getCachedUrlData, setCachedUrlData, cachedDataToJobText } from './urlCache';
+import { composeJobText as composeJobTextUtil, ExtractedJob } from './composeJobText';
 
 interface JobData {
   title: string;
@@ -159,27 +160,16 @@ export function extractJobText(html: string, url: string): ExtractedJobText {
   const cleanedQualifications = cleanText(qualifications);
   const cleanedFulltext = cleanText(fulltext);
 
-  // Step 4: Compose function
+  // Step 4: Compose function using the enhanced utility
   const composeJobText = (): string => {
-    const sections: string[] = [];
-    
-    if (cleanedTitle) {
-      sections.push(cleanedTitle);
-    }
-    
-    if (cleanedResponsibilities) {
-      sections.push(`\n\nAUFGABEN:\n${cleanedResponsibilities}`);
-    }
-    
-    if (cleanedQualifications) {
-      sections.push(`\n\nANFORDERUNGEN:\n${cleanedQualifications}`);
-    }
-    
-    if (cleanedDescription || cleanedFulltext) {
-      sections.push(`\n\nBESCHREIBUNG:\n${cleanedDescription || cleanedFulltext}`);
-    }
-    
-    return sections.join('');
+    return composeJobTextUtil({
+      title: cleanedTitle,
+      responsibilities: cleanedResponsibilities,
+      qualifications: cleanedQualifications,
+      description: cleanedDescription,
+      fulltext: cleanedFulltext,
+      source: url
+    });
   };
 
   return {
