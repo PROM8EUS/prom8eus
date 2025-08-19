@@ -306,14 +306,18 @@ function composeJobText(j: ExtractedJob): string {
 function runAnalysis(jobText: string): AnalysisResult {
   console.log('Starting job analysis with text length:', jobText.length);
   
-  // Extract tasks from text
-  const extractedTasks = extractTasks(jobText);
-  console.log('Extracted tasks:', extractedTasks.length);
+  // Step 1: Extract tasks using the advanced extractor
+  const rawTasks = extractTasks(jobText);
+  console.log('Raw tasks extracted:', rawTasks.length, rawTasks.map(t => `${t.text} (${t.source})`));
+  
+  // Convert to text array for analysis
+  const extractedTasks = rawTasks.map(t => t.text);
+  console.log('Tasks for analysis:', extractedTasks.length);
 
-  // Analyze and score each task
+  // Step 2: Analyze and score each task
   const analyzedTasks = extractedTasks.map(taskText => analyzeTask(taskText));
 
-  // Calculate aggregated scores
+  // Step 3: Calculate aggregated scores
   const totalTasks = analyzedTasks.length;
   const automatisierbareCount = analyzedTasks.filter(t => t.label === "Automatisierbar").length;
   const menschCount = analyzedTasks.filter(t => t.label === "Mensch").length;
@@ -325,7 +329,7 @@ function runAnalysis(jobText: string): AnalysisResult {
     mensch: totalTasks > 0 ? Math.round((menschCount / totalTasks) * 100) : 0
   };
 
-  // Generate summary and recommendations
+  // Step 4: Generate summary and recommendations
   const summary = generateSummary(weightedScore, ratio, totalTasks);
   const recommendations = generateRecommendations(analyzedTasks, weightedScore);
 
@@ -338,134 +342,213 @@ function runAnalysis(jobText: string): AnalysisResult {
   };
 }
 
-function extractTasks(text: string): string[] {
-  console.log('=== EXTRACT TASKS DEBUG ===');
-  console.log('Input text length:', text.length);
-  console.log('First 200 chars:', text.substring(0, 200));
-  
-  const tasks: string[] = [];
-  
-  // Split into sentences
-  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
-  console.log('Total sentences found:', sentences.length);
-  
-  // Extract bullet points
-  const bulletRegex = /(?:^|\n)\s*[-•*]\s*(.+?)(?=\n|$)/gm;
-  let match;
-  let bulletCount = 0;
-  while ((match = bulletRegex.exec(text)) !== null) {
-    if (match[1].trim().length > 15) {
-      tasks.push(match[1].trim());
-      bulletCount++;
+function extractTasks(text: string): RawTask[] {
+  const lines = text.split(/\r?\n/).map(l => clean(l)).filter(Boolean);
+
+  // Section detection patterns
+  const SECTION_START = new RegExp(
+    [
+      // DE
+      "\\b(aufgaben|verantwortlichkeiten|zuständigkeiten|tätigkeiten|zur rolle|rolle|deine aufgaben)\\b",
+      // EN
+      "\\b(responsibilities|duties|what you will do|role|your role|tasks)\\b",
+    ].join("|"),
+    "i"
+  );
+
+  const SECTION_IGNORE = new RegExp(
+    [
+      // DE
+      "\\b(hard facts|details zum jobangebot|benefits|leistungen|profil|dein profil|anforderungen|qualifikationen|kontakt)\\b",
+      // EN
+      "\\b(benefits|perks|about you|requirements|qualifications|contact|about us|company)\\b",
+    ].join("|"),
+    "i"
+  );
+
+  // 1) Find relevant section: from "Aufgaben/Responsibilities" until next ignore section
+  let startIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (SECTION_START.test(lines[i])) { 
+      startIdx = i; 
+      console.log(`Found responsibilities section at line ${i}: "${lines[i]}"`);
+      break; 
     }
   }
-  console.log('Bullet points found:', bulletCount);
+  let scoped = startIdx >= 0 ? lines.slice(startIdx + 1) : lines;
 
-  // Extract numbered lists
-  const numberedRegex = /(?:^|\n)\s*\d+\.?\s*(.+?)(?=\n|$)/gm;
-  let numberedCount = 0;
-  while ((match = numberedRegex.exec(text)) !== null) {
-    if (match[1].trim().length > 15) {
-      tasks.push(match[1].trim());
-      numberedCount++;
-    }
-  }
-  console.log('Numbered items found:', numberedCount);
-
-  // Look for "Responsibilities" section specifically
-  const responsibilitiesMatch = text.match(/Responsibilities\s*\n([\s\S]*?)(?=\n\n|\n[A-Z]|$)/i);
-  if (responsibilitiesMatch) {
-    console.log('Found Responsibilities section:', responsibilitiesMatch[1].substring(0, 100));
-    const respLines = responsibilitiesMatch[1].split('\n').filter(line => line.trim().length > 20);
-    respLines.forEach(line => {
-      const cleanLine = line.trim();
-      if (cleanLine && !tasks.includes(cleanLine)) {
-        tasks.push(cleanLine);
-      }
-    });
+  const stopAt = scoped.findIndex(l => SECTION_IGNORE.test(l));
+  if (stopAt >= 0) {
+    console.log(`Stopping at ignore section: "${scoped[stopAt]}"`);
+    scoped = scoped.slice(0, stopAt);
   }
 
-  // Extract action verb sentences
-  const actionVerbs = [
-    'write', 'develop', 'build', 'create', 'maintain', 'design', 'implement', 'review', 'participate',
-    'lead', 'contribute', 'triage', 'debug', 'analyze', 'provide', 'ensure', 'track', 'resolve',
-    'planen', 'koordinieren', 'erstellen', 'entwickeln', 'verwalten', 'organisieren',
-    'durchführen', 'bearbeiten', 'überwachen', 'analysieren', 'dokumentieren',
-    'pflegen', 'betreuen', 'unterstützen', 'leiten', 'führen',
-    'beraten', 'kommunizieren', 'präsentieren', 'verhandeln', 'verkaufen'
-  ];
+  console.log(`Analyzing ${scoped.length} lines in responsibilities section`);
 
-  let verbMatches = 0;
-  sentences.forEach(sentence => {
-    const hasActionVerb = actionVerbs.some(verb => 
-      sentence.toLowerCase().includes(verb.toLowerCase())
-    );
-    
-    if (hasActionVerb && sentence.length > 20 && sentence.length < 200) {
-      tasks.push(sentence);
-      verbMatches++;
+  // 2) Collect bullets
+  const bullets: RawTask[] = [];
+  const BULLET = /^\s*(?:[-–*•●▪]|[0-9]+\.)\s+(.+)$/i;
+  
+  for (const l of scoped) {
+    const m = l.match(BULLET);
+    if (m && m[1]) {
+      const txt = shorten(clean(m[1]));
+      if (txt.length >= 6) bullets.push({ text: txt, source: "bullet" });
     }
-  });
-  console.log('Action verb sentences found:', verbMatches);
+  }
 
-  // Remove duplicates
-  const uniqueTasks = tasks.filter((task, index, arr) => {
-    return arr.findIndex(t => calculateSimilarity(t.toLowerCase(), task.toLowerCase()) > 0.8) === index;
-  });
+  console.log(`Found ${bullets.length} bullet points`);
 
-  console.log('Total unique tasks extracted:', uniqueTasks.length);
-  console.log('Sample tasks:', uniqueTasks.slice(0, 3));
+  // 3) Fallback: Verb lines (if no bullets found)
+  const VERB_LINE = new RegExp(
+    [
+      // DE (Infinitiv/Verb am Satzanfang oder nach Gedankenstrich)
+      "^(?:[–—-]\\s*)?(?:entwickeln|gestalten|planen|koordinieren|analysieren|implementieren|pflegen|migrieren|übernehmen|führen|mentoren|betreuen|optimieren|automatisieren|dokumentieren|überwachen|integrieren)\\b",
+      // EN
+      "^(?:[–—-]\\s*)?(?:develop|design|plan|coordinate|analy[sz]e|implement|maintain|migrate|lead|mentor|own|optimi[sz]e|automate|document|monitor|integrate|write|build|create|review|participate|contribute|triage|debug|provide|ensure|track|resolve)\\b",
+    ].join("|"),
+    "i"
+  );
 
-  return uniqueTasks.slice(0, 15);
+  const verbLines: RawTask[] = bullets.length
+    ? []
+    : scoped
+        .filter(l => VERB_LINE.test(l))
+        .map(l => ({ text: shorten(clean(l)), source: "verbline" }));
+
+  console.log(`Found ${verbLines.length} verb lines as fallback`);
+
+  // 4) Combine and deduplicate
+  const dedup = new Map<string, RawTask>();
+  for (const t of [...bullets, ...verbLines]) {
+    const key = t.text.toLowerCase();
+    if (!dedup.has(key)) dedup.set(key, t);
+  }
+
+  // 5) Filter noise
+  const NOISE = /\b(hard facts|details|benefits|profil|qualifikationen|anforderungen|requirement|qualification|benefit|perk)\b/i;
+  const result = Array.from(dedup.values())
+    .filter(t => !NOISE.test(t.text))
+    .slice(0, 30);
+
+  console.log(`Final extracted tasks: ${result.length}`);
+  return result;
+}
+
+function clean(s: string): string {
+  return s
+    .replace(/[*_`#>]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+[,;]$/, "")
+    .trim();
+}
+
+function shorten(s: string, n = 140): string {
+  return s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s;
+}
+
+interface RawTask { 
+  text: string; 
+  source: "bullet" | "verbline"; 
 }
 
 function analyzeTask(taskText: string): Task {
   const lowerText = taskText.toLowerCase();
   
-  // Automation signals
+  // Define automation indicators (with English keywords added)
   const automationSignals = {
     dataProcessing: {
-      keywords: ['excel', 'daten', 'tabelle', 'reporting', 'report', 'statistik', 'auswertung', 'eingabe', 'erfassung'],
+      keywords: [
+        // German
+        'excel', 'daten', 'tabelle', 'reporting', 'report', 'statistik', 'auswertung', 'eingabe', 'erfassung',
+        // English
+        'data', 'database', 'spreadsheet', 'analytics', 'metrics', 'dashboard', 'entry', 'input', 'processing'
+      ],
       weight: 25
     },
     communication: {
-      keywords: ['email', 'e-mail', 'nachricht', 'benachrichtigung', 'terminplanung', 'kalender', 'erinnerung'],
+      keywords: [
+        // German
+        'email', 'e-mail', 'nachricht', 'benachrichtigung', 'terminplanung', 'kalender', 'erinnerung',
+        // English
+        'notification', 'scheduling', 'calendar', 'reminder', 'message', 'communication', 'coordination'
+      ],
       weight: 20
     },
     routine: {
-      keywords: ['routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess'],
+      keywords: [
+        // German
+        'routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess',
+        // English
+        'routine', 'recurring', 'daily', 'weekly', 'regular', 'standard', 'process', 'workflow', 'systematic'
+      ],
       weight: 20
     },
     systems: {
-      keywords: ['crm', 'erp', 'system', 'software', 'tool', 'plattform', 'dashboard', 'datenbank'],
+      keywords: [
+        // German
+        'crm', 'erp', 'system', 'software', 'tool', 'plattform', 'dashboard', 'datenbank',
+        // English
+        'platform', 'infrastructure', 'integration', 'api', 'automation', 'deployment', 'monitoring', 'code', 'development'
+      ],
       weight: 15
     },
     documentation: {
-      keywords: ['dokumentation', 'protokoll', 'liste', 'archivierung', 'ablage', 'verwaltung'],
+      keywords: [
+        // German
+        'dokumentation', 'protokoll', 'liste', 'archivierung', 'ablage', 'verwaltung',
+        // English
+        'documentation', 'logging', 'tracking', 'maintenance', 'updating', 'management'
+      ],
       weight: 15
     }
   };
 
-  // Human signals
+  // Define human-required indicators (with English keywords added)
   const humanSignals = {
     creative: {
-      keywords: ['kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming'],
+      keywords: [
+        // German
+        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming',
+        // English
+        'creative', 'innovation', 'strategy', 'design', 'conceptual', 'vision', 'ideation', 'brainstorm'
+      ],
       weight: 30
     },
     leadership: {
-      keywords: ['führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung'],
+      keywords: [
+        // German
+        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung',
+        // English
+        'leadership', 'manage', 'lead', 'mentor', 'guide', 'supervise', 'coordinate', 'stakeholder'
+      ],
       weight: 25
     },
     consultation: {
-      keywords: ['beratung', 'beratend', 'empfehlung', 'expertise', 'fachlich', 'spezialist'],
+      keywords: [
+        // German
+        'beratung', 'beratend', 'empfehlung', 'expertise', 'fachlich', 'spezialist',
+        // English
+        'consultation', 'advise', 'recommend', 'expertise', 'specialist', 'counsel', 'guidance'
+      ],
       weight: 25
     },
     negotiation: {
-      keywords: ['verhandlung', 'verkauf', 'akquise', 'überzeugung', 'kundenbeziehung', 'networking'],
+      keywords: [
+        // German
+        'verhandlung', 'verkauf', 'akquise', 'überzeugung', 'kundenbeziehung', 'networking',
+        // English
+        'negotiation', 'sales', 'persuasion', 'relationship', 'networking', 'client', 'customer'
+      ],
       weight: 20
     },
     complex: {
-      keywords: ['komplex', 'schwierig', 'herausfordernd', 'problemlösung', 'entscheidung', 'kritisch'],
+      keywords: [
+        // German
+        'komplex', 'schwierig', 'herausfordernd', 'problemlösung', 'entscheidung', 'kritisch',
+        // English
+        'complex', 'difficult', 'challenging', 'problem-solving', 'decision', 'critical', 'judgment'
+      ],
       weight: 15
     }
   };
@@ -474,15 +557,16 @@ function analyzeTask(taskText: string): Task {
   let humanScore = 0;
   let detectedCategory = 'Allgemein';
 
-  // Calculate scores
+  // Calculate automation score
   Object.entries(automationSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
     if (matches > 0) {
-      automationScore += signal.weight * Math.min(matches, 2);
+      automationScore += signal.weight * Math.min(matches, 2); // Cap at 2 matches per category
       detectedCategory = category;
     }
   });
 
+  // Calculate human score
   Object.entries(humanSignals).forEach(([category, signal]) => {
     const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
     if (matches > 0) {
@@ -491,9 +575,10 @@ function analyzeTask(taskText: string): Task {
     }
   });
 
-  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + 50));
+  // Determine final score and label
+  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + 50)); // Base score of 50
   const label = netScore >= 50 ? "Automatisierbar" : "Mensch";
-  const confidence = Math.abs(netScore - 50) * 2;
+  const confidence = Math.abs(netScore - 50) * 2; // Confidence based on deviation from neutral
 
   return {
     text: taskText,

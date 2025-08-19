@@ -1,3 +1,5 @@
+import { extractTasks as extractTasksAdvanced } from './extractTasks';
+
 interface Task {
   text: string;
   score: number;
@@ -20,9 +22,13 @@ interface AnalysisResult {
 export function runAnalysis(jobText: string): AnalysisResult {
   console.log('Starting job analysis with text length:', jobText.length);
   
-  // Step 1: Extract tasks from text
-  const extractedTasks = extractTasks(jobText);
-  console.log('Extracted tasks:', extractedTasks.length);
+  // Step 1: Extract tasks using the advanced extractor
+  const rawTasks = extractTasksAdvanced(jobText);
+  console.log('Raw tasks extracted:', rawTasks.length, rawTasks.map(t => `${t.text} (${t.source})`));
+  
+  // Convert to text array for analysis
+  const extractedTasks = rawTasks.map(t => t.text);
+  console.log('Tasks for analysis:', extractedTasks.length);
 
   // Step 2: Analyze and score each task
   const analyzedTasks = extractedTasks.map(taskText => analyzeTask(taskText));
@@ -32,7 +38,7 @@ export function runAnalysis(jobText: string): AnalysisResult {
   const automatisierbareCount = analyzedTasks.filter(t => t.label === "Automatisierbar").length;
   const menschCount = analyzedTasks.filter(t => t.label === "Mensch").length;
 
-  const weightedScore = analyzedTasks.reduce((sum, task) => sum + task.score, 0) / totalTasks;
+  const weightedScore = totalTasks > 0 ? analyzedTasks.reduce((sum, task) => sum + task.score, 0) / totalTasks : 0;
   
   const ratio = {
     automatisierbar: totalTasks > 0 ? Math.round((automatisierbareCount / totalTasks) * 100) : 0,
@@ -52,102 +58,105 @@ export function runAnalysis(jobText: string): AnalysisResult {
   };
 }
 
-function extractTasks(text: string): string[] {
-  const tasks: string[] = [];
-  
-  // Split text into sentences
-  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
-  
-  // Extract bullet points and list items
-  const bulletRegex = /(?:^|\n)\s*[-•*]\s*(.+?)(?=\n|$)/gm;
-  let match;
-  while ((match = bulletRegex.exec(text)) !== null) {
-    if (match[1].trim().length > 15) {
-      tasks.push(match[1].trim());
-    }
-  }
-
-  // Extract numbered lists
-  const numberedRegex = /(?:^|\n)\s*\d+\.?\s*(.+?)(?=\n|$)/gm;
-  while ((match = numberedRegex.exec(text)) !== null) {
-    if (match[1].trim().length > 15) {
-      tasks.push(match[1].trim());
-    }
-  }
-
-  // Extract sentences with action verbs (German)
-  const actionVerbs = [
-    'planen', 'koordinieren', 'erstellen', 'entwickeln', 'verwalten', 'organisieren',
-    'durchführen', 'bearbeiten', 'überwachen', 'analysieren', 'dokumentieren',
-    'erstellen', 'pflegen', 'betreuen', 'unterstützen', 'leiten', 'führen',
-    'beraten', 'kommunizieren', 'präsentieren', 'verhandeln', 'verkaufen'
-  ];
-
-  sentences.forEach(sentence => {
-    const hasActionVerb = actionVerbs.some(verb => 
-      sentence.toLowerCase().includes(verb)
-    );
-    
-    if (hasActionVerb && sentence.length > 20 && sentence.length < 200) {
-      tasks.push(sentence);
-    }
-  });
-
-  // Remove duplicates and very similar tasks
-  const uniqueTasks = tasks.filter((task, index, arr) => {
-    return arr.findIndex(t => calculateSimilarity(t.toLowerCase(), task.toLowerCase()) > 0.8) === index;
-  });
-
-  return uniqueTasks.slice(0, 15); // Limit to 15 most relevant tasks
-}
+// Remove the old extractTasks function - now using the advanced extractor
 
 function analyzeTask(taskText: string): Task {
   const lowerText = taskText.toLowerCase();
   
-  // Define automation indicators
+  // Define automation indicators (with English keywords added)
   const automationSignals = {
     dataProcessing: {
-      keywords: ['excel', 'daten', 'tabelle', 'reporting', 'report', 'statistik', 'auswertung', 'eingabe', 'erfassung'],
+      keywords: [
+        // German
+        'excel', 'daten', 'tabelle', 'reporting', 'report', 'statistik', 'auswertung', 'eingabe', 'erfassung',
+        // English
+        'data', 'database', 'spreadsheet', 'analytics', 'metrics', 'dashboard', 'entry', 'input', 'processing'
+      ],
       weight: 25
     },
     communication: {
-      keywords: ['email', 'e-mail', 'nachricht', 'benachrichtigung', 'terminplanung', 'kalender', 'erinnerung'],
+      keywords: [
+        // German
+        'email', 'e-mail', 'nachricht', 'benachrichtigung', 'terminplanung', 'kalender', 'erinnerung',
+        // English
+        'notification', 'scheduling', 'calendar', 'reminder', 'message', 'communication', 'coordination'
+      ],
       weight: 20
     },
     routine: {
-      keywords: ['routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess'],
+      keywords: [
+        // German
+        'routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess',
+        // English
+        'routine', 'recurring', 'daily', 'weekly', 'regular', 'standard', 'process', 'workflow', 'systematic'
+      ],
       weight: 20
     },
     systems: {
-      keywords: ['crm', 'erp', 'system', 'software', 'tool', 'plattform', 'dashboard', 'datenbank'],
+      keywords: [
+        // German
+        'crm', 'erp', 'system', 'software', 'tool', 'plattform', 'dashboard', 'datenbank',
+        // English
+        'platform', 'infrastructure', 'integration', 'api', 'automation', 'deployment', 'monitoring'
+      ],
       weight: 15
     },
     documentation: {
-      keywords: ['dokumentation', 'protokoll', 'liste', 'archivierung', 'ablage', 'verwaltung'],
+      keywords: [
+        // German
+        'dokumentation', 'protokoll', 'liste', 'archivierung', 'ablage', 'verwaltung',
+        // English
+        'documentation', 'logging', 'tracking', 'maintenance', 'updating', 'management'
+      ],
       weight: 15
     }
   };
 
-  // Define human-required indicators
+  // Define human-required indicators (with English keywords added)
   const humanSignals = {
     creative: {
-      keywords: ['kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming'],
+      keywords: [
+        // German
+        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming',
+        // English
+        'creative', 'innovation', 'strategy', 'design', 'conceptual', 'vision', 'ideation', 'brainstorm'
+      ],
       weight: 30
     },
     leadership: {
-      keywords: ['führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung'],
+      keywords: [
+        // German
+        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung',
+        // English
+        'leadership', 'manage', 'lead', 'mentor', 'guide', 'supervise', 'coordinate', 'stakeholder'
+      ],
       weight: 25
     },
     consultation: {
-      keywords: ['beratung', 'beratend', 'empfehlung', 'expertise', 'fachlich', 'spezialist'],
+      keywords: [
+        // German
+        'beratung', 'beratend', 'empfehlung', 'expertise', 'fachlich', 'spezialist',
+        // English
+        'consultation', 'advise', 'recommend', 'expertise', 'specialist', 'counsel', 'guidance'
+      ],
       weight: 25
     },
     negotiation: {
-      keywords: ['verhandlung', 'verkauf', 'akquise', 'überzeugung', 'kundenbeziehung', 'networking'],
+      keywords: [
+        // German
+        'verhandlung', 'verkauf', 'akquise', 'überzeugung', 'kundenbeziehung', 'networking',
+        // English
+        'negotiation', 'sales', 'persuasion', 'relationship', 'networking', 'client', 'customer'
+      ],
       weight: 20
     },
     complex: {
-      keywords: ['komplex', 'schwierig', 'herausfordernd', 'problemlösung', 'entscheidung', 'kritisch'],
+      keywords: [
+        // German
+        'komplex', 'schwierig', 'herausfordernd', 'problemlösung', 'entscheidung', 'kritisch',
+        // English
+        'complex', 'difficult', 'challenging', 'problem-solving', 'decision', 'critical', 'judgment'
+      ],
       weight: 15
     }
   };
