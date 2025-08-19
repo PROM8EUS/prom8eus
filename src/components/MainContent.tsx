@@ -1,16 +1,29 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import LoadingPage from "./LoadingPage";
 
 const MainContent = () => {
   const [text, setText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAnalyze = () => {
     if (text.trim()) {
-      console.log("Analyzing text:", text);
-      // TODO: Implement analysis functionality
+      setIsLoading(true);
+      
+      // Simulate analysis process
+      setTimeout(() => {
+        console.log("Analysis complete:", text);
+        setIsLoading(false);
+        // TODO: Show results or navigate to results page
+      }, 4000);
     }
   };
+
+  // Show loading page when analyzing
+  if (isLoading) {
+    return <LoadingPage />;
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-20">
