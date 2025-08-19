@@ -187,9 +187,11 @@ function analyzeTask(taskText: string): Task {
   const netScore = Math.max(0, Math.min(100, automationScore - humanScore + 50)); // Base score of 50
   const confidence = Math.abs(netScore - 50) * 2; // Confidence based on deviation from neutral
   
-  // Conservative labeling: Only label as "Automatisierbar" if we have high confidence
-  // If confidence is low (< 20%), err on the side of caution and require human intervention
-  const label = (netScore >= 60 || (netScore >= 50 && confidence >= 20)) ? "Automatisierbar" : "Mensch";
+  // Conservative labeling: 
+  // - If confidence is 0%, always label as "Mensch" (no confidence = human intervention needed)
+  // - Only label as "Automatisierbar" if we have reasonable confidence and score
+  const label = (confidence === 0) ? "Mensch" :
+                (netScore >= 60 || (netScore >= 50 && confidence >= 20)) ? "Automatisierbar" : "Mensch";
 
   return {
     text: taskText,
