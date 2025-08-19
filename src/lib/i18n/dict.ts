@@ -53,6 +53,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     history_today: "Heute",
     history_yesterday: "Gestern", 
     history_tasks: "Aufgaben",
+    history_delete: "Analyse löschen",
     copyright: "Alle Rechte vorbehalten.",
     
     // MainContent
@@ -144,6 +145,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     history_today: "Today",
     history_yesterday: "Yesterday",
     history_tasks: "tasks",
+    history_delete: "Delete analysis",
     copyright: "All rights reserved.",
     
     // MainContent

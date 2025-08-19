@@ -55,15 +55,20 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
 
   const deleteAnalysis = (e: React.MouseEvent, itemId: string) => {
     e.stopPropagation();
+    e.preventDefault();
+    
+    console.log('Attempting to delete analysis:', itemId);
     
     try {
       // Remove from history
       const newHistory = history.filter(item => item.id !== itemId);
+      console.log('New history length:', newHistory.length);
       setHistory(newHistory);
       localStorage.setItem('analysisHistory', JSON.stringify(newHistory));
       
       // Remove the full analysis data
       localStorage.removeItem(itemId);
+      console.log('Analysis deleted successfully');
     } catch (error) {
       console.error('Error deleting analysis:', error);
     }
@@ -148,7 +153,8 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
                     variant="ghost"
                     size="sm"
                     onClick={(e) => deleteAnalysis(e, item.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 hover:bg-destructive/20 hover:text-destructive"
+                    aria-label={t(lang, 'history_delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
