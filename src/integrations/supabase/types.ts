@@ -14,13 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      url_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          extracted_data: Json
+          id: string
+          original_url: string
+          text_length: number
+          url_hash: string
+          was_rendered: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          extracted_data: Json
+          id?: string
+          original_url: string
+          text_length: number
+          url_hash: string
+          was_rendered?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          extracted_data?: Json
+          id?: string
+          original_url?: string
+          text_length?: number
+          url_hash?: string
+          was_rendered?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_url_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_cached_url_data: {
+        Args: { url_hash_param: string }
+        Returns: {
+          created_at: string
+          extracted_data: Json
+          text_length: number
+          was_rendered: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
