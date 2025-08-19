@@ -292,16 +292,11 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
           </div>
 
           {/* Features hint */}
-          <div className="text-sm text-muted-foreground max-w-lg mx-auto space-y-1">
-            <div>
-              {isUrl && hasInput && !analysisError ? 
-                t(lang, "url_detected_hint") : 
-                t(lang, "ai_hint")
-              }
-            </div>
-            <div className="text-xs opacity-70">
-              Tipp: {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'} + Enter zum Analysieren
-            </div>
+          <div className="text-sm text-muted-foreground max-w-lg mx-auto">
+            {isUrl && hasInput && !analysisError ? 
+              t(lang, "url_detected_hint") : 
+              t(lang, "ai_hint")
+            }
           </div>
         </div>
       </main>
