@@ -63,7 +63,7 @@ const About = () => {
             
             <div className="max-w-2xl mx-auto relative">
               {/* Connecting Line */}
-              <div className="absolute left-4 top-12 bottom-12 w-0.5 bg-primary/20"></div>
+              <div className="absolute left-2 top-12 bottom-12 w-0.5 bg-primary/20"></div>
               
               <div className="space-y-12">
                 {/* Step 1 */}
