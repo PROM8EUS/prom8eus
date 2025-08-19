@@ -46,6 +46,13 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_automatisierbar: "Automatisierbar",
     task_category_mensch: "Mensch erfordert",
     task_category_allgemein: "Allgemein",
+    
+    // History
+    history_title: "Frühere Analysen",
+    history_subtitle: "Klicken Sie auf eine Analyse, um sie erneut anzuzeigen",
+    history_today: "Heute",
+    history_yesterday: "Gestern", 
+    history_tasks: "Aufgaben",
     copyright: "Alle Rechte vorbehalten.",
     
     // MainContent
@@ -130,6 +137,13 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_automatisierbar: "Automatable",
     task_category_mensch: "Human Required",
     task_category_allgemein: "General",
+    
+    // History
+    history_title: "Previous Analyses",
+    history_subtitle: "Click on an analysis to view it again",
+    history_today: "Today",
+    history_yesterday: "Yesterday",
+    history_tasks: "tasks",
     copyright: "All rights reserved.",
     
     // MainContent

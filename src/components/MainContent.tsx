@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { callAnalyzeInput } from "@/lib/supabase";
 import { extractJobTextFromUrl } from "@/lib/extractJobText";
 import LoadingPage from "./LoadingPage";
+import AnalysisHistory from "./AnalysisHistory";
 import { DebugModal } from "./DebugModal";
 import { AlertTriangle, Bug } from "lucide-react";
 import { t } from "@/lib/i18n/i18n";
@@ -170,6 +171,10 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
         
         // Store the normalized data structure
         sessionStorage.setItem('analysisResult', JSON.stringify(analysisData));
+        
+        // Save to history
+        saveToHistory(analysisData, analysisInput);
+        
         if (debugData) {
           sessionStorage.setItem('debugData', JSON.stringify(debugData));
         }
@@ -183,6 +188,49 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
       setAnalysisError(t(lang, "connection_error"));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const saveToHistory = (analysisData: any, originalInput: string) => {
+    try {
+      const historyId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Extract job title
+      let jobTitle = "Analyse";
+      if (analysisData.originalText) {
+        const lines = analysisData.originalText.split('\n');
+        const firstLine = lines[0]?.trim();
+        if (firstLine && firstLine.length > 5 && firstLine.length < 60 && !firstLine.includes('http')) {
+          jobTitle = firstLine;
+        }
+      } else if (originalInput.length > 0 && originalInput.length < 60 && !originalInput.includes('http')) {
+        jobTitle = originalInput;
+      }
+
+      // Create history item
+      const historyItem = {
+        id: historyId,
+        timestamp: Date.now(),
+        score: analysisData.totalScore,
+        jobTitle: jobTitle,
+        taskCount: analysisData.tasks?.length || 0,
+        summary: analysisData.summary
+      };
+
+      // Save full analysis data
+      localStorage.setItem(historyId, JSON.stringify(analysisData));
+
+      // Update history list
+      const existingHistory = localStorage.getItem('analysisHistory');
+      const history = existingHistory ? JSON.parse(existingHistory) : [];
+      history.unshift(historyItem); // Add to beginning
+      
+      // Keep only last 10 analyses
+      const trimmedHistory = history.slice(0, 10);
+      localStorage.setItem('analysisHistory', JSON.stringify(trimmedHistory));
+
+    } catch (error) {
+      console.error('Error saving to history:', error);
     }
   };
 
@@ -311,6 +359,9 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
         fromCache={debugData?.fromCache}
         cacheDate={debugData?.cacheDate}
       />
+
+      {/* Analysis History */}
+      <AnalysisHistory lang={lang} />
     </>
   );
 };
