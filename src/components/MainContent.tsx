@@ -11,9 +11,11 @@ import { AlertTriangle, Bug } from "lucide-react";
 
 interface MainContentProps {
   buttonText: string;
+  headline: string;
+  subtitle: string;
 }
 
-const MainContent = ({ buttonText }: MainContentProps) => {
+const MainContent = ({ buttonText, headline, subtitle }: MainContentProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [debugModalOpen, setDebugModalOpen] = useState(false);
@@ -196,8 +198,18 @@ const MainContent = ({ buttonText }: MainContentProps) => {
 
   return (
     <>
-      <main className="flex-1 flex items-center justify-center px-6 -mt-8">
-        <div className="w-full max-w-4xl mx-auto text-center space-y-6">
+      <main className="flex-1 flex items-center justify-center px-6">
+        <div className="w-full max-w-4xl mx-auto text-center space-y-8">
+          {/* Title and Subtitle */}
+          <div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              {headline}
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+              {subtitle}
+            </p>
+          </div>
+
           {/* Input Section */}
           <div className="space-y-6">
             {/* Combined Input Field */}

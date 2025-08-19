@@ -11,15 +11,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <div className="container mx-auto px-4 pt-8 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4">
-          {t(lang, "headline")}
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-          {t(lang, "sub")}
-        </p>
-      </div>
-      <MainContent buttonText={t(lang, "start")} />
+      <MainContent 
+        buttonText={t(lang, "start")}
+        headline={t(lang, "headline")}
+        subtitle={t(lang, "sub")}
+      />
       <div className="fixed bottom-6 right-6">
         <LanguageSwitcher current={lang} />
       </div>
