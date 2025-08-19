@@ -40,12 +40,16 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: Try simple fetch first
+    // Special handling for Google Jobs URLs - they require rendering
+    const isGoogleJobs = url.includes('google.com') && url.includes('jobs');
+    const shouldRender = forceRender || isGoogleJobs;
+
+    // Step 1: Try simple fetch first (skip for Google Jobs)
     let html = '';
     let textLength = 0;
     let wasRendered = false;
 
-    if (!forceRender) {
+    if (!shouldRender) {
       try {
         console.log('Attempting simple fetch first...');
         const response = await fetch(url, {
@@ -71,9 +75,9 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Use Playwright if content is minimal or forced
-    if (forceRender || textLength < 1000) {
-      console.log('Using Playwright for enhanced scraping...');
+    // Step 2: Use Playwright if content is minimal, forced, or Google Jobs
+    if (shouldRender || textLength < 1000) {
+      console.log(`Using Playwright for enhanced scraping... (Google Jobs: ${isGoogleJobs}, Force: ${forceRender}, Low content: ${textLength < 1000})`);
       
       try {
         const browser = await puppeteer.launch({
@@ -85,30 +89,49 @@ serve(async (req) => {
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-features=VizDisplayCompositor'
           ]
         });
 
         const page = await browser.newPage();
         
-        // Set realistic viewport and user agent
+        // Set realistic viewport and user agent for Google
         await page.setViewport({ width: 1920, height: 1080 });
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        
+        // Additional stealth measures for Google
+        await page.evaluateOnNewDocument(() => {
+          Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        });
 
         console.log('Navigating to page...');
         await page.goto(url, { 
           waitUntil: 'networkidle2',
-          timeout: 10000
+          timeout: 15000
         });
 
-        // Wait for main content to appear
-        try {
-          await page.waitForSelector('[role="main"], main, .content, .job-description', { 
-            timeout: 5000 
-          });
-        } catch {
-          // Continue if selector not found
-          console.log('Main content selector not found, proceeding with current state');
+        // For Google Jobs, wait for specific content to load
+        if (isGoogleJobs) {
+          console.log('Waiting for Google Jobs content...');
+          try {
+            await page.waitForSelector('[data-job-title], .VfPpkd-fmcmS-wGMbrd, [jsname="s5aXhc"]', { 
+              timeout: 10000 
+            });
+            console.log('Google Jobs content selector found');
+          } catch {
+            console.log('Google Jobs selectors not found, proceeding anyway');
+          }
+        } else {
+          // Wait for main content to appear
+          try {
+            await page.waitForSelector('[role="main"], main, .content, .job-description', { 
+              timeout: 5000 
+            });
+          } catch {
+            console.log('Main content selector not found, proceeding with current state');
+          }
         }
 
         // Get the rendered HTML
@@ -117,6 +140,15 @@ serve(async (req) => {
         wasRendered = true;
 
         console.log(`Playwright result: ${textLength} characters of visible text`);
+        
+        // Log a sample of the extracted content for debugging
+        const sampleText = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                             .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                             .replace(/<[^>]*>/g, ' ')
+                             .replace(/\s+/g, ' ')
+                             .trim()
+                             .substring(0, 500);
+        console.log(`Sample extracted text: ${sampleText}`);
 
         await browser.close();
       } catch (error) {
@@ -138,13 +170,19 @@ serve(async (req) => {
       }
     }
 
+    // Final validation
+    if (textLength < 100) {
+      console.log(`Warning: Very low text content (${textLength} characters)`);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         html,
         textLength,
-        wasRendered
-      } as ScrapeResponse),
+        wasRendered,
+        isGoogleJobs
+      } as ScrapeResponse & { isGoogleJobs?: boolean }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
