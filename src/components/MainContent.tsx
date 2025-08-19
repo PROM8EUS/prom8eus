@@ -202,7 +202,7 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
       <main className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-4xl mx-auto text-center space-y-8">
           {/* Title and Subtitle */}
-          <div>
+          <div className="pt-8">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
               {headline}
             </h1>
