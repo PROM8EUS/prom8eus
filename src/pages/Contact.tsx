@@ -27,9 +27,11 @@ const Contact = () => {
               <section>
                 <h2 className="text-xl font-semibold mb-4">{t(lang, "address")}</h2>
                 <div className="space-y-2 text-muted-foreground">
+                  <p className="font-medium">PROM8EUS GbR</p>
+                  <p>c/o ABCDATA</p>
                   <p>Niehler Straße 44a</p>
-                  <p>50733 {t(lang, "city")}</p>
-                  <p>{t(lang, "country")}</p>
+                  <p>50733 Köln</p>
+                  <p>Deutschland</p>
                 </div>
               </section>
 
