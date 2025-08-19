@@ -27,14 +27,49 @@ export interface AnalysisResult {
 
 export async function callAnalyzeInput(input: AnalyzeInputRequest): Promise<AnalysisResult> {
   try {
-    // Prüfe, ob Supabase korrekt konfiguriert ist
+    // Mock-Implementation für Lovable Vorschau
     if (supabaseUrl.includes('your-project') || supabaseAnonKey.includes('your-anon-key')) {
+      console.log('Using mock analysis for preview:', input)
+      
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      const isUrl = input.url && /^https?:\/\//.test(input.url)
+      const textToAnalyze = input.rawText || `Simulierte Analyse für ${isUrl ? 'URL: ' + input.url : 'Text-Input'}`
+      
+      // Mock analysis results
+      const mockResult = {
+        originalText: textToAnalyze.substring(0, 500) + '...',
+        automationScore: Math.floor(Math.random() * 40) + 45, // 45-85%
+        automatedTasks: [
+          'Dateneingabe und -verwaltung',
+          'E-Mail-Bearbeitung und Verteilung', 
+          'Berichte und Dokumentation',
+          'Terminplanung und Kalenderführung',
+          'Wiederkehrende Datenauswertungen'
+        ].slice(0, Math.floor(Math.random() * 3) + 2),
+        manualTasks: [
+          'Strategische Entscheidungen',
+          'Kundengespräche und Beratung',
+          'Kreative Problemlösung',
+          'Team-Leadership',
+          'Komplexe Verhandlungen'
+        ].slice(0, Math.floor(Math.random() * 3) + 2),
+        recommendations: [
+          'Workflow-Automatisierung implementieren',
+          'KI-Tools für Routineaufgaben einsetzen',
+          'Digitale Processes etablieren'
+        ],
+        summary: `Mock-Analyse erfolgreich: ${Math.floor(Math.random() * 40) + 45}% Automatisierungspotenzial identifiziert`
+      }
+      
       return {
-        success: false,
-        error: 'Supabase ist noch nicht konfiguriert. Bitte fügen Sie die Projekt-URLs in src/lib/supabase.ts hinzu.'
+        success: true,
+        data: mockResult
       }
     }
 
+    // Echte Supabase Implementation
     const { data, error } = await supabase.functions.invoke('analyze-input', {
       body: input
     })
