@@ -101,7 +101,7 @@ const AnalysisHistory = ({ lang, isAdminMode = false }: AnalysisHistoryProps) =>
   }
 
   return (
-    <section className="w-full max-w-4xl mx-auto mt-16 px-6">
+    <section className="w-full max-w-4xl mx-auto mt-16 px-6 mb-20">
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-foreground mb-2">
