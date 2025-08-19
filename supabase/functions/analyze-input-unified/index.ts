@@ -292,8 +292,23 @@ function composeJobText(j: ExtractedJob): string {
   if (j.title) parts.push(j.title.trim());
 
   const pushBlock = (label: string, body?: string) => {
-    const clean = (body ?? "")
+    let clean = (body ?? "")
       .replace(/<[^>]+>/g, " ")
+      // Comprehensive HTML entity decoding
+      .replace(/&ouml;/gi, 'ö')
+      .replace(/&auml;/gi, 'ä')
+      .replace(/&uuml;/gi, 'ü')
+      .replace(/&Ouml;/gi, 'Ö')
+      .replace(/&Auml;/gi, 'Ä')
+      .replace(/&Uuml;/gi, 'Ü')
+      .replace(/&szlig;/gi, 'ß')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&quot;/gi, '"')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+      .replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
       .replace(/\s{2,}/g, " ")
       .trim();
     if (clean) parts.push(`${label}:\n${clean}`);
@@ -484,7 +499,29 @@ const FLUFF_PATTERNS = [
 ];
 
 function isFluff(text: string): boolean {
-  return FLUFF_PATTERNS.some(pattern => pattern.test(text));
+  const fluffPatterns = [
+    // Generic headings and meta information
+    /\b(hard facts|details|benefits|profil|qualifikationen|anforderungen|requirement|qualification|benefit|perk|nice to have|plus|bonus)\b/i,
+    /^\s*(?:weitere|additional|other|more)\s+/i,
+    /^\s*(?:sonstige|miscellaneous|various)\s+/i,
+    /\b(?:etc\.?|usw\.?|and more|and similar)\s*$/i,
+    // Application and contact related text
+    /bewerben sie sich|weitere informationen|link hierzu|kontakt|bewerbung|stellenausschreibung/i,
+    /^\s*den\s+link.*weitere\s+informationen/i,
+    /^\s*bewerben\s+sie\s+sich/i,
+    // Short meaningless text  
+    /^.{1,15}$/,
+    /^\s*(&nbsp;)+/i,
+    /^\s*planen\s*$/i,
+    /^\s*(&nbsp;|\s)+planen/i,
+    // HTML artifacts and navigation
+    /^(email|e-mail|telefon|kontakt|adresse|navigation|menu|zurück|weiter|home|start)$/i,
+    /^\d+\s*$/,
+    // Generic action words without context
+    /^(entwickeln|planen|arbeiten|führen|koordinieren|unterstützen)$/i,
+  ];
+  
+  return fluffPatterns.some(pattern => pattern.test(text.trim()));
 }
 
 function isHeadingOrIntro(text: string): boolean {
