@@ -10,14 +10,16 @@ const Index = () => {
   const lang = resolveLang(searchParams.get("lang") || undefined);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="bg-background">
       <Header />
-      <MainContent 
-        buttonText={t(lang, "start")}
-        headline={t(lang, "headline")}
-        subtitle={t(lang, "sub")}
-        lang={lang}
-      />
+      <div className="min-h-screen">
+        <MainContent 
+          buttonText={t(lang, "start")}
+          headline={t(lang, "headline")}
+          subtitle={t(lang, "sub")}
+          lang={lang}
+        />
+      </div>
       <HomePageFooter />
       <div className="fixed bottom-6 right-6">
         <LanguageSwitcher current={lang} />
