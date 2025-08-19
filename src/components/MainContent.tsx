@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +28,21 @@ const MainContent = ({ buttonText }: MainContentProps) => {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.max(60, Math.min(textarea.scrollHeight, 400));
+      textarea.style.height = newHeight + 'px';
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input]);
 
   // URL validation regex
   const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
@@ -181,17 +196,19 @@ const MainContent = ({ buttonText }: MainContentProps) => {
 
   return (
     <>
-      <main className="min-h-screen flex items-center justify-center px-6 py-20">
+      <main className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-4xl mx-auto text-center space-y-8">
           {/* Input Section */}
           <div className="space-y-6">
             {/* Combined Input Field */}
             <div className="relative">
               <Textarea
+                ref={textareaRef}
                 placeholder="URL oder Aufgabenbeschreibung hier einfügen …"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="min-h-[300px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors"
+                className="min-h-[60px] text-lg resize-none focus:ring-2 focus:ring-primary/20 border-2 hover:border-primary/30 transition-colors overflow-hidden"
+                rows={1}
               />
               {isUrl && hasInput && !analysisError && (
                 <div className="absolute top-3 right-3">

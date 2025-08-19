@@ -9,7 +9,7 @@ const Index = () => {
   const lang = resolveLang(searchParams.get("lang") || undefined);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
