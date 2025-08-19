@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Results from "./pages/Results";
 import Landing from "./pages/Landing";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import TestAnalysis from "./components/TestAnalysis";
 import CatalogAdmin from "./pages/admin/Catalog";
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/results" element={<Results />} />
           <Route path="/landing" element={<Landing />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/test" element={<TestAnalysis />} />
           <Route path="/admin/catalog" element={<CatalogAdmin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

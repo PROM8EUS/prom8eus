@@ -32,6 +32,12 @@ export const DICT: Record<Lang, Record<string, string>> = {
     please_wait: "Bitte warten",
     ai_analyzing: "Unsere KI analysiert Ihren Text und erstellt eine detaillierte Auswertung",
     
+    // Contact page
+    contact_title: "Kontakt",
+    contact_subtitle: "Nehmen Sie Kontakt mit uns auf",
+    address: "Adresse",
+    phone: "Telefon",
+    
     // Error messages
     page_not_readable: "Die Seite konnte nicht automatisch gelesen werden",
     paste_manually: "Bitte fügen Sie den Stellentext manuell ein oder prüfen Sie den Debug-Modus.",
@@ -64,6 +70,12 @@ export const DICT: Record<Lang, Record<string, string>> = {
     analysis_creating: "Creating your analysis",
     please_wait: "Please wait",
     ai_analyzing: "Our AI is analyzing your text and creating a detailed evaluation",
+    
+    // Contact page
+    contact_title: "Contact",
+    contact_subtitle: "Get in touch with us",
+    address: "Address",
+    phone: "Phone",
     
     // Error messages
     page_not_readable: "The page could not be read automatically",
