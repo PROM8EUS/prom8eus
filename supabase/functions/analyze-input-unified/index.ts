@@ -558,8 +558,12 @@ function analyzeTask(taskText: string): Task {
       keywords: [
         // German - körperliche Tätigkeiten
         'fegen', 'putzen', 'reinigen', 'wischen', 'saugen', 'kehren', 'aufräumen', 'reparieren', 'montieren', 'demontieren', 'bauen', 'installieren', 'bewegen', 'tragen', 'heben', 'transportieren', 'sortieren', 'packen', 'auspacken', 'laden', 'entladen', 'schneiden', 'sägen', 'bohren', 'schrauben', 'kleben', 'schweißen', 'lackieren', 'streichen', 'pflegen', 'gießen', 'ernten', 'pflanzen', 'graben', 'mähen',
+        // German - Handwerk und Bau
+        'fliesen', 'legen', 'verlegen', 'mauern', 'verputzen', 'tapezieren', 'dachdecken', 'zimmern', 'schleifen', 'hobeln', 'stemmen', 'hämmern', 'nageln', 'spachteln', 'grundieren', 'isolieren', 'dämmen', 'fliesenlegen', 'parkettlegen', 'dacharbeiten', 'maurerarbeiten', 'elektroinstallation', 'rohrleitungen', 'sanitärarbeiten',
         // English - physical tasks
-        'sweep', 'clean', 'mop', 'vacuum', 'wipe', 'dust', 'scrub', 'polish', 'wash', 'dry', 'repair', 'fix', 'assemble', 'disassemble', 'build', 'construct', 'install', 'move', 'carry', 'lift', 'transport', 'load', 'unload', 'pack', 'unpack', 'sort', 'organize', 'cut', 'saw', 'drill', 'screw', 'glue', 'weld', 'paint', 'maintain', 'water', 'harvest', 'plant', 'dig', 'mow'
+        'sweep', 'clean', 'mop', 'vacuum', 'wipe', 'dust', 'scrub', 'polish', 'wash', 'dry', 'repair', 'fix', 'assemble', 'disassemble', 'build', 'construct', 'install', 'move', 'carry', 'lift', 'transport', 'load', 'unload', 'pack', 'unpack', 'sort', 'organize', 'cut', 'saw', 'drill', 'screw', 'glue', 'weld', 'paint', 'maintain', 'water', 'harvest', 'plant', 'dig', 'mow',
+        // English - crafts and construction  
+        'tile', 'lay', 'laying', 'tiling', 'masonry', 'bricklaying', 'plastering', 'wallpapering', 'roofing', 'carpentry', 'sanding', 'planing', 'hammering', 'nailing', 'filling', 'priming', 'insulating', 'flooring', 'electrical', 'plumbing', 'piping'
       ],
       weight: 40 // Höchste Gewichtung für körperliche Arbeit
     },
