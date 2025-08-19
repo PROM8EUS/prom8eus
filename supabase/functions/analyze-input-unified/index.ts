@@ -388,22 +388,25 @@ function extractTasks(text: string): RawTask[] {
   const BULLET = /^\s*(?:[-–—*•●▪▫◦‣⁃]|[0-9]+\.|\([0-9]+\)|[a-z]\.|\([a-z]\))\s+(.+)$/i;
   
   for (const l of scoped) {
-    if (isHeadingOrIntro(l) || isFluff(l)) continue;
+    if (isHeadingOrIntro(l) || isFluff(l) || isQualification(l)) continue;
     
     // Standard bullet point matching
     const m = l.match(BULLET);
     if (m && m[1] && m[1].length >= 10) {
-      const txt = shorten(clean(m[1]));
-      if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
+      const cleanText = clean(m[1]);
+      if (!isQualification(cleanText)) { // Doppelte Prüfung nach dem Cleaning
+        const txt = shorten(cleanText);
+        if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
+      }
       continue;
     }
     
     // Enhanced detection for lines that start with action verbs (paragraph format)
     const ACTION_STARTS = /^(write|create|develop|design|build|maintain|manage|lead|coordinate|support|implement|analyze|optimize|collaborate|partner|help|assist|ensure|provide|deliver|execute|plan|organize|monitor|review|evaluate|establish|enhance|improve|facilitate|guide|mentor|supervise|oversee|direct|control|handle|process|generate|produce|publish|distribute|communicate|present|report|document|research|investigate|identify|recommend|advise|consult|negotiate|sell|market|promote|train|teach|educate|install|configure|deploy|test|debug|troubleshoot|resolve|fix|update|upgrade|integrate|connect|link|sync|backup|restore|archive|store|retrieve|fetch|collect|gather|compile|summarize|translate|convert|transform|adapt|customize|personalize|tailor|schreiben|erstellen|entwickeln|gestalten|bauen|pflegen|verwalten|leiten|koordinieren|unterstützen|implementieren|analysieren|optimieren|zusammenarbeiten|helfen|sicherstellen|bereitstellen|liefern|ausführen|planen|organisieren|überwachen|überprüfen|bewerten|etablieren|verbessern|erleichtern|führen|betreuen|beaufsichtigen|überwachen|dirigieren|kontrollieren|handhaben|verarbeiten|generieren|produzieren|veröffentlichen|verteilen|kommunizieren|präsentieren|berichten|dokumentieren|recherchieren|untersuchen|identifizieren|empfehlen|beraten|konsultieren|verhandeln|verkaufen|vermarkten|bewerben|trainieren|lehren|bilden|installieren|konfigurieren|einsetzen|testen|debuggen|beheben|lösen|reparieren|aktualisieren|upgraden|integrieren|verbinden|verknüpfen|synchronisieren|sichern|wiederherstellen|archivieren|speichern|abrufen|sammeln|zusammenstellen|zusammenfassen|übersetzen|konvertieren|transformieren|anpassen|personalisieren|maßschneidern)\b/i;
     
-    if (l.length >= 20 && ACTION_STARTS.test(l)) {
+    if (l.length >= 20 && ACTION_STARTS.test(l) && !isQualification(l)) {
       const txt = shorten(clean(l));
-      if (txt.length >= 15) bullets.push({ text: txt, source: "action" as any });
+      if (txt.length >= 15 && !isQualification(txt)) bullets.push({ text: txt, source: "action" as any });
     }
   }
 
@@ -429,12 +432,12 @@ function extractTasks(text: string): RawTask[] {
     );
 
     for (const sentence of sentences) {
-      if (sentence.length >= 20 && ACTION_VERBS.test(sentence) && !isFluff(sentence)) {
+      if (sentence.length >= 20 && ACTION_VERBS.test(sentence) && !isFluff(sentence) && !isQualification(sentence)) {
         // Split compound sentences on conjunctions
         const parts = sentence.split(/\b(?:and|und|sowie|oder|or)\b/i);
         for (const part of parts) {
           const cleanPart = clean(part.trim());
-          if (cleanPart.length >= 15 && ACTION_VERBS.test(cleanPart)) {
+          if (cleanPart.length >= 15 && ACTION_VERBS.test(cleanPart) && !isQualification(cleanPart)) {
             sentenceTasks.push({ text: shorten(cleanPart), source: "sentence" as any });
           }
         }
@@ -462,9 +465,9 @@ function extractTasks(text: string): RawTask[] {
   const verbLines: RawTask[] = (bullets.length + sentenceTasks.length) >= 3 
     ? []
     : scoped
-        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && VERB_LINE_ENHANCED.test(l))
+        .filter(l => !isHeadingOrIntro(l) && !isFluff(l) && !isQualification(l) && VERB_LINE_ENHANCED.test(l))
         .map(l => ({ text: shorten(clean(l)), source: "verbline" as const }))
-        .filter(t => t.text.length >= 10);
+        .filter(t => t.text.length >= 10 && !isQualification(t.text));
 
   console.log(`Found ${verbLines.length} verb lines with enhanced detection as fallback`);
 
@@ -472,7 +475,7 @@ function extractTasks(text: string): RawTask[] {
   const dedup = new Map<string, RawTask>();
   for (const t of [...bullets, ...sentenceTasks, ...verbLines]) {
     const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
-    if (!dedup.has(key) && !isFluff(t.text)) {
+    if (!dedup.has(key) && !isFluff(t.text) && !isQualification(t.text)) {
       dedup.set(key, t);
     }
   }
@@ -488,6 +491,48 @@ function extractTasks(text: string): RawTask[] {
 
   console.log(`Final extracted tasks after generic filter: ${result.length}`);
   return result;
+}
+
+// Qualifikations-Keywords die keine Aufgaben sind
+const QUALIFICATION_PATTERNS = [
+  // Bildung & Abschlüsse
+  /\b(ausbildung|studium|abschluss|degree|education|background|certified|certification)\b/i,
+  /\b(steuerfachangestellte|buchhalter|accountant|tax specialist|steuerberatung)\b/i,
+  
+  // Erfahrung & Zeit
+  /\b(erfahrung|experience|jahre|years|berufserfahrung|work experience)\b/i,
+  /\b(mehrjährig|langjährig|long-term|several years)\b/i,
+  
+  // Kenntnisse & Fähigkeiten (erweitert)
+  /\b(kenntnisse|knowledge|skills|fähigkeiten|fertigkeiten|competence|proficiency|vertraut|familiar)\b/i,
+  /\b(datev|sap|software kenntnisse|tool kenntnisse|system kenntnisse|application knowledge)\b/i,
+  /\b(pc-kenntnisse|computer skills|it-kenntnisse|software skills|ms office)\b/i,
+  /\b(sprachkenntnisse|language|englisch|deutsch|english|german|französisch|french)\b/i,
+  
+  // Eigenschaften & Soft Skills (erweitert)
+  /\b(genauigkeit|zuverlässigkeit|accuracy|reliability|sorgfalt|precision)\b/i,
+  /\b(kommunikationsstärke|communication skills|soft skills|social skills)\b/i,
+  /\b(teamfähigkeit|team player|leadership skills|führungskompetenz)\b/i,
+  /\b(belastbarkeit|stress resistance|flexibilität|flexibility)\b/i,
+  /\b(geduld|patience|empathie|empathy|freundlich|friendly|höflich|polite)\b/i,
+  /\b(professionell|professional)\s+(auftreten|demeanor|erscheinung|behavior)\b/i,
+  
+  // Rechtliche & fachliche Kenntnisse
+  /\b(steuerrechtlich|tax law|rechtlich|legal|compliance|regulatory)\b/i,
+  /\b(bilanzierung|accounting standards|gaap|ifrs|hgb)\b/i,
+  
+  // Voraussetzungen
+  /\b(voraussetzung|requirement|must have|should have|preferred|wünschenswert|nice to have)\b/i,
+  /\b(berechtigung|lizenz|license|permit|authorization|zertifikat|certificate)\b/i,
+  /^\s*(?:mindestens|minimum|at least)\s+\d+/i, // "Mindestens 3 Jahre"
+  
+  // Bildungsabschlüsse
+  /\b(?:bachelor|master|diplom|phd|dr\.|mba|fachhochschule|universität|university)\b/i,
+  /\b(?:kaufmännisch|commercial|business|wirtschafts|betriebswirt)\b/i
+];
+
+function isQualification(text: string): boolean {
+  return QUALIFICATION_PATTERNS.some(pattern => pattern.test(text));
 }
 
 // Floskeln und überflüssige Begriffe
@@ -555,112 +600,124 @@ function analyzeTask(taskText: string): Task {
   
   // Define automation indicators (with English keywords added)
   const automationSignals = {
+    accounting: {
+      keywords: [
+        // German - spezifische Buchhaltungsaufgaben
+        'buchhaltung', 'finanzbuchhaltung', 'kontierung', 'belege', 'rechnungswesen', 'bilanzierung',
+        'abschluss', 'monatsabschluss', 'jahresabschluss', 'umsatzsteuer', 'steuervoranmeldung',
+        'mahnwesen', 'zahlungsverkehr', 'kontoabstimmung', 'abstimmung', 'buchen', 'verbuchen',
+        // English
+        'bookkeeping', 'accounting', 'posting', 'vouchers', 'invoicing', 'reconciliation', 'entries'
+      ],
+      weight: 40
+    },
     dataProcessing: {
       keywords: [
         // German
-        'excel', 'daten', 'tabelle', 'reporting', 'report', 'statistik', 'auswertung', 'eingabe', 'erfassung',
-        // English
-        'data', 'database', 'spreadsheet', 'analytics', 'metrics', 'dashboard', 'entry', 'input', 'processing'
+        'datenerfassung', 'dateneingabe', 'datenverarbeitung', 'auswertung', 'statistik', 'reporting', 'report',
+        'excel', 'tabelle', 'eingabe', 'erfassung', 'archivierung', 'verwaltung', 'aktualisierung',
+        // English  
+        'data entry', 'data processing', 'analytics', 'metrics', 'dashboard', 'input', 'processing', 'reporting'
       ],
-      weight: 25
+      weight: 35
+    },
+    systemWork: {
+      keywords: [
+        // German
+        'auftragserfassung', 'systembearbeitung', 'crm', 'erp', 'software', 'datenbank', 'system',
+        'buchung', 'rechnung', 'fakturierung', 'bestellung', 'verwaltung im system', 'datev',
+        // English
+        'order processing', 'system entry', 'database', 'invoicing', 'billing', 'system management'
+      ],
+      weight: 35
+    },
+    budgetingPlanning: {
+      keywords: [
+        // German
+        'budgetplanung', 'controlling', 'kostenrechnung', 'planung', 'kalkulation', 'budgetkontrolle',
+        'finanzplanung', 'liquiditätsplanung', 'kennzahlen', 'analyse', 'auswertung',
+        // English
+        'budget planning', 'controlling', 'cost accounting', 'financial planning', 'analysis'
+      ],
+      weight: 30
     },
     communication: {
       keywords: [
-        // German
-        'email', 'e-mail', 'nachricht', 'benachrichtigung', 'terminplanung', 'kalender', 'erinnerung',
+        // German - nur automatisierbare Kommunikation
+        'e-mail bearbeitung', 'email bearbeitung', 'terminplanung', 'kalender', 'erinnerung', 'benachrichtigung',
+        'nachricht versenden', 'status updates', 'dokumentation', 'protokoll',
         // English
-        'notification', 'scheduling', 'calendar', 'reminder', 'message', 'communication', 'coordination'
+        'email processing', 'scheduling', 'calendar management', 'notifications', 'status updates'
       ],
-      weight: 20
-    },
-    routine: {
-      keywords: [
-        // German
-        'routine', 'wiederkehrend', 'täglich', 'wöchentlich', 'regelmäßig', 'standard', 'prozess',
-        // English
-        'routine', 'recurring', 'daily', 'weekly', 'regular', 'standard', 'process', 'workflow', 'systematic'
-      ],
-      weight: 20
-    },
-    systems: {
-      keywords: [
-        // German
-        'crm', 'erp', 'system', 'software', 'tool', 'plattform', 'dashboard', 'datenbank',
-        // English
-        'platform', 'infrastructure', 'integration', 'api', 'automation', 'deployment', 'monitoring', 'code', 'development'
-      ],
-      weight: 15
-    },
-    documentation: {
-      keywords: [
-        // German
-        'dokumentation', 'protokoll', 'liste', 'archivierung', 'ablage', 'verwaltung',
-        // English
-        'documentation', 'logging', 'tracking', 'maintenance', 'updating', 'management'
-      ],
-      weight: 15
+      weight: 25
     }
   };
 
   // Define human-required indicators (with English keywords added)
   const humanSignals = {
-    physical: {
+    collaboration: {
       keywords: [
-        // German - körperliche Tätigkeiten
-        'fegen', 'putzen', 'reinigen', 'wischen', 'saugen', 'kehren', 'aufräumen', 'reparieren', 'montieren', 'demontieren', 'bauen', 'installieren', 'bewegen', 'tragen', 'heben', 'transportieren', 'sortieren', 'packen', 'auspacken', 'laden', 'entladen', 'schneiden', 'sägen', 'bohren', 'schrauben', 'kleben', 'schweißen', 'lackieren', 'streichen', 'pflegen', 'gießen', 'ernten', 'pflanzen', 'graben', 'mähen',
-        // German - Handwerk und Bau
-        'fliesen', 'legen', 'verlegen', 'mauern', 'verputzen', 'tapezieren', 'dachdecken', 'zimmern', 'schleifen', 'hobeln', 'stemmen', 'hämmern', 'nageln', 'spachteln', 'grundieren', 'isolieren', 'dämmen', 'fliesenlegen', 'parkettlegen', 'dacharbeiten', 'maurerarbeiten', 'elektroinstallation', 'rohrleitungen', 'sanitärarbeiten',
-        // English - physical tasks
-        'sweep', 'clean', 'mop', 'vacuum', 'wipe', 'dust', 'scrub', 'polish', 'wash', 'dry', 'repair', 'fix', 'assemble', 'disassemble', 'build', 'construct', 'install', 'move', 'carry', 'lift', 'transport', 'load', 'unload', 'pack', 'unpack', 'sort', 'organize', 'cut', 'saw', 'drill', 'screw', 'glue', 'weld', 'paint', 'maintain', 'water', 'harvest', 'plant', 'dig', 'mow',
-        // English - crafts and construction  
-        'tile', 'lay', 'laying', 'tiling', 'masonry', 'bricklaying', 'plastering', 'wallpapering', 'roofing', 'carpentry', 'sanding', 'planing', 'hammering', 'nailing', 'filling', 'priming', 'insulating', 'flooring', 'electrical', 'plumbing', 'piping'
+        // German - Zusammenarbeit mit Menschen
+        'zusammenarbeit', 'kooperation', 'abstimmung mit', 'rücksprache', 'koordination mit',
+        'besprechung', 'meeting', 'teamarbeit', 'steuerberater', 'externe partner',
+        'kunde', 'kunden', 'mandant', 'mandanten', 'lieferant', 'lieferanten',
+        // English
+        'collaboration', 'cooperation', 'coordination with', 'meeting', 'teamwork', 'client', 'supplier'
       ],
-      weight: 40 // Höchste Gewichtung für körperliche Arbeit
+      weight: 50
+    },
+    interpersonal: {
+      keywords: [
+        // German - interpersonal skills, personality traits, social abilities
+        'beratung', 'kundenberatung', 'telefonische beratung', 'persönliche beratung', 'verkaufsgespräch',
+        'freundlich', 'professionell', 'auftreten', 'erscheinungsbild', 'kommunikativ', 'empathie', 'einfühlungsvermögen',
+        'geduld', 'höflichkeit', 'respekt', 'verständnis', 'zwischenmenschlich', 'sozial', 'charisma', 'ausstrahlung',
+        'persönlichkeit', 'menschlich', 'emotional', 'diplomatie', 'takt', 'fingerspitzengefühl',
+        'kundenservice', 'kundenkontakt', 'beziehungsaufbau',
+        // English
+        'customer service', 'consultation', 'personal advice', 'sales conversation', 'relationship building',
+        'friendly', 'professional', 'demeanor', 'appearance', 'interpersonal', 'empathy', 'patience', 
+        'courtesy', 'respect', 'understanding', 'social', 'charisma', 'personality', 'emotional', 'diplomacy'
+      ],
+      weight: 45
+    },
+    salesNegotiation: {
+      keywords: [
+        // German
+        'verkauf', 'verkaufen', 'vertrieb', 'akquise', 'verhandlung', 'überzeugung', 'produktberatung',
+        'abschluss', 'deal', 'verkaufsgespräch', 'kundengewinnung', 'umsatz',
+        // English
+        'sales', 'selling', 'negotiation', 'persuasion', 'closing', 'deal', 'revenue', 'acquisition'
+      ],
+      weight: 45
     },
     creative: {
       keywords: [
         // German
-        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming',
+        'kreativ', 'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming', 'entwicklung',
         // English
         'creative', 'innovation', 'strategy', 'design', 'conceptual', 'vision', 'ideation', 'brainstorm'
       ],
-      weight: 30
+      weight: 35
     },
     leadership: {
       keywords: [
         // German
-        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung',
+        'führung', 'team', 'leitung', 'management', 'mitarbeiter', 'personalentwicklung', 'koordination',
         // English
         'leadership', 'manage', 'lead', 'mentor', 'guide', 'supervise', 'coordinate', 'stakeholder'
       ],
-      weight: 25
+      weight: 30
     },
-    consultation: {
+    problemSolving: {
       keywords: [
         // German
-        'beratung', 'beratend', 'empfehlung', 'expertise', 'fachlich', 'spezialist',
+        'reklamation', 'beschwerde', 'problemlösung', 'konflikt', 'schwierige situation', 'komplexe fälle',
+        'entscheidung', 'kritisch', 'herausfordernd', 'individuell',
         // English
-        'consultation', 'advise', 'recommend', 'expertise', 'specialist', 'counsel', 'guidance'
+        'complaint', 'problem solving', 'conflict', 'complex cases', 'decision making', 'critical', 'challenging'
       ],
-      weight: 25
-    },
-    negotiation: {
-      keywords: [
-        // German
-        'verhandlung', 'verkauf', 'akquise', 'überzeugung', 'kundenbeziehung', 'networking',
-        // English
-        'negotiation', 'sales', 'persuasion', 'relationship', 'networking', 'client', 'customer'
-      ],
-      weight: 20
-    },
-    complex: {
-      keywords: [
-        // German
-        'komplex', 'schwierig', 'herausfordernd', 'problemlösung', 'entscheidung', 'kritisch',
-        // English
-        'complex', 'difficult', 'challenging', 'problem-solving', 'decision', 'critical', 'judgment'
-      ],
-      weight: 15
+      weight: 30
     }
   };
 
@@ -670,26 +727,46 @@ function analyzeTask(taskText: string): Task {
 
   // Calculate automation score
   Object.entries(automationSignals).forEach(([category, signal]) => {
-    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
-    if (matches > 0) {
-      automationScore += signal.weight * Math.min(matches, 2); // Cap at 2 matches per category
+    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
+    if (matches.length > 0) {
+      console.log(`AUTOMATION MATCH in ${category}:`, matches);
+      automationScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
     }
   });
 
-  // Calculate human score
+  // Calculate human score  
   Object.entries(humanSignals).forEach(([category, signal]) => {
-    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword)).length;
-    if (matches > 0) {
-      humanScore += signal.weight * Math.min(matches, 2);
+    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
+    if (matches.length > 0) {
+      console.log(`HUMAN MATCH in ${category}:`, matches);
+      humanScore += signal.weight * Math.min(matches.length, 3);
       detectedCategory = category;
     }
   });
+
+  console.log(`SCORES: automation=${automationScore}, human=${humanScore}, category=${detectedCategory}`);
 
   // Determine final score and label
-  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + 50)); // Base score of 50
-  const label = netScore >= 50 ? "Automatisierbar" : "Mensch";
-  const confidence = Math.abs(netScore - 50) * 2; // Confidence based on deviation from neutral
+  const baseScore = 25; // Noch niedrigerer Basis-Score
+  const netScore = Math.max(0, Math.min(100, automationScore - humanScore + baseScore));
+  
+  // Verbesserte Confidence-Berechnung
+  const totalSignalStrength = Math.max(automationScore, humanScore);
+  const confidence = Math.min(95, Math.max(15, (totalSignalStrength / 25) * 50)); // Realistischere Confidence
+  
+  // Deutlich konservativere Bewertung:
+  let label: "Automatisierbar" | "Mensch";
+  if (humanScore > 0) {
+    // Jede menschliche Komponente → Mensch  
+    label = "Mensch";
+  } else if (automationScore >= 30 && netScore >= 70) {
+    // Nur bei starken Automation-Signalen → Automatisierbar
+    label = "Automatisierbar";
+  } else {
+    // Bei Zweifel → Mensch (konservativ)
+    label = "Mensch";
+  }
 
   return {
     text: taskText,
