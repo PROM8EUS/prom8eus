@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ScoreCircle from "@/components/ScoreCircle";
 import BarChart from "@/components/BarChart";
 import TaskList from "@/components/TaskList";
+
 import ShareModal from "@/components/ShareModal";
 import PageFooter from "@/components/PageFooter";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -36,6 +37,8 @@ interface TaskForDisplay {
   score: number;
   category: 'automatisierbar' | 'mensch';
   description: string;
+  complexity?: 'low' | 'medium' | 'high';
+  automationTrend?: 'increasing' | 'stable' | 'decreasing';
 }
 
 // Fallback mock data
@@ -109,7 +112,9 @@ const Results = () => {
             name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
             score: Math.round(task.score),
             category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
-            description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`
+            description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`,
+            complexity: task.complexity,
+            automationTrend: task.automationTrend
           }));
           
           console.log('Transformed tasks:', transformedTasks);
@@ -196,6 +201,8 @@ const Results = () => {
           <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
             <TaskList tasks={displayTasks} />
           </div>
+
+
 
           {/* Action Buttons */}
           <TooltipProvider>

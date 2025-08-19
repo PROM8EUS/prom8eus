@@ -125,13 +125,14 @@ const MainContent = ({ buttonText, headline, subtitle, lang, isLoggedIn = false,
         const data = result.data as any; // Type assertion to handle both formats
         
         if (data.totalScore !== undefined) {
-          // New unified structure
+          // New enhanced structure
           analysisData = {
             totalScore: data.totalScore,
             ratio: data.ratio,
             tasks: data.tasks,
             summary: data.summary,
             recommendations: data.recommendations,
+            automationTrends: data.automationTrends,
             originalText: data.originalText
           };
         } else {
@@ -147,14 +148,18 @@ const MainContent = ({ buttonText, headline, subtitle, lang, isLoggedIn = false,
               score: Math.min(100, automationScore + Math.random() * 20),
               label: "Automatisierbar" as const,
               category: "automatisierbar",
-              confidence: 80
+              confidence: 80,
+              complexity: "medium" as const,
+              automationTrend: "increasing" as const
             })),
             ...manualTasks.map((task: string, index: number) => ({
               text: task,
               score: Math.max(0, 50 - Math.random() * 30),
               label: "Mensch" as const,
               category: "mensch", 
-              confidence: 70
+              confidence: 70,
+              complexity: "medium" as const,
+              automationTrend: "stable" as const
             }))
           ];
           
@@ -167,6 +172,11 @@ const MainContent = ({ buttonText, headline, subtitle, lang, isLoggedIn = false,
             tasks: tasks,
             summary: data.summary || `Analyse mit ${automationScore}% Automatisierungspotenzial`,
             recommendations: data.recommendations || [],
+            automationTrends: {
+              highPotential: automatedTasks.slice(0, 3),
+              mediumPotential: [],
+              lowPotential: manualTasks.slice(0, 3)
+            },
             originalText: data.originalText
           };
         }

@@ -12,42 +12,67 @@ export interface AnalyzeInputRequest {
   rawText?: string
 }
 
+export interface Task {
+  text: string;
+  score: number;
+  label: "Automatisierbar" | "Mensch";
+  category: string;
+  confidence: number;
+  complexity: "low" | "medium" | "high";
+  automationTrend: "increasing" | "stable" | "decreasing";
+}
+
 export interface AnalysisResult {
   success: boolean
   data?: {
     originalText: string
-    automationScore: number
-    automatedTasks: string[]
-    manualTasks: string[]
-    recommendations: string[]
+    totalScore: number
+    ratio: {
+      automatisierbar: number;
+      mensch: number;
+    }
+    tasks: Task[]
     summary: string
+    recommendations: string[]
+    automationTrends: {
+      highPotential: string[];
+      mediumPotential: string[];
+      lowPotential: string[];
+    }
   }
   error?: string
 }
 
 export async function callAnalyzeInput(input: AnalyzeInputRequest): Promise<AnalysisResult> {
   try {
-    console.log('Calling unified analysis function with:', input)
+    console.log('Calling enhanced analysis function with:', input)
     
-    // Call the new unified analysis function
-    const { data, error } = await supabase.functions.invoke('analyze-input-unified', {
-      body: input
-    })
-
-    if (error) {
-      console.error('Supabase function error:', error)
+    // Use local enhanced analysis engine instead of Supabase function
+    const analysisText = input.rawText || '';
+    
+    if (!analysisText || analysisText.trim().length < 5) {
       return {
         success: false,
-        error: error.message || 'Fehler beim Aufrufen der Analyse-Funktion'
-      }
+        error: "Zu wenig Inhalt gefunden. Bitte fügen Sie mehr Text ein."
+      };
     }
 
-    return data as AnalysisResult
+    // Import and use the enhanced analysis engine
+    const { runAnalysis } = await import('./runAnalysis');
+    const result = runAnalysis(analysisText.slice(0, 10000));
+
+    return {
+      success: true,
+      data: {
+        originalText: analysisText.substring(0, 500) + (analysisText.length > 500 ? '...' : ''),
+        ...result
+      }
+    };
   } catch (error) {
-    console.error('Error calling analyze-input-unified:', error)
+    console.error('Error calling enhanced analysis:', error)
     return {
       success: false,
-      error: 'Netzwerkfehler beim Aufrufen der Analyse'
+      error: 'Fehler bei der Analyse'
     }
   }
 }
