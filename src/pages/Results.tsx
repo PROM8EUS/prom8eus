@@ -6,6 +6,7 @@ import InfoCard from "@/components/InfoCard";
 import TaskList from "@/components/TaskList";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Header from "@/components/Header";
+import { AIToolRecommendations } from "@/components/AIToolRecommendations";
 
 import ShareModal from "@/components/ShareModal";
 import PageFooter from "@/components/PageFooter";
@@ -13,6 +14,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
 import { generateSummary } from "@/lib/runAnalysis";
+import { detectIndustry } from "@/lib/extractTasks";
 
 // Animated Letter Component
 const AnimatedLetter = ({ letter, index, isVisible }: { letter: string; index: number; isVisible: boolean }) => {
@@ -65,6 +67,9 @@ interface AnalysisTask {
   label: "Automatisierbar" | "Mensch";
   category: string;
   confidence: number;
+  aiTools?: string[];
+  complexity?: 'low' | 'medium' | 'high';
+  automationTrend?: 'increasing' | 'stable' | 'decreasing';
 }
 
 interface AnalysisResult {
@@ -83,10 +88,11 @@ interface TaskForDisplay {
   id: string;
   name: string;
   score: number;
-  category: 'automatisierbar' | 'mensch';
+  category: 'automatisierbar' | 'teilweise' | 'mensch';
   description: string;
   complexity?: 'low' | 'medium' | 'high';
   automationTrend?: 'increasing' | 'stable' | 'decreasing';
+  aiTools?: string[];
 }
 
 // Fallback mock data
@@ -146,9 +152,6 @@ const Results = () => {
   };
 
   useEffect(() => {
-    // Smooth scroll to top when component mounts (only on initial load)
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
     // Check if this is a shared view
     const shareId = searchParams.get("share");
     if (shareId) {
@@ -174,8 +177,9 @@ const Results = () => {
               id: String(index + 1),
               name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
               score: Math.round(task.score),
-              category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
-              description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`,
+              category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
+                        task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
+              description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
               complexity: task.complexity,
               automationTrend: task.automationTrend
             }));
@@ -209,10 +213,12 @@ const Results = () => {
               id: String(index + 1),
               name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
               score: Math.round(task.score),
-              category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
-              description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`,
+              category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
+                        task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
+              description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
               complexity: task.complexity,
-              automationTrend: task.automationTrend
+              automationTrend: task.automationTrend,
+              aiTools: task.aiTools
             }));
             
 
@@ -221,13 +227,11 @@ const Results = () => {
             // Generate share URL
             setShareUrl(generateShareUrl(parsedResult));
             
-            // Smooth scroll to top after data is loaded (only on initial load)
-            setTimeout(() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 100);
+            // Note: Scroll to top is handled by the separate useEffect for initial mount
           }
         } else {
-  
+          // Handle case when no analysis data is found
+          console.log('No analysis data found in URL parameters');
         }
       } catch (error) {
         console.error('Error loading analysis results:', error);
@@ -238,14 +242,12 @@ const Results = () => {
   
   // Additional effect to ensure smooth scroll after component is fully rendered (only on initial load)
   useEffect(() => {
-    if (analysisData) {
-      // Small delay to ensure all content is rendered
-      const timer = setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 200);
-      
-      return () => clearTimeout(timer);
-    }
+    // Only scroll on initial mount, not when data changes
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 200);
+    
+    return () => clearTimeout(timer);
   }, []); // Only run once on mount, not when analysisData changes
   
   // Update task descriptions and regenerate summary when language changes (without scrolling)
@@ -255,10 +257,12 @@ const Results = () => {
         id: String(index + 1),
         name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
         score: Math.round(task.score),
-        category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
-        description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`,
+        category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
+                  task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
+        description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
         complexity: task.complexity,
-        automationTrend: task.automationTrend
+        automationTrend: task.automationTrend,
+        aiTools: task.aiTools
       }));
       
       setDisplayTasks(transformedTasks);
@@ -289,9 +293,9 @@ const Results = () => {
   }, [jobTitle]); // Trigger when jobTitle changes
   
   // Use the actual ratio percentages from analysis data, not task counts
-  const automatizableTasks = analysisData?.ratio.automatisierbar || 0;
-  const humanTasks = analysisData?.ratio.mensch || 0;
-  const totalScore = analysisData?.totalScore || 72;
+  const automatizableTasks = analysisData?.ratio?.automatisierbar ?? 0;
+  const humanTasks = analysisData?.ratio?.mensch ?? 0;
+  const totalScore = analysisData?.totalScore ?? 72;
 
   const handleShare = () => {
     setShareModalOpen(true);
@@ -468,6 +472,17 @@ const Results = () => {
           )}
 
 
+
+          {/* AI Tool Recommendations */}
+          {!isSharedView && (
+            <section className="mt-12">
+              <AIToolRecommendations
+                industry={detectIndustry(analysisData?.originalText || '')}
+                tasks={analysisData?.tasks || []}
+                className="max-w-6xl mx-auto"
+              />
+            </section>
+          )}
 
           {/* Action Buttons - Only show for non-shared views */}
           {!isSharedView && (

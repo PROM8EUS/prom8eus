@@ -3,19 +3,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Bot, User, ChevronDown, ChevronUp, Zap, Workflow, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { t } from "@/lib/i18n/i18n";
+import { AppIcon } from './AppIcon';
+import { AITool, getToolById } from '../lib/catalog/aiTools';
 
 interface Task {
   id?: string;
   text: string;
   name?: string;
   score: number;
-  label?: 'Automatisierbar' | 'Mensch';
-  category?: 'automatisierbar' | 'mensch' | string;
+  label?: 'Automatisierbar' | 'Teilweise Automatisierbar' | 'Mensch';
+  category?: 'automatisierbar' | 'teilweise' | 'mensch' | string;
   description?: string;
   complexity?: 'low' | 'medium' | 'high';
   automationTrend?: 'increasing' | 'stable' | 'decreasing';
   humanRatio?: number;
   automationRatio?: number;
+  aiTools?: string[];
 }
 
 interface AIAgent {
@@ -90,11 +93,13 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
           taskText.includes('react') || taskText.includes('node.js') || taskText.includes('api') || 
           taskText.includes('debugging') || taskText.includes('testing') || taskText.includes('code review')) {
         agents.push({
-          name: "AI-Entwicklungs-Assistent",
+          name: lang === 'en' ? "AI Development Assistant" : "AI-Entwicklungs-Assistent",
           technology: "ChatGPT + GitHub Copilot + Claude",
-          implementation: "1. Installiere GitHub Copilot in deiner IDE\n2. Erstelle ChatGPT-Prompts für Code-Reviews\n3. Nutze Claude für Debugging-Hilfe\n4. Überprüfe und validiere AI-generierte Lösungen",
-          difficulty: "Mittel",
-          setupTime: "2-4 Stunden"
+          implementation: lang === 'en' 
+            ? "Install GitHub Copilot in your IDE\nCreate ChatGPT prompts for code reviews\nUse Claude for debugging help\nReview and validate AI-generated solutions"
+            : "Installiere GitHub Copilot in deiner IDE\nErstelle ChatGPT-Prompts für Code-Reviews\nNutze Claude für Debugging-Hilfe\nÜberprüfe und validiere AI-generierte Lösungen",
+          difficulty: lang === 'en' ? "Medium" : "Mittel",
+          setupTime: lang === 'en' ? "2-4 hours" : "2-4 Stunden"
         });
       }
       
@@ -102,9 +107,11 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
       if (taskText.includes('daten') || taskText.includes('data') || taskText.includes('excel') || 
           taskText.includes('auswertung') || taskText.includes('statistik') || taskText.includes('reporting')) {
         agents.push({
-          name: "Datenanalyse-Agent",
+          name: lang === 'en' ? "Data Analysis Agent" : "Datenanalyse-Agent",
           technology: "ChatGPT + Claude + Excel AI",
-          implementation: "1. Nutze ChatGPT für Datenanalyse-Strategien\n2. Verwende Claude für komplexe Berechnungen\n3. Aktiviere Excel AI für automatische Formeln\n4. Erstelle automatisierte Reports mit AI"
+          implementation: lang === 'en'
+            ? "Use ChatGPT for data analysis strategies\nUse Claude for complex calculations\nEnable Excel AI for automatic formulas\nCreate automated reports with AI"
+            : "Nutze ChatGPT für Datenanalyse-Strategien\nVerwende Claude für komplexe Berechnungen\nAktiviere Excel AI für automatische Formeln\nErstelle automatisierte Reports mit AI"
         });
       }
       
@@ -160,9 +167,13 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
       // General AI Assistant for any task
       if (agents.length === 0) {
         agents.push({
-          name: "Allzweck-AI-Assistent",
-          technology: "ChatGPT + Claude + Grok",
-          implementation: "1. Erstelle spezifische Prompts für deine Aufgabe\n2. Nutze ChatGPT für allgemeine Unterstützung\n3. Verwende Claude für detaillierte Analysen\n4. Überprüfe und validiere AI-Empfehlungen"
+          name: lang === 'en' ? "All-Purpose AI Assistant" : "Allzweck-AI-Assistent",
+          technology: "ChatGPT + Claude + Gemini + Grok + Pi",
+          implementation: lang === 'en'
+            ? "Create specific prompts for your task\nUse ChatGPT for general support\nUse Claude for detailed analyses\nUse Gemini for multimodal tasks\nUse Grok for creative tasks\nUse Pi for conversational tasks\nReview and validate AI recommendations"
+            : "Erstelle spezifische Prompts für deine Aufgabe\nNutze ChatGPT für allgemeine Unterstützung\nVerwende Claude für detaillierte Analysen\nNutze Gemini für multimodale Aufgaben\nVerwende Grok für kreative Aufgaben\nNutze Pi für Gesprächsaufgaben\nÜberprüfe und validiere AI-Empfehlungen",
+          difficulty: lang === 'en' ? "Medium" : "Mittel",
+          setupTime: lang === 'en' ? "2-4 hours" : "2-4 Stunden"
         });
       }
     }
@@ -182,7 +193,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
         workflows.push({
           name: "AI-gestützter Entwicklungs-Workflow",
           technology: "GitHub Actions + ChatGPT API",
-          implementation: "1. Erstelle GitHub Actions Workflow\n2. Integriere ChatGPT API für Code-Reviews\n3. Überprüfe AI-generierte Tests vor Deployment\n4. Setze manuelle Freigabe für kritische Änderungen"
+          implementation: "Erstelle GitHub Actions Workflow\nIntegriere ChatGPT API für Code-Reviews\nÜberprüfe AI-generierte Tests vor Deployment\nSetze manuelle Freigabe für kritische Änderungen"
         });
       }
       
@@ -192,7 +203,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
         workflows.push({
           name: "Datenanalyse-Automatisierung",
           technology: "Apache Airflow + ChatGPT API",
-          implementation: "1. Installiere Apache Airflow mit Docker\n2. Integriere ChatGPT API für Datenanalyse\n3. Erstelle automatisierte Reporting-Pipeline\n4. Setze tägliche Ausführung"
+          implementation: "Installiere Apache Airflow mit Docker\nIntegriere ChatGPT API für Datenanalyse\nErstelle automatisierte Reporting-Pipeline\nSetze tägliche Ausführung"
         });
       }
       
@@ -202,7 +213,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
         workflows.push({
           name: "Dokumentations-Automatisierung",
           technology: "n8n + ChatGPT API",
-          implementation: "1. Installiere n8n: npm install n8n\n2. Integriere ChatGPT API für automatische Dokumentation\n3. Erstelle Trigger für neue Dokumente\n4. Automatisiere Qualitätskontrolle"
+          implementation: "Installiere n8n: npm install n8n\nIntegriere ChatGPT API für automatische Dokumentation\nErstelle Trigger für neue Dokumente\nAutomatisiere Qualitätskontrolle"
         });
       }
       
@@ -212,7 +223,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
         workflows.push({
           name: "System-Integrations-Pipeline",
           technology: "Zapier + n8n + ChatGPT API",
-          implementation: "1. Erstelle Zapier-Konto für einfache Verbindungen\n2. Nutze n8n für komplexe Automatisierungen\n3. Integriere ChatGPT API für intelligente Entscheidungen\n4. Automatisiere Datenübertragungen"
+          implementation: "Erstelle Zapier-Konto für einfache Verbindungen\nNutze n8n für komplexe Automatisierungen\nIntegriere ChatGPT API für intelligente Entscheidungen\nAutomatisiere Datenübertragungen"
         });
       }
       
@@ -222,16 +233,18 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
         workflows.push({
           name: "Team-Kollaborations-Automatisierung",
           technology: "Slack + Microsoft Teams + ChatGPT API",
-          implementation: "1. Aktiviere Slack/Teams Integrationen\n2. Integriere ChatGPT API für Meeting-Vorbereitung\n3. Überwache automatische Status-Updates\n4. Erstelle intelligente Benachrichtigungen mit manueller Kontrolle"
+          implementation: "Aktiviere Slack/Teams Integrationen\nIntegriere ChatGPT API für Meeting-Vorbereitung\nÜberwache automatische Status-Updates\nErstelle intelligente Benachrichtigungen mit manueller Kontrolle"
         });
       }
       
       // General AI-Powered Workflow
       if (workflows.length === 0) {
         workflows.push({
-          name: "AI-gestützter Automatisierungs-Workflow",
+          name: lang === 'en' ? "AI-Supported Automation Workflow" : "AI-gestützter Automatisierungs-Workflow",
           technology: "ChatGPT API + Zapier + n8n",
-          implementation: "1. Erstelle ChatGPT API-Konto\n2. Nutze Zapier für einfache Automatisierungen\n3. Verwende n8n für komplexe Workflows\n4. Integriere AI für intelligente Entscheidungen"
+          implementation: lang === 'en'
+            ? "Create ChatGPT API account\nUse Zapier for simple automations\nUse n8n for complex workflows\nIntegrate AI for intelligent decisions"
+            : "Erstelle ChatGPT API-Konto\nNutze Zapier für einfache Automatisierungen\nVerwende n8n für komplexe Workflows\nIntegriere AI für intelligente Entscheidungen"
         });
       }
     }
@@ -251,6 +264,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
           const isExpanded = expandedTasks.has(taskId);
           const taskName = task.name || task.text;
           const taskCategory = task.label === 'Automatisierbar' ? 'automatisierbar' : 
+                              task.label === 'Teilweise Automatisierbar' ? 'teilweise' :
                               task.label === 'Mensch' ? 'mensch' : 
                               task.category || 'mensch';
           const aiAgents = getAIAgentsForTask({ ...task, category: taskCategory });
@@ -276,10 +290,14 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     <div className={`p-2 rounded-full ${
                       taskCategory === 'automatisierbar' 
                         ? 'bg-primary/10 text-primary' 
+                        : taskCategory === 'teilweise'
+                        ? 'bg-yellow-100 text-yellow-600'
                         : 'bg-destructive/10 text-destructive'
                     }`}>
                       {taskCategory === 'automatisierbar' ? (
                         <Bot className="w-4 h-4" />
+                      ) : taskCategory === 'teilweise' ? (
+                        <Zap className="w-4 h-4" />
                       ) : (
                         <User className="w-4 h-4" />
                       )}
@@ -330,7 +348,8 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     
                     {/* Category badge */}
                     <Badge 
-                      variant={taskCategory === 'automatisierbar' ? 'default' : 'destructive'}
+                      variant={taskCategory === 'automatisierbar' ? 'default' : 
+                              taskCategory === 'teilweise' ? 'secondary' : 'destructive'}
                       className="capitalize"
                     >
                       {taskCategory}
@@ -354,65 +373,92 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                   }`}
                 >
                   <div className="border-t pt-4 space-y-4">
-                    {/* AI Agents Section */}
-                    {taskCategory === 'automatisierbar' && aiAgents.length > 0 && (
-                      <div>
-                        <h5 className="font-medium text-foreground mb-2 flex items-center">
-                          <Zap className="w-4 h-4 mr-2 text-primary" />
-                          Empfohlene AI-Agents
-                        </h5>
-                        <div className="space-y-2">
-                                                     {aiAgents.map((agent, idx) => (
-                             <div key={idx} className="bg-muted/50 p-3 rounded-lg">
-                               <div className="font-medium text-sm mb-2">{agent.name}</div>
-                               <div className="text-xs text-muted-foreground mb-2">
-                                 <strong>Technologie:</strong> {agent.technology}
-                               </div>
-                               <div className="text-xs text-muted-foreground mb-2">
-                                 <strong>Schwierigkeit:</strong> {agent.difficulty || "Mittel"} • <strong>Setup-Zeit:</strong> {agent.setupTime || "2-4 Stunden"}
-                               </div>
-                               <div className="text-xs text-muted-foreground">
-                                 <strong>Schritte zur Umsetzung:</strong>
-                                 <ol className="mt-1 ml-4 space-y-1 list-decimal">
-                                   {agent.implementation.split('\n').map((step, stepIdx) => (
-                                     <li key={stepIdx} className="pl-1">
-                                       {step}
-                                     </li>
-                                   ))}
-                                 </ol>
-                               </div>
-                             </div>
-                           ))}
-                        </div>
+                    {/* AI Agents and Workflows Section - Side by Side */}
+                    {(taskCategory === 'automatisierbar' && (aiAgents.length > 0 || workflows.length > 0)) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* AI Agents Section - Left */}
+                        {aiAgents.length > 0 && (
+                          <div>
+                            <h5 className="font-medium text-foreground mb-2 flex items-center">
+                              <Zap className="w-4 h-4 mr-2 text-primary" />
+                              {t(lang, "recommended_ai_agents")}
+                            </h5>
+                            <div className="space-y-2">
+                              {aiAgents.map((agent, idx) => (
+                                 <div key={idx} className="bg-muted/50 p-3 rounded-lg">
+                                   <div className="font-medium text-sm mb-2">{agent.name}</div>
+                                   <div className="text-xs text-muted-foreground mb-2">
+                                     <strong>{t(lang, "technology")}:</strong> {agent.technology}
+                                   </div>
+                                   <div className="text-xs text-muted-foreground mb-2">
+                                     <strong>{t(lang, "difficulty")}:</strong> {agent.difficulty || t(lang, "medium")} • <strong>{t(lang, "setup_time")}:</strong> {agent.setupTime || t(lang, "2_4_hours")}
+                                   </div>
+                                   <div className="text-xs text-muted-foreground">
+                                     <strong>{t(lang, "implementation_steps")}:</strong>
+                                     <ol className="mt-1 ml-4 space-y-1 list-decimal">
+                                       {agent.implementation.split('\n').map((step, stepIdx) => (
+                                         <li key={stepIdx} className="pl-1">
+                                           {step.replace(/^\d+\.\s*/, '')}
+                                         </li>
+                                       ))}
+                                     </ol>
+                                   </div>
+                                 </div>
+                               ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Workflows Section - Right */}
+                        {workflows.length > 0 && (
+                          <div>
+                            <h5 className="font-medium text-foreground mb-2 flex items-center">
+                              <Workflow className="w-4 h-4 mr-2 text-primary" />
+                              {t(lang, "recommended_workflows")}
+                            </h5>
+                            <div className="space-y-2">
+                              {workflows.map((workflow, idx) => (
+                                 <div key={idx} className="bg-muted/50 p-3 rounded-lg">
+                                   <div className="font-medium text-sm mb-2">{workflow.name}</div>
+                                   <div className="text-xs text-muted-foreground mb-2">
+                                     <strong>{t(lang, "technology")}:</strong> {workflow.technology}
+                                   </div>
+                                   <div className="text-xs text-muted-foreground">
+                                     <strong>{t(lang, "implementation_steps")}:</strong>
+                                     <ol className="mt-1 ml-4 space-y-1 list-decimal">
+                                       {workflow.implementation.split('\n').map((step, stepIdx) => (
+                                         <li key={stepIdx} className="pl-1">
+                                           {step.replace(/^\d+\.\s*/, '')}
+                                         </li>
+                                       ))}
+                                     </ol>
+                                   </div>
+                                 </div>
+                               ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     
-                    {/* Workflows Section */}
-                    {taskCategory === 'automatisierbar' && workflows.length > 0 && (
+                    {/* AI Tools Section */}
+                    {task.aiTools && task.aiTools.length > 0 && (
                       <div>
                         <h5 className="font-medium text-foreground mb-2 flex items-center">
-                          <Workflow className="w-4 h-4 mr-2 text-primary" />
-                          Empfohlene Workflows
+                          <Bot className="w-4 h-4 mr-2 text-primary" />
+                          {t(lang, "recommended_ai_tools")}
                         </h5>
-                        <div className="space-y-2">
-                                                     {workflows.map((workflow, idx) => (
-                             <div key={idx} className="bg-muted/50 p-3 rounded-lg">
-                               <div className="font-medium text-sm mb-2">{workflow.name}</div>
-                               <div className="text-xs text-muted-foreground mb-2">
-                                 <strong>Technologie:</strong> {workflow.technology}
-                               </div>
-                               <div className="text-xs text-muted-foreground">
-                                 <strong>Schritte zur Umsetzung:</strong>
-                                 <ol className="mt-1 ml-4 space-y-1 list-decimal">
-                                   {workflow.implementation.split('\n').map((step, stepIdx) => (
-                                     <li key={stepIdx} className="pl-1">
-                                       {step}
-                                     </li>
-                                   ))}
-                                 </ol>
-                               </div>
-                             </div>
-                           ))}
+                        <div className="flex flex-wrap gap-2">
+                          {task.aiTools.map((toolId) => {
+                            const tool = getToolById(toolId);
+                            if (!tool) return null;
+                            return (
+                              <div key={toolId} className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+                                <AppIcon tool={tool} size="sm" />
+                                <span className="text-sm font-medium">{tool.name}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

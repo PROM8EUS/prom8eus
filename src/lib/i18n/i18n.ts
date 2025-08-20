@@ -37,7 +37,10 @@ export function t(lang: "de" | "en", key: string): string {
 /**
  * Helper function to translate task categories
  */
-export function translateCategory(lang: Lang, category: string): string {
+export function translateCategory(lang: Lang, category?: string): string {
+  if (!category) {
+    return t(lang, 'task_category_general');
+  }
   const categoryKey = `task_category_${category.toLowerCase()}`;
   return t(lang, categoryKey);
 }

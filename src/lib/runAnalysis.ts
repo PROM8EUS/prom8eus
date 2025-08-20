@@ -1,13 +1,14 @@
-import { extractTasks as extractTasksAdvanced } from './extractTasks';
+import { extractTasks } from './extractTasks';
+import { getToolsByIndustry } from './catalog/aiTools';
 
 interface Task {
   text: string;
   score: number;
-  label: "Automatisierbar" | "Mensch";
-  category: string;
-  confidence: number;
-  humanRatio: number; // Percentage of human work required (0-100)
-  automationRatio: number; // Percentage that can be automated (0-100)
+  label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
+  signals?: string[];
+  aiTools?: string[];
+  industry?: string;
+  confidence?: number;
 }
 
 interface AnalysisResult {
@@ -24,9 +25,8 @@ interface AnalysisResult {
 export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): AnalysisResult {
   console.log('DEBUG runAnalysis: lang =', lang);
   
-  // Step 1: Extract tasks using the advanced extractor
-  const rawTasks = extractTasksAdvanced(jobText);
-  console.log('Raw tasks extracted:', rawTasks.length, rawTasks.map(t => `${t.text} (${t.source})`));
+  // Step 1: Extract tasks using the extractor
+  const rawTasks = extractTasks(jobText);
   
   // Convert to text array for analysis
   const extractedTasks = rawTasks.map(t => t.text);
@@ -38,6 +38,7 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
   // Step 3: Calculate aggregated scores - make them consistent
   const totalTasks = analyzedTasks.length;
   const automatisierbareCount = analyzedTasks.filter(t => t.label === "Automatisierbar").length;
+  const teilweiseCount = analyzedTasks.filter(t => t.label === "Teilweise Automatisierbar").length;
   const menschCount = analyzedTasks.filter(t => t.label === "Mensch").length;
 
   // Calculate the overall automation potential based on task scores (weighted average)
@@ -45,19 +46,22 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
   
   // The ratio should reflect the overall automation potential, not just task counts
   const overallAutomationPotential = Math.round(weightedScore);
+  
   const ratio = {
-    automatisierbar: overallAutomationPotential,
-    mensch: 100 - overallAutomationPotential
+    automatisierbar: totalTasks > 0 ? Math.round((automatisierbareCount / totalTasks) * 100) : 0,
+    mensch: totalTasks > 0 ? Math.round(((teilweiseCount + menschCount) / totalTasks) * 100) : 0
   };
+  
+  // Ensure ratio values are valid numbers
+  if (isNaN(ratio.automatisierbar)) ratio.automatisierbar = 0;
+  if (isNaN(ratio.mensch)) ratio.mensch = 0;
   
   // Debug logging to verify consistency
 
 
 
   // Step 4: Generate summary and recommendations
-  console.log('DEBUG: Calling generateSummary with lang =', lang);
   const summary = generateSummary(overallAutomationPotential, ratio, totalTasks, lang);
-  console.log('DEBUG: Generated summary =', summary);
   const recommendations = generateRecommendations(analyzedTasks, overallAutomationPotential);
 
   return {
@@ -69,10 +73,97 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
   };
 }
 
-// Remove the old extractTasks function - now using the advanced extractor
+
+
+// Branchenspezifische AI-Tool-IDs für Aufgabenautomatisierung
+const AI_TOOL_IDS_BY_INDUSTRY = {
+  tech: ['chatgpt', 'claude', 'github-copilot', 'code-whisperer', 'tabnine'],
+  healthcare: ['chatgpt', 'claude', 'notion-ai', 'obsidian-ai', 'microsoft-copilot', 'perplexity'],
+  finance: ['chatgpt', 'claude', 'excel-ai', 'power-bi-ai', 'google-sheets-ai', 'airtable-ai'],
+  marketing: ['chatgpt', 'claude', 'jasper', 'copy-ai', 'writesonic', 'canva-ai'],
+  hr: ['chatgpt', 'claude', 'notion-ai', 'microsoft-copilot', 'airtable-ai'],
+  production: ['chatgpt', 'claude', 'excel-ai', 'power-bi-ai', 'airtable-ai'],
+  education: ['chatgpt', 'claude', 'notion-ai', 'obsidian-ai', 'perplexity', 'grammarly'],
+  legal: ['chatgpt', 'claude', 'notion-ai', 'perplexity'],
+  general: ['chatgpt', 'claude', 'grok', 'gemini', 'perplexity', 'microsoft-copilot', 'notion-ai']
+};
+
+// Branchenerkennung
+function detectIndustry(text: string): string {
+  const lowerText = text.toLowerCase();
+  
+  // Technologie & IT
+  if (lowerText.includes('software') || lowerText.includes('programming') || lowerText.includes('development') || 
+      lowerText.includes('coding') || lowerText.includes('api') || lowerText.includes('database') ||
+      lowerText.includes('entwicklung') || lowerText.includes('programmierung') || lowerText.includes('coding') ||
+      lowerText.includes('datenbank') || lowerText.includes('system') || lowerText.includes('technisch')) {
+    return 'tech';
+  }
+  
+  // Gesundheitswesen
+  if (lowerText.includes('patient') || lowerText.includes('medical') || lowerText.includes('nursing') ||
+      lowerText.includes('clinical') || lowerText.includes('healthcare') || lowerText.includes('care') ||
+      lowerText.includes('patient') || lowerText.includes('medizinisch') || lowerText.includes('pflege') ||
+      lowerText.includes('klinisch') || lowerText.includes('gesundheit') || lowerText.includes('behandlung')) {
+    return 'healthcare';
+  }
+  
+  // Finanzwesen
+  if (lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') ||
+      lowerText.includes('bookkeeping') || lowerText.includes('financial') || lowerText.includes('audit') ||
+      lowerText.includes('buchhaltung') || lowerText.includes('finanzen') || lowerText.includes('steuer') ||
+      lowerText.includes('buchführung') || lowerText.includes('finanziell') || lowerText.includes('prüfung')) {
+    return 'finance';
+  }
+  
+  // Marketing & Sales
+  if (lowerText.includes('marketing') || lowerText.includes('sales') || lowerText.includes('campaign') ||
+      lowerText.includes('advertising') || lowerText.includes('promotion') || lowerText.includes('lead') ||
+      lowerText.includes('marketing') || lowerText.includes('vertrieb') || lowerText.includes('kampagne') ||
+      lowerText.includes('werbung') || lowerText.includes('promotion') || lowerText.includes('lead')) {
+    return 'marketing';
+  }
+  
+  // HR & Personal
+  if (lowerText.includes('hr') || lowerText.includes('human resources') || lowerText.includes('recruitment') ||
+      lowerText.includes('personnel') || lowerText.includes('employee') || lowerText.includes('hiring') ||
+      lowerText.includes('personal') || lowerText.includes('rekrutierung') || lowerText.includes('mitarbeiter') ||
+      lowerText.includes('einstellung') || lowerText.includes('personalwesen')) {
+    return 'hr';
+  }
+  
+  // Produktion & Logistik
+  if (lowerText.includes('production') || lowerText.includes('manufacturing') || lowerText.includes('logistics') ||
+      lowerText.includes('warehouse') || lowerText.includes('supply chain') || lowerText.includes('inventory') ||
+      lowerText.includes('produktion') || lowerText.includes('fertigung') || lowerText.includes('logistik') ||
+      lowerText.includes('lager') || lowerText.includes('lieferkette') || lowerText.includes('bestand')) {
+    return 'production';
+  }
+  
+  // Bildung & Forschung
+  if (lowerText.includes('teaching') || lowerText.includes('education') || lowerText.includes('research') ||
+      lowerText.includes('academic') || lowerText.includes('university') || lowerText.includes('school') ||
+      lowerText.includes('lehre') || lowerText.includes('bildung') || lowerText.includes('forschung') ||
+      lowerText.includes('akademisch') || lowerText.includes('universität') || lowerText.includes('schule')) {
+    return 'education';
+  }
+  
+  // Recht & Compliance
+  if (lowerText.includes('legal') || lowerText.includes('law') || lowerText.includes('compliance') ||
+      lowerText.includes('regulatory') || lowerText.includes('contract') || lowerText.includes('attorney') ||
+      lowerText.includes('recht') || lowerText.includes('gesetz') || lowerText.includes('compliance') ||
+      lowerText.includes('regulatorisch') || lowerText.includes('vertrag') || lowerText.includes('anwalt')) {
+    return 'legal';
+  }
+  
+  return 'general';
+}
 
 function analyzeTask(taskText: string): Task {
   const lowerText = taskText.toLowerCase();
+  
+  // Branchenerkennung für die Aufgabe
+  const taskIndustry = detectIndustry(taskText);
   
   // Define automation indicators (with modern AI tools consideration)
   const automationSignals = {
@@ -90,309 +181,205 @@ function analyzeTask(taskText: string): Task {
         'database design', 'optimization', 'debugging', 'error handling', 'testing', 'code review',
         'documentation', 'components', 'integration', 'system', 'architecture'
       ],
-      weight: 35, // Reduced weight - even with AI assistance, human oversight needed
-      aiTools: ['ChatGPT', 'GitHub Copilot', 'Grok', 'Claude', 'CodeWhisperer']
+      weight: 25, // Reduced weight for more nuanced scoring
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.tech
     },
     dataAnalysis: {
       keywords: [
         // German - Datenanalyse und -verarbeitung
         'datenanalyse', 'auswertung', 'statistik', 'kennzahlen', 'reporting', 'dashboard',
-        'excel', 'tabelle', 'datenerfassung', 'dateneingabe', 'datenverarbeitung',
-        'analytics', 'metrics', 'kpi', 'bericht', 'report', 'visualisierung',
+        'excel', 'tabelle', 'datenerfassung', 'dateneingabe',
         // English
         'data analysis', 'analytics', 'statistics', 'metrics', 'reporting', 'dashboard',
-        'excel', 'spreadsheet', 'data entry', 'data processing', 'visualization'
+        'excel', 'spreadsheet', 'data entry', 'data input'
       ],
       weight: 30,
-      aiTools: ['ChatGPT', 'Claude', 'Grok', 'Excel AI', 'Tableau AI']
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.finance
     },
-    documentation: {
+    // Branchenspezifische Automatisierungssignale
+    healthcare: {
       keywords: [
-        // German - Dokumentation und Kommunikation
-        'dokumentation', 'protokoll', 'aufzeichnung', 'dokumentieren', 'notieren',
-        'e-mail', 'email', 'kommunikation', 'bericht', 'report', 'zusammenfassung',
-        'terminplanung', 'kalender', 'erinnerung', 'benachrichtigung',
-        // English
-        'documentation', 'recording', 'logging', 'documenting', 'noting',
-        'email', 'communication', 'report', 'summary', 'scheduling', 'calendar'
+        'dokumentation', 'protokollierung', 'patientendaten', 'medizinische berichte',
+        'documentation', 'logging', 'patient data', 'medical reports', 'charting',
+        'vital signs', 'medication', 'treatment plans', 'care coordination'
       ],
-      weight: 25,
-      aiTools: ['ChatGPT', 'Claude', 'Grok', 'Notion AI', 'Grammarly']
+      weight: 30,
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.healthcare
     },
-    systemIntegration: {
+    finance: {
       keywords: [
-        // German - Systemintegration und -verwaltung
-        'integration', 'api', 'synchronisation', 'datenübertragung', 'systemverbindung',
-        'crm', 'erp', 'software', 'datenbank', 'system', 'buchung', 'rechnung',
-        'fakturierung', 'bestellung', 'verwaltung im system', 'datev',
-        // English
-        'integration', 'api', 'synchronization', 'data transfer', 'system connection',
-        'order processing', 'system entry', 'database', 'invoicing', 'billing'
+        'buchhaltung', 'abrechnung', 'steuern', 'finanzberichte', 'prüfung',
+        'accounting', 'reconciliation', 'tax', 'financial reports', 'audit',
+        'data entry', 'reporting', 'compliance', 'risk assessment'
       ],
       weight: 45,
-      aiTools: ['ChatGPT', 'Zapier', 'n8n', 'Make.com', 'IFTTT']
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.finance
     },
-    accounting: {
+    marketing: {
       keywords: [
-        // German - Buchhaltung und Finanzen
-        'buchhaltung', 'finanzbuchhaltung', 'kontierung', 'belege', 'rechnungswesen',
-        'abschluss', 'monatsabschluss', 'jahresabschluss', 'umsatzsteuer',
-        'mahnwesen', 'zahlungsverkehr', 'kontoabstimmung', 'buchen', 'verbuchen',
-        // English
-        'bookkeeping', 'accounting', 'posting', 'vouchers', 'invoicing', 'reconciliation'
+        'content erstellung', 'kampagnen', 'analysen', 'social media', 'seo',
+        'content creation', 'campaigns', 'analytics', 'social media', 'seo',
+        'email marketing', 'lead generation', 'conversion optimization',
+        'marketingstrategien', 'marketing strategies', 'werbekampagnen', 'advertising campaigns',
+        'budgetplanung', 'budget planning', 'social media kanäle', 'social media channels',
+        'events', 'messen', 'trade shows', 'präsentationen', 'presentations', 'reports'
+      ],
+      weight: 20, // Lower weight for more nuanced scoring
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.marketing
+    },
+    hr: {
+      keywords: [
+        'rekrutierung', 'bewerbungsanalyse', 'onboarding', 'mitarbeiterdaten',
+        'recruitment', 'application analysis', 'onboarding', 'employee data',
+        'screening', 'interview scheduling', 'performance reviews'
+      ],
+      weight: 30,
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.hr
+    },
+    production: {
+      keywords: [
+        'produktionsplanung', 'qualitätskontrolle', 'lagerverwaltung', 'wartung',
+        'production planning', 'quality control', 'inventory management', 'maintenance',
+        'safety monitoring', 'equipment tracking', 'supply chain'
       ],
       weight: 40,
-      aiTools: ['ChatGPT', 'Claude', 'Datev AI', 'Sage AI', 'QuickBooks AI']
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.production
     },
-    collaboration: {
+    education: {
       keywords: [
-        // German - Zusammenarbeit mit KI-Unterstützung
-        'zusammenarbeit', 'kooperation', 'abstimmung', 'koordination', 'teamarbeit',
-        'agil', 'agile', 'scrum', 'kanban', 'meeting', 'besprechung', 'planning',
-        'code-review', 'code review', 'testing', 'qualitätssicherung',
-        // English
-        'collaboration', 'cooperation', 'coordination', 'teamwork', 'agile', 'scrum',
-        'kanban', 'meeting', 'planning', 'code review', 'testing', 'quality assurance'
+        'unterrichtsvorbereitung', 'materialerstellung', 'bewertung', 'dokumentation',
+        'lesson planning', 'material creation', 'assessment', 'documentation',
+        'grading', 'curriculum development', 'student tracking'
+      ],
+      weight: 25,
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.education
+    },
+    legal: {
+      keywords: [
+        'vertragsprüfung', 'dokumentation', 'recherche', 'compliance',
+        'contract review', 'documentation', 'research', 'compliance',
+        'legal research', 'case analysis', 'regulatory review'
+      ],
+      weight: 30,
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.legal
+    },
+    // Medium automation potential
+    documentation: {
+      keywords: [
+        'dokumentation', 'protokoll', 'aufzeichnung', 'dokumentieren', 'notieren',
+        'documentation', 'recording', 'logging', 'documenting', 'noting',
+        'präsentationen', 'presentations', 'reports', 'berichte'
+      ],
+      weight: 25,
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.general
+    },
+    monitoring: {
+      keywords: [
+        'überwachung', 'monitoring', 'kontrolle', 'beobachtung',
+        'monitoring', 'surveillance', 'control', 'observation'
       ],
       weight: 35,
-      aiTools: ['ChatGPT', 'Claude', 'Grok', 'Slack AI', 'Microsoft Teams AI']
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.general
     },
-    physicalTasks: {
+    // Low automation potential (human-centric tasks)
+    creativeStrategy: {
       keywords: [
-        // German - Physische Aufgaben mit Automatisierungspotenzial
-        'schneiden', 'schneidet', 'schneidest', 'packen', 'packt', 'packst', 'sortieren', 'sortiert', 'sortierst',
-        'bearbeiten', 'bearbeitet', 'bearbeitest', 'verarbeiten', 'verarbeitet', 'verarbeitest',
-        'kontrollieren', 'kontrolliert', 'kontrollierst', 'prüfen', 'prüft', 'prüfst',
-        'lagerst', 'lagern', 'lagert', 'transportieren', 'transportiert', 'transportierst',
-        'liefern', 'liefert', 'lieferst', 'versenden', 'versendet', 'versendest',
-        'verpacken', 'verpackt', 'verpackst', 'etikettieren', 'etikettiert', 'etikettierst',
-        'montieren', 'montiert', 'montierst', 'assemblieren', 'assembliert', 'assemblierst',
-        'produzieren', 'produziert', 'produzierst', 'fertigen', 'fertigt', 'fertigst',
-        'reparieren', 'repariert', 'reparierst', 'installieren', 'installiert', 'installierst',
-        'wartet', 'wartest', 'wartet', 'testen', 'testet', 'testest',
-        // English
-        'cut', 'cutting', 'pack', 'packing', 'sort', 'sorting', 'process', 'processing',
-        'check', 'checking', 'inspect', 'inspecting', 'store', 'storing',
-        'transport', 'transporting', 'deliver', 'delivering', 'ship', 'shipping',
-        'package', 'packaging', 'label', 'labeling', 'assemble', 'assembling',
-        'produce', 'producing', 'manufacture', 'manufacturing', 'repair', 'repairing',
-        'install', 'installing', 'maintain', 'maintaining', 'test', 'testing'
+        'strategie', 'planung', 'konzeption', 'kreativ', 'innovation',
+        'strategy', 'planning', 'concept', 'creative', 'innovation',
+        'marketingstrategien', 'marketing strategies'
       ],
-      weight: 40,
-      aiTools: ['Robotics', 'Automated Systems', 'IoT Sensors', 'Computer Vision']
+      weight: 10, // Lower weight for creative tasks
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.general
+    },
+    humanInteraction: {
+      keywords: [
+        'beratung', 'kommunikation', 'führung', 'mentoring', 'coaching',
+        'advice', 'communication', 'leadership', 'mentoring', 'coaching',
+        'zusammenarbeit', 'collaboration', 'koordination', 'coordination', 'agenturen', 'agencies'
+      ],
+      weight: 5, // Very low weight for human interaction tasks
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.general
+    },
+    // Partially automatable tasks with AI assistance
+    aiAssistedTasks: {
+      keywords: [
+        'analyse', 'analysis', 'trends', 'trends', 'kundenverhalten', 'customer behavior',
+        'markttrends', 'market trends', 'events', 'messen', 'trade shows',
+        'organisation', 'organization', 'planung', 'planning'
+      ],
+      weight: 15, // Medium weight for AI-assisted tasks
+      aiTools: AI_TOOL_IDS_BY_INDUSTRY.general
     }
   };
 
-  // Define human-required indicators (expanded scope for realistic assessment)
-  const humanSignals = {
-    // Customer interaction and communication
-    customerInteraction: {
-      keywords: [
-        // German - Customer interaction tasks
-        'beratung', 'kundenberatung', 'telefonische beratung', 'persönliche beratung',
-        'kundenservice', 'kundenkontakt', 'kundengespräch', 'kundensupport',
-        'verkaufsgespräch', 'akquise', 'kundengewinnung', 'kundenbetreuung',
-        'kundenzufriedenheit', 'kundenbeziehung', 'kundenpflege',
-        // English
-        'consultation', 'customer service', 'customer support', 'customer contact',
-        'sales conversation', 'customer acquisition', 'customer care',
-        'customer satisfaction', 'customer relationship', 'customer retention'
-      ],
-      weight: 65
-    },
-    // Interpersonal and communication skills
-    interpersonalCommunication: {
-      keywords: [
-        // German - Interpersonal communication
-        'kommunikation', 'gespräch', 'verhandlung', 'überzeugung', 'präsentation',
-        'meeting', 'besprechung', 'teamarbeit', 'zusammenarbeit', 'koordination',
-        'abstimmung', 'rücksprache', 'feedback', 'schulung', 'training',
-        'moderation', 'mediation', 'konfliktlösung', 'diplomatie',
-        // English
-        'communication', 'conversation', 'negotiation', 'persuasion', 'presentation',
-        'meeting', 'discussion', 'teamwork', 'collaboration', 'coordination',
-        'consultation', 'feedback', 'training', 'moderation', 'mediation',
-        'conflict resolution', 'diplomacy'
-      ],
-      weight: 55
-    },
-    // Emotional intelligence and empathy
-    emotionalIntelligence: {
-      keywords: [
-        // German - Emotional Intelligence (hard to automate)
-        'empathie', 'einfühlungsvermögen', 'emotionale unterstützung', 'psychologische beratung',
-        'trauerbegleitung', 'konfliktmediation', 'therapie', 'coaching', 'mentoring',
-        'zwischenmenschliche beziehungen', 'vertrauensaufbau', 'motivation', 'inspiration',
-        'geduld', 'höflichkeit', 'respekt', 'verständnis', 'zwischenmenschlich',
-        // English
-        'empathy', 'emotional support', 'psychological counseling', 'grief counseling',
-        'conflict mediation', 'therapy', 'coaching', 'mentoring', 'interpersonal relationships',
-        'trust building', 'motivation', 'inspiration', 'patience', 'courtesy', 'respect'
-      ],
-      weight: 60
-    },
-    // Physical interaction and manual tasks
-    physicalInteraction: {
-      keywords: [
-        // German - Physical tasks
-        'körperlich', 'handwerk', 'reparatur', 'wartung vor ort', 'installation',
-        'lieferung', 'transport', 'kundenservice vor ort', 'schulung vor ort',
-        'schneiden', 'packen', 'sortieren', 'bearbeiten', 'verarbeiten',
-        'kontrollieren', 'prüfen', 'testen', 'montieren', 'assemblieren',
-        // English
-        'physical', 'manual work', 'repair', 'on-site maintenance', 'installation',
-        'delivery', 'transport', 'on-site customer service', 'on-site training',
-        'cutting', 'packing', 'sorting', 'processing', 'inspecting', 'testing'
-      ],
-      weight: 55
-    },
-    // Complex decision making and judgment
-    complexDecisionMaking: {
-      keywords: [
-        // German - Complex strategic decisions
-        'strategische entscheidung', 'unternehmensführung', 'investitionsentscheidung',
-        'risikobewertung', 'krisenmanagement', 'notfall', 'kritische situation',
-        'ethische entscheidung', 'moralische abwägung', 'komplexe urteile',
-        'entscheidung', 'entscheidungsfindung', 'beurteilung', 'einschätzung',
-        'bewertung', 'analyse', 'diagnose', 'prognose', 'planung',
-        // English
-        'strategic decision', 'executive leadership', 'investment decision',
-        'risk assessment', 'crisis management', 'emergency', 'critical situation',
-        'ethical decision', 'moral judgment', 'complex judgments', 'decision making',
-        'assessment', 'evaluation', 'analysis', 'diagnosis', 'prognosis', 'planning'
-      ],
-      weight: 50
-    },
-    // Creative and innovative thinking
-    creativeInnovation: {
-      keywords: [
-        // German - Creative innovation (not routine creativity)
-        'kreativ', 'kreative innovation', 'disruptive idee', 'revolutionär', 'bahnbrechend',
-        'künstlerische schöpfung', 'originale konzeption', 'visionäre entwicklung',
-        'innovation', 'design', 'konzept', 'strategie', 'vision', 'brainstorming',
-        'entwicklung', 'ideen', 'lösungen', 'ansätze', 'methoden',
-        // English
-        'creative', 'creative innovation', 'disruptive idea', 'revolutionary', 'groundbreaking',
-        'artistic creation', 'original conception', 'visionary development',
-        'innovation', 'design', 'concept', 'strategy', 'vision', 'ideation'
-      ],
-      weight: 45
+  // Calculate automation score based on detected signals
+  let totalScore = 0;
+  let totalWeight = 0;
+  const detectedSignals: string[] = [];
+  const recommendedTools: string[] = [];
+
+  for (const [signalName, signal] of Object.entries(automationSignals)) {
+    const hasSignal = signal.keywords.some(keyword => lowerText.includes(keyword));
+    if (hasSignal) {
+      totalScore += signal.weight;
+      totalWeight += signal.weight;
+      detectedSignals.push(signalName);
+      
+      // Add recommended AI tools for this signal
+      if (signal.aiTools) {
+        recommendedTools.push(...signal.aiTools);
+      }
     }
-  };
+  }
 
-  let automationScore = 0;
-  let humanScore = 0;
-  let detectedCategory = 'Allgemein';
+  // Add industry-specific bonus
+  const industryToolIds = AI_TOOL_IDS_BY_INDUSTRY[taskIndustry as keyof typeof AI_TOOL_IDS_BY_INDUSTRY];
+  if (industryToolIds && taskIndustry !== 'general') {
+    totalScore += 5; // Small bonus for industry-specific tasks
+    totalWeight += 5;
+    recommendedTools.push(...industryToolIds);
+  }
 
-  // Calculate automation score
-  Object.entries(automationSignals).forEach(([category, signal]) => {
-    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
-    if (matches.length > 0) {
+  // Normalize score to 0-100 range
+  let automationScore = totalWeight > 0 ? Math.min(100, Math.round((totalScore / totalWeight) * 100)) : 0;
   
-      automationScore += signal.weight * Math.min(matches.length, 3);
-      detectedCategory = category;
-    }
-  });
-
-  // Calculate human score  
-  Object.entries(humanSignals).forEach(([category, signal]) => {
-    const matches = signal.keywords.filter(keyword => lowerText.includes(keyword));
-    if (matches.length > 0) {
-  
-      humanScore += signal.weight * Math.min(matches.length, 3);
-      detectedCategory = category;
-    }
-  });
-
-
-
-  // Determine final score and label with AI assistance consideration
-  const baseScore = 35; // Higher base score for AI assistance
-  let netScore = Math.max(0, Math.min(100, automationScore - humanScore + baseScore));
-  
-  // Cap automation scores realistically - never 100% if human interaction is needed
-  if (netScore > 85) {
-    netScore = 85; // Maximum realistic automation score
+  // Add nuance based on number of detected signals
+  if (detectedSignals.length === 1) {
+    // Single signal - moderate the score
+    automationScore = Math.round(automationScore * 0.8);
+  } else if (detectedSignals.length >= 3) {
+    // Multiple signals - boost the score slightly
+    automationScore = Math.min(100, Math.round(automationScore * 1.1));
   }
   
-  // Improved confidence calculation
-  const totalSignalStrength = Math.max(automationScore, humanScore);
-  const confidence = Math.min(95, Math.max(15, (totalSignalStrength / 30) * 60));
-  
-  // Much more realistic assessment - most tasks require human involvement
-  let label: "Automatisierbar" | "Mensch";
-  if (automationScore >= 40 && humanScore < 20) {
-    // Only truly automatable tasks with strong automation signals and weak human signals
+  // Ensure score is within bounds
+  automationScore = Math.max(0, Math.min(100, automationScore));
+
+  // Determine automation label with more nuanced thresholds
+  let label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
+  if (automationScore >= 70) {
     label = "Automatisierbar";
-  } else if (humanScore >= 25) {
-    // Most tasks require human interaction
-    label = "Mensch";
+  } else if (automationScore >= 25) {
+    label = "Teilweise Automatisierbar";
   } else {
-    // Default to human - most tasks require human involvement
     label = "Mensch";
   }
   
-  // Adjust score based on task complexity and human interaction needed
-  if (label === "Automatisierbar") {
-    // Reduce score for tasks that require human oversight or decision-making
-    if (taskText.includes('entwicklung') || taskText.includes('programmierung') || taskText.includes('coding')) {
-      netScore = Math.min(netScore, 75); // Software development needs human oversight
-    }
-    if (taskText.includes('zusammenarbeit') || taskText.includes('team') || taskText.includes('agil')) {
-      netScore = Math.min(netScore, 70); // Collaboration requires human interaction
-    }
-    if (taskText.includes('debugging') || taskText.includes('fehlerbehebung')) {
-      netScore = Math.min(netScore, 65); // Debugging often needs human judgment
-    }
-    if (taskText.includes('code review') || taskText.includes('testing')) {
-      netScore = Math.min(netScore, 60); // Reviews and testing need human validation
-    }
-  }
-
-  // Calculate human vs automation ratios - make them consistent with the score
-  let humanRatio = 0;
-  let automationRatio = 0;
-  
-  // The score represents the automation potential, so use it directly
-  automationRatio = Math.round(netScore);
-  humanRatio = 100 - automationRatio;
-  
-  // Ensure realistic minimums based on the label
-  if (label === "Automatisierbar") {
-    // Even automatable tasks need some human oversight
-    humanRatio = Math.max(humanRatio, 15);
-    automationRatio = Math.min(automationRatio, 85);
-  } else {
-    // Human tasks should have significant human involvement
-    humanRatio = Math.max(humanRatio, 60);
-    automationRatio = Math.min(automationRatio, 40);
-  }
-  
-  // Recalculate to ensure they add up to 100
-  const total = humanRatio + automationRatio;
-  if (total !== 100) {
-    if (label === "Automatisierbar") {
-      automationRatio = Math.round((automationRatio / total) * 100);
-      humanRatio = 100 - automationRatio;
-    } else {
-      humanRatio = Math.round((humanRatio / total) * 100);
-      automationRatio = 100 - humanRatio;
-    }
-  }
+  // Remove duplicate tools and limit to top 5
+  const uniqueTools = [...new Set(recommendedTools)].slice(0, 5);
 
   return {
     text: taskText,
-    score: netScore,
+    score: automationScore,
     label,
-    category: detectedCategory,
-    confidence: Math.min(100, confidence),
-    humanRatio,
-    automationRatio
+    signals: detectedSignals,
+    aiTools: uniqueTools,
+    industry: taskIndustry,
+    confidence: Math.round(automationScore) // Confidence basiert auf dem Automatisierungsscore
   };
 }
 
 export function generateSummary(totalScore: number, ratio: { automatisierbar: number; mensch: number }, taskCount: number, lang: 'de' | 'en' = 'de'): string {
-  console.log('DEBUG generateSummary: lang =', lang, 'taskCount =', taskCount);
   
   // Handle edge case of no tasks found
   if (taskCount === 0) {
@@ -412,41 +399,108 @@ export function generateSummary(totalScore: number, ratio: { automatisierbar: nu
     summary = `Analyse von ${taskCount} identifizierten Aufgaben ergab ein ${scoreCategory}es Automatisierungspotenzial von ${totalScore}%. ${ratio.automatisierbar}% der Aufgaben sind potentiell automatisierbar, ${ratio.mensch}% erfordern menschliche Fähigkeiten.`;
   }
   
-  console.log('DEBUG generateSummary: returning:', summary);
   return summary;
 }
 
-function generateRecommendations(tasks: Task[], totalScore: number): string[] {
+function generateRecommendations(tasks: Task[], overallScore: number): string[] {
   const recommendations: string[] = [];
   
-  // Count task categories
-  const automationTasks = tasks.filter(t => t.label === "Automatisierbar");
-  const categories = automationTasks.reduce((acc, task) => {
-    acc[task.category] = (acc[task.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Branchenerkennung basierend auf den Aufgaben
+  const industries = tasks.map(t => t.industry).filter(Boolean);
+  const primaryIndustry = industries.length > 0 ? 
+    industries.sort((a, b) => 
+      industries.filter(v => v === a).length - 
+      industries.filter(v => v === b).length
+    ).pop() : 'general';
 
-  if (totalScore >= 70) {
-    recommendations.push('Hohe Automatisierungseignung - Implementierung von Workflow-Tools empfohlen');
-  }
-  
-  if (categories['dataProcessing'] >= 2) {
-    recommendations.push('Excel-Automatisierung oder Business Intelligence Tools einsetzen');
-  }
-  
-  if (categories['communication'] >= 2) {
-    recommendations.push('Email-Automatisierung und Terminplanungstools implementieren');
-  }
-  
-  if (categories['systems'] >= 2) {
-    recommendations.push('API-Integrationen zwischen bestehenden Systemen prüfen');
-  }
-  
-  if (totalScore < 40) {
-    recommendations.push('Fokus auf menschliche Stärken - Automatisierung nur für unterstützende Prozesse');
+  // Sammle alle empfohlenen AI-Tools
+  const allRecommendedTools = tasks
+    .flatMap(t => t.aiTools || [])
+    .filter((tool, index, arr) => arr.indexOf(tool) === index); // Deduplizieren
+
+  // Allgemeine Empfehlungen basierend auf Score
+  if (overallScore >= 70) {
+    recommendations.push("Hohes Automatisierungspotenzial! Fokus auf AI-Tools und Workflow-Automatisierung.");
+  } else if (overallScore >= 40) {
+    recommendations.push("Mittleres Automatisierungspotenzial. Kombinieren Sie AI-Tools mit menschlicher Expertise.");
+  } else {
+    recommendations.push("Niedriges Automatisierungspotenzial. Fokus auf menschliche Fähigkeiten und AI-Unterstützung.");
   }
 
-  return recommendations.length > 0 ? recommendations : ['Individuelle Analyse der Arbeitsprozesse für spezifische Empfehlungen durchführen'];
+  // Branchenspezifische Empfehlungen
+  const industryRecommendations = {
+    tech: [
+      "Implementieren Sie GitHub Copilot für Code-Vervollständigung",
+      "Nutzen Sie Claude für Code-Reviews und Sicherheitsanalysen",
+      "Verwenden Sie ChatGPT für Dokumentation und Debugging-Hilfe",
+      "Integrieren Sie CI/CD-Pipelines mit AI-gestützter Qualitätskontrolle"
+    ],
+    healthcare: [
+      "Etablieren Sie Notion AI für Patientendaten-Management",
+      "Nutzen Sie Claude für klinische Entscheidungsunterstützung",
+      "Implementieren Sie Microsoft Copilot für medizinische Berichte",
+      "Verwenden Sie Perplexity für medizinische Recherche"
+    ],
+    finance: [
+      "Integrieren Sie Excel AI für automatische Datenverarbeitung",
+      "Nutzen Sie Power BI AI für Finanzdashboards",
+      "Implementieren Sie Claude für Risikoanalysen",
+      "Verwenden Sie Airtable AI für Workflow-Automatisierung"
+    ],
+    marketing: [
+      "Etablieren Sie Jasper für Content-Erstellung",
+      "Nutzen Sie Copy.ai für Conversion-optimierte Texte",
+      "Implementieren Sie Canva AI für Visual Content",
+      "Verwenden Sie Claude für Marktanalysen"
+    ],
+    hr: [
+      "Integrieren Sie Notion AI für HR-Dokumentation",
+      "Nutzen Sie Airtable AI für Bewerber-Management",
+      "Implementieren Sie ChatGPT für Recruiting-Unterstützung",
+      "Verwenden Sie Microsoft Copilot für Office-Aufgaben"
+    ],
+    production: [
+      "Etablieren Sie Excel AI für Produktionsdaten",
+      "Nutzen Sie Power BI AI für Performance-Monitoring",
+      "Implementieren Sie Airtable AI für Lagerverwaltung",
+      "Verwenden Sie Claude für Prozessoptimierung"
+    ],
+    education: [
+      "Integrieren Sie Notion AI für Kurs-Management",
+      "Nutzen Sie Obsidian AI für Forschungsnotizen",
+      "Implementieren Sie ChatGPT für Unterrichtsvorbereitung",
+      "Verwenden Sie Perplexity für Literaturrecherche"
+    ],
+    legal: [
+      "Etablieren Sie Notion AI für Fall-Management",
+      "Nutzen Sie Claude für Rechtsanalysen",
+      "Implementieren Sie Perplexity für Rechtsrecherche",
+      "Verwenden Sie ChatGPT für Vertragsentwürfe"
+    ],
+    general: [
+      "Starten Sie mit ChatGPT für allgemeine Aufgaben",
+      "Nutzen Sie Claude für detaillierte Analysen",
+      "Implementieren Sie Microsoft Copilot für Office-Integration",
+      "Verwenden Sie Notion AI für Dokumentation"
+    ]
+  };
+
+  // Füge branchenspezifische Empfehlungen hinzu
+  const industryRecs = industryRecommendations[primaryIndustry as keyof typeof industryRecommendations] || industryRecommendations.general;
+  recommendations.push(...industryRecs.slice(0, 3));
+
+  // AI-Tool-spezifische Empfehlungen
+  if (allRecommendedTools.length > 0) {
+    const topTools = allRecommendedTools.slice(0, 3);
+    recommendations.push(`Empfohlene AI-Tools: ${topTools.join(', ')}`);
+  }
+
+  // Moderne Automatisierungstrends
+  recommendations.push("Implementieren Sie schrittweise Automatisierung mit kontinuierlicher Evaluation");
+  recommendations.push("Kombinieren Sie AI-Tools mit menschlicher Expertise für optimale Ergebnisse");
+  recommendations.push("Fokussieren Sie sich auf repetitive, strukturierte Aufgaben für maximale Effizienz");
+
+  return recommendations.slice(0, 8); // Begrenzen auf 8 Empfehlungen
 }
 
 function calculateSimilarity(str1: string, str2: string): number {

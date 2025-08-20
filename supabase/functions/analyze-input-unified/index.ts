@@ -167,58 +167,48 @@ function runAnalysis(jobText: string): AnalysisResult {
 
 function extractTasks(text: string): RawTask[] {
   const lines = text.split(/\r?\n/).map(l => clean(l)).filter(Boolean);
+  
+  // Branchenerkennung
+  const detectedIndustry = detectIndustry(text);
+  console.log(`Detected industry: ${detectedIndustry}`);
 
-  // Check if this is a simple wrapped task (e.g., "Aufgabe: boden fegen")
-  if (lines.length === 1 && lines[0].match(/^aufgabe:\s*/i)) {
-    const taskText = lines[0].replace(/^aufgabe:\s*/i, '').trim();
-    if (taskText) {
-      console.log('Detected single wrapped task:', taskText);
-      return [{ text: taskText, source: "verbline" }];
+  // 1) Relevanten Abschnitt finden: ab "Aufgaben/Responsibilities" 
+  let startIdx = -1;
+  const SECTION_START = /aufgaben|responsibilities|duties|role/i;
+  for (let i = 0; i < lines.length; i++) {
+    if (SECTION_START.test(lines[i])) { 
+      startIdx = i; 
+      break; 
     }
   }
+  
+  // Falls kein expliziter Aufgaben-Abschnitt gefunden, nehme den ganzen Text
+  let scoped = startIdx >= 0 ? lines.slice(startIdx + 1) : lines;
 
-  // ANALYZE ENTIRE TEXT - no section detection
-  console.log(`Analyzing entire text with ${lines.length} lines - NO SECTION FILTERING`);
-  // Use all lines without filtering
-  let scoped = lines;
+  // 2) Bis zur nächsten irrelevanten Section
+  const SECTION_END = /anforderungen|requirements|qualifikationen|qualifications/i;
+  const stopAt = scoped.findIndex(l => SECTION_END.test(l));
+  if (stopAt >= 0) scoped = scoped.slice(0, stopAt);
 
-  // 3) Bullets einsammeln (priorisiert) - erweitert für verschiedene Formate
+  // 3) Bullets einsammeln (priorisiert)
   const bullets: RawTask[] = [];
   const BULLET = /^\s*(?:[-–—*•●▪▫◦‣⁃]|[0-9]+\.|\([0-9]+\)|[a-z]\.|\([a-z]\))\s+(.+)$/i;
   
   for (const l of scoped) {
     if (isHeadingOrIntro(l) || isFluff(l) || isQualification(l)) continue;
     
-    // Standard bullet point matching
     const m = l.match(BULLET);
-    if (m && m[1] && m[1].length >= 10) {
+    if (m && m[1] && m[1].length >= 10) { // Mindestlänge für sinnvolle Tasks
       const cleanText = clean(m[1]);
       if (!isQualification(cleanText)) { // Doppelte Prüfung nach dem Cleaning
         const txt = shorten(cleanText);
         if (txt.length >= 10) bullets.push({ text: txt, source: "bullet" });
       }
-      continue;
     }
   }
 
-  console.log(`Found ${bullets.length} bullet points`);
-
-  // 6) Kombinieren + deduplizieren
-  const dedup = new Map<string, RawTask>();
-  for (const t of bullets) {
-    const key = t.text.toLowerCase().replace(/[^\w\s]/g, ''); // Normalisiert für Duplikatserkennung
-    if (!dedup.has(key) && !isFluff(t.text) && !isQualification(t.text)) {
-      dedup.set(key, t);
-    }
-  }
-
-  // 8) Begrenzen und sortieren (längere Tasks zuerst, da sie meist detaillierter sind)
-  const result = Array.from(dedup.values())
-    .sort((a, b) => b.text.length - a.text.length)
-    .slice(0, 20); // Max 20 Tasks
-
-  console.log(`Final extracted tasks after generic filter: ${result.length}`);
-  return result;
+  console.log(`Found ${bullets.length} bullet points for industry: ${detectedIndustry}`);
+  return bullets;
 }
 
 // Qualifikations-Keywords die keine Aufgaben sind
@@ -259,7 +249,49 @@ const QUALIFICATION_PATTERNS = [
   /\b(?:kaufmännisch|commercial|business|wirtschafts|betriebswirt)\b/i
 ];
 
+function detectIndustry(text: string): string {
+  const lowerText = text.toLowerCase();
+  
+  if (lowerText.includes('software') || lowerText.includes('entwicklung') || lowerText.includes('programmierung') || lowerText.includes('coding') || lowerText.includes('web') || lowerText.includes('app') || lowerText.includes('api') || lowerText.includes('system') || lowerText.includes('database') || lowerText.includes('code')) {
+    return 'tech';
+  }
+  if (lowerText.includes('patient') || lowerText.includes('pflege') || lowerText.includes('arzt') || lowerText.includes('klinik') || lowerText.includes('medizin') || lowerText.includes('healthcare') || lowerText.includes('nursing') || lowerText.includes('doctor') || lowerText.includes('hospital') || lowerText.includes('medical')) {
+    return 'healthcare';
+  }
+  if (lowerText.includes('buchhaltung') || lowerText.includes('finanz') || lowerText.includes('steuer') || lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') || lowerText.includes('audit') || lowerText.includes('controlling') || lowerText.includes('billing') || lowerText.includes('payroll')) {
+    return 'finance';
+  }
+  if (lowerText.includes('marketing') || lowerText.includes('kampagne') || lowerText.includes('werbung') || lowerText.includes('vertrieb') || lowerText.includes('sales') || lowerText.includes('advertising') || lowerText.includes('campaign') || lowerText.includes('social media') || lowerText.includes('seo') || lowerText.includes('content')) {
+    return 'marketing';
+  }
+  if (lowerText.includes('personal') || lowerText.includes('hr') || lowerText.includes('rekrutierung') || lowerText.includes('einstellung') || lowerText.includes('mitarbeiter') || lowerText.includes('human resources') || lowerText.includes('recruitment') || lowerText.includes('hiring') || lowerText.includes('employee') || lowerText.includes('onboarding')) {
+    return 'hr';
+  }
+  if (lowerText.includes('produktion') || lowerText.includes('fertigung') || lowerText.includes('lager') || lowerText.includes('logistik') || lowerText.includes('production') || lowerText.includes('manufacturing') || lowerText.includes('warehouse') || lowerText.includes('logistics') || lowerText.includes('quality control') || lowerText.includes('maintenance')) {
+    return 'production';
+  }
+  if (lowerText.includes('lehre') || lowerText.includes('unterricht') || lowerText.includes('forschung') || lowerText.includes('bildung') || lowerText.includes('teaching') || lowerText.includes('instruction') || lowerText.includes('research') || lowerText.includes('education') || lowerText.includes('curriculum') || lowerText.includes('academic')) {
+    return 'education';
+  }
+  if (lowerText.includes('recht') || lowerText.includes('legal') || lowerText.includes('compliance') || lowerText.includes('vertrag') || lowerText.includes('contract') || lowerText.includes('regulatory') || lowerText.includes('litigation') || lowerText.includes('mediation') || lowerText.includes('legal advice') || lowerText.includes('documentation')) {
+    return 'legal';
+  }
+  
+  return 'general';
+}
+
 function isQualification(text: string): boolean {
+  const taskVerbs = [
+    'entwicklung', 'koordination', 'analyse', 'betreuung', 'organisation', 'zusammenarbeit', 'erstellung',
+    'planung', 'kontrolle', 'verwaltung', 'führung', 'leitung', 'optimierung', 'implementierung',
+    'budgetplanung', 'budget', 'budgeting', 'finanzplanung'
+  ];
+
+  const lowerText = text.toLowerCase();
+  if (taskVerbs.some(verb => lowerText.startsWith(verb))) {
+    return false; // Das ist eine Aufgabe, keine Qualifikation
+  }
+
   return QUALIFICATION_PATTERNS.some(pattern => pattern.test(text));
 }
 
