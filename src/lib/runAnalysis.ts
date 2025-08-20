@@ -102,6 +102,25 @@ const AI_TOOL_IDS_BY_INDUSTRY = {
 export function detectIndustry(text: string): string {
   const lowerText = text.toLowerCase();
   
+  // HR & Personal (muss vor Finanzwesen geprüft werden wegen "HR Manager" vs "Manager")
+  if (lowerText.includes('hr manager') || lowerText.includes('hr director') || lowerText.includes('hr specialist') ||
+      lowerText.includes('human resources manager') || lowerText.includes('human resources director') ||
+      lowerText.includes('personalmanager') || lowerText.includes('personalchef') || lowerText.includes('personalreferent') ||
+      lowerText.includes('hr') || lowerText.includes('human resources') || lowerText.includes('recruitment') ||
+      lowerText.includes('personnel') || lowerText.includes('employee') || lowerText.includes('hiring') ||
+      lowerText.includes('personal') || lowerText.includes('rekrutierung') || lowerText.includes('mitarbeiter') ||
+      lowerText.includes('einstellung') || lowerText.includes('personalwesen') ||
+      lowerText.includes('talent acquisition') || lowerText.includes('recruiter') || lowerText.includes('headhunter') ||
+      lowerText.includes('arbeitsvertrag') || lowerText.includes('employment contract') ||
+      lowerText.includes('mitarbeiterdaten') || lowerText.includes('employee data') ||
+      lowerText.includes('bewerbung') || lowerText.includes('application') ||
+      lowerText.includes('onboarding') || lowerText.includes('offboarding') ||
+      lowerText.includes('hr manager (m/w/d)') || lowerText.includes('hr manager (m/w)') ||
+      lowerText.includes('personal manager (m/w/d)') || lowerText.includes('personal manager (m/w)') ||
+      lowerText.includes('human resources manager (m/w/d)') || lowerText.includes('human resources manager (m/w)')) {
+    return 'hr';
+  }
+
   // Finanzwesen (muss vor Tech geprüft werden wegen "accountant" vs "count")
   if (lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') ||
       lowerText.includes('bookkeeping') || lowerText.includes('financial') || lowerText.includes('audit') ||
@@ -143,7 +162,13 @@ export function detectIndustry(text: string): string {
       lowerText.includes('data analyst') || lowerText.includes('business analyst') || lowerText.includes('datenanalyst') ||
       (lowerText.includes('analyst') && lowerText.includes('data')) ||
       lowerText.includes('software manager') || lowerText.includes('tech manager') || lowerText.includes('it manager') ||
-      lowerText.includes('development manager') || lowerText.includes('engineering manager')) {
+      lowerText.includes('development manager') || lowerText.includes('engineering manager') ||
+      lowerText.includes('ux') || lowerText.includes('ui') || lowerText.includes('user experience') ||
+      lowerText.includes('user interface') || lowerText.includes('designer') || lowerText.includes('design') ||
+      lowerText.includes('figma') || lowerText.includes('sketch') || lowerText.includes('adobe xd') ||
+      lowerText.includes('wireframe') || lowerText.includes('mockup') || lowerText.includes('prototyp') ||
+      lowerText.includes('designsystem') || lowerText.includes('design system') ||
+      lowerText.includes('usability') || lowerText.includes('user research') || lowerText.includes('user feedback')) {
     return 'tech';
   }
   
@@ -157,20 +182,7 @@ export function detectIndustry(text: string): string {
   
 
   
-  // HR & Personal
-  if (lowerText.includes('hr') || lowerText.includes('human resources') || lowerText.includes('recruitment') ||
-      lowerText.includes('personnel') || lowerText.includes('employee') || lowerText.includes('hiring') ||
-      lowerText.includes('personal') || lowerText.includes('rekrutierung') || lowerText.includes('mitarbeiter') ||
-      lowerText.includes('einstellung') || lowerText.includes('personalwesen') ||
-      lowerText.includes('hr manager') || lowerText.includes('hr director') || lowerText.includes('hr specialist') ||
-      lowerText.includes('talent acquisition') || lowerText.includes('recruiter') || lowerText.includes('headhunter') ||
-      lowerText.includes('personalmanager') || lowerText.includes('personalchef') || lowerText.includes('personalreferent') ||
-      lowerText.includes('arbeitsvertrag') || lowerText.includes('employment contract') ||
-      lowerText.includes('mitarbeiterdaten') || lowerText.includes('employee data') ||
-      lowerText.includes('bewerbung') || lowerText.includes('application') ||
-      lowerText.includes('onboarding') || lowerText.includes('offboarding')) {
-    return 'hr';
-  }
+
   
   // Produktion & Logistik
   if (lowerText.includes('production') || lowerText.includes('manufacturing') || lowerText.includes('logistics') ||

@@ -940,6 +940,14 @@ export const DICT: Record<Lang, Record<string, string>> = {
     about_cta_desc: "Discover the automation potential of your tasks with PROM8EUS.",
     about_cta_button: "Analyze Now",
     
+    // Agents & Workflows Page
+    agents_workflows_title: "More about Agents & Workflows",
+    agents_workflows_subtitle: "Discover the world of AI automation",
+    agents_workflows_beginner: "Beginner",
+    agents_workflows_advanced: "Advanced",
+    agents_workflows_ready_next_step: "Ready for the next step?",
+    agents_workflows_analyze_now: "Analyze now",
+    
     // New About page content
     about_new_page_title: "About PROM8EUS",
     about_intro_main: "PROM8EUS analyzes job descriptions in seconds and shows you exactly which tasks can be automated. Our AI evaluates each task individually and gives you concrete recommendations for action.",
@@ -975,7 +983,15 @@ export const DICT: Record<Lang, Record<string, string>> = {
     no_tasks_found_title: "No Tasks Found",
     no_tasks_found_desc: "No specific tasks could be identified in the provided text. Please provide a more detailed job description or task list for analysis.",
     try_again: "Try Again",
-    learn_more: "Learn More"
+    learn_more: "Learn More",
+    
+    // Agents & Workflows Page
+    agents_workflows_title: "Mehr über Agenten & Workflows",
+    agents_workflows_subtitle: "Entdecken Sie die Welt der KI-Automatisierung",
+    agents_workflows_beginner: "Anfänger",
+    agents_workflows_advanced: "Fortgeschritten",
+    agents_workflows_ready_next_step: "Bereit für den nächsten Schritt?",
+    agents_workflows_analyze_now: "Jetzt analysieren"
   }
 };
 

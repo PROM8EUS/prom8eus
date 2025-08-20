@@ -318,7 +318,7 @@ const Results = () => {
   };
 
   const handleLearnMore = () => {
-    
+    navigate('/agents-workflows');
   };
 
   return (
@@ -514,24 +514,15 @@ const Results = () => {
                   <span>{t(lang, "share_landing")}</span>
                 </Button>
                 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="secondary"
-                        disabled
-                        size="lg"
-                        className="flex items-center space-x-2 px-8"
-                      >
-                        <BookOpen className="w-5 h-5" />
-                        <span>{t(lang, "learn_workflows")}</span>
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t(lang, "coming_soon")}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <Button 
+                  onClick={handleLearnMore}
+                  variant="secondary"
+                  size="lg"
+                  className="flex items-center space-x-2 px-8"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  <span>{t(lang, "learn_workflows")}</span>
+                </Button>
               </div>
             </TooltipProvider>
           )}

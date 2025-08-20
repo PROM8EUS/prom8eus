@@ -3,7 +3,7 @@ import { AppIcon, AppIconList, AppIconCard, AppIconGrid } from './AppIcon';
 import { AITool, getToolsByIndustry, getTopToolsByIndustry, getToolDescription, getToolFeatures } from '../lib/catalog/aiTools';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Lightbulb } from 'lucide-react';
 
 interface AIToolRecommendationsProps {
   industry: string;
@@ -161,9 +161,12 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
       </Dialog>
 
       {/* Branchen-spezifische Tipps */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">💡 {lang === 'de' ? 'Branchen-Tipp' : 'Industry Tip'}</h4>
-        <p className="text-sm text-blue-800">
+      <div className="bg-muted/30 border border-muted/40 rounded-lg p-4">
+        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+          <Lightbulb className="w-4 h-4 text-primary" />
+          {lang === 'de' ? 'Branchen-Tipp' : 'Industry Tip'}
+        </h4>
+        <p className="text-sm text-muted-foreground">
           {industry === 'tech' && (lang === 'de' 
             ? "Kombinieren Sie GitHub Copilot mit Claude für optimale Code-Qualität und Sicherheit."
             : "Combine GitHub Copilot with Claude for optimal code quality and security.")}

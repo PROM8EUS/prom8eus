@@ -55,7 +55,7 @@ const BRANCH_SPECIFIC_SECTIONS = {
 
 const SECTION_START = /aufgaben|responsibilities|duties|role/i;
 
-const SECTION_END = /anforderungen|requirements|qualifikationen|qualifications/i;
+const SECTION_END = /anforderungen|requirements|qualifikationen|qualifications|was wir bieten|what we offer|benefits|vorteile|dein profil|your profile|profil|profile/i;
 
 // Bullet-Zeilen (erweitert) - auch für Pflegeaufgaben
 const BULLET = /^\s*(?:[-–—*•●▪▫◦‣⁃]|[0-9]+\.|\([0-9]+\)|[a-z]\.|\([a-z]\))\s+(.+)$/i;
@@ -264,6 +264,25 @@ const QUALIFICATION_PATTERNS = [
   // Pflege-spezifische Qualifikationen (aber nicht Aufgaben)
   /\b(?:gesundheits- und krankenpfleger|altenpflegefachkraft|gesundheits- und kinder krankenpfleger|pflegefachkraft|pflegehelfer)\b/i,
   /\b(?:führerschein|führerschein der klasse)\b/i,
+  
+  // Benefits & Angebote (keine Aufgaben) - nur wenn sie alleine stehen
+  /^(flexible|flexibility|remote|home office|homeoffice|work from home|arbeitszeiten|working hours)$/i,
+  /^(kreativ|creative|umfeld|environment|raum|room|ideen|ideas)$/i,
+  /^(interdisziplinär|interdisciplinary|flach|flat|hierarchien|hierarchies)$/i,
+  /^(weiterbildung|training|konferenz|conference|besuch|visit|möglichkeiten|opportunities)$/i,
+  /^(moderne|modern|tools|agile|methoden|methods|arbeitsmethoden|work methods)$/i,
+  /^(team|teamwork|kollaboration|collaboration|zusammenarbeit|cooperation)$/i,
+  /^(gehalt|salary|lohn|wage|vergütung|compensation|bonus|prämie|premium)$/i,
+  /^(urlaub|vacation|ferien|holidays|freizeit|leisure|work-life|worklife)$/i,
+  /^(versicherung|insurance|krankenversicherung|health insurance|rentenversicherung|pension)$/i,
+  /^(vertrag|contract|unbefristet|permanent|befristet|temporary|probation|probezeit)$/i,
+  
+  // Benefits-Phrasen (nur wenn sie den ganzen Text ausmachen)
+  /^(flexible arbeitszeiten|flexible working hours|remote option|home office möglichkeit)$/i,
+  /^(kreatives umfeld|creative environment|raum für ideen|room for ideas)$/i,
+  /^(interdisziplinäres team|interdisciplinary team|flache hierarchien|flat hierarchies)$/i,
+  /^(weiterbildungsmöglichkeiten|training opportunities|konferenzbesuche|conference visits)$/i,
+  /^(moderne tools|modern tools|agile methoden|agile methods)$/i,
   
   // Branchenspezifische Qualifikationen
   ...Object.values(BRANCH_QUALIFICATIONS).flat().map(q => new RegExp(`\\b${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
