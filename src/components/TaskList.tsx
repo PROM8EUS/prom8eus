@@ -474,7 +474,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     <div className="flex-1">
                       <h4 className="font-medium text-foreground">{taskName}</h4>
                       <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-sm text-muted-foreground">
                           {task.description || (() => {
                             // Simple category translation
                             let categoryText = 'General';
@@ -662,8 +662,14 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                                     <div className="text-xs text-muted-foreground mb-1">
                                       <strong>{lang === 'de' ? 'Tech:' : 'Tech:'}</strong> {agent.technology}
                                     </div>
-                                    <div className="text-xs text-muted-foreground whitespace-pre-line">
-                                      {agent.implementation}
+                                    <div className="text-xs text-muted-foreground">
+                                      <ol className="mt-1 ml-4 space-y-1 list-decimal">
+                                        {agent.implementation.split('\n').map((step, stepIdx) => (
+                                          <li key={stepIdx} className="pl-1">
+                                            {step.replace(/^\d+\.\s*/, '')}
+                                          </li>
+                                        ))}
+                                      </ol>
                                     </div>
                                     {agent.setupTime && (
                                       <div className="text-xs text-muted-foreground mt-1">
@@ -697,8 +703,14 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                                     <div className="text-xs text-muted-foreground mb-1">
                                       <strong>{lang === 'de' ? 'Tech:' : 'Tech:'}</strong> {workflow.technology}
                                     </div>
-                                    <div className="text-xs text-muted-foreground whitespace-pre-line">
-                                      {workflow.implementation}
+                                    <div className="text-xs text-muted-foreground">
+                                      <ol className="mt-1 ml-4 space-y-1 list-decimal">
+                                        {workflow.implementation.split('\n').map((step, stepIdx) => (
+                                          <li key={stepIdx} className="pl-1">
+                                            {step.replace(/^\d+\.\s*/, '')}
+                                          </li>
+                                        ))}
+                                      </ol>
                                     </div>
                                     {workflow.setupTime && (
                                       <div className="text-xs text-muted-foreground mt-1">

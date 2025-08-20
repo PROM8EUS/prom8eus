@@ -281,7 +281,9 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
         score: analysisData.totalScore,
         jobTitle: jobTitle,
         taskCount: analysisData.tasks?.length || 0,
-        summary: analysisData.summary
+        summary: analysisData.summary,
+        isPublic: true, // Default to public
+        views: 0
       };
 
       // Save full analysis data
@@ -715,12 +717,11 @@ QUALIFICATIONS:
           </div>
 
           {/* Features hint */}
-          <div className="text-sm text-muted-foreground max-w-lg mx-auto">
-            {isUrl && hasInput && !analysisError ? 
-              t(lang, "url_detected_hint") : 
-              t(lang, "ai_hint")
-            }
-          </div>
+          {isUrl && hasInput && !analysisError && (
+            <div className="text-sm text-muted-foreground max-w-lg mx-auto">
+              {t(lang, "url_detected_hint")}
+            </div>
+          )}
         </div>
       </main>
 

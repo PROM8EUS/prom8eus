@@ -14,41 +14,38 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     // New About page content
     about_new_page_title: "Über PROM8EUS",
-    about_intro_main: "PROM8EUS ist eine Forschungs- und Entwicklungsplattform im Bereich Workflow Automation und Workforce-Matching.",
-    about_intro_goal: "Unser Ziel ist es, Unternehmen eine evidenzbasierte Einschätzung darüber zu ermöglichen, ob spezifische Aufgaben oder ganze Stellenprofile durch Automatisierung effizient abbildbar sind – oder ob menschliche Expertise unverzichtbar bleibt.",
+    about_intro_main: "PROM8EUS analysiert Job-Beschreibungen in Sekunden und zeigt Ihnen genau, welche Aufgaben automatisiert werden können. Unsere KI bewertet jede Aufgabe einzeln und gibt Ihnen konkrete Handlungsempfehlungen.",
+    about_intro_goal: "Wir helfen Unternehmen und Einzelpersonen dabei, ihre Produktivität zu steigern, indem wir Automatisierungspotenziale identifizieren und konkrete Lösungen vorschlagen.",
     
     about_approach_title: "Unser Ansatz",
-    about_approach_desc: "Die Plattform verbindet Methoden der Natural Language Processing (NLP), regelbasierte Analysesysteme und heuristische Bewertungsmodelle.",
+    about_approach_desc: "In drei einfachen Schritten erhalten Sie eine detaillierte Analyse Ihrer Arbeitsaufgaben und konkrete Automatisierungsvorschläge.",
     about_approach_input: "Input",
-    about_approach_input_desc: "Unternehmen können Aufgabenbeschreibungen oder Stellenausschreibungen manuell eingeben oder über Schnittstellen importieren.",
+    about_approach_input_desc: "Fügen Sie Ihre Job-Beschreibung ein, laden Sie ein Dokument hoch oder wählen Sie aus unseren Beispielen.",
     about_approach_analysis: "Analyse", 
-    about_approach_analysis_desc: "Texte werden in Einzeltasks segmentiert. Jeder Task wird anhand definierter Kriterien hinsichtlich seiner Automatisierbarkeit bewertet (0–100 Score).",
+    about_approach_analysis_desc: "Unsere KI zerlegt die Aufgaben in Einzelteile und bewertet jede Aufgabe nach Automatisierungspotenzial (0-100 Score).",
     about_approach_output: "Output",
-    about_approach_output_desc: "Das Ergebnis ist ein differenzierter Automatisierungs-Score, ergänzt um eine klare Segmentierung in Automatisierbar und Mensch notwendig.",
+    about_approach_output_desc: "Das Ergebnis ist ein differenzierter Automatisierungs-Score, ergänzt um eine klare Segmentierung in Automatisierbar und Mensch notwendig. Zusätzlich werden konkrete Informationen zu Automatisierungsmöglichkeiten, empfohlene Tools und Workflows bereitgestellt.",
     
-    about_scientific_title: "Wissenschaftlicher Hintergrund",
-    about_scientific_hypothesis: "Die Kernidee basiert auf der Hypothese, dass sich der Automatisierbarkeitsgrad einer Tätigkeit entlang von Wiederholbarkeit, Standardisierbarkeit, kognitiver Komplexität und sozialer Interaktion messen lässt.",
-    about_scientific_foundations: "Unsere Modelle orientieren sich an folgenden Grundlagen:",
-    about_scientific_research: "Forschung zu Task Automation und Human Factors (z. B. Frey & Osborne, 2017; Brynjolfsson & McAfee, 2014).",
-    about_scientific_theory: "Theorien der Arbeitsorganisation und Prozesstheorie, insbesondere zur Zerlegung von Tätigkeiten in Basiseinheiten.",
-    about_scientific_models: "Praktische Referenzmodelle aus Workflow Automation Tools (z. B. n8n, Zapier, RPA-Systeme).",
+    about_scientific_title: "Wie funktioniert das Scoring?",
+    about_scientific_hypothesis: "Unser Scoring-System basiert auf etablierten Erkenntnissen der Arbeitspsychologie und Human-Computer Interaction. Wir bewerten jede Aufgabe nach drei Schlüsselfaktoren und berechnen einen Gesamtscore von 0-100. Je höher der Score, desto besser eignet sich die Aufgabe für Automatisierung. Ein Score von 80+ bedeutet: Vollständig automatisierbar. Ein Score von 20- bedeutet: Menschliche Expertise erforderlich. Die Bewertung erfolgt durch KI-gestützte Textanalyse und regelbasierte Algorithmen.",
+    about_scientific_foundations: "Die drei Bewertungskriterien (basierend auf Cognitive Load Theory und Task Analysis):",
+    about_scientific_research: "Wiederholbarkeit (Gewichtung: 35%): Wie oft werden ähnliche Aufgaben ausgeführt? Höhere Wiederholung = höheres Automatisierungspotenzial. Beispiel: 'E-Mails beantworten' (Score: 85) vs. 'Kreative Kampagnen entwickeln' (Score: 25)",
+    about_scientific_theory: "Standardisierbarkeit (Gewichtung: 40%): Lassen sich Prozesse in feste Regeln fassen? Klare Abläufe = bessere Automatisierbarkeit. Beispiel: 'Daten in Excel eintragen' (Score: 90) vs. 'Kunden beraten' (Score: 30)",
+    about_scientific_models: "Kognitive Komplexität (Gewichtung: 25%): Erfordert die Aufgabe kreative Entscheidungen? Niedrige Komplexität = höhere Automatisierbarkeit. Beispiel: 'Berichte erstellen' (Score: 70) vs. 'Strategische Entscheidungen treffen' (Score: 15)",
     
-    about_application_title: "Anwendung und Nutzen",
-    about_application_desc: "PROM8EUS bietet Unternehmen:",
-    about_application_transparency: "Transparenz",
-    about_application_transparency_desc: "Eine objektive Analyse, ob Automatisierung oder menschliche Arbeitskraft der effizienteste Weg ist.",
-    about_application_actionable: "Handlungsoptionen",
-    about_application_actionable_desc: "Zugang zu Automatisierungs-Blueprints (Workflows, Scripts, KI-Agenten) oder die Möglichkeit, eine Jobanzeige gezielt zu veröffentlichen.",
-    about_application_scientific: "Wissenschaftliche Grundlage",
-    about_application_scientific_desc: "Entscheidungen werden nicht aus dem Bauchgefühl, sondern aus systematischer Analyse heraus getroffen.",
+    about_usecases_title: "Anwendungsfälle",
+    about_usecase_companies_title: "Unternehmen",
+    about_usecase_companies_desc: "Ein HR-Manager kann 5 Stellenbeschreibungen pro Tag analysieren und sofort sehen, welche Aufgaben automatisiert werden können. Das hilft bei Personalentscheidungen: Soll eine neue Stelle besetzt werden oder können bestehende Mitarbeiter durch Automatisierung mehr Aufgaben übernehmen?",
+    about_usecase_employees_title: "Arbeitnehmer & Freelancer",
+    about_usecase_employees_desc: "Ein Freelancer kann seine Produktivität um 30% steigern, indem er repetitive Aufgaben automatisiert. Die Analyse zeigt konkret: 'E-Mail-Sortierung kann automatisiert werden' und empfiehlt passende Tools wie Zapier oder n8n.",
     
     about_vision_title: "Vision",
-    about_vision_bridge: "PROM8EUS versteht sich als Brücke zwischen technologischer Automatisierung und menschlicher Arbeit.",
-    about_vision_marketplace: "Langfristig soll die Plattform zu einem Marktplatz für Mensch-oder-Maschine-Entscheidungen werden – und damit zu einem Instrument, das Unternehmen hilft, Ressourcen optimal einzusetzen und zukunftsfähige Arbeitsmodelle zu gestalten.",
+    about_vision_bridge: "PROM8EUS macht Automatisierung für jeden zugänglich. Unser Ziel: Bis 2025 sollen 10.000 Unternehmen ihre Arbeitsprozesse mit unserer Hilfe optimiert haben.",
+    about_vision_marketplace: "Wir entwickeln uns zu einer umfassenden Plattform, die nicht nur analysiert, sondern auch konkrete Automatisierungslösungen anbietet. Von einfachen Workflows bis zu komplexen KI-Integrationen.",
     
     about_cta_title: "Bereit für die Zukunft der Arbeit?",
-    about_cta_desc: "Entdecken Sie das Automatisierungspotenzial Ihrer Aufgaben mit PROM8EUS.",
-    about_cta_button: "Jetzt analysieren",
+    about_cta_desc: "Analysieren Sie Ihre erste Job-Beschreibung kostenlos und erhalten Sie sofort konkrete Automatisierungsvorschläge.",
+    about_cta_button: "Kostenlos analysieren",
     
     // Header
     about: "Über uns",
@@ -135,6 +132,19 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     // Analysis Result Page
     analysis_result_for: "Analyse-Ergebnis für",
+    
+    // Public Analyses
+    public_analyses: "Öffentliche Analysen",
+    public_analyses_title: "Öffentliche Analysen",
+    public_analyses_subtitle: "Entdecken Sie Analysen von anderen Nutzern und teilen Sie Ihre eigenen Erkenntnisse",
+    public_analyses_desc: "Alle öffentlichen Analysen der Community",
+    no_public_analyses: "Keine öffentlichen Analysen",
+    no_public_analyses_desc: "Es wurden noch keine Analysen öffentlich geteilt. Seien Sie der Erste!",
+    loading: "Laden...",
+    load_more: "Mehr laden",
+    remaining: "verbleibend",
+    analyses: "Analysen",
+    my_analyses: "Meine Analysen",
     
     // AI Agents and Workflows - German
     ai_agents_title: "Empfohlene AI-Agents",
@@ -584,6 +594,19 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     // Analysis Result Page
     analysis_result_for: "Analysis Result for",
+    
+    // Public Analyses
+    public_analyses: "Public Analyses",
+    public_analyses_title: "Public Analyses",
+    public_analyses_subtitle: "Discover analyses from other users and share your own insights",
+    public_analyses_desc: "All public analyses from the community",
+    no_public_analyses: "No public analyses",
+    no_public_analyses_desc: "No analyses have been shared publicly yet. Be the first!",
+    loading: "Loading...",
+    load_more: "Load more",
+    remaining: "remaining",
+    analyses: "analyses",
+    my_analyses: "My Analyses",
     task_category_systemwork: "System Work",
     task_category_interpersonal: "Interpersonal",
     
@@ -919,33 +942,30 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     // New About page content
     about_new_page_title: "About PROM8EUS",
-    about_intro_main: "PROM8EUS is a research and development platform in the field of Workflow Automation and Workforce-Matching.",
-    about_intro_goal: "Our goal is to provide companies with evidence-based assessments of whether specific tasks or entire job profiles can be efficiently mapped through automation – or whether human expertise remains indispensable.",
+    about_intro_main: "PROM8EUS analyzes job descriptions in seconds and shows you exactly which tasks can be automated. Our AI evaluates each task individually and gives you concrete recommendations for action.",
+    about_intro_goal: "We help companies and individuals increase their productivity by identifying automation potential and suggesting concrete solutions.",
     
     about_approach_title: "Our Approach",
-    about_approach_desc: "The platform combines methods of Natural Language Processing (NLP), rule-based analysis systems, and heuristic evaluation models.",
+    about_approach_desc: "In three simple steps, you get a detailed analysis of your work tasks and concrete automation suggestions.",
     about_approach_input: "Input",
-    about_approach_input_desc: "Companies can manually enter task descriptions or job postings or import them via interfaces.",
+    about_approach_input_desc: "Enter your job description, upload a document, or choose from our examples.",
     about_approach_analysis: "Analysis", 
-    about_approach_analysis_desc: "Texts are segmented into individual tasks. Each task is evaluated for its automatability based on defined criteria (0–100 score).",
+    about_approach_analysis_desc: "Our AI breaks down tasks into individual parts and evaluates each task for automation potential (0-100 score).",
     about_approach_output: "Output",
-    about_approach_output_desc: "The result is a differentiated automation score, supplemented by a clear segmentation into automatable and human-necessary.",
+    about_approach_output_desc: "The result is a differentiated automation score, supplemented by a clear segmentation into automatable and human-necessary. Additionally, concrete information on automation possibilities, recommended tools and workflows are provided.",
     
-    about_scientific_title: "Scientific Background",
-    about_scientific_hypothesis: "The core idea is based on the hypothesis that the degree of automatability of an activity can be measured along repeatability, standardizability, cognitive complexity, and social interaction.",
-    about_scientific_foundations: "Our models are based on the following foundations:",
-    about_scientific_research: "Research on Task Automation and Human Factors (e.g., Frey & Osborne, 2017; Brynjolfsson & McAfee, 2014).",
-    about_scientific_theory: "Theories of work organization and process theory, particularly for breaking down activities into basic units.",
-    about_scientific_models: "Practical reference models from Workflow Automation Tools (e.g., n8n, Zapier, RPA systems).",
+    about_scientific_title: "How does the scoring work?",
+    about_scientific_hypothesis: "Our scoring system is based on established findings from work psychology and human-computer interaction. We evaluate each task based on three key factors and calculate an overall score from 0-100. The higher the score, the better suited the task is for automation. A score of 80+ means: Fully automatable. A score of 20- means: Human expertise required. The evaluation is performed through AI-supported text analysis and rule-based algorithms.",
+    about_scientific_foundations: "The three evaluation criteria (based on Cognitive Load Theory and Task Analysis):",
+    about_scientific_research: "Repeatability (Weighting: 35%): How often are similar tasks performed? Higher repetition = higher automation potential. Example: 'Answering emails' (Score: 85) vs. 'Developing creative campaigns' (Score: 25)",
+    about_scientific_theory: "Standardizability (Weighting: 40%): Can processes be defined by fixed rules? Clear workflows = better automability. Example: 'Entering data in Excel' (Score: 90) vs. 'Advising customers' (Score: 30)",
+    about_scientific_models: "Cognitive Complexity (Weighting: 25%): Does the task require creative decisions? Low complexity = higher automability. Example: 'Creating reports' (Score: 70) vs. 'Making strategic decisions' (Score: 15)",
     
-    about_application_title: "Application and Benefits",
-    about_application_desc: "PROM8EUS offers companies:",
-    about_application_transparency: "Transparency",
-    about_application_transparency_desc: "An objective analysis of whether automation or human workforce is the most efficient path.",
-    about_application_actionable: "Action Options",
-    about_application_actionable_desc: "Access to automation blueprints (workflows, scripts, AI agents) or the ability to publish job postings in a targeted manner.",
-    about_application_scientific: "Scientific Foundation",
-    about_application_scientific_desc: "Decisions are made from systematic analysis rather than gut feeling.",
+    about_usecases_title: "Use Cases",
+    about_usecase_companies_title: "Companies",
+    about_usecase_companies_desc: "An HR manager can analyze 5 job descriptions per day and immediately see which tasks can be automated. This helps with personnel decisions: Should a new position be filled or can existing employees take on more tasks through automation?",
+    about_usecase_employees_title: "Employees & Freelancers",
+    about_usecase_employees_desc: "A freelancer can increase their productivity by 30% by automating repetitive tasks. The analysis shows concretely: 'Email sorting can be automated' and recommends suitable tools like Zapier or n8n.",
     
     about_vision_title: "Vision",
     about_vision_bridge: "PROM8EUS sees itself as a bridge between technological automation and human work.",

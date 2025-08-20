@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, BarChart3, Trash2 } from "lucide-react";
+import { Clock, BarChart3, Trash2, Users, Eye, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { t } from "@/lib/i18n/i18n";
 import ScoreCircle from "./ScoreCircle";
+import { generateDemoAnalyses, getDemoAnalysisData } from "@/lib/demoData";
 
 interface AnalysisHistoryItem {
   id: string;
@@ -13,6 +14,9 @@ interface AnalysisHistoryItem {
   jobTitle: string;
   taskCount: number;
   summary: string;
+  isPublic?: boolean;
+  views?: number;
+  author?: string;
 }
 
 interface AnalysisHistoryProps {
@@ -22,11 +26,14 @@ interface AnalysisHistoryProps {
 
 const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
+  const [publicAnalyses, setPublicAnalyses] = useState<AnalysisHistoryItem[]>([]);
   const [displayedCount, setDisplayedCount] = useState(8);
+  const [showPublic, setShowPublic] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadHistory();
+    loadPublicAnalyses();
   }, []);
 
   const loadHistory = () => {
@@ -35,24 +42,142 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
       if (historyData) {
         const parsedHistory: AnalysisHistoryItem[] = JSON.parse(historyData);
         // Sort by timestamp, most recent first
-        setHistory(parsedHistory.sort((a, b) => b.timestamp - a.timestamp));
+        const sortedHistory = parsedHistory.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Remove duplicates based on content (jobTitle, score, taskCount)
+        const uniqueHistory = sortedHistory.filter((item, index, self) => 
+          index === self.findIndex(t => 
+            t.jobTitle === item.jobTitle && 
+            t.score === item.score && 
+            t.taskCount === item.taskCount
+          )
+        );
+        
+        setHistory(uniqueHistory);
       }
     } catch (error) {
       console.error('Error loading analysis history:', error);
     }
   };
 
+  const loadPublicAnalyses = () => {
+    try {
+      // Load all analysis histories from localStorage
+      const allAnalyses: AnalysisHistoryItem[] = [];
+      
+      // Get all localStorage keys that start with 'analysisHistory'
+      const keys = Object.keys(localStorage);
+      const historyKeys = keys.filter(key => key === 'analysisHistory' || key.startsWith('analysisHistory_'));
+      
+      historyKeys.forEach(key => {
+        try {
+          const historyData = localStorage.getItem(key);
+          if (historyData) {
+            const parsedHistory: AnalysisHistoryItem[] = JSON.parse(historyData);
+            // Filter for public analyses and add metadata
+            const publicItems = parsedHistory
+              .filter(item => item.isPublic !== false) // Default to public if not specified
+              .map(item => ({
+                ...item,
+                author: key === 'analysisHistory' ? 'Anonymous' : key.replace('analysisHistory_', ''),
+                views: item.views || 0,
+                isPublic: item.isPublic !== false
+              }));
+            allAnalyses.push(...publicItems);
+          }
+        } catch (error) {
+          console.error('Error parsing history from key:', key, error);
+        }
+      });
+      
+      // Sort by timestamp, most recent first
+      let sortedAnalyses = allAnalyses.sort((a, b) => b.timestamp - a.timestamp);
+      
+      // Remove duplicates based on content (jobTitle, score, taskCount)
+      const uniqueAnalyses = sortedAnalyses.filter((item, index, self) => 
+        index === self.findIndex(t => 
+          t.jobTitle === item.jobTitle && 
+          t.score === item.score && 
+          t.taskCount === item.taskCount
+        )
+      );
+      
+      // If no public analyses found, add demo data
+      if (uniqueAnalyses.length === 0) {
+        const demoAnalyses = generateDemoAnalyses();
+        sortedAnalyses = demoAnalyses;
+      } else {
+        sortedAnalyses = uniqueAnalyses;
+      }
+      
+      setPublicAnalyses(sortedAnalyses);
+    } catch (error) {
+      console.error('Error loading public analyses:', error);
+    }
+  };
+
   const loadAnalysis = (historyItem: AnalysisHistoryItem) => {
     // Load the full analysis data from localStorage
     try {
-      const fullData = localStorage.getItem(historyItem.id);
+      // Try to load the full analysis data from localStorage first
+      let fullData = localStorage.getItem(historyItem.id);
+      
+      // If not found in localStorage, try demo data
+      if (!fullData && historyItem.id.startsWith('demo_')) {
+        const demoData = getDemoAnalysisData(historyItem.id);
+        if (demoData) {
+          fullData = JSON.stringify(demoData);
+        }
+      }
+      
       if (fullData) {
         // Store in sessionStorage for results page
         sessionStorage.setItem('analysisResult', fullData);
+        
+        // Increment view count for public analyses
+        if (historyItem.isPublic) {
+          incrementViewCount(historyItem.id);
+        }
+        
         navigate('/results');
       }
     } catch (error) {
       console.error('Error loading analysis:', error);
+    }
+  };
+
+  const incrementViewCount = (analysisId: string) => {
+    try {
+      // Find and update the view count in the appropriate history
+      const keys = Object.keys(localStorage);
+      const historyKeys = keys.filter(key => key === 'analysisHistory' || key.startsWith('analysisHistory_'));
+      
+      historyKeys.forEach(key => {
+        try {
+          const historyData = localStorage.getItem(key);
+          if (historyData) {
+            const parsedHistory: AnalysisHistoryItem[] = JSON.parse(historyData);
+            const updatedHistory = parsedHistory.map(item => {
+              if (item.id === analysisId) {
+                return { ...item, views: (item.views || 0) + 1 };
+              }
+              return item;
+            });
+            localStorage.setItem(key, JSON.stringify(updatedHistory));
+          }
+        } catch (error) {
+          console.error('Error updating view count for key:', key, error);
+        }
+      });
+      
+      // Update local state
+      setPublicAnalyses(prev => prev.map(item => 
+        item.id === analysisId 
+          ? { ...item, views: (item.views || 0) + 1 }
+          : item
+      ));
+    } catch (error) {
+      console.error('Error incrementing view count:', error);
     }
   };
 
@@ -130,7 +255,7 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
     }
   };
 
-  if (history.length === 0) {
+  if (history.length === 0 && publicAnalyses.length === 0) {
     return null;
   }
 
@@ -147,12 +272,37 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
                 {t(lang, 'history_subtitle')}
               </p>
             </div>
-
+          </div>
+          
+          {/* Tabs for switching between own and public analyses */}
+          <div className="flex justify-center mt-6">
+            <div className="flex bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setShowPublic(false)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  !showPublic 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t(lang, 'my_analyses')} ({history.length})
+              </button>
+              <button
+                onClick={() => setShowPublic(true)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  showPublic 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t(lang, 'public_analyses')} ({publicAnalyses.length})
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {history.slice(0, displayedCount).map((item) => (
+          {(showPublic ? publicAnalyses : history).slice(0, displayedCount).map((item) => (
             <Card 
               key={item.id} 
               className="cursor-pointer hover:shadow-md transition-shadow duration-200 group"
@@ -183,9 +333,16 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
                           <Clock className="w-3 h-3" />
                           <span>{formatDate(item.timestamp)}</span>
                         </span>
-                        <span>
-                          {item.taskCount} {t(lang, 'history_tasks')}
+                        <span className="flex items-center space-x-1">
+                          <CheckSquare className="w-3 h-3" />
+                          <span>{item.taskCount} {t(lang, 'history_tasks')}</span>
                         </span>
+                        {showPublic && item.views !== undefined && (
+                          <span className="flex items-center space-x-1">
+                            <Eye className="w-3 h-3" />
+                            <span>{item.views}</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

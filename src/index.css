@@ -146,4 +146,58 @@ All colors MUST be HSL.
   .letter-animate {
     animation: letter-fade-in 0.8s ease-out forwards;
   }
+
+  /* Floating animations for vision circles */
+  @keyframes float1 {
+    0%, 100% {
+      transform: translateY(0px) translateX(0px);
+      opacity: 0.2;
+    }
+    25% {
+      transform: translateY(-8px) translateX(4px);
+      opacity: 0.25;
+    }
+    50% {
+      transform: translateY(-4px) translateX(-2px);
+      opacity: 0.18;
+    }
+    75% {
+      transform: translateY(-12px) translateX(3px);
+      opacity: 0.22;
+    }
+  }
+
+  @keyframes float2 {
+    0%, 100% {
+      transform: translateY(0px) translateX(0px);
+      opacity: 0.2;
+    }
+    33% {
+      transform: translateY(-6px) translateX(-3px);
+      opacity: 0.28;
+    }
+    66% {
+      transform: translateY(-10px) translateX(2px);
+      opacity: 0.15;
+    }
+  }
+
+  @keyframes float3 {
+    0%, 100% {
+      transform: translateY(0px) translateX(0px);
+      opacity: 0.2;
+    }
+    25% {
+      transform: translateY(-5px) translateX(1px);
+      opacity: 0.24;
+    }
+    50% {
+      transform: translateY(-8px) translateX(-1px);
+      opacity: 0.16;
+    }
+    75% {
+      transform: translateY(-3px) translateX(2px);
+      opacity: 0.26;
+    }
+  }
 }

@@ -31,7 +31,7 @@ const Legal = () => {
                   <h2 className="text-xl font-semibold mb-4">Kontakt</h2>
                   <div className="space-y-2 text-muted-foreground">
                     <p>Telefon: <a href="tel:+4922125927541" className="text-primary hover:text-primary/80">0221 2592 7541</a></p>
-                    <p>E-Mail: <a href="mailto:mail@prom8eus.de" className="text-primary hover:text-primary/80">mail@prom8eus.de</a></p>
+                    <p>E-Mail: <a href="mailto:mail@prom8eus.com" className="text-primary hover:text-primary/80">mail@prom8eus.com</a></p>
                   </div>
                 </section>
 

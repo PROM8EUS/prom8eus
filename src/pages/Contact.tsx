@@ -43,10 +43,10 @@ const Contact = () => {
               <div className="space-y-2 text-foreground">
                 <p>
                   <a 
-                    href="mailto:mail@prom8eus.de" 
+                    href="mailto:mail@prom8eus.com" 
                     className="text-primary hover:text-primary/80"
                   >
-                    mail@prom8eus.de
+                    mail@prom8eus.com
                   </a>
                 </p>
               </div>

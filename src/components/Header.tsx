@@ -38,6 +38,7 @@ const Header = ({ showBack = false }: HeaderProps) => {
           </div>
         ) : (
           <nav className="flex items-center space-x-8 pointer-events-auto">
+
             <a 
               href="/about" 
               className="text-foreground hover:text-primary transition-colors duration-200"
