@@ -45,18 +45,18 @@ const Landing = () => {
 
   useEffect(() => {
     const shareId = searchParams.get('share');
-    console.log('Landing page - shareId from URL:', shareId);
+  
     
     if (shareId) {
       // Load shared analysis data from localStorage
       try {
-        console.log('Loading shared analysis data for ID:', shareId);
+
         const sharedData = localStorage.getItem(shareId);
-        console.log('Found shared data:', sharedData);
+        
         
         if (sharedData) {
           const parsedResult: AnalysisResult = JSON.parse(sharedData);
-          console.log('Successfully loaded shared analysis:', parsedResult);
+          
           setAnalysisData(parsedResult);
           return;
         } else {

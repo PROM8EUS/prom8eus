@@ -14,7 +14,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
 import { generateSummary } from "@/lib/runAnalysis";
-import { detectIndustry } from "@/lib/extractTasks";
+import { detectIndustry } from "@/lib/runAnalysis";
 
 // Animated Letter Component
 const AnimatedLetter = ({ letter, index, isVisible }: { letter: string; index: number; isVisible: boolean }) => {
@@ -64,12 +64,14 @@ const AnimatedWord = ({ word, isVisible }: { word: string; isVisible: boolean })
 interface AnalysisTask {
   text: string;
   score: number;
-  label: "Automatisierbar" | "Mensch";
+  label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
   category: string;
   confidence: number;
   aiTools?: string[];
   complexity?: 'low' | 'medium' | 'high';
   automationTrend?: 'increasing' | 'stable' | 'decreasing';
+  automationRatio?: number;
+  humanRatio?: number;
 }
 
 interface AnalysisResult {
@@ -93,6 +95,8 @@ interface TaskForDisplay {
   complexity?: 'low' | 'medium' | 'high';
   automationTrend?: 'increasing' | 'stable' | 'decreasing';
   aiTools?: string[];
+  automationRatio?: number;
+  humanRatio?: number;
 }
 
 // Fallback mock data
@@ -102,28 +106,36 @@ const mockTasks: TaskForDisplay[] = [
     name: 'Datenerfassung und -eingabe',
     score: 95,
     category: 'automatisierbar' as const,
-    description: 'Strukturierte Dateneingabe in Systeme'
+    description: 'Strukturierte Dateneingabe in Systeme',
+    automationRatio: 85,
+    humanRatio: 15
   },
   {
     id: '2',
     name: 'Berichtserstellung',
     score: 88,
     category: 'automatisierbar' as const,
-    description: 'Automatische Generierung von Standardberichten'
+    description: 'Automatische Generierung von Standardberichten',
+    automationRatio: 80,
+    humanRatio: 20
   },
   {
     id: '3',
     name: 'Terminplanung',
     score: 82,
-    category: 'automatisierbar' as const,
-    description: 'Koordination und Verwaltung von Terminen'
+    category: 'teilweise' as const,
+    description: 'Koordination und Verwaltung von Terminen',
+    automationRatio: 60,
+    humanRatio: 40
   },
   {
     id: '4',
     name: 'Kundenberatung',
     score: 35,
     category: 'mensch' as const,
-    description: 'Persönliche Beratung und Problemlösung'
+    description: 'Persönliche Beratung und Problemlösung',
+    automationRatio: 15,
+    humanRatio: 85
   }
 ];
 
@@ -179,9 +191,11 @@ const Results = () => {
               score: Math.round(task.score),
               category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
                         task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
-              description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
+              description: `${task.category ? translateCategory(lang, task.category) : 'Allgemein'} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
               complexity: task.complexity,
-              automationTrend: task.automationTrend
+              automationTrend: task.automationTrend,
+              automationRatio: task.automationRatio,
+              humanRatio: task.humanRatio
             }));
             setDisplayTasks(transformedTasks);
           }
@@ -215,9 +229,11 @@ const Results = () => {
               score: Math.round(task.score),
               category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
                         task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
-              description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
+              description: `${task.category ? translateCategory(lang, task.category) : 'Allgemein'} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
               complexity: task.complexity,
               automationTrend: task.automationTrend,
+              automationRatio: task.automationRatio,
+              humanRatio: task.humanRatio,
               aiTools: task.aiTools
             }));
             
@@ -259,7 +275,7 @@ const Results = () => {
         score: Math.round(task.score),
         category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
                   task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
-        description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
+        description: `${task.category ? translateCategory(lang, task.category) : 'Allgemein'} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
         complexity: task.complexity,
         automationTrend: task.automationTrend,
         aiTools: task.aiTools
@@ -307,11 +323,11 @@ const Results = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <Header showBack={!isSharedView} />
+      {/* Header - nur wenn nicht Shared View */}
+      {!isSharedView && <Header showBack={true} />}
 
       {/* Main Content */}
-      <main className="flex-1 px-6 py-12 pt-32">
+      <main className={`flex-1 px-6 py-12 ${!isSharedView ? 'pt-32' : 'pt-12'}`}>
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Title */}
           <div className="text-center">
@@ -480,6 +496,7 @@ const Results = () => {
                 industry={detectIndustry(analysisData?.originalText || '')}
                 tasks={analysisData?.tasks || []}
                 className="max-w-6xl mx-auto"
+                lang={lang}
               />
             </section>
           )}

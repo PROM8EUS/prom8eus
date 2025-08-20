@@ -8,7 +8,12 @@ interface Task {
   signals?: string[];
   aiTools?: string[];
   industry?: string;
+  category?: string;
   confidence?: number;
+  automationRatio?: number; // 0-100% wie viel automatisierbar ist
+  humanRatio?: number; // 0-100% wie viel menschlich ist
+  complexity?: 'low' | 'medium' | 'high';
+  automationTrend?: 'increasing' | 'stable' | 'decreasing';
 }
 
 interface AnalysisResult {
@@ -33,7 +38,7 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
   console.log('Tasks for analysis:', extractedTasks.length);
 
   // Step 2: Analyze and score each task
-  const analyzedTasks = extractedTasks.map(taskText => analyzeTask(taskText));
+  const analyzedTasks = extractedTasks.map(taskText => analyzeTask(taskText, jobText));
 
   // Step 3: Calculate aggregated scores - make them consistent
   const totalTasks = analyzedTasks.length;
@@ -47,9 +52,14 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
   // The ratio should reflect the overall automation potential, not just task counts
   const overallAutomationPotential = Math.round(weightedScore);
   
+  // Berechne das tatsächliche Automatisierungspotenzial basierend auf den Task-Scores
+  const totalAutomationScore = analyzedTasks.reduce((sum, task) => sum + task.score, 0);
+  const maxPossibleScore = totalTasks * 100;
+  const actualAutomationPotential = totalTasks > 0 ? Math.round((totalAutomationScore / maxPossibleScore) * 100) : 0;
+  
   const ratio = {
-    automatisierbar: totalTasks > 0 ? Math.round((automatisierbareCount / totalTasks) * 100) : 0,
-    mensch: totalTasks > 0 ? Math.round(((teilweiseCount + menschCount) / totalTasks) * 100) : 0
+    automatisierbar: actualAutomationPotential,
+    mensch: 100 - actualAutomationPotential
   };
   
   // Ensure ratio values are valid numbers
@@ -89,14 +99,51 @@ const AI_TOOL_IDS_BY_INDUSTRY = {
 };
 
 // Branchenerkennung
-function detectIndustry(text: string): string {
+export function detectIndustry(text: string): string {
   const lowerText = text.toLowerCase();
+  
+  // Finanzwesen (muss vor Tech geprüft werden wegen "accountant" vs "count")
+  if (lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') ||
+      lowerText.includes('bookkeeping') || lowerText.includes('financial') || lowerText.includes('audit') ||
+      lowerText.includes('buchhaltung') || lowerText.includes('finanzen') || lowerText.includes('steuer') ||
+      lowerText.includes('buchführung') || lowerText.includes('finanziell') || lowerText.includes('prüfung') ||
+      lowerText.includes('buchhalter') || lowerText.includes('controller') || lowerText.includes('rechnungswesen') ||
+      lowerText.includes('bilanz') || lowerText.includes('abrechnung') || lowerText.includes('kassenbuch') ||
+      lowerText.includes('accountant') || lowerText.includes('bookkeeper') || lowerText.includes('auditor')) {
+    return 'finance';
+  }
+  
+  // Marketing & Sales (muss vor Tech geprüft werden wegen "marketing manager" vs "manager")
+  if (lowerText.includes('marketing') || lowerText.includes('sales') || lowerText.includes('campaign') ||
+      lowerText.includes('advertising') || lowerText.includes('promotion') || lowerText.includes('lead') ||
+      lowerText.includes('marketing') || lowerText.includes('vertrieb') || lowerText.includes('kampagne') ||
+      lowerText.includes('werbung') || lowerText.includes('promotion') || lowerText.includes('lead') ||
+      lowerText.includes('marketing manager') || lowerText.includes('sales manager') || lowerText.includes('marketing director') ||
+      lowerText.includes('marketingchef') || lowerText.includes('vertriebsleiter') || lowerText.includes('marketingleiter') ||
+      lowerText.includes('content') || lowerText.includes('social media') || lowerText.includes('seo') ||
+      lowerText.includes('email marketing') || lowerText.includes('lead generation') ||
+      lowerText.includes('marketingstrategie') || lowerText.includes('marketing strategy') ||
+      lowerText.includes('werbekampagne') || lowerText.includes('advertising campaign') ||
+      lowerText.includes('budgetplanung') || lowerText.includes('budget planning') ||
+      lowerText.includes('events') || lowerText.includes('messen') || lowerText.includes('trade shows')) {
+    return 'marketing';
+  }
   
   // Technologie & IT
   if (lowerText.includes('software') || lowerText.includes('programming') || lowerText.includes('development') || 
       lowerText.includes('coding') || lowerText.includes('api') || lowerText.includes('database') ||
       lowerText.includes('entwicklung') || lowerText.includes('programmierung') || lowerText.includes('coding') ||
-      lowerText.includes('datenbank') || lowerText.includes('system') || lowerText.includes('technisch')) {
+      lowerText.includes('datenbank') || lowerText.includes('system') || lowerText.includes('technisch') ||
+      lowerText.includes('engineer') || lowerText.includes('developer') || lowerText.includes('programmer') ||
+      lowerText.includes('data scientist') || lowerText.includes('data science') || lowerText.includes('machine learning') ||
+      lowerText.includes('artificial intelligence') || lowerText.includes('ai') || lowerText.includes('ml') ||
+      lowerText.includes('analytics') || lowerText.includes('statistics') || lowerText.includes('algorithm') ||
+      lowerText.includes('datenwissenschaft') || lowerText.includes('maschinelles lernen') || lowerText.includes('künstliche intelligenz') ||
+      lowerText.includes('analytik') || lowerText.includes('statistik') || lowerText.includes('algorithmus') ||
+      lowerText.includes('data analyst') || lowerText.includes('business analyst') || lowerText.includes('datenanalyst') ||
+      (lowerText.includes('analyst') && lowerText.includes('data')) ||
+      lowerText.includes('software manager') || lowerText.includes('tech manager') || lowerText.includes('it manager') ||
+      lowerText.includes('development manager') || lowerText.includes('engineering manager')) {
     return 'tech';
   }
   
@@ -108,27 +155,20 @@ function detectIndustry(text: string): string {
     return 'healthcare';
   }
   
-  // Finanzwesen
-  if (lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') ||
-      lowerText.includes('bookkeeping') || lowerText.includes('financial') || lowerText.includes('audit') ||
-      lowerText.includes('buchhaltung') || lowerText.includes('finanzen') || lowerText.includes('steuer') ||
-      lowerText.includes('buchführung') || lowerText.includes('finanziell') || lowerText.includes('prüfung')) {
-    return 'finance';
-  }
-  
-  // Marketing & Sales
-  if (lowerText.includes('marketing') || lowerText.includes('sales') || lowerText.includes('campaign') ||
-      lowerText.includes('advertising') || lowerText.includes('promotion') || lowerText.includes('lead') ||
-      lowerText.includes('marketing') || lowerText.includes('vertrieb') || lowerText.includes('kampagne') ||
-      lowerText.includes('werbung') || lowerText.includes('promotion') || lowerText.includes('lead')) {
-    return 'marketing';
-  }
+
   
   // HR & Personal
   if (lowerText.includes('hr') || lowerText.includes('human resources') || lowerText.includes('recruitment') ||
       lowerText.includes('personnel') || lowerText.includes('employee') || lowerText.includes('hiring') ||
       lowerText.includes('personal') || lowerText.includes('rekrutierung') || lowerText.includes('mitarbeiter') ||
-      lowerText.includes('einstellung') || lowerText.includes('personalwesen')) {
+      lowerText.includes('einstellung') || lowerText.includes('personalwesen') ||
+      lowerText.includes('hr manager') || lowerText.includes('hr director') || lowerText.includes('hr specialist') ||
+      lowerText.includes('talent acquisition') || lowerText.includes('recruiter') || lowerText.includes('headhunter') ||
+      lowerText.includes('personalmanager') || lowerText.includes('personalchef') || lowerText.includes('personalreferent') ||
+      lowerText.includes('arbeitsvertrag') || lowerText.includes('employment contract') ||
+      lowerText.includes('mitarbeiterdaten') || lowerText.includes('employee data') ||
+      lowerText.includes('bewerbung') || lowerText.includes('application') ||
+      lowerText.includes('onboarding') || lowerText.includes('offboarding')) {
     return 'hr';
   }
   
@@ -152,18 +192,114 @@ function detectIndustry(text: string): string {
   if (lowerText.includes('legal') || lowerText.includes('law') || lowerText.includes('compliance') ||
       lowerText.includes('regulatory') || lowerText.includes('contract') || lowerText.includes('attorney') ||
       lowerText.includes('recht') || lowerText.includes('gesetz') || lowerText.includes('compliance') ||
-      lowerText.includes('regulatorisch') || lowerText.includes('vertrag') || lowerText.includes('anwalt')) {
+      lowerText.includes('regulatorisch') || lowerText.includes('vertrag') || lowerText.includes('anwalt') ||
+      lowerText.includes('arbeitsvertrag') || lowerText.includes('employment contract') ||
+      lowerText.includes('vertragsprüfung') || lowerText.includes('contract review')) {
     return 'legal';
+  }
+  
+  // Allgemeine Büro- und Verwaltungsaufgaben
+  if (lowerText.includes('verwaltung') || lowerText.includes('administration') ||
+      lowerText.includes('büro') || lowerText.includes('office') ||
+      lowerText.includes('koordination') || lowerText.includes('coordination') ||
+      lowerText.includes('planung') || lowerText.includes('planning') ||
+      lowerText.includes('organisation') || lowerText.includes('organization') ||
+      lowerText.includes('kommunikation') || lowerText.includes('communication') ||
+      lowerText.includes('berichterstattung') || lowerText.includes('reporting') ||
+      lowerText.includes('dokumentation') || lowerText.includes('documentation') ||
+      lowerText.includes('präsentation') || lowerText.includes('presentation')) {
+    return 'general';
   }
   
   return 'general';
 }
 
-function analyzeTask(taskText: string): Task {
+// Funktion zur Bestimmung der Aufgabenkategorie
+function detectTaskCategory(taskText: string): string {
   const lowerText = taskText.toLowerCase();
   
-  // Branchenerkennung für die Aufgabe
-  const taskIndustry = detectIndustry(taskText);
+  // Administrative Aufgaben
+  if (lowerText.includes('verwaltung') || lowerText.includes('administration') ||
+      lowerText.includes('büro') || lowerText.includes('office') ||
+      lowerText.includes('koordination') || lowerText.includes('coordination') ||
+      lowerText.includes('planung') || lowerText.includes('planning') ||
+      lowerText.includes('organisation') || lowerText.includes('organization') ||
+      lowerText.includes('berichterstattung') || lowerText.includes('reporting') ||
+      lowerText.includes('dokumentation') || lowerText.includes('documentation') ||
+      lowerText.includes('datenerfassung') || lowerText.includes('data entry') ||
+      lowerText.includes('abrechnung') || lowerText.includes('accounting')) {
+    return 'administrative';
+  }
+  
+  // Kommunikationsaufgaben
+  if (lowerText.includes('kommunikation') || lowerText.includes('communication') ||
+      lowerText.includes('präsentation') || lowerText.includes('presentation') ||
+      lowerText.includes('meeting') || lowerText.includes('gespräch') ||
+      lowerText.includes('verhandlung') || lowerText.includes('negotiation') ||
+      lowerText.includes('kundeninteraktion') || lowerText.includes('customer interaction')) {
+    return 'communication';
+  }
+  
+  // Technische Aufgaben
+  if (lowerText.includes('entwicklung') || lowerText.includes('development') ||
+      lowerText.includes('programmierung') || lowerText.includes('programming') ||
+      lowerText.includes('system') || lowerText.includes('integration') ||
+      lowerText.includes('datenbank') || lowerText.includes('database') ||
+      lowerText.includes('api') || lowerText.includes('software')) {
+    return 'technical';
+  }
+  
+  // Analytische Aufgaben
+  if (lowerText.includes('analyse') || lowerText.includes('analysis') ||
+      lowerText.includes('auswertung') || lowerText.includes('evaluation') ||
+      lowerText.includes('statistik') || lowerText.includes('statistics') ||
+      lowerText.includes('datenanalyse') || lowerText.includes('data analysis') ||
+      lowerText.includes('forschung') || lowerText.includes('research')) {
+    return 'analytical';
+  }
+  
+  // Kreative Aufgaben
+  if (lowerText.includes('content') || lowerText.includes('design') ||
+      lowerText.includes('kreativ') || lowerText.includes('creative') ||
+      lowerText.includes('marketing') || lowerText.includes('werbung') ||
+      lowerText.includes('kampagne') || lowerText.includes('campaign')) {
+    return 'creative';
+  }
+  
+  // Management-Aufgaben
+  if (lowerText.includes('führung') || lowerText.includes('leadership') ||
+      lowerText.includes('management') || lowerText.includes('leitung') ||
+      lowerText.includes('strategie') || lowerText.includes('strategy') ||
+      lowerText.includes('entscheidung') || lowerText.includes('decision')) {
+    return 'management';
+  }
+  
+  // Physische Aufgaben
+  if (lowerText.includes('körperlich') || lowerText.includes('physical') ||
+      lowerText.includes('bewegung') || lowerText.includes('movement') ||
+      lowerText.includes('handarbeit') || lowerText.includes('manual work') ||
+      lowerText.includes('transport') || lowerText.includes('lieferung')) {
+    return 'physical';
+  }
+  
+  // Routine-Aufgaben
+  if (lowerText.includes('routine') || lowerText.includes('wiederkehrend') ||
+      lowerText.includes('repetitive') || lowerText.includes('standard') ||
+      lowerText.includes('prozess') || lowerText.includes('process')) {
+    return 'routine';
+  }
+  
+  return 'general';
+}
+
+function analyzeTask(taskText: string, jobTitle?: string): Task {
+  const lowerText = taskText.toLowerCase();
+  
+  // Branchenerkennung für die Aufgabe - verwende Job-Titel wenn verfügbar
+  const taskIndustry = jobTitle ? detectIndustry(jobTitle + ' ' + taskText) : detectIndustry(taskText);
+  
+  // Aufgabenkategorie bestimmen
+  const taskCategory = detectTaskCategory(taskText);
   
   // Define automation indicators (with modern AI tools consideration)
   const automationSignals = {
@@ -340,42 +476,105 @@ function analyzeTask(taskText: string): Task {
     recommendedTools.push(...industryToolIds);
   }
 
-  // Normalize score to 0-100 range
-  let automationScore = totalWeight > 0 ? Math.min(100, Math.round((totalScore / totalWeight) * 100)) : 0;
+  // Always add general AI tools for any automation potential
+  if (totalScore > 0) {
+    recommendedTools.push(...AI_TOOL_IDS_BY_INDUSTRY.general);
+  }
+
+  // Normalize score to 0-100 range with more realistic scoring
+  let automationScore = totalWeight > 0 ? Math.min(85, Math.round((totalScore / totalWeight) * 85)) : 0;
   
   // Add nuance based on number of detected signals
   if (detectedSignals.length === 1) {
     // Single signal - moderate the score
-    automationScore = Math.round(automationScore * 0.8);
+    automationScore = Math.round(automationScore * 0.7);
   } else if (detectedSignals.length >= 3) {
-    // Multiple signals - boost the score slightly
-    automationScore = Math.min(100, Math.round(automationScore * 1.1));
+    // Multiple signals - boost the score slightly but cap at 85%
+    automationScore = Math.min(85, Math.round(automationScore * 1.05));
+  }
+  
+  // Apply realistic caps based on task type
+  if (detectedSignals.includes('humanInteraction') || detectedSignals.includes('creativeStrategy')) {
+    automationScore = Math.min(automationScore, 40); // Max 40% for human interaction tasks
+  } else if (detectedSignals.includes('management') || detectedSignals.includes('leadership')) {
+    automationScore = Math.min(automationScore, 60); // Max 60% for management tasks
+  } else if (detectedSignals.includes('documentation') || detectedSignals.includes('dataAnalysis')) {
+    automationScore = Math.min(automationScore, 80); // Max 80% for documentation tasks
   }
   
   // Ensure score is within bounds
-  automationScore = Math.max(0, Math.min(100, automationScore));
+  automationScore = Math.max(0, Math.min(85, automationScore));
 
-  // Determine automation label with more nuanced thresholds
+  // Determine automation label with more realistic thresholds
   let label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
-  if (automationScore >= 70) {
+  if (automationScore >= 60) {
     label = "Automatisierbar";
-  } else if (automationScore >= 25) {
+  } else if (automationScore >= 20) {
     label = "Teilweise Automatisierbar";
   } else {
     label = "Mensch";
   }
   
-  // Remove duplicate tools and limit to top 5
-  const uniqueTools = [...new Set(recommendedTools)].slice(0, 5);
+  // Remove duplicate tools and limit to top 5, prioritize industry-specific tools
+  const uniqueTools = [...new Set(recommendedTools)];
+  
+  // If we have industry-specific tools, prioritize them
+  let finalTools = uniqueTools;
+  if (industryToolIds && industryToolIds.length > 0) {
+    const industryTools = uniqueTools.filter(tool => industryToolIds.includes(tool));
+    const generalTools = uniqueTools.filter(tool => !industryToolIds.includes(tool));
+    finalTools = [...industryTools, ...generalTools];
+  }
+  
+  // Limit to top 5 tools
+  finalTools = finalTools.slice(0, 5);
+
+  // Calculate automation vs human ratio based on actual score
+  let automationRatio = automationScore;
+  let humanRatio = 100 - automationRatio;
+  
+  // Apply realistic caps based on task type
+  if (detectedSignals.includes('humanInteraction') || detectedSignals.includes('creativeStrategy')) {
+    automationRatio = Math.min(automationRatio, 40); // Max 40% for human interaction tasks
+  } else if (detectedSignals.includes('management') || detectedSignals.includes('leadership')) {
+    automationRatio = Math.min(automationRatio, 60); // Max 60% for management tasks
+  } else if (detectedSignals.includes('documentation') || detectedSignals.includes('dataAnalysis')) {
+    automationRatio = Math.min(automationRatio, 80); // Max 80% for documentation tasks
+  }
+  
+  // Ensure automationRatio doesn't exceed 85%
+  automationRatio = Math.min(automationRatio, 85);
+  humanRatio = 100 - automationRatio;
+
+  // Determine complexity based on task characteristics
+  let complexity: 'low' | 'medium' | 'high' = 'medium';
+  if (detectedSignals.includes('humanInteraction') || detectedSignals.includes('creativeStrategy')) {
+    complexity = 'high';
+  } else if (detectedSignals.includes('dataAnalysis') || detectedSignals.includes('documentation')) {
+    complexity = 'low';
+  }
+
+  // Determine automation trend based on score and industry
+  let automationTrend: 'increasing' | 'stable' | 'decreasing' = 'stable';
+  if (automationScore >= 70 && (taskIndustry === 'tech' || taskIndustry === 'finance')) {
+    automationTrend = 'increasing';
+  } else if (automationScore <= 25 && (taskIndustry === 'healthcare' || taskIndustry === 'legal')) {
+    automationTrend = 'decreasing';
+  }
 
   return {
     text: taskText,
     score: automationScore,
     label,
     signals: detectedSignals,
-    aiTools: uniqueTools,
+    aiTools: finalTools,
     industry: taskIndustry,
-    confidence: Math.round(automationScore) // Confidence basiert auf dem Automatisierungsscore
+    category: taskCategory,
+    confidence: Math.round(automationScore), // Confidence basiert auf dem Automatisierungsscore
+    automationRatio: Math.round(automationRatio),
+    humanRatio: Math.round(humanRatio),
+    complexity,
+    automationTrend
   };
 }
 

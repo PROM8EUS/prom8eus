@@ -17,6 +17,182 @@ export interface AITool {
   features: string[];
 }
 
+// Hilfsfunktion für mehrsprachige Beschreibungen
+export function getToolDescription(tool: AITool, lang: 'de' | 'en'): string {
+  const descriptions: Record<string, { de: string; en: string }> = {
+    'chatgpt': {
+      de: 'Allgemeine Programmierunterstützung, Code-Erklärungen, Debugging-Hilfe',
+      en: 'General programming support, code explanations, debugging assistance'
+    },
+    'claude': {
+      de: 'Detaillierte Code-Analysen, Sicherheitsprüfungen, Architektur-Beratung',
+      en: 'Detailed code analysis, security checks, architecture consulting'
+    },
+    'github-copilot': {
+      de: 'Code-Vervollständigung, automatische Funktionen, Tests',
+      en: 'Code completion, automatic functions, tests'
+    },
+    'code-whisperer': {
+      de: 'AWS-spezifische Entwicklung, Cloud-Integration',
+      en: 'AWS-specific development, cloud integration'
+    },
+    'tabnine': {
+      de: 'Lokale Code-Vervollständigung, Offline-Entwicklung',
+      en: 'Local code completion, offline development'
+    },
+    'notion-ai': {
+      de: 'Patientendaten-Management, Dokumentation, Workflows',
+      en: 'Patient data management, documentation, workflows'
+    },
+    'obsidian-ai': {
+      de: 'Medizinisches Knowledge Management, Fallstudien',
+      en: 'Medical knowledge management, case studies'
+    },
+    'microsoft-copilot': {
+      de: 'Office-Integration für medizinische Berichte',
+      en: 'Office integration for medical reports'
+    },
+    'excel-ai': {
+      de: 'Automatische Datenverarbeitung, Berichte, Dashboards',
+      en: 'Automatic data processing, reports, dashboards'
+    },
+    'power-bi-ai': {
+      de: 'Finanzdashboards, Trendanalyse, Visualisierung',
+      en: 'Financial dashboards, trend analysis, visualization'
+    },
+    'google-sheets-ai': {
+      de: 'Kollaborative Finanzanalyse, Automatisierung',
+      en: 'Collaborative financial analysis, automation'
+    },
+    'airtable-ai': {
+      de: 'Finanzdaten-Management, Workflows, Automatisierung',
+      en: 'Financial data management, workflows, automation'
+    },
+    'jasper': {
+      de: 'Marketing-Content, Werbetexte, Social Media',
+      en: 'Marketing content, advertising copy, social media'
+    },
+    'copy-ai': {
+      de: 'Conversion-optimierte Texte, A/B-Testing',
+      en: 'Conversion-optimized texts, A/B testing'
+    },
+    'writesonic': {
+      de: 'E-Commerce-Content, Produktbeschreibungen',
+      en: 'E-commerce content, product descriptions'
+    },
+    'canva-ai': {
+      de: 'Design-Templates, Visual Content, Branding',
+      en: 'Design templates, visual content, branding'
+    },
+    'perplexity': {
+      de: 'Recherche-basiert, Quellenangaben, Faktenprüfung',
+      en: 'Research-based, citations, fact-checking'
+    },
+    'grammarly': {
+      de: 'Grammatik, Stil, Plagiat',
+      en: 'Grammar, style, plagiarism'
+    },
+    'grok': {
+      de: 'Echtzeit-Informationen, Innovation, Trendanalyse',
+      en: 'Real-time information, innovation, trend analysis'
+    },
+    'gemini': {
+      de: 'Multimodal, Google-Integration, Recherche',
+      en: 'Multimodal, Google integration, research'
+    }
+  };
+  
+  return descriptions[tool.id]?.[lang] || tool.description;
+}
+
+// Hilfsfunktion für mehrsprachige Features
+export function getToolFeatures(tool: AITool, lang: 'de' | 'en'): string[] {
+  const features: Record<string, { de: string[]; en: string[] }> = {
+    'chatgpt': {
+      de: ['Code-Erklärungen', 'Debugging-Hilfe', 'Dokumentation', 'Allgemeine Unterstützung'],
+      en: ['Code Explanations', 'Debugging Help', 'Documentation', 'General Support']
+    },
+    'claude': {
+      de: ['Code-Analysen', 'Sicherheitsprüfungen', 'Architektur-Beratung', 'Detaillierte Analysen'],
+      en: ['Code Analysis', 'Security Checks', 'Architecture Consulting', 'Detailed Analysis']
+    },
+    'github-copilot': {
+      de: ['Code-Vervollständigung', 'Automatische Tests', 'Funktionsgenerierung', 'IDE-Integration'],
+      en: ['Code Completion', 'Automatic Tests', 'Function Generation', 'IDE Integration']
+    },
+    'code-whisperer': {
+      de: ['AWS-Integration', 'Cloud-Entwicklung', 'Code-Vervollständigung', 'Sicherheitsanalyse'],
+      en: ['AWS Integration', 'Cloud Development', 'Code Completion', 'Security Analysis']
+    },
+    'tabnine': {
+      de: ['Lokale Ausführung', 'Offline-Entwicklung', 'Code-Vervollständigung', 'Privatsphäre'],
+      en: ['Local Execution', 'Offline Development', 'Code Completion', 'Privacy']
+    },
+    'notion-ai': {
+      de: ['Dokumentation', 'Workflows', 'Daten-Management', 'Kollaboration'],
+      en: ['Documentation', 'Workflows', 'Data Management', 'Collaboration']
+    },
+    'obsidian-ai': {
+      de: ['Knowledge Graph', 'Fallstudien', 'Forschungsnotizen', 'Lokale Speicherung'],
+      en: ['Knowledge Graph', 'Case Studies', 'Research Notes', 'Local Storage']
+    },
+    'microsoft-copilot': {
+      de: ['Office-Integration', 'Berichtserstellung', 'Datenanalyse', 'Produktivität'],
+      en: ['Office Integration', 'Report Creation', 'Data Analysis', 'Productivity']
+    },
+    'excel-ai': {
+      de: ['Datenverarbeitung', 'Automatische Berichte', 'Dashboards', 'Formeln'],
+      en: ['Data Processing', 'Automatic Reports', 'Dashboards', 'Formulas']
+    },
+    'power-bi-ai': {
+      de: ['Dashboards', 'Trendanalyse', 'Visualisierung', 'Echtzeit-Daten'],
+      en: ['Dashboards', 'Trend Analysis', 'Visualization', 'Real-time Data']
+    },
+    'google-sheets-ai': {
+      de: ['Kollaboration', 'Finanzanalyse', 'Automatisierung', 'Cloud-basiert'],
+      en: ['Collaboration', 'Financial Analysis', 'Automation', 'Cloud-based']
+    },
+    'airtable-ai': {
+      de: ['Daten-Management', 'Workflows', 'Automatisierung', 'Kollaboration'],
+      en: ['Data Management', 'Workflows', 'Automation', 'Collaboration']
+    },
+    'jasper': {
+      de: ['Content-Erstellung', 'Werbetexte', 'Social Media', 'Brand Voice'],
+      en: ['Content Creation', 'Advertising Copy', 'Social Media', 'Brand Voice']
+    },
+    'copy-ai': {
+      de: ['Conversion-Optimierung', 'A/B-Testing', 'Copywriting', 'Templates'],
+      en: ['Conversion Optimization', 'A/B Testing', 'Copywriting', 'Templates']
+    },
+    'writesonic': {
+      de: ['E-Commerce-Content', 'Produktbeschreibungen', 'Landing Pages', 'SEO'],
+      en: ['E-commerce Content', 'Product Descriptions', 'Landing Pages', 'SEO']
+    },
+    'canva-ai': {
+      de: ['Design-Templates', 'Visual Content', 'Branding', 'Kollaboration'],
+      en: ['Design Templates', 'Visual Content', 'Branding', 'Collaboration']
+    },
+    'perplexity': {
+      de: ['Recherche', 'Quellenangaben', 'Faktenprüfung', 'Aktuelle Informationen'],
+      en: ['Research', 'Citations', 'Fact-checking', 'Current Information']
+    },
+    'grammarly': {
+      de: ['Grammatik-Korrektur', 'Stil-Verbesserung', 'Plagiat-Erkennung', 'Schreibhilfe'],
+      en: ['Grammar Correction', 'Style Improvement', 'Plagiarism Detection', 'Writing Help']
+    },
+    'grok': {
+      de: ['Echtzeit-Informationen', 'Innovation', 'Trendanalyse', 'Humor'],
+      en: ['Real-time Information', 'Innovation', 'Trend Analysis', 'Humor']
+    },
+    'gemini': {
+      de: ['Multimodal', 'Google-Integration', 'Recherche', 'Bildanalyse'],
+      en: ['Multimodal', 'Google Integration', 'Research', 'Image Analysis']
+    }
+  };
+  
+  return features[tool.id]?.[lang] || tool.features;
+}
+
 export const AI_TOOLS: AITool[] = [
   // Technologie & IT
   {
@@ -62,8 +238,8 @@ export const AI_TOOLS: AITool[] = [
     logo: {
       url: '/logos/github-copilot.png',
       alt: 'GitHub Copilot Logo',
-      backgroundColor: '#000000',
-      textColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      textColor: '#000000'
     },
     website: 'https://github.com/features/copilot',
     pricing: 'Paid',
@@ -115,8 +291,8 @@ export const AI_TOOLS: AITool[] = [
     logo: {
       url: '/logos/notion-ai.png',
       alt: 'Notion AI Logo',
-      backgroundColor: '#000000',
-      textColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      textColor: '#000000'
     },
     website: 'https://www.notion.so',
     pricing: 'Freemium',

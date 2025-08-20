@@ -17,10 +17,12 @@ interface AnalysisHistoryItem {
 
 interface AnalysisHistoryProps {
   lang: "de" | "en";
+  onClearAll?: () => void;
 }
 
 const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
+  const [displayedCount, setDisplayedCount] = useState(8);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -98,6 +100,15 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
     }
   };
 
+  const loadMore = () => {
+    console.log('Load more clicked. Current:', displayedCount, 'Total:', history.length);
+    setDisplayedCount(prev => {
+      const newCount = prev + 8;
+      console.log('New count will be:', newCount);
+      return newCount;
+    });
+  };
+
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     const today = new Date();
@@ -140,8 +151,8 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-          {history.map((item) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {history.slice(0, displayedCount).map((item) => (
             <Card 
               key={item.id} 
               className="cursor-pointer hover:shadow-md transition-shadow duration-200 group"
@@ -185,6 +196,19 @@ const AnalysisHistory = ({ lang }: AnalysisHistoryProps) => {
             </Card>
           ))}
         </div>
+        
+        {/* Load More Button */}
+        {displayedCount < history.length && (
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={loadMore}
+              variant="outline"
+              className="px-8"
+            >
+              {lang === 'de' ? 'Weitere laden' : 'Load more'}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

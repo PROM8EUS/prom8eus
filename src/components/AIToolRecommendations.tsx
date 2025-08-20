@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
 import { AppIcon, AppIconList, AppIconCard, AppIconGrid } from './AppIcon';
-import { AITool, getToolsByIndustry, getTopToolsByIndustry } from '../lib/catalog/aiTools';
+import { AITool, getToolsByIndustry, getTopToolsByIndustry, getToolDescription, getToolFeatures } from '../lib/catalog/aiTools';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { ExternalLink } from 'lucide-react';
 
 interface AIToolRecommendationsProps {
   industry: string;
   tasks: Array<{ text: string; aiTools?: string[] }>;
   className?: string;
+  lang?: 'de' | 'en';
 }
 
 const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
   industry,
   tasks,
-  className = ''
+  className = '',
+  lang = 'de'
 }) => {
   const [selectedTool, setSelectedTool] = useState<AITool | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'cards'>('cards');
@@ -34,30 +39,31 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
     setSelectedTool(tool);
   };
 
-  const handleCloseModal = () => {
-    setSelectedTool(null);
-  };
-
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            Empfohlene AI-Tools für {industry === 'tech' ? 'Technologie & IT' :
-                                   industry === 'healthcare' ? 'Gesundheitswesen' :
-                                   industry === 'finance' ? 'Finanzwesen' :
-                                   industry === 'marketing' ? 'Marketing & Sales' :
-                                   industry === 'hr' ? 'HR & Personal' :
-                                   industry === 'production' ? 'Produktion & Logistik' :
-                                   industry === 'education' ? 'Bildung & Forschung' :
-                                   industry === 'legal' ? 'Recht & Compliance' :
-                                   'Ihre Branche'}
+            {lang === 'de' ? 'Empfohlene AI-Tools für ' : 'Recommended AI-Tools for '}
+            {industry === 'tech' ? (lang === 'de' ? 'Technologie & IT' : 'Technology & IT') :
+             industry === 'healthcare' ? (lang === 'de' ? 'Gesundheitswesen' : 'Healthcare') :
+             industry === 'finance' ? (lang === 'de' ? 'Finanzwesen' : 'Finance') :
+             industry === 'marketing' ? (lang === 'de' ? 'Marketing & Sales' : 'Marketing & Sales') :
+             industry === 'hr' ? (lang === 'de' ? 'HR & Personal' : 'HR & Personnel') :
+             industry === 'production' ? (lang === 'de' ? 'Produktion & Logistik' : 'Production & Logistics') :
+             industry === 'education' ? (lang === 'de' ? 'Bildung & Forschung' : 'Education & Research') :
+             industry === 'legal' ? (lang === 'de' ? 'Recht & Compliance' : 'Legal & Compliance') :
+             (lang === 'de' ? 'Ihre Branche' : 'Your Industry')}
           </h3>
           <p className="text-sm text-gray-600">
             {recommendedTools.length > 0 
-              ? `${recommendedTools.length} Tools basierend auf Ihrer Aufgabenanalyse`
-              : `${fallbackTools.length} Top-Tools für Ihre Branche`
+              ? (lang === 'de' 
+                  ? `${recommendedTools.length} Tools basierend auf Ihrer Aufgabenanalyse`
+                  : `${recommendedTools.length} Tools based on your task analysis`)
+              : (lang === 'de'
+                  ? `${fallbackTools.length} Top-Tools für Ihre Branche`
+                  : `${fallbackTools.length} Top-Tools for your industry`)
             }
           </p>
         </div>
@@ -73,108 +79,119 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
               key={tool.id}
               tool={tool}
               onClick={() => handleToolClick(tool)}
+              lang={lang}
             />
           ))}
         </div>
       </div>
 
-      {/* Tool Details Modal */}
-      {selectedTool && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <AppIcon tool={selectedTool} size="lg" />
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{selectedTool.name}</h2>
-                    <p className="text-sm text-gray-600">{selectedTool.category}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+      {/* AI Tool Detail Modal */}
+      <Dialog open={!!selectedTool} onOpenChange={(open) => !open && setSelectedTool(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {selectedTool && <AppIcon tool={selectedTool} size="md" />}
+              <span>{selectedTool?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedTool && (
+            <div className="space-y-4">
+              {/* Description */}
+              <div>
+                <h4 className="font-medium text-foreground mb-2">{lang === 'de' ? 'Beschreibung' : 'Description'}</h4>
+                <p className="text-sm text-muted-foreground">{getToolDescription(selectedTool, lang || 'de')}</p>
               </div>
 
-              <div className="space-y-4">
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Beschreibung</h3>
-                  <p className="text-gray-600">{selectedTool.description}</p>
+                  <h4 className="font-medium text-foreground mb-2">{lang === 'de' ? 'Kategorie' : 'Category'}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedTool.category}</p>
                 </div>
-
-                <div className="flex items-center gap-4">
-                  <div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedTool.pricing === 'Free' ? 'bg-green-100 text-green-800' :
-                      selectedTool.pricing === 'Freemium' ? 'bg-blue-100 text-blue-800' :
-                      selectedTool.pricing === 'Paid' ? 'bg-orange-100 text-orange-800' :
-                      'bg-purple-100 text-purple-800'
-                    }`}>
-                      {selectedTool.pricing}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-600">
-                      <span className="font-medium">{selectedTool.automationPotential}%</span> Automatisierungspotenzial
-                    </span>
-                  </div>
-                </div>
-
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Features</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTool.features.map((feature, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
-                      >
-                        {feature}
-                      </span>
-                    ))}
+                  <h4 className="font-medium text-foreground mb-2">{lang === 'de' ? 'Branchen' : 'Industries'}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedTool.industry.join(', ')}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">{lang === 'de' ? 'Preismodell' : 'Pricing'}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedTool.pricing}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">{lang === 'de' ? 'Automatisierungspotenzial' : 'Automation Potential'}</h4>
+                  <div className="flex items-center gap-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${selectedTool.automationPotential}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium">{selectedTool.automationPotential}%</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <a
-                    href={selectedTool.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-center hover:bg-blue-700 transition-colors"
-                  >
-                    Website besuchen
-                  </a>
-                  <button
-                    onClick={handleCloseModal}
-                    className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    Schließen
-                  </button>
+              {/* Features */}
+              <div>
+                <h4 className="font-medium text-foreground mb-2">{lang === 'de' ? 'Features' : 'Features'}</h4>
+                <div className="flex flex-wrap gap-2">
+                  {getToolFeatures(selectedTool, lang || 'de').map((feature, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {feature}
+                    </Badge>
+                  ))}
                 </div>
+              </div>
+
+              {/* Website Link */}
+              <div className="flex justify-end">
+                <a 
+                  href={selectedTool.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <span>{lang === 'de' ? 'Website besuchen' : 'Visit Website'}</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Branchen-spezifische Tipps */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">💡 Branchen-Tipp</h4>
+        <h4 className="font-semibold text-blue-900 mb-2">💡 {lang === 'de' ? 'Branchen-Tipp' : 'Industry Tip'}</h4>
         <p className="text-sm text-blue-800">
-          {industry === 'tech' && "Kombinieren Sie GitHub Copilot mit Claude für optimale Code-Qualität und Sicherheit."}
-          {industry === 'healthcare' && "Nutzen Sie Notion AI für strukturierte Patientendaten und Microsoft Copilot für medizinische Berichte."}
-          {industry === 'finance' && "Excel AI und Power BI AI bieten die beste Kombination für Finanzanalyse und Reporting."}
-          {industry === 'marketing' && "Jasper für Content-Erstellung und Canva AI für visuelle Elemente sind eine starke Kombination."}
-          {industry === 'hr' && "Airtable AI für Bewerber-Management und Notion AI für HR-Dokumentation optimieren Ihre Prozesse."}
-          {industry === 'production' && "Excel AI für Produktionsdaten und Power BI AI für Performance-Monitoring bieten umfassende Einblicke."}
-          {industry === 'education' && "Notion AI für Kurs-Management und Obsidian AI für Forschungsnotizen unterstützen Ihre akademische Arbeit."}
-          {industry === 'legal' && "Claude für Rechtsanalysen und Perplexity für aktuelle Gesetze sind unverzichtbar für Ihre Arbeit."}
+          {industry === 'tech' && (lang === 'de' 
+            ? "Kombinieren Sie GitHub Copilot mit Claude für optimale Code-Qualität und Sicherheit."
+            : "Combine GitHub Copilot with Claude for optimal code quality and security.")}
+          {industry === 'healthcare' && (lang === 'de'
+            ? "Nutzen Sie Notion AI für strukturierte Patientendaten und Microsoft Copilot für medizinische Berichte."
+            : "Use Notion AI for structured patient data and Microsoft Copilot for medical reports.")}
+          {industry === 'finance' && (lang === 'de'
+            ? "Excel AI und Power BI AI bieten die beste Kombination für Finanzanalyse und Reporting."
+            : "Excel AI and Power BI AI offer the best combination for financial analysis and reporting.")}
+          {industry === 'marketing' && (lang === 'de'
+            ? "Jasper für Content-Erstellung und Canva AI für visuelle Elemente sind eine starke Kombination."
+            : "Jasper for content creation and Canva AI for visual elements are a powerful combination.")}
+          {industry === 'hr' && (lang === 'de'
+            ? "Airtable AI für Bewerber-Management und Notion AI für HR-Dokumentation optimieren Ihre Prozesse."
+            : "Airtable AI for applicant management and Notion AI for HR documentation optimize your processes.")}
+          {industry === 'production' && (lang === 'de'
+            ? "Excel AI für Produktionsdaten und Power BI AI für Performance-Monitoring bieten umfassende Einblicke."
+            : "Excel AI for production data and Power BI AI for performance monitoring provide comprehensive insights.")}
+          {industry === 'education' && (lang === 'de'
+            ? "Notion AI für Kurs-Management und Obsidian AI für Forschungsnotizen unterstützen Ihre akademische Arbeit."
+            : "Notion AI for course management and Obsidian AI for research notes support your academic work.")}
+          {industry === 'legal' && (lang === 'de'
+            ? "Claude für Rechtsanalysen und Perplexity für aktuelle Gesetze sind unverzichtbar für Ihre Arbeit."
+            : "Claude for legal analysis and Perplexity for current laws are essential for your work.")}
           {!['tech', 'healthcare', 'finance', 'marketing', 'hr', 'production', 'education', 'legal'].includes(industry) && 
-            "ChatGPT und Claude bieten eine solide Grundlage für allgemeine Aufgaben in Ihrer Branche."}
+            (lang === 'de'
+              ? "ChatGPT und Claude bieten eine solide Grundlage für allgemeine Aufgaben in Ihrer Branche."
+              : "ChatGPT and Claude provide a solid foundation for general tasks in your industry.")}
         </p>
       </div>
     </div>

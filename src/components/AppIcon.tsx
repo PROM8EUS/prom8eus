@@ -1,5 +1,5 @@
 import React from 'react';
-import { AITool } from '../lib/catalog/aiTools';
+import { AITool, getToolDescription, getToolFeatures } from '../lib/catalog/aiTools';
 
 interface AppIconProps {
   tool: AITool;
@@ -44,18 +44,19 @@ const AppIcon: React.FC<AppIconProps> = ({
           alt={tool.logo.alt}
           className={`${sizeClasses[size]} rounded-lg object-cover shadow-sm`}
           style={{
-            backgroundColor: tool.logo.backgroundColor || '#f3f4f6',
+            backgroundColor: '#ffffff',
             border: '1px solid #e5e7eb'
           }}
           onError={handleImageError}
+
         />
         
         {/* Fallback Icon */}
         <div 
           className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shadow-sm hidden`}
           style={{
-            backgroundColor: tool.logo.backgroundColor || '#f3f4f6',
-            color: tool.logo.textColor || '#374151'
+            backgroundColor: '#ffffff',
+            color: '#374151'
           }}
         >
           <span className={`font-bold ${textSizes[size]}`}>
@@ -122,12 +123,14 @@ interface AppIconCardProps {
   tool: AITool;
   className?: string;
   onClick?: () => void;
+  lang?: 'de' | 'en';
 }
 
 const AppIconCard: React.FC<AppIconCardProps> = ({
   tool,
   className = '',
-  onClick
+  onClick,
+  lang = 'de'
 }) => {
   return (
     <div 
@@ -139,7 +142,7 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
         
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 mb-1">{tool.name}</h3>
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{tool.description}</p>
+          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{getToolDescription(tool, lang)}</p>
           
           <div className="flex items-center gap-2 mb-2">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -152,12 +155,12 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
             </span>
             
             <span className="text-xs text-gray-500">
-              {tool.automationPotential}% Automatisierung
+              {tool.automationPotential}% {lang === 'de' ? 'Automatisierung' : 'Automation'}
             </span>
           </div>
           
           <div className="flex flex-wrap gap-1">
-            {tool.features.slice(0, 3).map((feature, index) => (
+            {getToolFeatures(tool, lang).slice(0, 3).map((feature, index) => (
               <span 
                 key={index}
                 className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
@@ -165,9 +168,9 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
                 {feature}
               </span>
             ))}
-            {tool.features.length > 3 && (
+            {getToolFeatures(tool, lang).length > 3 && (
               <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                +{tool.features.length - 3} mehr
+                +{getToolFeatures(tool, lang).length - 3} {lang === 'de' ? 'mehr' : 'more'}
               </span>
             )}
           </div>

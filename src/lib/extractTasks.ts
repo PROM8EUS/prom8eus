@@ -349,7 +349,9 @@ export function detectIndustry(text: string): string {
   if (lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') ||
       lowerText.includes('bookkeeping') || lowerText.includes('financial') || lowerText.includes('audit') ||
       lowerText.includes('buchhaltung') || lowerText.includes('finanzen') || lowerText.includes('steuer') ||
-      lowerText.includes('buchführung') || lowerText.includes('finanziell') || lowerText.includes('prüfung')) {
+      lowerText.includes('buchführung') || lowerText.includes('finanziell') || lowerText.includes('prüfung') ||
+      lowerText.includes('buchhalter') || lowerText.includes('controller') || lowerText.includes('rechnungswesen') ||
+      lowerText.includes('bilanz') || lowerText.includes('abrechnung') || lowerText.includes('kassenbuch')) {
     return 'finance';
   }
   

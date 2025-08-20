@@ -29,13 +29,12 @@ QUALIFICATIONS:
 `;
 
   const runTests = () => {
-    console.log("Running analysis tests...");
+
     
     const deResult = runAnalysis(de);
     const enResult = runAnalysis(en);
     
-    console.log("German Result:", deResult);
-    console.log("English Result:", enResult);
+    
     
     setResults({
       german: deResult,
