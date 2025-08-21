@@ -5,13 +5,23 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://gasqdnyyrxmmojivlxon.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdhc3Fkbnl5cnhtbW9qaXZseG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1OTgzNzcsImV4cCI6MjA3MTE3NDM3N30.fg3QUR471VbKWFaz4HnUqx2lQxcHFmNOwAaxRNgYLLE";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Global singleton instance
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+// Function to get or create the singleton instance
+function getSupabaseClient(): ReturnType<typeof createClient<Database>> {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'prom8eus-auth', // Unique storage key
+      }
+    });
   }
-});
+  return supabaseInstance;
+}
+
+// Export the singleton instance
+export const supabase = getSupabaseClient();

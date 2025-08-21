@@ -98,128 +98,104 @@ const AI_TOOL_IDS_BY_INDUSTRY = {
   general: ['chatgpt', 'claude', 'grok', 'gemini', 'perplexity', 'microsoft-copilot', 'notion-ai']
 };
 
-// Branchenerkennung
+// Browser-kompatible Keywords-Verwaltung
+const INDUSTRY_KEYWORDS = {
+  tech: [
+    "software", "development", "programming", "code", "api", "system", "technical",
+    "engineer", "developer", "programmer", "frontend", "backend", "fullstack",
+    "javascript", "typescript", "react", "vue", "angular", "node.js", "python",
+    "java", "c++", "database", "sql", "nosql", "mongodb", "postgresql",
+    "docker", "kubernetes", "aws", "azure", "cloud", "devops", "ci/cd",
+    "git", "github", "gitlab", "agile", "scrum", "sprint",
+    "software engineer", "coding", "api development", "system design", "technical lead",
+    "ux", "ui", "user experience", "user interface", "designer", "design",
+    "figma", "sketch", "adobe xd", "wireframe", "mockup", "prototyp",
+    "designsystem", "design system", "usability", "user research", "user feedback"
+  ],
+  marketing: [
+    "marketing", "campaign", "brand", "content", "social media", "advertising",
+    "promotion", "seo", "sem", "google ads", "facebook ads", "instagram",
+    "linkedin", "twitter", "youtube", "email marketing", "newsletter",
+    "lead generation", "conversion", "analytics", "google analytics",
+    "influencer", "affiliate", "pr", "public relations", "copywriting",
+    "marketing manager", "campaign management", "brand strategy", "content creation", "digital marketing"
+  ],
+  finance: [
+    "financial", "accounting", "tax", "budget", "invoice", "payment",
+    "controller", "accountant", "bookkeeper", "audit", "compliance",
+    "bilanz", "buchhaltung", "buchhalter", "buchführung", "steuer",
+    "rechnungswesen", "finanzen", "controlling", "kostenrechnung",
+    "liquidität", "cashflow", "reporting", "abrechnung", "kassenbuch"
+  ],
+  hr: [
+    "hr", "human resources", "recruitment", "personnel", "employee", "hiring",
+    "talent", "onboarding", "offboarding", "performance", "evaluation",
+    "personal", "mitarbeiter", "recruiting", "bewerbung", "einstellung",
+    "personalentwicklung", "weiterbildung", "arbeitsrecht", "betriebsrat",
+    "hr manager", "hr director", "hr specialist", "human resources manager",
+    "personalmanager", "personalchef", "personalreferent", "recruiter", "talent acquisition"
+  ],
+  healthcare: [
+    "medical", "patient", "healthcare", "clinical", "nursing", "treatment",
+    "doctor", "nurse", "physician", "hospital", "clinic", "therapy",
+    "medizinisch", "patient", "pflege", "krankenhaus", "praxis", "therapie",
+    "gesundheit", "medikament", "diagnose", "behandlung", "operation",
+    "medical professional", "patient care", "healthcare management", "clinical operations"
+  ],
+  production: [
+    "production", "manufacturing", "quality", "process", "operations",
+    "factory", "plant", "assembly", "lean", "six sigma", "kaizen",
+    "produktion", "fertigung", "qualität", "prozess", "betrieb",
+    "fabrik", "werk", "montage", "logistik", "supply chain", "warehouse",
+    "production manager", "quality assurance", "process optimization"
+  ]
+};
+
+function getKeywords(industry: string): string[] {
+  return INDUSTRY_KEYWORDS[industry as keyof typeof INDUSTRY_KEYWORDS] || [];
+}
+
+// Branchenerkennung mit dynamischen Keywords
 export function detectIndustry(text: string): string {
   const lowerText = text.toLowerCase();
   
-  // HR & Personal (muss vor Finanzwesen geprüft werden wegen "HR Manager" vs "Manager")
-  if (lowerText.includes('hr manager') || lowerText.includes('hr director') || lowerText.includes('hr specialist') ||
-      lowerText.includes('human resources manager') || lowerText.includes('human resources director') ||
-      lowerText.includes('personalmanager') || lowerText.includes('personalchef') || lowerText.includes('personalreferent') ||
-      lowerText.includes('hr') || lowerText.includes('human resources') || lowerText.includes('recruitment') ||
-      lowerText.includes('personnel') || lowerText.includes('employee') || lowerText.includes('hiring') ||
-      lowerText.includes('personal') || lowerText.includes('rekrutierung') || lowerText.includes('mitarbeiter') ||
-      lowerText.includes('einstellung') || lowerText.includes('personalwesen') ||
-      lowerText.includes('talent acquisition') || lowerText.includes('recruiter') || lowerText.includes('headhunter') ||
-      lowerText.includes('arbeitsvertrag') || lowerText.includes('employment contract') ||
-      lowerText.includes('mitarbeiterdaten') || lowerText.includes('employee data') ||
-      lowerText.includes('bewerbung') || lowerText.includes('application') ||
-      lowerText.includes('onboarding') || lowerText.includes('offboarding') ||
-      lowerText.includes('hr manager (m/w/d)') || lowerText.includes('hr manager (m/w)') ||
-      lowerText.includes('personal manager (m/w/d)') || lowerText.includes('personal manager (m/w)') ||
-      lowerText.includes('human resources manager (m/w/d)') || lowerText.includes('human resources manager (m/w)')) {
-    return 'hr';
-  }
-
-  // Finanzwesen (muss vor Tech geprüft werden wegen "accountant" vs "count")
-  if (lowerText.includes('accounting') || lowerText.includes('finance') || lowerText.includes('tax') ||
-      lowerText.includes('bookkeeping') || lowerText.includes('financial') || lowerText.includes('audit') ||
-      lowerText.includes('buchhaltung') || lowerText.includes('finanzen') || lowerText.includes('steuer') ||
-      lowerText.includes('buchführung') || lowerText.includes('finanziell') || lowerText.includes('prüfung') ||
-      lowerText.includes('buchhalter') || lowerText.includes('controller') || lowerText.includes('rechnungswesen') ||
-      lowerText.includes('bilanz') || lowerText.includes('abrechnung') || lowerText.includes('kassenbuch') ||
-      lowerText.includes('accountant') || lowerText.includes('bookkeeper') || lowerText.includes('auditor')) {
-    return 'finance';
+  // Definiere die Reihenfolge der Branchenerkennung (wichtig für Prioritäten)
+  const industries = ['hr', 'finance', 'marketing', 'tech', 'healthcare', 'production'];
+  
+  // Prüfe jede Branche mit ihren Keywords
+  for (const industry of industries) {
+    const keywords = getKeywords(industry);
+    
+    // Spezielle Logik für HR (muss spezifisch sein)
+    if (industry === 'hr') {
+      const hrSpecificKeywords = [
+        'hr manager', 'hr director', 'hr specialist', 'human resources manager',
+        'personalmanager', 'personalchef', 'personalreferent', 'recruiter',
+        'talent acquisition', 'recruitment', 'onboarding', 'offboarding'
+      ];
+      
+      const hasSpecificHrMatch = hrSpecificKeywords.some(keyword => lowerText.includes(keyword));
+      if (hasSpecificHrMatch) {
+        return industry;
+      }
+    } else {
+      // Für andere Branchen: Prüfe alle Keywords
+      const hasMatch = keywords.some(keyword => lowerText.includes(keyword));
+      if (hasMatch) {
+        return industry;
+      }
+    }
   }
   
-  // Marketing & Sales (muss vor Tech geprüft werden wegen "marketing manager" vs "manager")
-  if (lowerText.includes('marketing') || lowerText.includes('sales') || lowerText.includes('campaign') ||
-      lowerText.includes('advertising') || lowerText.includes('promotion') || lowerText.includes('lead') ||
-      lowerText.includes('marketing') || lowerText.includes('vertrieb') || lowerText.includes('kampagne') ||
-      lowerText.includes('werbung') || lowerText.includes('promotion') || lowerText.includes('lead') ||
-      lowerText.includes('marketing manager') || lowerText.includes('sales manager') || lowerText.includes('marketing director') ||
-      lowerText.includes('marketingchef') || lowerText.includes('vertriebsleiter') || lowerText.includes('marketingleiter') ||
-      lowerText.includes('content') || lowerText.includes('social media') || lowerText.includes('seo') ||
-      lowerText.includes('email marketing') || lowerText.includes('lead generation') ||
-      lowerText.includes('marketingstrategie') || lowerText.includes('marketing strategy') ||
-      lowerText.includes('werbekampagne') || lowerText.includes('advertising campaign') ||
-      lowerText.includes('budgetplanung') || lowerText.includes('budget planning') ||
-      lowerText.includes('events') || lowerText.includes('messen') || lowerText.includes('trade shows')) {
-    return 'marketing';
-  }
+  // Fallback für allgemeine Büro- und Verwaltungsaufgaben
+  const generalKeywords = [
+    'verwaltung', 'administration', 'büro', 'office', 'koordination', 'coordination',
+    'planung', 'planning', 'organisation', 'organization', 'kommunikation', 'communication',
+    'berichterstattung', 'reporting', 'dokumentation', 'documentation',
+    'präsentation', 'presentation'
+  ];
   
-  // Technologie & IT
-  if (lowerText.includes('software') || lowerText.includes('programming') || lowerText.includes('development') || 
-      lowerText.includes('coding') || lowerText.includes('api') || lowerText.includes('database') ||
-      lowerText.includes('entwicklung') || lowerText.includes('programmierung') || lowerText.includes('coding') ||
-      lowerText.includes('datenbank') || lowerText.includes('system') || lowerText.includes('technisch') ||
-      lowerText.includes('engineer') || lowerText.includes('developer') || lowerText.includes('programmer') ||
-      lowerText.includes('data scientist') || lowerText.includes('data science') || lowerText.includes('machine learning') ||
-      lowerText.includes('artificial intelligence') || lowerText.includes('ai') || lowerText.includes('ml') ||
-      lowerText.includes('analytics') || lowerText.includes('statistics') || lowerText.includes('algorithm') ||
-      lowerText.includes('datenwissenschaft') || lowerText.includes('maschinelles lernen') || lowerText.includes('künstliche intelligenz') ||
-      lowerText.includes('analytik') || lowerText.includes('statistik') || lowerText.includes('algorithmus') ||
-      lowerText.includes('data analyst') || lowerText.includes('business analyst') || lowerText.includes('datenanalyst') ||
-      (lowerText.includes('analyst') && lowerText.includes('data')) ||
-      lowerText.includes('software manager') || lowerText.includes('tech manager') || lowerText.includes('it manager') ||
-      lowerText.includes('development manager') || lowerText.includes('engineering manager') ||
-      lowerText.includes('ux') || lowerText.includes('ui') || lowerText.includes('user experience') ||
-      lowerText.includes('user interface') || lowerText.includes('designer') || lowerText.includes('design') ||
-      lowerText.includes('figma') || lowerText.includes('sketch') || lowerText.includes('adobe xd') ||
-      lowerText.includes('wireframe') || lowerText.includes('mockup') || lowerText.includes('prototyp') ||
-      lowerText.includes('designsystem') || lowerText.includes('design system') ||
-      lowerText.includes('usability') || lowerText.includes('user research') || lowerText.includes('user feedback')) {
-    return 'tech';
-  }
-  
-  // Gesundheitswesen
-  if (lowerText.includes('patient') || lowerText.includes('medical') || lowerText.includes('nursing') ||
-      lowerText.includes('clinical') || lowerText.includes('healthcare') || lowerText.includes('care') ||
-      lowerText.includes('patient') || lowerText.includes('medizinisch') || lowerText.includes('pflege') ||
-      lowerText.includes('klinisch') || lowerText.includes('gesundheit') || lowerText.includes('behandlung')) {
-    return 'healthcare';
-  }
-  
-
-  
-
-  
-  // Produktion & Logistik
-  if (lowerText.includes('production') || lowerText.includes('manufacturing') || lowerText.includes('logistics') ||
-      lowerText.includes('warehouse') || lowerText.includes('supply chain') || lowerText.includes('inventory') ||
-      lowerText.includes('produktion') || lowerText.includes('fertigung') || lowerText.includes('logistik') ||
-      lowerText.includes('lager') || lowerText.includes('lieferkette') || lowerText.includes('bestand')) {
-    return 'production';
-  }
-  
-  // Bildung & Forschung
-  if (lowerText.includes('teaching') || lowerText.includes('education') || lowerText.includes('research') ||
-      lowerText.includes('academic') || lowerText.includes('university') || lowerText.includes('school') ||
-      lowerText.includes('lehre') || lowerText.includes('bildung') || lowerText.includes('forschung') ||
-      lowerText.includes('akademisch') || lowerText.includes('universität') || lowerText.includes('schule')) {
-    return 'education';
-  }
-  
-  // Recht & Compliance
-  if (lowerText.includes('legal') || lowerText.includes('law') || lowerText.includes('compliance') ||
-      lowerText.includes('regulatory') || lowerText.includes('contract') || lowerText.includes('attorney') ||
-      lowerText.includes('recht') || lowerText.includes('gesetz') || lowerText.includes('compliance') ||
-      lowerText.includes('regulatorisch') || lowerText.includes('vertrag') || lowerText.includes('anwalt') ||
-      lowerText.includes('arbeitsvertrag') || lowerText.includes('employment contract') ||
-      lowerText.includes('vertragsprüfung') || lowerText.includes('contract review')) {
-    return 'legal';
-  }
-  
-  // Allgemeine Büro- und Verwaltungsaufgaben
-  if (lowerText.includes('verwaltung') || lowerText.includes('administration') ||
-      lowerText.includes('büro') || lowerText.includes('office') ||
-      lowerText.includes('koordination') || lowerText.includes('coordination') ||
-      lowerText.includes('planung') || lowerText.includes('planning') ||
-      lowerText.includes('organisation') || lowerText.includes('organization') ||
-      lowerText.includes('kommunikation') || lowerText.includes('communication') ||
-      lowerText.includes('berichterstattung') || lowerText.includes('reporting') ||
-      lowerText.includes('dokumentation') || lowerText.includes('documentation') ||
-      lowerText.includes('präsentation') || lowerText.includes('presentation')) {
+  if (generalKeywords.some(keyword => lowerText.includes(keyword))) {
     return 'general';
   }
   

@@ -1,11 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Temporäre Konfiguration - diese Werte müssen aus der Supabase Integration bezogen werden
-// TODO: Diese durch echte Supabase Projekt-URLs ersetzen
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Use the centralized Supabase client from integrations
+export { supabase } from '@/integrations/supabase/client';
 
 export interface AnalyzeInputRequest {
   url?: string

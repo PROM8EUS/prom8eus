@@ -291,13 +291,17 @@ const Results = () => {
       // Generate new summary in the correct language
       const newSummary = generateSummary(totalScore, ratio, taskCount, lang);
       
-      // Update the analysis data with the new summary
-      setAnalysisData(prev => prev ? {
-        ...prev,
-        summary: newSummary
-      } : null);
+      // Update the analysis data with the new summary only if it's different
+      setAnalysisData(prev => {
+        if (!prev) return null;
+        if (prev.summary === newSummary) return prev; // Avoid unnecessary updates
+        return {
+          ...prev,
+          summary: newSummary
+        };
+      });
     }
-  }, [lang, analysisData]); // Update when language changes, but don't scroll
+  }, [lang, analysisData?.tasks, analysisData?.ratio, analysisData?.totalScore]); // More specific dependencies
   
   // Trigger job title animation
   useEffect(() => {
