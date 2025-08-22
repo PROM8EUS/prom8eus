@@ -19,7 +19,8 @@ import {
   Filter,
   Zap,
   Target,
-  BarChart3
+  BarChart3,
+  Download
 } from 'lucide-react';
 import { MARKETING_WORKFLOWS } from '../lib/workflows/marketingWorkflows';
 import { FINANCE_WORKFLOWS } from '../lib/workflows/financeWorkflows';
@@ -95,6 +96,35 @@ const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({
     const hourlyRate = workflow.source === 'finance' ? 80 : workflow.source === 'healthcare' ? 70 : 60;
     const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
     return monthlyCostSavings + workflow.estimatedCostSavings;
+  };
+
+  const handleDownloadWorkflow = (workflow: WorkflowTemplate) => {
+    // Create workflow JSON for download
+    const workflowData = {
+      id: workflow.id,
+      title: workflow.title,
+      description: workflow.description,
+      category: workflow.category,
+      difficulty: workflow.difficulty,
+      estimatedTimeSavings: workflow.estimatedTimeSavings,
+      estimatedCostSavings: workflow.estimatedCostSavings,
+      tools: workflow.tools,
+      industry: workflow.industry,
+      tags: workflow.tags,
+      prerequisites: workflow.prerequisites,
+      steps: workflow.steps,
+      source: workflow.source
+    };
+
+    const blob = new Blob([JSON.stringify(workflowData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${workflow.id}_workflow.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -239,10 +269,30 @@ const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({
                 ))}
               </div>
 
-              <Button className="w-full" variant="outline">
-                {lang === 'de' ? 'Details anzeigen' : 'View Details'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedWorkflow(workflow);
+                  }}
+                >
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  {lang === 'de' ? 'Details' : 'Details'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownloadWorkflow(workflow);
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

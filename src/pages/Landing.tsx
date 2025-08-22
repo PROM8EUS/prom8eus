@@ -10,6 +10,7 @@ import BarChart from "@/components/BarChart";
 import PageFooter from "@/components/PageFooter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
+import { runAnalysis } from "@/lib/runAnalysis";
 
 interface AnalysisResult {
   totalScore: number;
@@ -20,9 +21,22 @@ interface AnalysisResult {
   tasks: Array<{
     text: string;
     score: number;
-    label: "Automatisierbar" | "Mensch";
+    label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
     category: string;
     confidence: number;
+    subtasks?: Array<{
+      id: string;
+      title: string;
+      description: string;
+      automationPotential: number;
+      estimatedTime: number;
+      priority: 'low' | 'medium' | 'high' | 'critical';
+      complexity: 'low' | 'medium' | 'high';
+      systems: string[];
+      risks: string[];
+      opportunities: string[];
+      dependencies: string[];
+    }>;
   }>;
   summary: string;
   recommendations: string[];
@@ -33,8 +47,21 @@ interface TaskForDisplay {
   id: string;
   name: string;
   score: number;
-  category: 'automatisierbar' | 'mensch';
+  category: 'automatisierbar' | 'teilweise' | 'mensch';
   description: string;
+  subtasks?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    automationPotential: number;
+    estimatedTime: number;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    complexity: 'low' | 'medium' | 'high';
+    systems: string[];
+    risks: string[];
+    opportunities: string[];
+    dependencies: string[];
+  }>;
 }
 
 const Landing = () => {
@@ -44,19 +71,18 @@ const Landing = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
+    // Clear old sessionStorage to force new analysis
+    sessionStorage.removeItem('analysisResult');
+    
     const shareId = searchParams.get('share');
   
-    
     if (shareId) {
       // Load shared analysis data from localStorage
       try {
-
         const sharedData = localStorage.getItem(shareId);
-        
         
         if (sharedData) {
           const parsedResult: AnalysisResult = JSON.parse(sharedData);
-          
           setAnalysisData(parsedResult);
           return;
         } else {
@@ -75,14 +101,54 @@ const Landing = () => {
       if (storedResult) {
         const parsedResult: AnalysisResult = JSON.parse(storedResult);
         setAnalysisData(parsedResult);
+      } else {
+        // No stored data - perform new analysis with sample Buchhalter data
+        console.log('No stored analysis data found, performing new analysis with pattern engine');
+        const sampleBuchhalterText = `Buchhalter (m/w/d)
+
+AUFGABEN:
+• Führung der Finanzbuchhaltung
+• Erstellung von Monats- und Jahresabschlüssen
+• Kontierung von Belegen
+• Umsatzsteuervoranmeldungen
+• Mahnwesen und Zahlungsverkehr
+• Abstimmung von Konten
+• Zusammenarbeit mit Steuerberatern
+• Budgetplanung und Controlling
+
+ANFORDERUNGEN:
+• Ausbildung als Steuerfachangestellte/r oder Buchhalter/in
+• Mehrjährige Berufserfahrung in der Buchhaltung
+• Kenntnisse in DATEV oder vergleichbarer Software
+• Genauigkeit und Zuverlässigkeit
+• Steuerrechtliche Kenntnisse`;
+        
+        performNewAnalysis(sampleBuchhalterText);
       }
     } catch (error) {
       console.error('Error loading analysis results for landing page:', error);
     }
-  }, [searchParams]);
+  }, [searchParams, lang]);
 
   const handleStartAnalysis = () => {
     navigate('/');
+  };
+
+  // Function to perform new analysis with pattern engine
+  const performNewAnalysis = async (jobText: string) => {
+    try {
+      console.log('🔄 Performing new analysis with pattern engine for:', jobText.substring(0, 50) + '...');
+      const result = await runAnalysis(jobText, lang);
+      console.log('✅ New analysis completed:', {
+        tasks: result.tasks.length,
+        subtasks: result.tasks.reduce((sum, task) => sum + (task.subtasks?.length || 0), 0)
+      });
+      setAnalysisData(result);
+      // Store in sessionStorage for consistency
+      sessionStorage.setItem('analysisResult', JSON.stringify(result));
+    } catch (error) {
+      console.error('Error performing new analysis:', error);
+    }
   };
 
   // Get job title from analysis or use default
@@ -123,45 +189,27 @@ const Landing = () => {
   // Get display tasks for TaskList component
   const getDisplayTasks = (): TaskForDisplay[] => {
     if (!analysisData?.tasks || analysisData.tasks.length === 0) {
-      // Return demo tasks if no real data
-      return [
-        {
-          id: '1',
-          name: 'Datenerfassung und -eingabe',
-          score: 95,
-          category: 'automatisierbar',
-          description: 'Strukturierte Dateneingabe in Systeme'
-        },
-        {
-          id: '2',
-          name: 'Berichtserstellung', 
-          score: 88,
-          category: 'automatisierbar',
-          description: 'Automatische Generierung von Standardberichten'
-        },
-        {
-          id: '3',
-          name: 'Kundenberatung',
-          score: 35,
-          category: 'mensch',
-          description: 'Persönliche Beratung und Problemlösung'
-        }
-      ];
+      // Return empty array if no real data - no more mock data
+      return [];
     }
 
     return analysisData.tasks.map((task, index) => ({
       id: String(index + 1),
       name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
       score: Math.round(task.score),
-      category: task.label === 'Automatisierbar' ? 'automatisierbar' : 'mensch',
-      description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence)}%)`
+      category: task.label,
+      description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || 70)}%)`,
+      subtasks: task.subtasks // Pass through subtasks from pattern engine
     }));
   };
 
-  // Use real data or fallback to demo values
-  const displayScore = analysisData?.totalScore || 80;
-  const displayAutomatable = analysisData?.ratio.automatisierbar || 65;
-  const displayHuman = analysisData?.ratio.mensch || 35;
+  // Check if we have real analysis data
+  const hasRealData = analysisData && analysisData.tasks && analysisData.tasks.length > 0;
+  
+  // Use real data only - no more fallback to demo values
+  const displayScore = analysisData?.totalScore || 0;
+  const displayAutomatable = analysisData?.ratio?.automatisierbar || 0;
+  const displayHuman = analysisData?.ratio?.mensch || 0;
   const displayJobTitle = getJobTitle();
   const displayTasks = getDisplayTasks();
   const automatizableTasks = displayTasks.filter(task => task.category === 'automatisierbar').length;
@@ -177,36 +225,58 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section with Score */}
           <section className="animate-fade-in">
-            <LandingScoreCircle 
-              score={displayScore} 
-              maxScore={100} 
-              jobTitle={displayJobTitle}
-            />
+            {hasRealData ? (
+              <LandingScoreCircle 
+                score={displayScore} 
+                maxScore={100} 
+                jobTitle={displayJobTitle}
+              />
+            ) : (
+              <div className="text-center space-y-6">
+                <div className="max-w-2xl mx-auto">
+                  <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+                    {t(lang, "landing_headline")}
+                  </h1>
+                  <p className="text-xl text-muted-foreground mb-8">
+                    {t(lang, "landing_subtitle")}
+                  </p>
+                  <Button 
+                    onClick={handleStartAnalysis}
+                    size="lg"
+                    className="px-16 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200 shadow-lg"
+                  >
+                    {t(lang, "start_analysis")}
+                  </Button>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Info Cards */}
-          <section className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <InfoCard
-                title={t(lang, "landing_automatable")}
-                value={`${displayAutomatable}%`}
-                description={t(lang, "landing_automatable_desc")}
-                icon={Bot}
-                variant="primary"
-              />
-              
-              <InfoCard
-                title={t(lang, "landing_human")}
-                value={`${displayHuman}%`}
-                description={t(lang, "landing_human_desc")}
-                icon={User}
-                variant="destructive"
-              />
-            </div>
-          </section>
+          {hasRealData && (
+            <section className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <InfoCard
+                  title={t(lang, "landing_automatable")}
+                  value={`${displayAutomatable}%`}
+                  description={t(lang, "landing_automatable_desc")}
+                  icon={Bot}
+                  variant="primary"
+                />
+                
+                <InfoCard
+                  title={t(lang, "landing_human")}
+                  value={`${displayHuman}%`}
+                  description={t(lang, "landing_human_desc")}
+                  icon={User}
+                  variant="destructive"
+                />
+              </div>
+            </section>
+          )}
 
           {/* Task Analysis Breakdown - Only show if we have real analysis data */}
-          {analysisData && analysisData.tasks && analysisData.tasks.length > 0 && (
+          {hasRealData && (
             <>
               {/* Bar Chart */}
               <section className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
@@ -218,7 +288,7 @@ const Landing = () => {
 
               {/* Task List */}
               <section className="animate-fade-in" style={{ animationDelay: '0.5s' }}>
-                <TaskList tasks={displayTasks} />
+                <TaskList tasks={displayTasks} lang={lang} />
               </section>
             </>
           )}

@@ -1,5 +1,6 @@
 import { extractTasks } from './extractTasks';
 import { getToolsByIndustry } from './catalog/aiTools';
+import { fastAnalysisEngine, FastAnalysisResult } from './patternEngine/fastAnalysisEngine';
 
 interface Task {
   text: string;
@@ -14,6 +15,19 @@ interface Task {
   humanRatio?: number; // 0-100% wie viel menschlich ist
   complexity?: 'low' | 'medium' | 'high';
   automationTrend?: 'increasing' | 'stable' | 'decreasing';
+  subtasks?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    automationPotential: number;
+    estimatedTime: number;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    complexity: 'low' | 'medium' | 'high';
+    systems: string[];
+    risks: string[];
+    opportunities: string[];
+    dependencies: string[];
+  }>;
 }
 
 interface AnalysisResult {
@@ -25,20 +39,54 @@ interface AnalysisResult {
   tasks: Task[];
   summary: string;
   recommendations: string[];
+  originalText?: string; // Add original text for job title extraction
 }
 
-export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): AnalysisResult {
+export async function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Promise<AnalysisResult> {
   console.log('DEBUG runAnalysis: lang =', lang);
   
-  // Step 1: Extract tasks using the extractor
+  // Step 1: Extract tasks using the original extractor
   const rawTasks = extractTasks(jobText);
   
   // Convert to text array for analysis
   const extractedTasks = rawTasks.map(t => t.text);
   console.log('Tasks for analysis:', extractedTasks.length);
 
-  // Step 2: Analyze and score each task
-  const analyzedTasks = extractedTasks.map(taskText => analyzeTask(taskText, jobText));
+  // Step 2: Fast analysis using pattern engine
+  console.log('🚀 Starting fast pattern analysis...');
+  const fastResults = fastAnalysisEngine.analyzeTasks(extractedTasks, jobText);
+  
+  // Step 3: Convert FastAnalysisResult to Task format with subtasks
+  console.log('🔄 Converting to task format...');
+  const analyzedTasks: Task[] = fastResults.map(result => {
+    console.log('🔍 [runAnalysis] Task result:', {
+      text: result.text,
+      subtasks: result.subtasks?.length || 0,
+      subtasksData: result.subtasks
+    });
+    
+    return {
+      text: result.text,
+      score: result.automationPotential,
+      label: result.label,
+      signals: [result.reasoning],
+      aiTools: getToolsByIndustry(result.category).map(tool => tool.id),
+      industry: result.category,
+      category: result.pattern,
+      confidence: result.confidence,
+      automationRatio: result.automationPotential,
+      humanRatio: 100 - result.automationPotential,
+      complexity: result.complexity,
+      automationTrend: result.trend || 'stable' as const,
+      subtasks: result.subtasks || [] // Include subtasks from pattern engine
+    };
+  });
+  
+  console.log('✅ Enhanced analysis completed with', analyzedTasks.length, 'tasks');
+  console.log('🔍 [runAnalysis] Final tasks with subtasks:', analyzedTasks.map(t => ({
+    text: t.text,
+    subtasks: t.subtasks?.length || 0
+  })));
 
   // Step 3: Calculate aggregated scores - make them consistent
   const totalTasks = analyzedTasks.length;
@@ -71,15 +119,16 @@ export function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Analysis
 
 
   // Step 4: Generate summary and recommendations
-  const summary = generateSummary(overallAutomationPotential, ratio, totalTasks, lang);
-  const recommendations = generateRecommendations(analyzedTasks, overallAutomationPotential);
+  const summary = `Analyse mit ${overallAutomationPotential}% Automatisierungspotenzial für ${totalTasks} Aufgaben`;
+  const recommendations = [`${Math.round(ratio.automatisierbar)}% der Aufgaben können automatisiert werden`];
 
   return {
     totalScore: overallAutomationPotential,
     ratio,
     tasks: analyzedTasks,
     summary,
-    recommendations
+    recommendations,
+    originalText: jobText // Store original text for job title extraction
   };
 }
 
@@ -280,7 +329,44 @@ function detectTaskCategory(taskText: string): string {
   return 'general';
 }
 
-function analyzeTask(taskText: string, jobTitle?: string): Task {
+function calculateAutomationPotential(lowerText: string, category: string): number {
+  // Basis-Automatisierungspotenzial basierend auf Kategorie
+  const categoryScores = {
+    'administrative': 85,
+    'routine': 90,
+    'technical': 80,
+    'analytical': 75,
+    'communication': 40,
+    'creative': 30,
+    'management': 25,
+    'physical': 20,
+    'general': 50
+  };
+  
+  let baseScore = categoryScores[category as keyof typeof categoryScores] || 50;
+  
+  // Keyword-basierte Anpassungen
+  const automationKeywords = [
+    'daten', 'data', 'excel', 'tabelle', 'table', 'bericht', 'report', 'routine', 'wiederkehrend',
+    'repetitive', 'standard', 'prozess', 'process', 'automatisch', 'automatic', 'system', 'software'
+  ];
+  
+  const manualKeywords = [
+    'kreativ', 'creative', 'beratung', 'consultation', 'entscheidung', 'decision', 'strategie',
+    'strategy', 'führung', 'leadership', 'körperlich', 'physical', 'handarbeit', 'manual'
+  ];
+  
+  const automationMatches = automationKeywords.filter(keyword => lowerText.includes(keyword)).length;
+  const manualMatches = manualKeywords.filter(keyword => lowerText.includes(keyword)).length;
+  
+  // Anpassung basierend auf Keywords
+  baseScore += automationMatches * 5;
+  baseScore -= manualMatches * 8;
+  
+  return Math.max(0, Math.min(100, baseScore));
+}
+
+async function analyzeTask(taskText: string, jobTitle?: string): Promise<Task> {
   const lowerText = taskText.toLowerCase();
   
   // Branchenerkennung für die Aufgabe - verwende Job-Titel wenn verfügbar
@@ -288,6 +374,33 @@ function analyzeTask(taskText: string, jobTitle?: string): Task {
   
   // Aufgabenkategorie bestimmen
   const taskCategory = detectTaskCategory(taskText);
+  
+  // Schnelle, lokale Analyse ohne externe API-Calls
+  console.log('🔍 Fast Local Analysis for task:', taskText);
+  
+  // Verwende schnelle Keyword-basierte Analyse
+  const automationPotential = calculateAutomationPotential(lowerText, taskCategory);
+  const reasoning = `Fast analysis: ${taskCategory} category`;
+  
+  return {
+    text: taskText,
+    score: Math.round(automationPotential),
+    label: automationPotential >= 70 ? "Automatisierbar" : 
+           automationPotential >= 30 ? "Teilweise Automatisierbar" : "Mensch",
+    signals: [reasoning],
+    aiTools: getToolsByIndustry(taskIndustry).map(tool => tool.id),
+    industry: taskIndustry,
+    category: taskCategory,
+    confidence: 0.7,
+    automationRatio: automationPotential,
+    humanRatio: 100 - automationPotential,
+    complexity: automationPotential >= 70 ? 'low' : automationPotential >= 30 ? 'medium' : 'high',
+    automationTrend: 'increasing'
+  };
+}
+
+function analyzeTaskFallback(taskText: string, jobTitle?: string, taskIndustry?: string, taskCategory?: string): Task {
+  const lowerText = taskText.toLowerCase();
   
   // Define automation indicators (with modern AI tools consideration)
   const automationSignals = {
@@ -504,7 +617,7 @@ function analyzeTask(taskText: string, jobTitle?: string): Task {
   }
   
   // Remove duplicate tools and limit to top 5, prioritize industry-specific tools
-  const uniqueTools = [...new Set(recommendedTools)];
+  const uniqueTools = Array.from(new Set(recommendedTools));
   
   // If we have industry-specific tools, prioritize them
   let finalTools = uniqueTools;

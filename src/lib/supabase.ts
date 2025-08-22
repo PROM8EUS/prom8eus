@@ -54,7 +54,7 @@ export async function callAnalyzeInput(input: AnalyzeInputRequest, lang: 'de' | 
     // Import and use the enhanced analysis engine
     const { runAnalysis } = await import('./runAnalysis');
     console.log('DEBUG: Calling runAnalysis with lang =', lang);
-    const result = runAnalysis(analysisText.slice(0, 10000), lang);
+    const result = await runAnalysis(analysisText.slice(0, 10000), lang);
 
     return {
       success: true,

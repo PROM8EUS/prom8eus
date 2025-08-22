@@ -41,6 +41,28 @@ export function translateCategory(lang: Lang, category?: string): string {
   if (!category) {
     return t(lang, 'task_category_general');
   }
-  const categoryKey = `task_category_${category.toLowerCase()}`;
-  return t(lang, categoryKey);
+  
+  // Normalize category name: replace hyphens with underscores
+  const normalizedCategory = category.toLowerCase().replace(/-/g, '_');
+  const categoryKey = `task_category_${normalizedCategory}`;
+  
+  // Try to get translation
+  const translation = t(lang, categoryKey);
+  
+  // If translation is the same as the key, try with original category name
+  if (translation === categoryKey) {
+    const originalCategoryKey = `task_category_${category.toLowerCase()}`;
+    const originalTranslation = t(lang, originalCategoryKey);
+    
+    // If still no translation, return a human-readable version of the category
+    if (originalTranslation === originalCategoryKey) {
+      return category.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+    }
+    
+    return originalTranslation;
+  }
+  
+  return translation;
 }

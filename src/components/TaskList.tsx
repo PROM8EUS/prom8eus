@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { t, translateCategory } from "@/lib/i18n/i18n";
 import { AppIcon } from './AppIcon';
 import { AITool, getToolById, getToolDescription, getToolFeatures } from '../lib/catalog/aiTools';
+import TaskPanel from './TaskPanel';
 
 interface Task {
   id?: string;
@@ -22,6 +23,19 @@ interface Task {
   confidence?: number;
   aiTools?: string[];
   industry?: string;
+  subtasks?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    automationPotential: number;
+    estimatedTime: number;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    complexity: 'low' | 'medium' | 'high';
+    systems: string[];
+    risks: string[];
+    opportunities: string[];
+    dependencies: string[];
+  }>;
 }
 
 interface AIAgent {
@@ -171,8 +185,11 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      case 'Automatisierbar':
       case 'automatisierbar': return 'bg-green-100 text-green-800';
+      case 'Teilweise Automatisierbar':
       case 'teilweise': return 'bg-yellow-100 text-yellow-800';
+      case 'Mensch':
       case 'mensch': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -180,6 +197,9 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
 
   const getCategoryText = (category: string) => {
     switch (category) {
+      case 'Automatisierbar': return lang === 'de' ? 'Automatisierbar' : 'Automated';
+      case 'Teilweise Automatisierbar': return lang === 'de' ? 'Teilweise Automatisierbar' : 'Partially Automated';
+      case 'Mensch': return lang === 'de' ? 'Menschlich' : 'Human';
       case 'automatisierbar': return lang === 'de' ? 'Automatisierbar' : 'Automated';
       case 'teilweise': return lang === 'de' ? 'Teilweise Automatisierbar' : 'Partially Automated';
       case 'mensch': return lang === 'de' ? 'Menschlich' : 'Human';
@@ -561,212 +581,90 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                 {/* Expandable content */}
                 <div 
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isExpanded ? 'max-h-[800px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+                    isExpanded ? 'max-h-[1200px] opacity-100 mt-4' : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="border-t pt-4 space-y-4">
-                    {/* AI Agents and Workflows Section - Side by Side */}
-                    {(automationCategory === 'automatisierbar' && (aiAgents.length > 0 || workflows.length > 0)) && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* AI Agents Section - Left */}
-                        {aiAgents.length > 0 && (
-                          <div>
-                            <h5 className="font-medium text-foreground mb-2 flex items-center">
-                              <Zap className="w-4 h-4 mr-2 text-primary" />
-                              {t(lang, "recommended_ai_agents")}
-                            </h5>
-                            <div className="space-y-2">
-                              {aiAgents.map((agent, idx) => (
-                                 <div key={idx} className="bg-muted/50 p-3 rounded-lg">
-                                   <div className="font-medium text-sm mb-2">{agent.name}</div>
-                                   <div className="text-xs text-muted-foreground mb-2">
-                                     <strong>{t(lang, "technology")}:</strong> {agent.technology}
-                                   </div>
-                                   <div className="text-xs text-muted-foreground mb-2">
-                                     <strong>{t(lang, "difficulty")}:</strong> {agent.difficulty || t(lang, "medium")} • <strong>{t(lang, "setup_time")}:</strong> {agent.setupTime || t(lang, "2_4_hours")}
-                                   </div>
-                                   <div className="text-xs text-muted-foreground">
-                                     <strong>{t(lang, "implementation_steps")}:</strong>
-                                     <ol className="mt-1 ml-4 space-y-1 list-decimal">
-                                       {agent.implementation.split('\n').map((step, stepIdx) => (
-                                         <li key={stepIdx} className="pl-1">
-                                           {step.replace(/^\d+\.\s*/, '')}
-                                         </li>
-                                       ))}
-                                     </ol>
-                                   </div>
-                                 </div>
-                               ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Workflows Section - Right */}
-                        {workflows.length > 0 && (
-                          <div>
-                            <h5 className="font-medium text-foreground mb-2 flex items-center">
-                              <Workflow className="w-4 h-4 mr-2 text-primary" />
-                              {t(lang, "recommended_workflows")}
-                            </h5>
-                            <div className="space-y-2">
-                              {workflows.map((workflow, idx) => (
-                                 <div key={idx} className="bg-muted/50 p-3 rounded-lg">
-                                   <div className="font-medium text-sm mb-2">{workflow.name}</div>
-                                   <div className="text-xs text-muted-foreground mb-2">
-                                     <strong>{t(lang, "technology")}:</strong> {workflow.technology}
-                                   </div>
-                                   <div className="text-xs text-muted-foreground">
-                                     <strong>{t(lang, "implementation_steps")}:</strong>
-                                     <ol className="mt-1 ml-4 space-y-1 list-decimal">
-                                       {workflow.implementation.split('\n').map((step, stepIdx) => (
-                                         <li key={stepIdx} className="pl-1">
-                                           {step.replace(/^\d+\.\s*/, '')}
-                                         </li>
-                                       ))}
-                                     </ol>
-                                   </div>
-                                 </div>
-                               ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* AI Agents & Workflows Section */}
-                    {(() => {
-                      const agents = getAIAgentsForTask(task);
-                      const workflows = getWorkflowsForTask(task);
-                      const hasAutomation = (task.automationRatio && task.automationRatio > 0) || (task.score && task.score > 0);
-                      
-                      return hasAutomation && (agents.length > 0 || workflows.length > 0) ? (
-                        <div className="flex gap-4">
-                          {/* AI Agents */}
-                          {agents.length > 0 && (
-                            <div className="flex-1">
-                              <h5 className="font-medium text-foreground mb-2 flex items-center">
-                                <Zap className="w-4 h-4 mr-2 text-primary" />
-                                {lang === 'de' ? 'AI Agenten' : 'AI Agents'}
-                              </h5>
-                              <div className="space-y-2">
-                                {agents.map((agent, index) => (
-                                  <div key={index} className="bg-muted/50 p-2 rounded-lg">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-sm font-medium">{agent.name}</span>
-                                      {agent.difficulty && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {agent.difficulty}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mb-1">
-                                      <strong>{lang === 'de' ? 'Tech:' : 'Tech:'}</strong> {agent.technology}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      <ol className="mt-1 ml-4 space-y-1 list-decimal">
-                                        {agent.implementation.split('\n').map((step, stepIdx) => (
-                                          <li key={stepIdx} className="pl-1">
-                                            {step.replace(/^\d+\.\s*/, '')}
-                                          </li>
-                                        ))}
-                                      </ol>
-                                    </div>
-                                    {agent.setupTime && (
-                                      <div className="text-xs text-muted-foreground mt-1">
-                                        <strong>{lang === 'de' ? 'Setup:' : 'Setup:'}</strong> {agent.setupTime}
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Workflows */}
-                          {workflows.length > 0 && (
-                            <div className="flex-1">
-                              <h5 className="font-medium text-foreground mb-2 flex items-center">
-                                <Workflow className="w-4 h-4 mr-2 text-primary" />
-                                {lang === 'de' ? 'Workflows' : 'Workflows'}
-                              </h5>
-                              <div className="space-y-2">
-                                {workflows.map((workflow, index) => (
-                                  <div key={index} className="bg-muted/50 p-2 rounded-lg">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-sm font-medium">{workflow.name}</span>
-                                      {workflow.difficulty && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {workflow.difficulty}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mb-1">
-                                      <strong>{lang === 'de' ? 'Tech:' : 'Tech:'}</strong> {workflow.technology}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      <ol className="mt-1 ml-4 space-y-1 list-decimal">
-                                        {workflow.implementation.split('\n').map((step, stepIdx) => (
-                                          <li key={stepIdx} className="pl-1">
-                                            {step.replace(/^\d+\.\s*/, '')}
-                                          </li>
-                                        ))}
-                                      </ol>
-                                    </div>
-                                    {workflow.setupTime && (
-                                      <div className="text-xs text-muted-foreground mt-1">
-                                        <strong>{lang === 'de' ? 'Setup:' : 'Setup:'}</strong> {workflow.setupTime}
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : null;
-                    })()}
-
-                    {/* AI Tools Section - MOVED AFTER AI AGENTS & WORKFLOWS */}
-                    {task.aiTools && task.aiTools.length > 0 && (
-                      <div>
-                        <h5 className="font-medium text-foreground mb-2 flex items-center">
-                          <Bot className="w-4 h-4 mr-2 text-primary" />
-                          {t(lang, "recommended_ai_tools")} ({task.aiTools.length})
-                        </h5>
-                        <div className="flex flex-wrap gap-2">
-                          {task.aiTools.map((toolId) => {
-                            const tool = getToolById(toolId);
-                            if (!tool) {
-                              return (
-                                <div key={toolId} className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
-                                  <span className="text-sm font-medium text-red-500">{toolId} (nicht gefunden)</span>
+                  <div className="border-t pt-4 space-y-6">
+                    {/* Subtasks Section */}
+                    {task.subtasks && task.subtasks.length > 0 && (
+                      <div className="space-y-4">
+                        <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                          <Workflow className="w-4 h-4 text-blue-600" />
+                          {currentLang === 'de' ? 'Teilaufgaben' : 'Subtasks'} ({task.subtasks.length})
+                        </h4>
+                        <div className="grid gap-3">
+                          {task.subtasks.map((subtask, index) => (
+                            <div key={subtask.id} className="p-3 border rounded-lg bg-gray-50">
+                              <div className="flex items-start justify-between mb-2">
+                                <h5 className="font-medium text-gray-900 text-sm">{subtask.title}</h5>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {subtask.automationPotential}% {currentLang === 'de' ? 'Automatisierung' : 'Automation'}
+                                  </Badge>
+                                  <Badge 
+                                    variant={subtask.priority === 'critical' ? 'destructive' : 'secondary'}
+                                    className="text-xs"
+                                  >
+                                    {subtask.priority}
+                                  </Badge>
                                 </div>
-                              );
-                            }
-                            return (
-                              <div 
-                                key={toolId} 
-                                className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
-                                onClick={() => openToolModal(tool)}
-                              >
-                                <AppIcon tool={tool} size="sm" />
-                                <span className="text-sm font-medium">{tool.name}</span>
                               </div>
-                            );
-                          })}
+                              <p className="text-xs text-gray-600 mb-2">{subtask.description}</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                <div>
+                                  <span className="font-medium text-gray-500">{currentLang === 'de' ? 'Zeit:' : 'Time:'}</span>
+                                  <span className="ml-1">{subtask.estimatedTime}min</span>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-500">{currentLang === 'de' ? 'Komplexität:' : 'Complexity:'}</span>
+                                  <span className="ml-1">{subtask.complexity}</span>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-500">{currentLang === 'de' ? 'Systeme:' : 'Systems:'}</span>
+                                  <span className="ml-1">{subtask.systems?.join(', ') || (currentLang === 'de' ? 'Keine' : 'None')}</span>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-500">{currentLang === 'de' ? 'Abhängigkeiten:' : 'Dependencies:'}</span>
+                                  <span className="ml-1">{subtask.dependencies?.length || 0}</span>
+                                </div>
+                              </div>
+                              {subtask.risks?.length > 0 && (
+                                <div className="mt-2 p-2 bg-red-50 rounded">
+                                  <h6 className="text-xs font-medium text-red-800 mb-1">{currentLang === 'de' ? 'Risiken:' : 'Risks:'}</h6>
+                                  <div className="flex flex-wrap gap-1">
+                                    {subtask.risks.map((risk, riskIndex) => (
+                                      <Badge key={riskIndex} variant="destructive" className="text-xs">
+                                        {risk}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {subtask.opportunities?.length > 0 && (
+                                <div className="mt-2 p-2 bg-green-50 rounded">
+                                  <h6 className="text-xs font-medium text-green-800 mb-1">{currentLang === 'de' ? 'Chancen:' : 'Opportunities:'}</h6>
+                                  <div className="flex flex-wrap gap-1">
+                                    {subtask.opportunities.map((opportunity, oppIndex) => (
+                                      <Badge key={oppIndex} variant="secondary" className="text-xs bg-green-100 text-green-800">
+                                        {opportunity}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* Human tasks info - MOVED TO END */}
-                    {automationCategory === 'mensch' && (
-                      <div className="bg-slate-50 p-3 rounded-lg">
-                        <h5 className="font-medium text-slate-800 mb-1">{t(lang, "analysis_human_expertise_required")}</h5>
-                        <p className="text-sm text-slate-600">
-                          {t(lang, "analysis_human_expertise_desc")}
-                        </p>
-                      </div>
-                    )}
+                    {/* TaskPanel - New Structured Layout */}
+                    <TaskPanel 
+                      task={task}
+                      lang={lang}
+                      onOpenSolutions={openToolModal}
+                      isVisible={isExpanded}
+                    />
                   </div>
                 </div>
               </CardContent>

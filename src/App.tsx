@@ -13,6 +13,8 @@ import AgentsWorkflows from "./pages/AgentsWorkflows";
 
 import NotFound from "./pages/NotFound";
 import TestAnalysis from "./components/TestAnalysis";
+import EnhancedDemo from "./pages/EnhancedDemo";
+import './lib/testLLM'; // Import LLM test
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/agents-workflows" element={<AgentsWorkflows />} />
+          <Route path="/enhanced-demo" element={<EnhancedDemo />} />
 
           <Route path="/test" element={<TestAnalysis />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

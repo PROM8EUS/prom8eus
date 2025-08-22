@@ -280,6 +280,23 @@ export const AI_TOOLS: AITool[] = [
     automationPotential: 75,
     features: ['Lokale Ausführung', 'Offline-Entwicklung', 'Code-Vervollständigung', 'Privatsphäre']
   },
+  {
+    id: 'n8n',
+    name: 'n8n',
+    description: 'Workflow-Automatisierung, API-Integration, No-Code/Low-Code',
+    category: 'Automation',
+    industry: ['tech', 'general'],
+    logo: {
+      url: 'https://logo.clearbit.com/n8n.io',
+      alt: 'n8n Logo',
+      backgroundColor: '#ff6b6b',
+      textColor: '#ffffff'
+    },
+    website: 'https://n8n.io',
+    pricing: 'Freemium',
+    automationPotential: 90,
+    features: ['Workflow-Automatisierung', 'API-Integration', 'No-Code', 'Templates', 'Webhooks']
+  },
 
   // Gesundheitswesen
   {
