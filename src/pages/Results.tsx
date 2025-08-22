@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Share2, BookOpen, Bot, User, Target, Zap, Rocket, Sparkles } from "lucide-react";
+import { Share2, BookOpen, Bot, User, Target, Zap, Rocket, Sparkles, Lightbulb } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ScoreCircle from "@/components/ScoreCircle";
 import InfoCard from "@/components/InfoCard";
@@ -504,6 +504,8 @@ const Results = () => {
               />
             </section>
           )}
+
+
 
           {/* Action Buttons - Only show for non-shared views */}
           {!isSharedView && (

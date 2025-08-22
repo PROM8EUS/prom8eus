@@ -5,6 +5,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, Lightbulb } from 'lucide-react';
 
+// Helper function to get industry display name
+const getIndustryDisplayName = (industry: string): string => {
+  const industryNames: Record<string, string> = {
+    'tech': 'Technologie & IT',
+    'healthcare': 'Gesundheitswesen',
+    'finance': 'Finanzwesen',
+    'marketing': 'Marketing & Sales',
+    'hr': 'HR & Personal',
+    'production': 'Produktion & Logistik',
+    'education': 'Bildung & Forschung',
+    'legal': 'Recht & Compliance',
+    'general': 'Allgemein'
+  };
+  return industryNames[industry] || industry;
+};
+
 interface AIToolRecommendationsProps {
   industry: string;
   tasks: Array<{ text: string; aiTools?: string[] }>;
@@ -19,7 +35,6 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
   lang = 'de'
 }) => {
   const [selectedTool, setSelectedTool] = useState<AITool | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'cards'>('cards');
 
   // Sammle alle empfohlenen AI-Tools aus den Aufgaben
   const recommendedToolIds = tasks
@@ -44,17 +59,11 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            {lang === 'de' ? 'Empfohlene AI-Tools für ' : 'Recommended AI-Tools for '}
-            {industry === 'tech' ? (lang === 'de' ? 'Technologie & IT' : 'Technology & IT') :
-             industry === 'healthcare' ? (lang === 'de' ? 'Gesundheitswesen' : 'Healthcare') :
-             industry === 'finance' ? (lang === 'de' ? 'Finanzwesen' : 'Finance') :
-             industry === 'marketing' ? (lang === 'de' ? 'Marketing & Sales' : 'Marketing & Sales') :
-             industry === 'hr' ? (lang === 'de' ? 'HR & Personal' : 'HR & Personnel') :
-             industry === 'production' ? (lang === 'de' ? 'Produktion & Logistik' : 'Production & Logistics') :
-             industry === 'education' ? (lang === 'de' ? 'Bildung & Forschung' : 'Education & Research') :
-             industry === 'legal' ? (lang === 'de' ? 'Recht & Compliance' : 'Legal & Compliance') :
-             (lang === 'de' ? 'Ihre Branche' : 'Your Industry')}
+          <h3 className="text-xl font-semibold text-foreground mb-2">
+            {lang === 'de' 
+              ? `Tools für die ${getIndustryDisplayName(industry)} Branche`
+              : `Tools for the ${getIndustryDisplayName(industry)} Industry`
+            }
           </h3>
           <p className="text-sm text-gray-600">
             {recommendedTools.length > 0 
@@ -67,8 +76,6 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
             }
           </p>
         </div>
-
-
       </div>
 
       {/* Tools Display */}
@@ -160,42 +167,56 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Branchen-spezifische Tipps */}
+      {/* Industry Tips - Compact */}
       <div className="bg-muted/30 border border-muted/40 rounded-lg p-4">
-        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+        <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-primary" />
-          {lang === 'de' ? 'Branchen-Tipp' : 'Industry Tip'}
+          {lang === 'de' ? 'Branchen-Tipps für Automatisierung' : 'Industry Tips for Automation'}
         </h4>
-        <p className="text-sm text-muted-foreground">
-          {industry === 'tech' && (lang === 'de' 
-            ? "Kombinieren Sie GitHub Copilot mit Claude für optimale Code-Qualität und Sicherheit."
-            : "Combine GitHub Copilot with Claude for optimal code quality and security.")}
-          {industry === 'healthcare' && (lang === 'de'
-            ? "Nutzen Sie Notion AI für strukturierte Patientendaten und Microsoft Copilot für medizinische Berichte."
-            : "Use Notion AI for structured patient data and Microsoft Copilot for medical reports.")}
-          {industry === 'finance' && (lang === 'de'
-            ? "Excel AI und Power BI AI bieten die beste Kombination für Finanzanalyse und Reporting."
-            : "Excel AI and Power BI AI offer the best combination for financial analysis and reporting.")}
-          {industry === 'marketing' && (lang === 'de'
-            ? "Jasper für Content-Erstellung und Canva AI für visuelle Elemente sind eine starke Kombination."
-            : "Jasper for content creation and Canva AI for visual elements are a powerful combination.")}
-          {industry === 'hr' && (lang === 'de'
-            ? "Airtable AI für Bewerber-Management und Notion AI für HR-Dokumentation optimieren Ihre Prozesse."
-            : "Airtable AI for applicant management and Notion AI for HR documentation optimize your processes.")}
-          {industry === 'production' && (lang === 'de'
-            ? "Excel AI für Produktionsdaten und Power BI AI für Performance-Monitoring bieten umfassende Einblicke."
-            : "Excel AI for production data and Power BI AI for performance monitoring provide comprehensive insights.")}
-          {industry === 'education' && (lang === 'de'
-            ? "Notion AI für Kurs-Management und Obsidian AI für Forschungsnotizen unterstützen Ihre akademische Arbeit."
-            : "Notion AI for course management and Obsidian AI for research notes support your academic work.")}
-          {industry === 'legal' && (lang === 'de'
-            ? "Claude für Rechtsanalysen und Perplexity für aktuelle Gesetze sind unverzichtbar für Ihre Arbeit."
-            : "Claude for legal analysis and Perplexity for current laws are essential for your work.")}
-          {!['tech', 'healthcare', 'finance', 'marketing', 'hr', 'production', 'education', 'legal'].includes(industry) && 
-            (lang === 'de'
-              ? "ChatGPT und Claude bieten eine solide Grundlage für allgemeine Aufgaben in Ihrer Branche."
-              : "ChatGPT and Claude provide a solid foundation for general tasks in your industry.")}
-        </p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <h5 className="font-medium text-foreground text-sm">
+                {lang === 'de' ? 'Starte mit einfachen Automatisierungen' : 'Start with simple automations'}
+              </h5>
+              <p className="text-xs text-muted-foreground">
+                {lang === 'de' 
+                  ? 'Wiederkehrende, strukturierte Aufgaben bieten das höchste Automatisierungspotenzial.'
+                  : 'Repetitive, structured tasks offer the highest automation potential.'
+                }
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <h5 className="font-medium text-foreground text-sm">
+                {lang === 'de' ? 'Kombiniere AI-Tools strategisch' : 'Combine AI tools strategically'}
+              </h5>
+              <p className="text-xs text-muted-foreground">
+                {lang === 'de' 
+                  ? 'Verwenden Sie verschiedene AI-Tools für verschiedene Aufgabenbereiche.'
+                  : 'Use different AI tools for different task areas.'
+                }
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <h5 className="font-medium text-foreground text-sm">
+                {lang === 'de' ? 'Messe und optimiere kontinuierlich' : 'Measure and optimize continuously'}
+              </h5>
+              <p className="text-xs text-muted-foreground">
+                {lang === 'de' 
+                  ? 'Tracken Sie Zeitersparnis und optimieren Sie basierend auf Daten.'
+                  : 'Track time savings and optimize based on data.'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

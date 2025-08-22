@@ -12,58 +12,9 @@ import {
   Bot
 } from 'lucide-react';
 import { FastAnalysisEngine } from '../lib/patternEngine/fastAnalysisEngine';
-import { AIToolRecommendations } from './AIToolRecommendations';
-import { WorkflowTemplates } from './WorkflowTemplates';
+import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
 
-// Helper function to map task categories to AI tool industries
-const mapTaskCategoryToIndustry = (category?: string): string => {
-  if (!category) return 'general';
-  
-  const categoryLower = category.toLowerCase();
-  
-  // Map task categories to AI tool industries
-  if (categoryLower.includes('finance') || categoryLower.includes('accounting') || 
-      categoryLower.includes('buchhaltung') || categoryLower.includes('finanz')) {
-    return 'finance';
-  }
-  
-  if (categoryLower.includes('marketing') || categoryLower.includes('sales') || 
-      categoryLower.includes('werbung') || categoryLower.includes('vertrieb')) {
-    return 'marketing';
-  }
-  
-  if (categoryLower.includes('hr') || categoryLower.includes('personal') || 
-      categoryLower.includes('recruiting') || categoryLower.includes('bewerber')) {
-    return 'hr';
-  }
-  
-  if (categoryLower.includes('healthcare') || categoryLower.includes('medizin') || 
-      categoryLower.includes('gesundheit')) {
-    return 'healthcare';
-  }
-  
-  if (categoryLower.includes('tech') || categoryLower.includes('it') || 
-      categoryLower.includes('software') || categoryLower.includes('development')) {
-    return 'tech';
-  }
-  
-  if (categoryLower.includes('production') || categoryLower.includes('logistik') || 
-      categoryLower.includes('manufacturing')) {
-    return 'production';
-  }
-  
-  if (categoryLower.includes('education') || categoryLower.includes('bildung') || 
-      categoryLower.includes('forschung')) {
-    return 'education';
-  }
-  
-  if (categoryLower.includes('legal') || categoryLower.includes('recht') || 
-      categoryLower.includes('compliance')) {
-    return 'legal';
-  }
-  
-  return 'general';
-};
+
 
 type TaskPanelProps = {
   task: {
@@ -373,24 +324,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* AI Tool Recommendations */}
-              {(() => {
-                const industry = mapTaskCategoryToIndustry(task.category);
-                console.log('🔍 [TaskPanel] AI Tools Industry:', {
-                  taskCategory: task.category,
-                  mappedIndustry: industry
-                });
-                return (
-                  <AIToolRecommendations
-                    industry={industry}
-                    tasks={[{ text: task.title || task.name || '', aiTools: [] }]}
-                    lang={lang}
-                  />
-                );
-              })()}
-
-              {/* Workflow Templates */}
-              <WorkflowTemplates
+              {/* Task-Specific Workflows */}
+              <TaskSpecificWorkflows
+                taskText={task.title || task.name || ''}
                 lang={lang}
               />
             </div>

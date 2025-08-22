@@ -1,12 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bot, User, ChevronDown, ChevronUp, Zap, Workflow, TrendingUp, TrendingDown, Minus, ExternalLink } from "lucide-react";
+import { Bot, User, ChevronDown, ChevronUp, Zap, Workflow, TrendingUp, TrendingDown, Minus, ExternalLink, Lightbulb } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { t, translateCategory } from "@/lib/i18n/i18n";
 import { AppIcon } from './AppIcon';
-import { AITool, getToolById, getToolDescription, getToolFeatures } from '../lib/catalog/aiTools';
+import { AITool, getToolById, getToolDescription, getToolFeatures, getToolsByIndustry, getTopToolsByIndustry } from '../lib/catalog/aiTools';
 import TaskPanel from './TaskPanel';
+import { AIToolRecommendations } from './AIToolRecommendations';
 
 interface Task {
   id?: string;
@@ -747,6 +748,8 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
           )}
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 };
