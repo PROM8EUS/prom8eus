@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Checkbox } from './ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { 
   Zap, 
   Workflow, 
@@ -9,7 +11,9 @@ import {
   Clock,
   TrendingUp,
   Euro,
-  Bot
+  Bot,
+  Check,
+  HelpCircle
 } from 'lucide-react';
 import { FastAnalysisEngine } from '../lib/patternEngine/fastAnalysisEngine';
 import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
@@ -45,6 +49,8 @@ type Subtask = {
   id: string;
   title: string;
   systems?: string[];
+  aiTools?: string[];
+  selectedTools?: string[];
   manualHoursShare: number;
   automationPotential: number;
   risks?: string[];
@@ -64,10 +70,258 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
   const [hourlyRate, setHourlyRate] = useState(40);
   const [generatedSubtasks, setGeneratedSubtasks] = useState<Subtask[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
+  const [applicationLogos, setApplicationLogos] = useState<Record<string, string>>({});
   
   // Initialize FastAnalysisEngine
   const fastAnalysisEngine = useMemo(() => new FastAnalysisEngine(), []);
+
+  // Get fallback logo URL for an application
+  const getFallbackLogo = (logoKey: string): string => {
+    const fallbackLogos: Record<string, string> = {
+      'excel': 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
+      'powerpoint': 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Microsoft_Office_PowerPoint_%282019%E2%80%93present%29.svg',
+      'word': 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Microsoft_Office_Word_%282019%E2%80%93present%29.svg',
+      'outlook': 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
+      'teams': 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg',
+      'sharepoint': 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
+      'powerbi': 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
+      'onedrive': 'https://upload.wikimedia.org/wikipedia/commons/7/7c/OneDrive_logo.svg',
+      'google-sheets': 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg',
+      'google-docs': 'https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282020%29.svg',
+      'calendar': 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg',
+      'salesforce': 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
+      'slack': 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
+      'notion': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
+      'asana': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Asana_logo.svg',
+      'trello': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Trello_logo.svg',
+      'figma': 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
+      'canva': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg',
+      'zoom': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Zoom_logo.svg',
+      'dropbox': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Dropbox_Icon.svg'
+    };
+    return fallbackLogos[logoKey] || '';
+  };
+
+  // Load real application logos using multiple sources
+  const loadApplicationLogos = async () => {
+    // Map application names to their real domains and alternative sources
+    const logoMapping = {
+      // Microsoft Office
+      'excel': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftexcel.svg'
+      },
+      'powerpoint': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Microsoft_Office_PowerPoint_%282019%E2%80%93present%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftpowerpoint.svg'
+      },
+      'word': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Microsoft_Office_Word_%282019%E2%80%93present%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftword.svg'
+      },
+            'outlook': {
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftoutlook.svg'
+      },
+      'teams': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftteams.svg'
+      },
+            'sharepoint': {
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftsharepoint.svg'
+      },
+            'powerbi': {
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/powerbi.svg'
+      },
+      'onedrive': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/7c/OneDrive_logo.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftonedrive.svg'
+      },
+      
+      // Google Workspace
+      'google-sheets': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg',
+        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googlesheets.svg'
+      },
+      'google-docs': { 
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googledocs.svg',
+        fallback: 'https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282020%29.svg'
+      },
+      'calendar': { 
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googlecalendar.svg',
+        fallback: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg'
+      },
+      
+      // Other applications
+      'salesforce': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
+        fallback: 'https://logo.clearbit.com/salesforce.com?size=32&format=png'
+      },
+      'slack': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
+        fallback: 'https://logo.clearbit.com/slack.com?size=32&format=png'
+      },
+      'notion': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
+        fallback: 'https://logo.clearbit.com/notion.so?size=32&format=png'
+      },
+      'asana': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Asana_logo.svg',
+        fallback: 'https://logo.clearbit.com/asana.com?size=32&format=png'
+      },
+      'trello': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Trello_logo.svg',
+        fallback: 'https://logo.clearbit.com/trello.com?size=32&format=png'
+      },
+      'figma': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
+        fallback: 'https://logo.clearbit.com/figma.com?size=32&format=png'
+      },
+      'canva': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg',
+        fallback: 'https://logo.clearbit.com/canva.com?size=32&format=png'
+      },
+      'zoom': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Zoom_logo.svg',
+        fallback: 'https://logo.clearbit.com/zoom.us?size=32&format=png'
+      },
+      'dropbox': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Dropbox_Icon.svg',
+        fallback: 'https://logo.clearbit.com/dropbox.com?size=32&format=png'
+      }
+    };
+
+    const logos: Record<string, string> = {};
+    
+    // Load logos with fallback mechanism
+    Object.entries(logoMapping).forEach(([appId, sources]) => {
+      logos[appId] = sources.primary;
+    });
+
+    setApplicationLogos(logos);
+  };
+
+  // Test logo availability and use working ones
+  const testAndLoadLogos = async () => {
+    const testLogos = {
+      'powerbi': [
+        'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/powerbi.svg',
+        'https://upload.wikimedia.org/wikipedia/commons/c/cf/Power_bi_logo_black.svg'
+      ],
+      'outlook': [
+        'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
+        'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftoutlook.svg'
+      ],
+      'sharepoint': [
+        'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
+        'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftsharepoint.svg'
+      ]
+    };
+
+    const workingLogos: Record<string, string> = {};
+    
+    for (const [appId, urls] of Object.entries(testLogos)) {
+      for (const url of urls) {
+        try {
+          const response = await fetch(url, { method: 'HEAD' });
+          if (response.ok) {
+            workingLogos[appId] = url;
+            break;
+          }
+        } catch (error) {
+          continue;
+        }
+      }
+    }
+
+    setApplicationLogos(prev => ({ ...prev, ...workingLogos }));
+  };
+
+  // Handle tool selection
+  const handleToolToggle = (subtaskId: string, toolId: string) => {
+    setSelectedTools(prev => {
+      const current = prev[subtaskId] || [];
+      const updated = current.includes(toolId)
+        ? current.filter(id => id !== toolId)
+        : [...current, toolId];
+      
+      return {
+        ...prev,
+        [subtaskId]: updated
+      };
+    });
+  };
+
+  // Get typical applications for a subtask
+  const getTypicalApplications = (subtask: Subtask) => {
+    // Define typical applications based on subtask content with Simple Icons mapping
+    const applications = [
+      { id: 'excel', name: 'Excel', logoKey: 'excel', category: 'data' },
+      { id: 'powerpoint', name: 'PowerPoint', logoKey: 'powerpoint', category: 'presentation' },
+      { id: 'word', name: 'Word', logoKey: 'word', category: 'documentation' },
+      { id: 'outlook', name: 'Outlook', logoKey: 'outlook', category: 'communication' },
+      { id: 'teams', name: 'Teams', logoKey: 'teams', category: 'collaboration' },
+      { id: 'sharepoint', name: 'SharePoint', logoKey: 'sharepoint', category: 'storage' },
+      { id: 'powerbi', name: 'Power BI', logoKey: 'powerbi', category: 'analytics' },
+      { id: 'salesforce', name: 'Salesforce', logoKey: 'salesforce', category: 'crm' },
+      { id: 'slack', name: 'Slack', logoKey: 'slack', category: 'communication' },
+      { id: 'notion', name: 'Notion', logoKey: 'notion', category: 'documentation' },
+      { id: 'asana', name: 'Asana', logoKey: 'asana', category: 'project' },
+      { id: 'trello', name: 'Trello', logoKey: 'trello', category: 'project' },
+      { id: 'figma', name: 'Figma', logoKey: 'figma', category: 'design' },
+      { id: 'canva', name: 'Canva', logoKey: 'canva', category: 'design' },
+      { id: 'google-sheets', name: 'Google Sheets', logoKey: 'google-sheets', category: 'data' },
+      { id: 'google-docs', name: 'Google Docs', logoKey: 'google-docs', category: 'documentation' },
+      { id: 'zoom', name: 'Zoom', logoKey: 'zoom', category: 'communication' },
+      { id: 'calendar', name: 'Google Calendar', logoKey: 'calendar', category: 'scheduling' },
+      { id: 'dropbox', name: 'Dropbox', logoKey: 'dropbox', category: 'storage' },
+      { id: 'onedrive', name: 'OneDrive', logoKey: 'onedrive', category: 'storage' }
+    ];
+
+    // Filter applications based on subtask title/content
+    const lowerTitle = subtask.title.toLowerCase();
+    
+    if (lowerTitle.includes('daten') || lowerTitle.includes('data') || lowerTitle.includes('analyse') || lowerTitle.includes('report')) {
+      return applications.filter(app => ['excel', 'powerbi', 'google-sheets'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('präsentation') || lowerTitle.includes('presentation') || lowerTitle.includes('meeting')) {
+      return applications.filter(app => ['powerpoint', 'teams', 'zoom'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('dokument') || lowerTitle.includes('document') || lowerTitle.includes('bericht')) {
+      return applications.filter(app => ['word', 'google-docs', 'notion'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('kommunikation') || lowerTitle.includes('communication') || lowerTitle.includes('email')) {
+      return applications.filter(app => ['outlook', 'teams', 'slack'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('projekt') || lowerTitle.includes('project') || lowerTitle.includes('task')) {
+      return applications.filter(app => ['asana', 'trello', 'notion'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('design') || lowerTitle.includes('visual') || lowerTitle.includes('grafik')) {
+      return applications.filter(app => ['figma', 'canva', 'powerpoint'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('storage') || lowerTitle.includes('datei') || lowerTitle.includes('file')) {
+      return applications.filter(app => ['sharepoint', 'dropbox', 'onedrive'].includes(app.id));
+    }
+    
+    // Default: return common applications
+    return applications.slice(0, 6);
+  };
   
+  // Load application logos on component mount
+  useEffect(() => {
+    loadApplicationLogos();
+    testAndLoadLogos(); // Test and load problematic logos
+  }, []);
+
   // Generate subtasks when task becomes visible
   useEffect(() => {
     if (isVisible && task) {
@@ -85,6 +339,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               id: subtask.id,
               title: subtask.title,
               systems: subtask.systems || [],
+              aiTools: subtask.aiTools || [],
+              selectedTools: [],
               manualHoursShare: (100 - subtask.automationPotential) / 100,
               automationPotential: subtask.automationPotential / 100,
               risks: subtask.risks || [],
@@ -306,24 +562,89 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-gray-900 mb-1">{subtask.title}</div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-1">
-                          {subtask.systems?.slice(0, 2).map((system) => (
-                            <Badge key={system} variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                              {system}
-                            </Badge>
-                          ))}
-                          {subtask.systems && subtask.systems.length > 2 && (
-                            <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
-                              +{subtask.systems.length - 2}
-                            </Badge>
-                          )}
+                      <div className="font-medium text-sm text-gray-900 mb-2">{subtask.title}</div>
+                      
+                                                                   {/* Eingesetzte Anwendungen und Zeitersparnis in zwei Spalten */}
+                       <div className="grid grid-cols-[1fr_auto] gap-4 mb-2">
+                        {/* Eingesetzte Anwendungen */}
+                        <div>
+                          <div className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                            {lang === 'de' ? 'Eingesetzte Anwendungen:' : 'Used Applications:'}
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="w-3 h-3 text-gray-400 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs">
+                                    {lang === 'de' 
+                                      ? 'Diese Auswahl dient als Filter für die Lösungen dieser Aufgabe. Nur Lösungen, die mit den ausgewählten Anwendungen kompatibel sind, werden angezeigt.'
+                                      : 'This selection serves as a filter for the solutions of this task. Only solutions compatible with the selected applications will be displayed.'
+                                    }
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {getTypicalApplications(subtask).map((app) => {
+                              const isSelected = selectedTools[subtask.id]?.includes(app.id) || false;
+                              return (
+                                <div
+                                  key={app.id}
+                                  className={`flex items-center gap-1 px-2 py-1 rounded-md border cursor-pointer transition-all ${
+                                    isSelected 
+                                      ? 'bg-primary/10 border-primary/30 text-primary' 
+                                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                  }`}
+                                  onClick={() => handleToolToggle(subtask.id, app.id)}
+                                >
+                                  <div className="w-4 h-4 flex items-center justify-center">
+                                    {isSelected ? (
+                                      <Check className="w-3 h-3 text-primary" />
+                                    ) : (
+                                      <div className="w-3 h-3 rounded-sm border border-gray-300" />
+                                    )}
+                                  </div>
+                                  <div className="w-4 h-4 rounded-sm bg-gray-100 flex items-center justify-center overflow-hidden">
+                                    <img 
+                                      src={applicationLogos[app.logoKey] || getFallbackLogo(app.logoKey)}
+                                      alt={app.name}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        // Try fallback logo first
+                                        const fallbackUrl = getFallbackLogo(app.logoKey);
+                                        if (fallbackUrl && fallbackUrl !== e.currentTarget.src) {
+                                          e.currentTarget.src = fallbackUrl;
+                                          return;
+                                        }
+                                        
+                                        // Final fallback to text-based icon
+                                        e.currentTarget.style.display = 'none';
+                                        const fallback = document.createElement('div');
+                                        fallback.className = 'w-full h-full flex items-center justify-center text-xs font-bold text-gray-600 bg-gray-200 rounded';
+                                        fallback.textContent = app.name.charAt(0).toUpperCase();
+                                        e.currentTarget.parentNode?.appendChild(fallback);
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-xs font-medium">{app.name}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                          <span className="text-gray-400">{hoursBefore.toFixed(1)}h</span>
-                          <span className="text-primary">→</span>
-                          <span className="text-green-600 font-semibold">{hoursAfter.toFixed(1)}h</span>
+                        
+                        {/* Zeitersparnis */}
+                        <div>
+                          <div className="text-xs text-gray-600 mb-1">
+                            {lang === 'de' ? 'Zeitersparnis:' : 'Time savings:'}
+                          </div>
+                          <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                            <span className="text-gray-400">{hoursBefore.toFixed(1)}h</span>
+                            <span className="text-primary">→</span>
+                            <span className="text-green-600 font-semibold">{hoursAfter.toFixed(1)}h</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -349,6 +670,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               <TaskSpecificWorkflows
                 taskText={task.title || task.name || ''}
                 lang={lang}
+                selectedApplications={Object.values(selectedTools).flat()}
               />
             </div>
           )}

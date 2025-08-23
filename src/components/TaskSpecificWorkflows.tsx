@@ -16,11 +16,13 @@ import { WorkflowItem, WorkflowItemData } from './WorkflowItem';
 interface TaskSpecificWorkflowsProps {
   taskText: string;
   lang?: 'de' | 'en';
+  selectedApplications?: string[];
 }
 
 export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
   taskText,
-  lang = 'de'
+  lang = 'de',
+  selectedApplications = []
 }) => {
   const [workflows, setWorkflows] = useState<WorkflowItemData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
     if (taskText) {
       fetchWorkflows();
     }
-  }, [taskText]);
+  }, [taskText, selectedApplications]);
 
   const fetchWorkflows = async () => {
     setLoading(true);
@@ -39,8 +41,24 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
     
     try {
       // Use n8n API client to fetch workflows
-      const n8nWorkflows = await n8nApiClient.searchWorkflowsByTask(taskText, 3);
-      setWorkflows(n8nWorkflows);
+      let n8nWorkflows = await n8nApiClient.searchWorkflowsByTask(taskText, 6);
+      
+      // Filter workflows based on selected applications if any are selected
+      if (selectedApplications.length > 0) {
+        n8nWorkflows = n8nWorkflows.filter(workflow => {
+          // Check if workflow uses any of the selected applications
+          const workflowTools = workflow.tools || [];
+          return selectedApplications.some(app => 
+            workflowTools.some(tool => 
+              tool.toLowerCase().includes(app.toLowerCase()) ||
+              app.toLowerCase().includes(tool.toLowerCase())
+            )
+          );
+        });
+      }
+      
+      // Limit to 3 workflows for display
+      setWorkflows(n8nWorkflows.slice(0, 3));
     } catch (err) {
       console.error('Error loading workflows:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
