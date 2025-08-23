@@ -17,12 +17,14 @@ interface TaskSpecificWorkflowsProps {
   taskText: string;
   lang?: 'de' | 'en';
   selectedApplications?: string[];
+  onSolutionsLoaded?: (count: number) => void;
 }
 
 export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
   taskText,
   lang = 'de',
-  selectedApplications = []
+  selectedApplications = [],
+  onSolutionsLoaded
 }) => {
   const [workflows, setWorkflows] = useState<WorkflowItemData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,13 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
       }
       
       // Limit to 3 workflows for display
-      setWorkflows(n8nWorkflows.slice(0, 3));
+      const limitedWorkflows = n8nWorkflows.slice(0, 3);
+      setWorkflows(limitedWorkflows);
+      
+      // Notify parent component about the number of solutions
+      if (onSolutionsLoaded) {
+        onSolutionsLoaded(limitedWorkflows.length);
+      }
     } catch (err) {
       console.error('Error loading workflows:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -155,15 +163,6 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 mb-3">
-        <Workflow className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-medium">
-          {lang === 'de' ? 'Passende Workflow-Templates' : 'Matching Workflow Templates'}
-        </h3>
-        <Badge variant="secondary" className="text-xs">
-          {workflows.length}
-        </Badge>
-      </div>
 
             <div className="space-y-3">
         {workflows.map((workflow) => (

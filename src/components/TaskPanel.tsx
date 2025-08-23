@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { FastAnalysisEngine } from '../lib/patternEngine/fastAnalysisEngine';
 import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
+import { AIToolRecommendations } from './AIToolRecommendations';
 
 
 
@@ -72,6 +73,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
   const [applicationLogos, setApplicationLogos] = useState<Record<string, string>>({});
+  const [solutionsCount, setSolutionsCount] = useState(0);
   
   // Initialize FastAnalysisEngine
   const fastAnalysisEngine = useMemo(() => new FastAnalysisEngine(), []);
@@ -253,6 +255,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         [subtaskId]: updated
       };
     });
+  };
+
+  // Update solutions count when solutions are loaded
+  const handleSolutionsLoaded = (count: number) => {
+    setSolutionsCount(count);
   };
 
   // Get typical applications for a subtask
@@ -516,6 +523,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
           <TabsTrigger value="solutions" className="flex items-center gap-2">
             <Zap className="w-4 h-4" />
             {lang === 'de' ? 'Lösungen' : 'Solutions'}
+            {solutionsCount > 0 && (
+              <Badge className="ml-1 text-xs bg-primary text-primary-foreground">
+                {solutionsCount}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -665,12 +677,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Task-Specific Workflows */}
               <TaskSpecificWorkflows
                 taskText={task.title || task.name || ''}
                 lang={lang}
                 selectedApplications={Object.values(selectedTools).flat()}
+                onSolutionsLoaded={handleSolutionsLoaded}
               />
             </div>
           )}
