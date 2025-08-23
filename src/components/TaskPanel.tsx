@@ -18,6 +18,7 @@ import {
 import { FastAnalysisEngine } from '../lib/patternEngine/fastAnalysisEngine';
 import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
 import { AIToolRecommendations } from './AIToolRecommendations';
+import BusinessCase from './BusinessCase';
 
 
 
@@ -68,7 +69,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
   onOpenSolutions, 
   isVisible = false 
 }) => {
-  const [hourlyRate, setHourlyRate] = useState(40);
   const [generatedSubtasks, setGeneratedSubtasks] = useState<Subtask[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
@@ -490,76 +490,27 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
     manualHoursTotal = 8;
     residualHoursTotal = 4; // Assume 50% automation potential
   }
-  
-  const monthlySolutionCost = 78; // Default cost
 
   if (!isVisible) return null;
 
   return (
     <div className="space-y-6">
       {/* Business Case */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              Business Case
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">€/h:</span>
-              <input
-                type="number"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(Number(e.target.value))}
-                className="w-16 px-2 py-1 text-sm border rounded"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-              <div className="text-lg font-semibold">{manualHoursTotal}h</div>
-              <div className="text-xs text-gray-600">Manuell</div>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <Zap className="w-6 h-6 mx-auto mb-2 text-green-600" />
-              <div className="text-lg font-semibold">{residualHoursTotal.toFixed(1)}h</div>
-              <div className="text-xs text-gray-600">Auto</div>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <TrendingUp className="w-6 h-6 mx-auto mb-2 text-orange-600" />
-              <div className="text-lg font-semibold">{(manualHoursTotal - residualHoursTotal).toFixed(1)}h</div>
-              <div className="text-xs text-gray-600">Ersparnis</div>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <Euro className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-              <div className="text-lg font-semibold">€{Math.round((manualHoursTotal - residualHoursTotal) * hourlyRate * 4.33)}</div>
-              <div className="text-xs text-gray-600">Monatlich</div>
-            </div>
-          </div>
-
-          <div className="bg-gray-100 rounded-lg p-3">
-            <div className="flex justify-between text-sm mb-2">
-              <span>Vorher: €{Math.round(manualHoursTotal * hourlyRate * 4.33)}</span>
-              <span>Nachher: €{Math.round(residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                style={{ 
-                  width: `${Math.max(0, Math.round(((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) / (manualHoursTotal * hourlyRate * 4.33) * 100))}%` 
-                }}
-              ></div>
-            </div>
-            <div className="text-center mt-2 text-sm">
-              <span className={((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-                {((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) > 0 ? '+' : ''}€{Math.round((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost))} monatliche Einsparung
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <BusinessCase 
+        task={{
+          name: task.name || task.title,
+          text: task.description,
+          automationRatio: realSubtasks.reduce((acc, s) => acc + s.automationPotential, 0) / Math.max(realSubtasks.length, 1) * 100,
+          humanRatio: realSubtasks.reduce((acc, s) => acc + (1 - s.automationPotential), 0) / Math.max(realSubtasks.length, 1) * 100,
+          subtasks: realSubtasks.map(s => ({
+            id: s.id,
+            title: s.title,
+            estimatedTime: s.manualHoursShare * 8,
+            automationPotential: s.automationPotential
+          }))
+        }}
+        lang={lang}
+      />
 
       {/* Subtasks and Solutions */}
       <Tabs defaultValue="subtasks" className="w-full">
