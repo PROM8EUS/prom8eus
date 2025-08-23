@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Zap, User, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import LandingScoreCircle from "@/components/LandingScoreCircle";
 import InfoCard from "@/components/InfoCard";
@@ -12,6 +12,8 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
 import { runAnalysis } from "@/lib/runAnalysis";
 import { SharedAnalysisService } from "@/lib/sharedAnalysis";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface AnalysisResult {
   totalScore: number;
@@ -85,64 +87,52 @@ const Landing = () => {
           const serverResult = await SharedAnalysisService.getAnalysis(shareId);
           if (serverResult.success && serverResult.data) {
             console.log('Loaded shared analysis from server:', shareId);
-            setAnalysisData(serverResult.data.analysisData);
-            return;
-          } else {
-            // Fallback to localStorage
-            console.log('Server analysis not found, trying localStorage:', shareId);
-            const sharedData = localStorage.getItem(shareId);
-            
-            if (sharedData) {
-              const parsedResult: AnalysisResult = JSON.parse(sharedData);
-              setAnalysisData(parsedResult);
+            // Use the original text to regenerate the analysis
+            const originalText = serverResult.data.originalText;
+            if (originalText) {
+              // Run new analysis with the original text
+              const { runAnalysis } = await import('@/lib/runAnalysis');
+              const newAnalysis = await runAnalysis(originalText, lang);
+              setAnalysisData(newAnalysis);
               return;
-            } else {
-              console.log('No shared data found in localStorage for ID:', shareId);
             }
           }
+          
+          // If server fails, try localStorage as fallback
+          console.log('Server analysis not found, trying localStorage fallback');
+          const localData = localStorage.getItem(`analysis_${shareId}`);
+          if (localData) {
+            try {
+              const parsedData = JSON.parse(localData);
+              console.log('Loaded shared analysis from localStorage:', shareId);
+              setAnalysisData(parsedData);
+              return;
+            } catch (parseError) {
+              console.error('Error parsing localStorage data:', parseError);
+            }
+          }
+          
+          // If both server and localStorage fail, show error message
+          console.log('Shared analysis not found or expired');
+          setAnalysisData(null);
+          
+          // Show user-friendly error message
+          const errorMessage = lang === 'de' 
+            ? 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.'
+            : 'The shared analysis is no longer available or has expired. Please perform a new analysis.';
+          
+          // Show error message to user
+          alert(errorMessage);
+          
         } catch (error) {
           console.error('Error loading shared analysis:', error);
+          setAnalysisData(null);
         }
       };
-
+      
       loadSharedAnalysis();
-      return;
     } else {
       console.log('No shareId parameter found in URL');
-    }
-
-    // Fallback: Try to load analysis results from sessionStorage (current session)
-    try {
-      const storedResult = sessionStorage.getItem('analysisResult');
-      if (storedResult) {
-        const parsedResult: AnalysisResult = JSON.parse(storedResult);
-        setAnalysisData(parsedResult);
-      } else {
-        // No stored data - perform new analysis with sample Buchhalter data
-        console.log('No stored analysis data found, performing new analysis with pattern engine');
-        const sampleBuchhalterText = `Buchhalter (m/w/d)
-
-AUFGABEN:
-• Führung der Finanzbuchhaltung
-• Erstellung von Monats- und Jahresabschlüssen
-• Kontierung von Belegen
-• Umsatzsteuervoranmeldungen
-• Mahnwesen und Zahlungsverkehr
-• Abstimmung von Konten
-• Zusammenarbeit mit Steuerberatern
-• Budgetplanung und Controlling
-
-ANFORDERUNGEN:
-• Ausbildung als Steuerfachangestellte/r oder Buchhalter/in
-• Mehrjährige Berufserfahrung in der Buchhaltung
-• Kenntnisse in DATEV oder vergleichbarer Software
-• Genauigkeit und Zuverlässigkeit
-• Steuerrechtliche Kenntnisse`;
-        
-        performNewAnalysis(sampleBuchhalterText);
-      }
-    } catch (error) {
-      console.error('Error loading analysis results for landing page:', error);
     }
   }, [searchParams, lang]);
 

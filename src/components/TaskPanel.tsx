@@ -1,26 +1,22 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Badge } from './ui/badge';
-import { Card, CardContent } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Checkbox } from './ui/checkbox';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
-  Zap, 
   Workflow, 
-  DollarSign,
-  Clock,
-  TrendingUp,
-  Euro,
-  Bot,
-  Check,
-  HelpCircle
+  Zap, 
+  HelpCircle,
+  Loader2
 } from 'lucide-react';
-import { FastAnalysisEngine } from '../lib/patternEngine/fastAnalysisEngine';
 import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
-import { AIToolRecommendations } from './AIToolRecommendations';
 import BusinessCase from './BusinessCase';
+import { DynamicSubtask } from '@/lib/patternEngine/dynamicSubtaskGenerator';
+import { fastAnalysisEngine } from '@/lib/patternEngine/fastAnalysisEngine';
 
-// Circular Pie Chart Component (same as in TaskList)
+// Circular Pie Chart Component
 const CircularPieChart = ({ automationRatio, humanRatio, size = 60, showPercentage = true }: { 
   automationRatio: number; 
   humanRatio: number; 
@@ -71,6 +67,80 @@ const CircularPieChart = ({ automationRatio, humanRatio, size = 60, showPercenta
   );
 };
 
+// Animated Counter Badge Component
+const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: boolean }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      setCurrentIndex(0);
+      setIsAnimating(false);
+      return;
+    }
+
+    // Only animate when count changes and we're not loading
+    if (count > 0 && !isAnimating && !isLoading) {
+      setIsAnimating(true);
+      const duration = 3000; // 3 second animation (slower)
+      const steps = 120; // More steps for smoother animation
+      const stepDuration = duration / steps;
+      
+      let currentStep = 0;
+      const timer = setInterval(() => {
+        currentStep++;
+        const progress = currentStep / steps;
+        const targetIndex = Math.floor(progress * count);
+        setCurrentIndex(Math.min(targetIndex, count - 1));
+        
+        if (currentStep >= steps) {
+          setCurrentIndex(count - 1);
+          setIsAnimating(false);
+          clearInterval(timer);
+        }
+      }, stepDuration);
+      
+      return () => clearInterval(timer);
+    } else if (count > 0 && !isLoading) {
+      // If not animating but count is available, set it directly
+      setCurrentIndex(count - 1);
+    }
+  }, [count, isLoading, isAnimating]);
+
+  // Always show badge, but with different content based on state
+  if (isLoading) {
+    return (
+      <Badge className="ml-1 text-xs bg-primary text-primary-foreground flex items-center gap-1 animate-pulse">
+        <Loader2 className="w-3 h-3 animate-spin" />
+      </Badge>
+    );
+  }
+
+  // Only show badge if count > 0
+  if (count === 0) {
+    return null;
+  }
+
+  return (
+    <Badge className="ml-1 text-xs bg-primary text-primary-foreground overflow-hidden">
+      <div className="relative h-5">
+        <div 
+          className="transition-transform duration-100 ease-out"
+          style={{
+            transform: `translateY(-${currentIndex * 20}px)`,
+          }}
+        >
+          {Array.from({ length: count }, (_, i) => i + 1).map((num) => (
+            <div key={num} className="h-5 flex items-center justify-center text-sm font-medium">
+              {num}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Badge>
+  );
+};
+
 
 
 type TaskPanelProps = {
@@ -114,20 +184,16 @@ type Subtask = {
 
 
 
-const TaskPanel: React.FC<TaskPanelProps> = ({ 
-  task, 
-  lang = 'de', 
-  onOpenSolutions, 
-  isVisible = false 
-}) => {
+export default function TaskPanel({ task, lang = 'de', isVisible = false }: TaskPanelProps) {
   const [generatedSubtasks, setGeneratedSubtasks] = useState<Subtask[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
   const [applicationLogos, setApplicationLogos] = useState<Record<string, string>>({});
   const [solutionsCount, setSolutionsCount] = useState(0);
+  const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
+  const hasLoadedSolutions = useRef(false);
   
-  // Initialize FastAnalysisEngine
-  const fastAnalysisEngine = useMemo(() => new FastAnalysisEngine(), []);
+  // fastAnalysisEngine is already a singleton instance, no need to create new one
 
   // Get fallback logo URL for an application
   const getFallbackLogo = (logoKey: string): string => {
@@ -149,63 +215,64 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
       'asana': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Asana_logo.svg',
       'trello': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Trello_logo.svg',
       'figma': 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
-      'canva': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg',
+      'canva': 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/canva.svg',
       'zoom': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Zoom_logo.svg',
       'dropbox': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Dropbox_Icon.svg'
     };
     return fallbackLogos[logoKey] || '';
   };
 
-  // Load real application logos using multiple sources
+  // Load real application logos using multiple sources with proper fallback hierarchy
   const loadApplicationLogos = async () => {
     // Map application names to their real domains and alternative sources
     const logoMapping = {
       // Microsoft Office
       'excel': { 
         primary: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftexcel.svg'
+        fallback: 'https://logo.clearbit.com/excel.microsoft.com?size=32&format=png'
       },
       'powerpoint': { 
         primary: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Microsoft_Office_PowerPoint_%282019%E2%80%93present%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftpowerpoint.svg'
+        fallback: 'https://logo.clearbit.com/powerpoint.microsoft.com?size=32&format=png'
       },
       'word': { 
         primary: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Microsoft_Office_Word_%282019%E2%80%93present%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftword.svg'
+        fallback: 'https://logo.clearbit.com/word.microsoft.com?size=32&format=png'
       },
-            'outlook': {
+      'outlook': {
         primary: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftoutlook.svg'
+        fallback: 'https://logo.clearbit.com/outlook.microsoft.com?size=32&format=png'
       },
       'teams': { 
         primary: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftteams.svg'
+        fallback: 'https://logo.clearbit.com/teams.microsoft.com?size=32&format=png'
       },
-            'sharepoint': {
+      'sharepoint': {
         primary: 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftsharepoint.svg'
+        fallback: 'https://logo.clearbit.com/sharepoint.microsoft.com?size=32&format=png'
       },
-            'powerbi': {
+      'powerbi': {
         primary: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/powerbi.svg'
+        fallback: 'https://logo.clearbit.com/powerbi.microsoft.com?size=32&format=png'
       },
       'onedrive': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/7c/OneDrive_logo.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftonedrive.svg'
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftonedrive.svg',
+        fallback: 'https://logo.clearbit.com/onedrive.live.com?size=32&format=png'
+      },
+      'google-docs': { 
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googledrive.svg',
+        fallback: 'https://logo.clearbit.com/docs.google.com?size=32&format=png'
       },
       
       // Google Workspace
       'google-sheets': { 
         primary: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg',
-        fallback: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googlesheets.svg'
+        fallback: 'https://logo.clearbit.com/sheets.google.com?size=32&format=png'
       },
-      'google-docs': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googledocs.svg',
-        fallback: 'https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282020%29.svg'
-      },
+
       'calendar': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googlecalendar.svg',
-        fallback: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg'
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg',
+        fallback: 'https://logo.clearbit.com/calendar.google.com?size=32&format=png'
       },
       
       // Other applications
@@ -222,11 +289,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         fallback: 'https://logo.clearbit.com/notion.so?size=32&format=png'
       },
       'asana': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Asana_logo.svg',
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/asana.svg',
         fallback: 'https://logo.clearbit.com/asana.com?size=32&format=png'
       },
       'trello': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Trello_logo.svg',
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/trello.svg',
         fallback: 'https://logo.clearbit.com/trello.com?size=32&format=png'
       },
       'figma': { 
@@ -234,25 +301,47 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         fallback: 'https://logo.clearbit.com/figma.com?size=32&format=png'
       },
       'canva': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg',
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/canva.svg',
         fallback: 'https://logo.clearbit.com/canva.com?size=32&format=png'
       },
       'zoom': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Zoom_logo.svg',
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/zoom.svg',
         fallback: 'https://logo.clearbit.com/zoom.us?size=32&format=png'
       },
       'dropbox': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Dropbox_Icon.svg',
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/dropbox.svg',
         fallback: 'https://logo.clearbit.com/dropbox.com?size=32&format=png'
       }
     };
 
     const logos: Record<string, string> = {};
     
-    // Load logos with fallback mechanism
-    Object.entries(logoMapping).forEach(([appId, sources]) => {
-      logos[appId] = sources.primary;
-    });
+    // Test each logo source and use the first working one
+    for (const [appId, sources] of Object.entries(logoMapping)) {
+      try {
+        // Try primary (app logo) first
+        const primaryResponse = await fetch(sources.primary, { method: 'HEAD' });
+        if (primaryResponse.ok) {
+          logos[appId] = sources.primary;
+          continue;
+        }
+      } catch (error) {
+        // Primary failed, try fallback
+      }
+      
+      try {
+        // Try fallback (company logo) second
+        const fallbackResponse = await fetch(sources.fallback, { method: 'HEAD' });
+        if (fallbackResponse.ok) {
+          logos[appId] = sources.fallback;
+          continue;
+        }
+      } catch (error) {
+        // Fallback failed, will use letter fallback
+      }
+      
+      // If both fail, will use letter fallback in the component
+    }
 
     setApplicationLogos(logos);
   };
@@ -311,12 +400,28 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
   // Initialize solutions count when subtasks change
   useEffect(() => {
     setSolutionsCount(0);
+    // Only set loading if we haven't loaded solutions yet
+    if (!hasLoadedSolutions.current) {
+      setIsLoadingSolutions(true);
+    }
   }, [task?.subtasks, generatedSubtasks]);
+
+  // Start loading solutions when task becomes visible
+  useEffect(() => {
+    if (isVisible && !hasLoadedSolutions.current) {
+      setIsLoadingSolutions(true);
+    }
+  }, [isVisible]);
 
   // Update solutions count when solutions are loaded
   const handleSolutionsLoaded = (count: number) => {
+    console.log('✅ [TaskPanel] Solutions loaded:', count);
+    setIsLoadingSolutions(false);
     setSolutionsCount(count);
+    hasLoadedSolutions.current = true; // Mark as loaded
   };
+
+  // Remove the handleSolutionsTabOpen function since we load automatically
 
   // Get typical applications for a subtask
   const getTypicalApplications = (subtask: Subtask) => {
@@ -490,7 +595,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
       import('../lib/n8nApi').then(({ n8nApiClient }) => {
         n8nApiClient.fastSearchWorkflows(taskText, selectedApps)
           .then(workflows => {
-            setSolutionsCount(workflows.length);
+            // Only update if count actually changed to prevent unnecessary re-renders
+            setSolutionsCount(prevCount => {
+              if (prevCount !== workflows.length) {
+                return workflows.length;
+              }
+              return prevCount;
+            });
           })
           .catch(error => {
             console.warn('Failed to preload workflows:', error);
@@ -498,29 +609,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
       });
     }
   }, [isVisible, realSubtasks, selectedTools, task.title, task.name]);
-
-  // Reload workflows when selected tools change
-  useEffect(() => {
-    if (isVisible && realSubtasks && realSubtasks.length > 0) {
-      const taskText = realSubtasks.map(subtask => subtask.title).join(' ') || (task.title || task.name || '');
-      const selectedApps = Object.values(selectedTools).flat();
-      
-      // Debounce the reload to avoid too many API calls
-      const timeoutId = setTimeout(() => {
-        import('../lib/n8nApi').then(({ n8nApiClient }) => {
-          n8nApiClient.fastSearchWorkflows(taskText, selectedApps)
-            .then(workflows => {
-              setSolutionsCount(workflows.length);
-            })
-            .catch(error => {
-              console.warn('Failed to reload workflows:', error);
-            });
-        });
-      }, 500); // 500ms debounce
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [selectedTools, isVisible, realSubtasks, task.title, task.name]);
 
   // Calculate business case based on actual subtask effort reduction
   let manualHoursTotal = 0;
@@ -573,11 +661,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
           <TabsTrigger value="solutions" className="flex items-center gap-2">
             <Zap className="w-4 h-4" />
             {lang === 'de' ? 'Lösungen' : 'Solutions'}
-            {solutionsCount > 0 && (
-              <Badge className="ml-1 text-xs bg-primary text-primary-foreground">
-                {solutionsCount}
-              </Badge>
-            )}
+            <AnimatedCounterBadge count={solutionsCount} isLoading={isGenerating || isLoadingSolutions} />
           </TabsTrigger>
         </TabsList>
 
@@ -637,17 +721,29 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               </p>
             </div>
           ) : (
-            <TaskSpecificWorkflows
-              taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
-              lang={lang}
-              selectedApplications={Object.values(selectedTools).flat()}
-              onSolutionsLoaded={handleSolutionsLoaded}
-            />
+            <div className="min-h-[200px]">
+              <TaskSpecificWorkflows
+                taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
+                lang={lang}
+                selectedApplications={Object.values(selectedTools).flat()}
+                onSolutionsLoaded={handleSolutionsLoaded}
+              />
+            </div>
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Hidden TaskSpecificWorkflows to load solutions in background */}
+      {isVisible && !isGenerating && (
+        <div className="hidden">
+          <TaskSpecificWorkflows
+            taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
+            lang={lang}
+            selectedApplications={Object.values(selectedTools).flat()}
+            onSolutionsLoaded={handleSolutionsLoaded}
+          />
+        </div>
+      )}
     </div>
   );
 };
-
-export default TaskPanel;

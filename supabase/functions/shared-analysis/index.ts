@@ -9,11 +9,8 @@ const corsHeaders = {
 
 interface StoreAnalysisRequest {
   shareId: string;
-  analysisData: any;
   originalText: string;
   jobTitle?: string;
-  totalScore?: number;
-  taskCount?: number;
 }
 
 interface GetAnalysisRequest {
@@ -35,17 +32,14 @@ serve(async (req) => {
     const { action, ...data } = await req.json();
 
     if (action === 'store') {
-      const { shareId, analysisData, originalText, jobTitle, totalScore, taskCount }: StoreAnalysisRequest = data;
+      const { shareId, originalText, jobTitle }: StoreAnalysisRequest = data;
       
-      console.log('Storing shared analysis:', { shareId, jobTitle, totalScore, taskCount });
+      console.log('Storing shared analysis:', { shareId, jobTitle });
       
       const { data: result, error } = await supabase.rpc('store_shared_analysis', {
         share_id_param: shareId,
-        analysis_data_param: analysisData,
         original_text_param: originalText,
-        job_title_param: jobTitle || null,
-        total_score_param: totalScore || null,
-        task_count_param: taskCount || null
+        job_title_param: jobTitle || null
       });
 
       if (error) {
@@ -100,7 +94,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Analysis not found or expired' 
+            error: 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.' 
           }),
           { 
             status: 404, 
@@ -115,11 +109,8 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           data: {
-            analysisData: analysis.analysis_data,
             originalText: analysis.original_text,
             jobTitle: analysis.job_title,
-            totalScore: analysis.total_score,
-            taskCount: analysis.task_count,
             createdAt: analysis.created_at,
             views: analysis.view_count
           }

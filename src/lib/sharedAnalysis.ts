@@ -2,22 +2,16 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export interface SharedAnalysisData {
-  analysisData: any;
   originalText: string;
   jobTitle?: string;
-  totalScore?: number;
-  taskCount?: number;
   createdAt?: string;
   views?: number;
 }
 
 export interface StoreAnalysisRequest {
   shareId: string;
-  analysisData: any;
   originalText: string;
   jobTitle?: string;
-  totalScore?: number;
-  taskCount?: number;
 }
 
 export class SharedAnalysisService {
@@ -85,9 +79,18 @@ export class SharedAnalysisService {
 
       if (!response.ok) {
         console.error('Failed to retrieve shared analysis:', result);
+        
+        // Provide more specific error messages
+        if (response.status === 404) {
+          return {
+            success: false,
+            error: 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.'
+          };
+        }
+        
         return {
           success: false,
-          error: result.error || 'Failed to retrieve analysis'
+          error: result.error || 'Fehler beim Abrufen der geteilten Analyse'
         };
       }
 
@@ -100,7 +103,7 @@ export class SharedAnalysisService {
       console.error('Error retrieving shared analysis:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unbekannter Fehler beim Abrufen der geteilten Analyse'
       };
     }
   }

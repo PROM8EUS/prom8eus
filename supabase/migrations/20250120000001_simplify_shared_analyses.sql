@@ -1,4 +1,14 @@
--- Create shared analyses table for cross-user sharing
+-- Simplify shared analyses table to only store original input
+-- This allows for regeneration of analysis results
+
+-- Drop existing functions first
+DROP FUNCTION IF EXISTS public.get_shared_analysis(TEXT);
+DROP FUNCTION IF EXISTS public.store_shared_analysis(TEXT, JSONB, TEXT, TEXT, INTEGER, INTEGER);
+
+-- Drop existing table
+DROP TABLE IF EXISTS public.shared_analyses;
+
+-- Create simplified shared analyses table
 CREATE TABLE public.shared_analyses (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   share_id TEXT NOT NULL UNIQUE,
@@ -10,38 +20,32 @@ CREATE TABLE public.shared_analyses (
   is_public BOOLEAN DEFAULT true
 );
 
--- Create index for faster lookups by share_id
+-- Create indexes
 CREATE INDEX idx_shared_analyses_share_id ON public.shared_analyses(share_id);
-
--- Create index for cleanup of expired entries
 CREATE INDEX idx_shared_analyses_expires_at ON public.shared_analyses(expires_at);
-
--- Create index for public analyses
 CREATE INDEX idx_shared_analyses_public ON public.shared_analyses(is_public) WHERE is_public = true;
 
 -- Enable Row Level Security
 ALTER TABLE public.shared_analyses ENABLE ROW LEVEL SECURITY;
 
--- Allow public access for reading shared analyses
+-- Create policies
 CREATE POLICY "Allow public read access to shared_analyses" 
 ON public.shared_analyses 
 FOR SELECT 
 USING (is_public = true);
 
--- Allow public insert for creating shared analyses
 CREATE POLICY "Allow public insert to shared_analyses" 
 ON public.shared_analyses 
 FOR INSERT 
 WITH CHECK (true);
 
--- Allow public update for incrementing view count
 CREATE POLICY "Allow public update view count on shared_analyses" 
 ON public.shared_analyses 
 FOR UPDATE 
 USING (is_public = true)
 WITH CHECK (is_public = true);
 
--- Create function to get shared analysis by share_id
+-- Create simplified function to get shared analysis
 CREATE OR REPLACE FUNCTION public.get_shared_analysis(share_id_param TEXT)
 RETURNS TABLE (
   original_text TEXT,
@@ -73,7 +77,7 @@ BEGIN
 END;
 $$;
 
--- Create function to store shared analysis
+-- Create simplified function to store shared analysis
 CREATE OR REPLACE FUNCTION public.store_shared_analysis(
   share_id_param TEXT,
   original_text_param TEXT,

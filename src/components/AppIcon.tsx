@@ -26,55 +26,150 @@ const AppIcon: React.FC<AppIconProps> = ({
     lg: 'text-base'
   };
 
-  // Function to get app logo URL with fallback to company logo
-  const getAppLogoUrl = (tool: AITool): string => {
-    // Map tool IDs to their app logo URLs using Wikimedia Commons and other reliable sources
-    const appLogoMap: Record<string, string> = {
+  // Function to get app logo URL with proper fallback hierarchy
+  const getAppLogoUrl = (tool: AITool): { primary: string; fallback: string } => {
+    // Map tool IDs to their app logo URLs with fallbacks
+    const appLogoMap: Record<string, { primary: string; fallback: string }> = {
       // Microsoft Office Apps
-      'excel-ai': 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
-      'power-bi-ai': 'https://upload.wikimedia.org/wikipedia/commons/c/cf/Power_bi_logo_black.svg',
-      'microsoft-copilot': 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Microsoft_Office_logo_%282019%E2%80%93present%29.svg',
+      'excel-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
+        fallback: 'https://logo.clearbit.com/excel.microsoft.com?size=32&format=png'
+      },
+      'power-bi-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
+        fallback: 'https://logo.clearbit.com/powerbi.microsoft.com?size=32&format=png'
+      },
+      'microsoft-copilot': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Microsoft_Office_logo_%282019%E2%80%93present%29.svg',
+        fallback: 'https://logo.clearbit.com/copilot.microsoft.com?size=32&format=png'
+      },
       
       // Google Apps
-      'google-sheets-ai': 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282020-present%29.svg',
-      'gemini': 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Google_Gemini_logo.svg',
+      'google-sheets-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282020-present%29.svg',
+        fallback: 'https://logo.clearbit.com/sheets.google.com?size=32&format=png'
+      },
+      'google-docs-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282020%29.svg',
+        fallback: 'https://logo.clearbit.com/docs.google.com?size=32&format=png'
+      },
+      'gemini': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Google_Gemini_logo.svg',
+        fallback: 'https://logo.clearbit.com/gemini.google.com?size=32&format=png'
+      },
       
       // AI Tools
-      'chatgpt': 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
-      'claude': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Anthropic_logo.svg',
-      'github-copilot': 'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
-      'code-whisperer': 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg',
-      'tabnine': 'https://upload.wikimedia.org/wikipedia/commons/8/87/Tabnine_logo.svg',
-      'notion-ai': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
-      'obsidian-ai': 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Obsidian_logo.svg',
-      'jasper': 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Jasper_AI_logo.svg',
-      'copy-ai': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Copy.ai_logo.svg',
-      'writesonic': 'https://upload.wikimedia.org/wikipedia/commons/w/wc/Writesonic_logo.svg',
-      'canva-ai': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg',
-      'perplexity': 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Perplexity_AI_logo.svg',
-      'grammarly': 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Grammarly_logo.svg',
-      'grok': 'https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.svg',
-      'airtable-ai': 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Airtable_logo.svg'
+      'chatgpt': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
+        fallback: 'https://logo.clearbit.com/chat.openai.com?size=32&format=png'
+      },
+      'claude': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Anthropic_logo.svg',
+        fallback: 'https://logo.clearbit.com/claude.ai?size=32&format=png'
+      },
+      'github-copilot': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
+        fallback: 'https://logo.clearbit.com/github.com?size=32&format=png'
+      },
+      'code-whisperer': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg',
+        fallback: 'https://logo.clearbit.com/aws.amazon.com?size=32&format=png'
+      },
+      'tabnine': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Tabnine_logo.svg',
+        fallback: 'https://logo.clearbit.com/tabnine.com?size=32&format=png'
+      },
+      'notion-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
+        fallback: 'https://logo.clearbit.com/notion.so?size=32&format=png'
+      },
+      'obsidian-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Obsidian_logo.svg',
+        fallback: 'https://logo.clearbit.com/obsidian.md?size=32&format=png'
+      },
+      'jasper': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Jasper_AI_logo.svg',
+        fallback: 'https://logo.clearbit.com/jasper.ai?size=32&format=png'
+      },
+      'copy-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Copy.ai_logo.svg',
+        fallback: 'https://logo.clearbit.com/copy.ai?size=32&format=png'
+      },
+      'writesonic': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/w/wc/Writesonic_logo.svg',
+        fallback: 'https://logo.clearbit.com/writesonic.com?size=32&format=png'
+      },
+      'canva-ai': { 
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/canva.svg',
+        fallback: 'https://logo.clearbit.com/canva.com?size=32&format=png'
+      },
+      'perplexity': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Perplexity_AI_logo.svg',
+        fallback: 'https://logo.clearbit.com/perplexity.ai?size=32&format=png'
+      },
+      'grammarly': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Grammarly_logo.svg',
+        fallback: 'https://logo.clearbit.com/grammarly.com?size=32&format=png'
+      },
+      'grok': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.svg',
+        fallback: 'https://logo.clearbit.com/x.ai?size=32&format=png'
+      },
+      'airtable-ai': { 
+        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Airtable_logo.svg',
+        fallback: 'https://logo.clearbit.com/airtable.com?size=32&format=png'
+      },
+      'zoom': { 
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/zoom.svg',
+        fallback: 'https://logo.clearbit.com/zoom.us?size=32&format=png'
+      },
+      'dropbox': { 
+        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/dropbox.svg',
+        fallback: 'https://logo.clearbit.com/dropbox.com?size=32&format=png'
+      }
     };
 
-    // Try app logo first, then fallback to original logo
-    return appLogoMap[tool.id] || tool.logo.url;
+    // Return app logo with fallback, or use original logo as fallback
+    const logoData = appLogoMap[tool.id];
+    if (logoData) {
+      return {
+        primary: logoData.primary,
+        fallback: logoData.fallback
+      };
+    }
+
+    // If no app logo mapping, use original logo as primary and company logo as fallback
+    return {
+      primary: tool.logo.url,
+      fallback: tool.logo.url
+    };
   };
 
+  const [currentLogoUrl, setCurrentLogoUrl] = React.useState<string>('');
+  const [logoState, setLogoState] = React.useState<'loading' | 'primary' | 'fallback' | 'error'>('loading');
+
+  React.useEffect(() => {
+    const logoData = getAppLogoUrl(tool);
+    setCurrentLogoUrl(logoData.primary);
+    setLogoState('loading');
+  }, [tool]);
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    // If app logo fails, try the original logo
-    const originalLogo = tool.logo.url;
-    if (e.currentTarget.src !== originalLogo) {
-      e.currentTarget.src = originalLogo;
+    const logoData = getAppLogoUrl(tool);
+    
+    if (logoState === 'loading' || logoState === 'primary') {
+      // Try fallback logo
+      setCurrentLogoUrl(logoData.fallback);
+      setLogoState('fallback');
       return;
     }
     
-    // If both fail, show fallback icon
-    e.currentTarget.style.display = 'none';
-    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-    if (fallback) {
-      fallback.style.display = 'flex';
-    }
+    // If fallback also fails, show error state
+    setLogoState('error');
+  };
+
+  const handleImageLoad = () => {
+    setLogoState(logoState === 'loading' ? 'primary' : 'fallback');
   };
 
   return (
@@ -82,7 +177,7 @@ const AppIcon: React.FC<AppIconProps> = ({
       <div className="relative">
         {/* Logo Image - Try app logo first */}
         <img
-          src={getAppLogoUrl(tool)}
+          src={currentLogoUrl}
           alt={tool.logo.alt}
           className={`${sizeClasses[size]} rounded-lg object-cover shadow-sm`}
           style={{
@@ -90,14 +185,16 @@ const AppIcon: React.FC<AppIconProps> = ({
             border: '1px solid #e5e7eb'
           }}
           onError={handleImageError}
+          onLoad={handleImageLoad}
         />
         
         {/* Fallback Icon */}
         <div 
-          className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shadow-sm hidden`}
+          className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shadow-sm ${logoState === 'error' ? 'flex' : 'hidden'}`}
           style={{
             backgroundColor: '#ffffff',
-            color: '#374151'
+            color: '#374151',
+            border: '1px solid #e5e7eb'
           }}
         >
           <span className={`font-bold ${textSizes[size]}`}>

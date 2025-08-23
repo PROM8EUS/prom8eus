@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -45,7 +45,8 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
   onSolutionsLoaded
 }) => {
   const [workflows, setWorkflows] = useState<WorkflowItemData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowItemData | null>(null);
   const [setupForm, setSetupForm] = useState({
@@ -55,26 +56,38 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
     requirements: ''
   });
   const [showSetupForm, setShowSetupForm] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [lastSearchParams, setLastSearchParams] = useState<string>('');
 
-
-  useEffect(() => {
-    if (taskText) {
-      loadWorkflows();
+  const loadWorkflows = useCallback(async (searchParams?: string) => {
+    // Only show loading spinner on initial load or when no workflows exist
+    if (!hasLoadedOnce || workflows.length === 0) {
+      setInitialLoading(true);
+    } else {
+      setLoading(true);
     }
-  }, [taskText, selectedApplications]);
-
-  const loadWorkflows = async () => {
-    setLoading(true);
+    
     setError(null);
     
     try {
-
+      const foundWorkflows = await n8nApiClient.fastSearchWorkflows(taskText, selectedApplications);
       
-              const foundWorkflows = await n8nApiClient.fastSearchWorkflows(taskText, selectedApplications);
-      setWorkflows(foundWorkflows);
+      // Use functional update to prevent unnecessary re-renders
+      setWorkflows(prevWorkflows => {
+        // Only update if the workflows are actually different
+        if (JSON.stringify(prevWorkflows) === JSON.stringify(foundWorkflows)) {
+          return prevWorkflows;
+        }
+        return foundWorkflows;
+      });
       
       if (onSolutionsLoaded) {
         onSolutionsLoaded(foundWorkflows.length);
+      }
+      
+      setHasLoadedOnce(true);
+      if (searchParams) {
+        setLastSearchParams(searchParams);
       }
     } catch (err) {
       console.error('Error loading workflows:', err);
@@ -83,9 +96,28 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
         onSolutionsLoaded(0);
       }
     } finally {
+      setInitialLoading(false);
       setLoading(false);
     }
-  };
+  }, [taskText, selectedApplications, hasLoadedOnce, workflows.length, onSolutionsLoaded]);
+
+  // Debounced workflow loading
+  useEffect(() => {
+    if (!taskText) return;
+
+    const searchParams = JSON.stringify({ taskText, selectedApplications });
+    
+    // Skip if we're already loading the same search
+    if (searchParams === lastSearchParams && workflows.length > 0) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      loadWorkflows(searchParams);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [taskText, selectedApplications, lastSearchParams, workflows.length, loadWorkflows]);
 
   // Test function to debug workflow fetching
   const testWorkflowFetching = async () => {
@@ -246,7 +278,7 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
     }
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -272,12 +304,20 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
 
   return (
     <div className="space-y-4">
-
+      {/* Subtle loading indicator for updates */}
+      {loading && (
+        <div className="flex items-center justify-center py-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+          <span className="ml-2 text-xs text-muted-foreground">
+            {lang === 'de' ? 'Aktualisiere...' : 'Updating...'}
+          </span>
+        </div>
+      )}
       
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
         {workflows.map((workflow) => (
           <WorkflowItem
-            key={workflow.id}
+            key={`${workflow.id}-${workflow.name}`}
             workflow={workflow}
             lang={lang}
             compact={true}

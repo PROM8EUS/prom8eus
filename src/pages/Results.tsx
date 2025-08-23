@@ -13,8 +13,9 @@ import PageFooter from "@/components/PageFooter";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
-import { generateSummary } from "@/lib/runAnalysis";
+import { runAnalysis } from "@/lib/runAnalysis";
 import { detectIndustry } from "@/lib/runAnalysis";
+import { generateSummary } from "@/lib/runAnalysis";
 import { SharedAnalysisService } from "@/lib/sharedAnalysis";
 
 // Animated Letter Component
@@ -171,11 +172,8 @@ const Results = () => {
       // Store analysis data on server
       const result = await SharedAnalysisService.storeAnalysis({
         shareId,
-        analysisData: data,
-        originalText: data.originalText || '',
-        jobTitle: jobTitle || undefined,
-        totalScore: data.totalScore,
-        taskCount: data.tasks?.length || 0
+        originalText: analysisData.originalText || '',
+        jobTitle: jobTitle || ''
       });
 
       if (result.success) {
@@ -271,15 +269,28 @@ const Results = () => {
             const serverResult = await SharedAnalysisService.getAnalysis(shareId);
             if (serverResult.success && serverResult.data) {
               console.log('Loaded shared analysis from server:', shareId);
-              parsedResult = serverResult.data.analysisData;
-              setJobTitle(serverResult.data.jobTitle || '');
-            } else {
-              // Fallback to localStorage
-              console.log('Server analysis not found, trying localStorage:', shareId);
-              const localData = localStorage.getItem(shareId);
-              if (localData) {
-                parsedResult = JSON.parse(localData);
+              // Use the original text to regenerate the analysis
+              const originalText = serverResult.data.originalText;
+              if (originalText) {
+                // Run new analysis with the original text
+                const newAnalysis = await runAnalysis(originalText, lang);
+                setAnalysisData(newAnalysis);
+                setJobTitle(serverResult.data.jobTitle || '');
+                return;
               }
+            } else {
+              // Show error message for expired analysis
+              console.log('Shared analysis not found or expired:', serverResult.error);
+              const errorMessage = lang === 'de' 
+                ? 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.'
+                : 'The shared analysis is no longer available or has expired. Please perform a new analysis.';
+              
+              // Show error message to user
+              alert(errorMessage);
+              
+              // Redirect to home page
+              navigate('/');
+              return;
             }
           } else if (sessionId) {
             // Session-based sharing (localStorage fallback)

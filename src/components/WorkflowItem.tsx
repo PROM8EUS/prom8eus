@@ -42,7 +42,7 @@ interface WorkflowItemProps {
   compact?: boolean;
 }
 
-export const WorkflowItem: React.FC<WorkflowItemProps> = ({
+const WorkflowItemComponent: React.FC<WorkflowItemProps> = ({
   workflow,
   lang = 'de',
   onDetails,
@@ -263,3 +263,5 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
     </Card>
   );
 };
+
+export const WorkflowItem = React.memo(WorkflowItemComponent);

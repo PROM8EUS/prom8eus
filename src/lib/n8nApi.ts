@@ -1047,6 +1047,27 @@ export class N8nApi {
   // Fast search method - only loads relevant categories
   async fastSearchWorkflows(taskText: string, selectedApplications: string[] = []): Promise<N8nWorkflow[]> {
     try {
+      // Create a cache key for this search
+      const cacheKey = `fast_search_${JSON.stringify({ taskText, selectedApplications })}`;
+      
+      // Check if we have a recent cache for this exact search
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached);
+          const now = Date.now();
+          const cacheAge = now - timestamp;
+          
+          // Use cache if it's less than 5 minutes old
+          if (cacheAge < 5 * 60 * 1000) {
+            console.log('Using cached fast search results');
+            return data;
+          }
+        } catch (e) {
+          // Invalid cache, continue with fresh search
+        }
+      }
+
       console.log('=== FAST WORKFLOW SEARCH ===');
       console.log('Task text:', taskText);
       console.log('Selected applications:', selectedApplications);
@@ -1095,6 +1116,17 @@ export class N8nApi {
       // Search in fetched workflows
       const results = this.searchInWorkflows(workflows, taskText, selectedApplications);
       console.log(`Found ${results.length} relevant workflows from ${workflows.length} total`);
+      
+      // Cache the results
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          data: results,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        // Cache storage failed, continue without caching
+        console.warn('Failed to cache search results:', e);
+      }
       
       // Debug: Show some workflow names for troubleshooting
       if (workflows.length > 0 && results.length === 0) {
