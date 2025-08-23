@@ -21,10 +21,11 @@ import { AIToolRecommendations } from './AIToolRecommendations';
 import BusinessCase from './BusinessCase';
 
 // Circular Pie Chart Component (same as in TaskList)
-const CircularPieChart = ({ automationRatio, humanRatio, size = 60 }: { 
+const CircularPieChart = ({ automationRatio, humanRatio, size = 60, showPercentage = true }: { 
   automationRatio: number; 
   humanRatio: number; 
   size?: number;
+  showPercentage?: boolean;
 }) => {
   const radius = size / 2;
   const circumference = 2 * Math.PI * (radius - 2);
@@ -58,12 +59,14 @@ const CircularPieChart = ({ automationRatio, humanRatio, size = 60 }: {
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      {/* Center text */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-xs font-bold text-primary">{automationRatio}%</div>
+      {/* Center text - only show if showPercentage is true */}
+      {showPercentage && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-xs font-bold text-primary">{automationRatio}%</div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -587,107 +590,33 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {realSubtasks.map((subtask) => {
+            <div className="space-y-0">
+              {realSubtasks.map((subtask, index) => {
               const hoursBefore = subtask.manualHoursShare * 8; // 8 hours base per task
               const hoursAfter = subtask.manualHoursShare * 8 * (1 - subtask.automationPotential);
               
               return (
-                <div key={subtask.id} className="p-4 border rounded-lg bg-white shadow-sm">
+                <div key={subtask.id} className={`py-2 px-4 ${index < realSubtasks.length - 1 ? 'border-b' : ''}`}>
                   <div className="flex items-center gap-4">
                     {/* Circular Progress Chart for each subtask */}
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex items-center">
                       <CircularPieChart 
                         automationRatio={Math.round(subtask.automationPotential * 100)} 
                         humanRatio={Math.round((1 - subtask.automationPotential) * 100)} 
-                        size={40} 
+                        size={32}
+                        showPercentage={false}
                       />
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-gray-900 mb-2">{subtask.title}</div>
-                      
-                                                                   {/* Eingesetzte Anwendungen und Zeitersparnis in zwei Spalten */}
-                       <div className="grid grid-cols-[1fr_auto] gap-4 mb-2">
-                        {/* Eingesetzte Anwendungen */}
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                            {lang === 'de' ? 'Eingesetzte Anwendungen:' : 'Used Applications:'}
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="w-3 h-3 text-gray-400 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="max-w-xs">
-                                    {lang === 'de' 
-                                      ? 'Diese Auswahl dient als Filter für die Lösungen dieser Aufgabe. Nur Lösungen, die mit den ausgewählten Anwendungen kompatibel sind, werden angezeigt.'
-                                      : 'This selection serves as a filter for the solutions of this task. Only solutions compatible with the selected applications will be displayed.'
-                                    }
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {getTypicalApplications(subtask).map((app) => {
-                              const isSelected = selectedTools[subtask.id]?.includes(app.id) || false;
-                              return (
-                                <div
-                                  key={app.id}
-                                  className={`flex items-center gap-1 px-2 py-1 rounded-md border cursor-pointer transition-all ${
-                                    isSelected 
-                                      ? 'bg-primary/10 border-primary/30 text-primary' 
-                                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                                  }`}
-                                  onClick={() => handleToolToggle(subtask.id, app.id)}
-                                >
-                                  <div className="w-4 h-4 flex items-center justify-center">
-                                    {isSelected ? (
-                                      <Check className="w-3 h-3 text-primary" />
-                                    ) : (
-                                      <div className="w-3 h-3 rounded-sm border border-gray-300" />
-                                    )}
-                                  </div>
-                                  <div className="w-4 h-4 rounded-sm bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img 
-                                      src={applicationLogos[app.logoKey] || getFallbackLogo(app.logoKey)}
-                                      alt={app.name}
-                                      className="w-full h-full object-contain"
-                                      onError={(e) => {
-                                        // Try fallback logo first
-                                        const fallbackUrl = getFallbackLogo(app.logoKey);
-                                        if (fallbackUrl && fallbackUrl !== e.currentTarget.src) {
-                                          e.currentTarget.src = fallbackUrl;
-                                          return;
-                                        }
-                                        
-                                        // Final fallback to text-based icon
-                                        e.currentTarget.style.display = 'none';
-                                        const fallback = document.createElement('div');
-                                        fallback.className = 'w-full h-full flex items-center justify-center text-xs font-bold text-gray-600 bg-gray-200 rounded';
-                                        fallback.textContent = app.name.charAt(0).toUpperCase();
-                                        e.currentTarget.parentNode?.appendChild(fallback);
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="text-xs font-medium">{app.name}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                    <div className="flex-1 min-w-0 flex items-center">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="font-medium text-sm text-gray-900">{subtask.title}</div>
                         
                         {/* Zeitersparnis */}
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">
-                            {lang === 'de' ? 'Zeitersparnis:' : 'Time savings:'}
-                          </div>
-                          <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                            <span className="text-gray-400">{hoursBefore.toFixed(1)}h</span>
-                            <span className="text-primary">→</span>
-                            <span className="text-green-600 font-semibold">{hoursAfter.toFixed(1)}h</span>
-                          </div>
+                        <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                          <span className="text-gray-400">{hoursBefore.toFixed(1)}h</span>
+                          <span className="text-primary">→</span>
+                          <span className="text-green-600 font-semibold">{hoursAfter.toFixed(1)}h</span>
                         </div>
                       </div>
                     </div>
