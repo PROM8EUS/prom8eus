@@ -11,6 +11,7 @@ import PageFooter from "@/components/PageFooter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
 import { runAnalysis } from "@/lib/runAnalysis";
+import { SharedAnalysisService } from "@/lib/sharedAnalysis";
 
 interface AnalysisResult {
   totalScore: number;
@@ -77,20 +78,35 @@ const Landing = () => {
     const shareId = searchParams.get('share');
   
     if (shareId) {
-      // Load shared analysis data from localStorage
-      try {
-        const sharedData = localStorage.getItem(shareId);
-        
-        if (sharedData) {
-          const parsedResult: AnalysisResult = JSON.parse(sharedData);
-          setAnalysisData(parsedResult);
-          return;
-        } else {
-          console.log('No shared data found in localStorage for ID:', shareId);
+      // Load shared analysis data from server first, then fallback to localStorage
+      const loadSharedAnalysis = async () => {
+        try {
+          // Try server first
+          const serverResult = await SharedAnalysisService.getAnalysis(shareId);
+          if (serverResult.success && serverResult.data) {
+            console.log('Loaded shared analysis from server:', shareId);
+            setAnalysisData(serverResult.data.analysisData);
+            return;
+          } else {
+            // Fallback to localStorage
+            console.log('Server analysis not found, trying localStorage:', shareId);
+            const sharedData = localStorage.getItem(shareId);
+            
+            if (sharedData) {
+              const parsedResult: AnalysisResult = JSON.parse(sharedData);
+              setAnalysisData(parsedResult);
+              return;
+            } else {
+              console.log('No shared data found in localStorage for ID:', shareId);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading shared analysis:', error);
         }
-      } catch (error) {
-        console.error('Error loading shared analysis:', error);
-      }
+      };
+
+      loadSharedAnalysis();
+      return;
     } else {
       console.log('No shareId parameter found in URL');
     }
@@ -216,12 +232,10 @@ ANFORDERUNGEN:
   const humanTasks = displayTasks.filter(task => task.category === 'mensch').length;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
+    <div className="bg-background">
       <Header />
-      
-      {/* Main Content */}
-      <main className="flex-1 px-6 py-12 pt-24">
+      <div className="min-h-screen">
+        <main className="px-6 py-12 pt-24">
         <div className="max-w-6xl mx-auto space-y-16">
           {/* Hero Section with Score */}
           <section className="animate-fade-in">
@@ -351,11 +365,9 @@ ANFORDERUNGEN:
             </div>
           </section>
         </div>
-      </main>
-
-      {/* Footer */}
+        </main>
+      </div>
       <PageFooter />
-      
       <div className="fixed bottom-6 right-6">
         <LanguageSwitcher current={lang} />
       </div>

@@ -484,6 +484,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     paste_text_tip: "Kopieren Sie den Stellentext manuell von der Website und fügen Sie ihn direkt hier ein.",
     connection_error: "Verbindungsfehler: Die Analyse konnte nicht durchgeführt werden",
     analysis_error: "Ein unbekannter Fehler ist bei der Analyse aufgetreten",
+    redirecting_to_home: "Sie werden zur Startseite weitergeleitet...",
     
     // Results page
     back: "Zurück",
@@ -960,6 +961,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     paste_text_tip: "Copy the job text manually from the website and paste it directly here.",
     connection_error: "Connection error: Analysis could not be performed",
     analysis_error: "An unknown error occurred during analysis",
+    redirecting_to_home: "You will be redirected to the home page...",
     
     // Results page
     back: "Back",

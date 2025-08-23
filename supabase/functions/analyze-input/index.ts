@@ -212,7 +212,7 @@ async function runAnalysis(text: string): Promise<any> {
   ]
   
   return {
-    originalText: text.substring(0, 1000) + (text.length > 1000 ? '...' : ''),
+    originalText: text, // Store full original text for sharing
     automationScore,
     automatedTasks,
     manualTasks,

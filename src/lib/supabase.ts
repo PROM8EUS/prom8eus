@@ -59,7 +59,7 @@ export async function callAnalyzeInput(input: AnalyzeInputRequest, lang: 'de' | 
     return {
       success: true,
       data: {
-        originalText: analysisText.substring(0, 500) + (analysisText.length > 500 ? '...' : ''),
+        originalText: analysisText, // Store full original text for sharing
         ...result
       }
     };

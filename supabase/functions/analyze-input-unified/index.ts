@@ -94,7 +94,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         data: {
-          originalText: analysisText.substring(0, 500) + (analysisText.length > 500 ? '...' : ''),
+          originalText: analysisText, // Store full original text for sharing
           ...result
         }
       }),

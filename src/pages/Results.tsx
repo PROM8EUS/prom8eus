@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Share2, BookOpen, Bot, User, Target, Zap, Rocket, Sparkles, Lightbulb } from "lucide-react";
+import { Share2, BookOpen, Bot, User, Target, Zap, Rocket, Sparkles, Lightbulb, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ScoreCircle from "@/components/ScoreCircle";
 import InfoCard from "@/components/InfoCard";
@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { resolveLang, t, translateCategory } from "@/lib/i18n/i18n";
 import { generateSummary } from "@/lib/runAnalysis";
 import { detectIndustry } from "@/lib/runAnalysis";
+import { SharedAnalysisService } from "@/lib/sharedAnalysis";
 
 // Animated Letter Component
 const AnimatedLetter = ({ letter, index, isVisible }: { letter: string; index: number; isVisible: boolean }) => {
@@ -150,14 +151,67 @@ const Results = () => {
   const [isSharedView, setIsSharedView] = useState(false);
   const [jobTitle, setJobTitle] = useState("");
   const [isJobTitleVisible, setIsJobTitleVisible] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Generate unique share URL for this analysis
-  const generateShareUrl = (data: AnalysisResult) => {
+  const generateShareUrl = async (data: AnalysisResult): Promise<string> => {
+    const shareId = SharedAnalysisService.generateShareId();
+    
+    try {
+      // Extract job title from original text
+      let jobTitle = "";
+      if (data.originalText) {
+        const lines = data.originalText.split('\n');
+        const firstLine = lines[0]?.trim();
+        if (firstLine && firstLine.length > 5 && firstLine.length < 60 && !firstLine.includes('http')) {
+          jobTitle = firstLine;
+        }
+      }
+
+      // Store analysis data on server
+      const result = await SharedAnalysisService.storeAnalysis({
+        shareId,
+        analysisData: data,
+        originalText: data.originalText || '',
+        jobTitle: jobTitle || undefined,
+        totalScore: data.totalScore,
+        taskCount: data.tasks?.length || 0
+      });
+
+      if (result.success) {
+        console.log('Successfully stored shared analysis:', shareId);
+        return SharedAnalysisService.createShareUrl(shareId, lang);
+      } else {
+        console.warn('Failed to store analysis on server, using localStorage fallback:', result.error);
+        // Fallback to localStorage
+        return generateLocalShareUrl(data);
+      }
+    } catch (error) {
+      console.warn('Error storing analysis on server, using localStorage fallback:', error);
+      // Fallback to localStorage
+      return generateLocalShareUrl(data);
+    }
+  };
+
+  // Fallback function for localStorage sharing
+  const generateLocalShareUrl = (data: AnalysisResult): string => {
     const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     try {
       // Clean up old analysis data first
       cleanupOldAnalysisData();
+      
+      // Check if data is too large for localStorage (limit is typically 5-10MB)
+      const dataSize = JSON.stringify(data).length;
+      const maxSize = 4 * 1024 * 1024; // 4MB limit to be safe
+      
+      if (dataSize > maxSize) {
+        console.warn(`Analysis data too large (${dataSize} bytes), using session-based sharing`);
+        // Fallback: use sessionStorage instead
+        sessionStorage.setItem('sharedAnalysis', JSON.stringify(data));
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/results?session=${analysisId}&lang=${lang}`;
+      }
       
       // Store analysis data in localStorage with the unique ID
       localStorage.setItem(analysisId, JSON.stringify(data));
@@ -206,46 +260,77 @@ const Results = () => {
     if (shareId || sessionId) {
       setIsSharedView(true);
       
-      // Try to load shared analysis from localStorage or sessionStorage
-      try {
-        let sharedData = null;
-        if (shareId) {
-          sharedData = localStorage.getItem(shareId);
-        } else if (sessionId) {
-          sharedData = sessionStorage.getItem('sharedAnalysis');
-        }
-        
-        if (sharedData) {
-          const parsedResult: AnalysisResult = JSON.parse(sharedData);
-          setAnalysisData(parsedResult);
-          
-          // Extract job title from original text
-          if (parsedResult.originalText) {
-            const lines = parsedResult.originalText.split('\n');
-            const firstLine = lines[0].trim();
-            setJobTitle(firstLine);
+      // Try to load shared analysis from server first, then fallback to localStorage/sessionStorage
+      const loadSharedAnalysis = async () => {
+        try {
+          let sharedData = null;
+          let parsedResult: AnalysisResult | null = null;
+
+          if (shareId) {
+            // Try server first
+            const serverResult = await SharedAnalysisService.getAnalysis(shareId);
+            if (serverResult.success && serverResult.data) {
+              console.log('Loaded shared analysis from server:', shareId);
+              parsedResult = serverResult.data.analysisData;
+              setJobTitle(serverResult.data.jobTitle || '');
+            } else {
+              // Fallback to localStorage
+              console.log('Server analysis not found, trying localStorage:', shareId);
+              const localData = localStorage.getItem(shareId);
+              if (localData) {
+                parsedResult = JSON.parse(localData);
+              }
+            }
+          } else if (sessionId) {
+            // Session-based sharing (localStorage fallback)
+            const localData = sessionStorage.getItem('sharedAnalysis');
+            if (localData) {
+              parsedResult = JSON.parse(localData);
+            }
           }
-          
-          // Transform tasks
-          if (parsedResult.tasks && parsedResult.tasks.length > 0) {
-            const transformedTasks: TaskForDisplay[] = parsedResult.tasks.map((task, index) => ({
-              id: String(index + 1),
-              name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
-              score: Math.round(task.score),
-              category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
-                        task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
-              description: `${task.category ? translateCategory(lang, task.category) : 'Allgemein'} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
-              complexity: task.complexity,
-              automationTrend: task.automationTrend,
-              automationRatio: task.automationRatio,
-              humanRatio: task.humanRatio
-            }));
-            setDisplayTasks(transformedTasks);
+
+          if (parsedResult) {
+            setAnalysisData(parsedResult);
+            
+            // Extract job title from original text if not already set
+            if (!jobTitle && parsedResult.originalText) {
+              const lines = parsedResult.originalText.split('\n');
+              const firstLine = lines[0].trim();
+              setJobTitle(firstLine);
+            }
+            
+            // Transform tasks
+            if (parsedResult.tasks && parsedResult.tasks.length > 0) {
+              const transformedTasks: TaskForDisplay[] = parsedResult.tasks.map((task, index) => ({
+                id: String(index + 1),
+                name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
+                score: Math.round(task.score),
+                category: task.label === 'Automatisierbar' ? 'automatisierbar' : 
+                          task.label === 'Teilweise Automatisierbar' ? 'teilweise' : 'mensch',
+                description: `${task.category ? translateCategory(lang, task.category) : 'Allgemein'} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || task.score)}%)`,
+                complexity: task.complexity,
+                automationTrend: task.automationTrend,
+                automationRatio: task.automationRatio,
+                humanRatio: task.humanRatio
+              }));
+              setDisplayTasks(transformedTasks);
+            }
+          } else {
+            // Shared data not found - show error message and redirect to home
+            console.error('Shared analysis data not found for ID:', shareId || sessionId);
+            setAnalysisError('Die geteilte Analyse konnte nicht gefunden werden. Möglicherweise wurde sie gelöscht oder ist abgelaufen.');
+            // Redirect to home page after 3 seconds
+            setTimeout(() => {
+              navigate('/');
+            }, 3000);
           }
+        } catch (error) {
+          console.error('Error loading shared analysis:', error);
+          setAnalysisError('Fehler beim Laden der geteilten Analyse.');
         }
-      } catch (error) {
-        console.error('Error loading shared analysis:', error);
-      }
+      };
+
+      loadSharedAnalysis();
     } else {
       // Try to load real analysis results from sessionStorage
       try {
@@ -284,7 +369,7 @@ const Results = () => {
             setDisplayTasks(transformedTasks);
             
             // Generate share URL
-            setShareUrl(generateShareUrl(parsedResult));
+            generateShareUrl(parsedResult).then(url => setShareUrl(url));
             
             // Note: Scroll to top is handled by the separate useEffect for initial mount
           }
@@ -369,12 +454,10 @@ const Results = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header - nur wenn nicht Shared View */}
-      {!isSharedView && <Header showBack={true} />}
-
-      {/* Main Content */}
-      <main className={`flex-1 px-6 py-12 ${!isSharedView ? 'pt-32' : 'pt-12'}`}>
+    <div className="bg-background">
+      <Header />
+      <div className="min-h-screen">
+        <main className="px-6 py-12 pt-24">
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Title */}
           <div className="text-center">
@@ -391,6 +474,21 @@ const Results = () => {
               }
             </h1>
           </div>
+
+          {/* Error Display */}
+          {analysisError && (
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="flex items-start gap-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 p-4 rounded-lg text-left">
+                <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <p>{analysisError}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(lang, "redirecting_to_home")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Check if tasks were found */}
           {analysisData && analysisData.tasks && analysisData.tasks.length > 0 ? (
@@ -576,13 +674,13 @@ const Results = () => {
             </TooltipProvider>
           )}
         </div>
-      </main>
-
-      {/* Footer */}
+        </main>
+      </div>
       <PageFooter />
       
-      {/* Language Switcher */}
-      <LanguageSwitcher current={lang} />
+      <div className="fixed bottom-6 right-6">
+        <LanguageSwitcher current={lang} />
+      </div>
       
       {/* Share Modal */}
       <ShareModal
