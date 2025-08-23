@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bot, User, ChevronDown, ChevronUp, Zap, Workflow, TrendingUp, TrendingDown, Minus, ExternalLink, Lightbulb } from "lucide-react";
+import { Bot, User, ChevronDown, ChevronUp, Zap, Workflow, TrendingUp, TrendingDown, Minus, ExternalLink, Lightbulb, Code, Layers, Circle, Square, Hexagon } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { t, translateCategory } from "@/lib/i18n/i18n";
 import { AppIcon } from './AppIcon';
@@ -59,9 +59,9 @@ const CircularPieChart = ({ automationRatio, humanRatio, size = 60 }: {
   size?: number;
 }) => {
   const radius = size / 2;
-  const circumference = 2 * Math.PI * radius;
+  const circumference = 2 * Math.PI * (radius - 2);
   
-  // Calculate stroke dasharray for automation (green)
+  // Calculate stroke dasharray for automation (brand color)
   const automationStrokeDasharray = (automationRatio / 100) * circumference;
   const humanStrokeDasharray = (humanRatio / 100) * circumference;
   
@@ -72,43 +72,29 @@ const CircularPieChart = ({ automationRatio, humanRatio, size = 60 }: {
         <circle
           cx={radius}
           cy={radius}
-          r={radius - 3}
+          r={radius - 2}
           fill="none"
-          stroke="#f3f4f6"
+          stroke="#ccfbf1"
           strokeWidth="4"
         />
         {/* Automation segment (brand color) */}
         <circle
           cx={radius}
           cy={radius}
-          r={radius - 3}
+          r={radius - 2}
           fill="none"
           stroke="hsl(var(--primary))"
           strokeWidth="4"
-          strokeDasharray={`${automationStrokeDasharray - 3} ${circumference}`}
+          strokeDasharray={`${automationStrokeDasharray} ${circumference}`}
           strokeLinecap="round"
           className="transition-all duration-700 ease-out"
         />
-        {/* Human segment (red) - starts after automation with gap */}
-        {humanRatio > 0 && (
-          <circle
-            cx={radius}
-            cy={radius}
-            r={radius - 3}
-            fill="none"
-            stroke="hsl(var(--destructive))"
-            strokeWidth="4"
-            strokeDasharray={`${humanStrokeDasharray - 3} ${circumference}`}
-            strokeDashoffset={-automationStrokeDasharray + 3}
-            strokeLinecap="round"
-            className="transition-all duration-700 ease-out"
-          />
-        )}
+
       </svg>
       {/* Center text */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-xs font-bold text-gray-800">{automationRatio}%</div>
+          <div className="text-xs font-bold text-primary">{automationRatio}%</div>
         </div>
       </div>
     </div>
@@ -484,7 +470,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                           : 'bg-yellow-100 text-yellow-600'
                       }`}>
                         {automationCategory === 'automatisierbar' ? (
-                          <Bot className="w-4 h-4" />
+                          <Zap className="w-4 h-4" />
                         ) : (
                           <Zap className="w-4 h-4" />
                         )}
@@ -597,11 +583,22 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                           {task.subtasks.map((subtask, index) => (
                             <div key={subtask.id} className="p-3 border rounded-lg bg-gray-50">
                               <div className="flex items-start justify-between mb-2">
-                                <h5 className="font-medium text-gray-900 text-sm">{subtask.title}</h5>
+                                <div className="flex items-center space-x-3 flex-1">
+                                  {/* Circular Progress Chart for Subtask */}
+                                  <div className="flex items-center justify-end">
+                                    <CircularPieChart 
+                                      automationRatio={subtask.automationPotential} 
+                                      humanRatio={100 - subtask.automationPotential} 
+                                      size={40} 
+                                    />
+                                  </div>
+                                  
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-gray-900 text-sm">{subtask.title}</h5>
+                                  </div>
+                                </div>
+                                
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {subtask.automationPotential}% {currentLang === 'de' ? 'Automatisierung' : 'Automation'}
-                                  </Badge>
                                   <Badge 
                                     variant={subtask.priority === 'critical' ? 'destructive' : 'secondary'}
                                     className="text-xs"

@@ -202,8 +202,8 @@ export class N8nApi {
       }
       
       const categories = await categoriesResponse.json();
-      const workflows: N8nWorkflow[] = [];
-      
+    const workflows: N8nWorkflow[] = [];
+    
       // Process each category to find workflow files (load all categories for complete coverage)
       const categoriesToProcess = categories; // Load all 186 categories
       console.log(`Processing ${categoriesToProcess.length} categories for complete workflow coverage...`);
@@ -263,14 +263,14 @@ export class N8nApi {
         try {
           const workflow = await this.createWorkflowFromFile(file, categoryName);
           if (workflow) {
-            workflows.push(workflow);
-          }
-        } catch (error) {
-          console.warn(`Failed to process workflow file ${file.name}:`, error);
+          workflows.push(workflow);
         }
+      } catch (error) {
+          console.warn(`Failed to process workflow file ${file.name}:`, error);
       }
-      
-      return workflows;
+    }
+
+    return workflows;
       
     } catch (error) {
       console.error(`Error fetching workflows from category ${categoryName}:`, error);
@@ -326,11 +326,11 @@ export class N8nApi {
         difficulty: difficulty,
         estimatedTime: estimatedTime,
         estimatedCost: estimatedCost,
-        nodes: nodes.length,
+      nodes: nodes.length,
         connections: connectionCount,
         downloads: downloads,
         rating: rating,
-        createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
         url: `https://github.com/Zie619/n8n-workflows/blob/main/workflows/${categoryName}/${file.name}`,
         jsonUrl: file.download_url,
         active: workflowData.active !== false,
@@ -973,14 +973,14 @@ export class N8nApi {
       
       return { workflow, score };
     });
-    
+
     // If no high-scoring workflows, return some general ones
     const highScoringWorkflows = scoredWorkflows
       .filter(item => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 20)
       .map(item => item.workflow);
-    
+
     if (highScoringWorkflows.length === 0) {
       console.log('No high-scoring workflows found, returning general workflows');
       return workflows.slice(0, 10); // Return first 10 workflows as fallback

@@ -26,8 +26,50 @@ const AppIcon: React.FC<AppIconProps> = ({
     lg: 'text-base'
   };
 
+  // Function to get app logo URL with fallback to company logo
+  const getAppLogoUrl = (tool: AITool): string => {
+    // Map tool IDs to their app logo URLs using Wikimedia Commons and other reliable sources
+    const appLogoMap: Record<string, string> = {
+      // Microsoft Office Apps
+      'excel-ai': 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
+      'power-bi-ai': 'https://upload.wikimedia.org/wikipedia/commons/c/cf/Power_bi_logo_black.svg',
+      'microsoft-copilot': 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Microsoft_Office_logo_%282019%E2%80%93present%29.svg',
+      
+      // Google Apps
+      'google-sheets-ai': 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282020-present%29.svg',
+      'gemini': 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Google_Gemini_logo.svg',
+      
+      // AI Tools
+      'chatgpt': 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
+      'claude': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Anthropic_logo.svg',
+      'github-copilot': 'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
+      'code-whisperer': 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg',
+      'tabnine': 'https://upload.wikimedia.org/wikipedia/commons/8/87/Tabnine_logo.svg',
+      'notion-ai': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
+      'obsidian-ai': 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Obsidian_logo.svg',
+      'jasper': 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Jasper_AI_logo.svg',
+      'copy-ai': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Copy.ai_logo.svg',
+      'writesonic': 'https://upload.wikimedia.org/wikipedia/commons/w/wc/Writesonic_logo.svg',
+      'canva-ai': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg',
+      'perplexity': 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Perplexity_AI_logo.svg',
+      'grammarly': 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Grammarly_logo.svg',
+      'grok': 'https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.svg',
+      'airtable-ai': 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Airtable_logo.svg'
+    };
+
+    // Try app logo first, then fallback to original logo
+    return appLogoMap[tool.id] || tool.logo.url;
+  };
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    // Fallback zu einem generischen Icon wenn das Logo nicht geladen werden kann
+    // If app logo fails, try the original logo
+    const originalLogo = tool.logo.url;
+    if (e.currentTarget.src !== originalLogo) {
+      e.currentTarget.src = originalLogo;
+      return;
+    }
+    
+    // If both fail, show fallback icon
     e.currentTarget.style.display = 'none';
     const fallback = e.currentTarget.nextElementSibling as HTMLElement;
     if (fallback) {
@@ -38,9 +80,9 @@ const AppIcon: React.FC<AppIconProps> = ({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className="relative">
-        {/* Logo Image */}
+        {/* Logo Image - Try app logo first */}
         <img
-          src={tool.logo.url}
+          src={getAppLogoUrl(tool)}
           alt={tool.logo.alt}
           className={`${sizeClasses[size]} rounded-lg object-cover shadow-sm`}
           style={{
@@ -48,7 +90,6 @@ const AppIcon: React.FC<AppIconProps> = ({
             border: '1px solid #e5e7eb'
           }}
           onError={handleImageError}
-
         />
         
         {/* Fallback Icon */}

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Share2, BookOpen, Bot, User, Target, Zap, Rocket, Sparkles, Lightbulb, AlertTriangle } from "lucide-react";
+import { Share2, BookOpen, Zap, User, Target, Rocket, Sparkles, Lightbulb, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ScoreCircle from "@/components/ScoreCircle";
 import InfoCard from "@/components/InfoCard";
@@ -516,7 +516,7 @@ const Results = () => {
                     title={t(lang, "landing_automatable")}
                     value={`${automatizableTasks}%`}
                     description={t(lang, "landing_automatable_desc")}
-                    icon={Bot}
+                    icon={Zap}
                     variant="primary"
                   />
                   
@@ -525,7 +525,7 @@ const Results = () => {
                     value={`${humanTasks}%`}
                     description={t(lang, "landing_human_desc")}
                     icon={User}
-                    variant="destructive"
+                    variant="human"
                   />
                 </div>
               </div>

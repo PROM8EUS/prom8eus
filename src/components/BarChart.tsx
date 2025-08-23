@@ -40,7 +40,7 @@ const BarChart = ({ automatizable, humanRequired }: BarChartProps) => {
           </div>
           <div className="h-4 bg-muted rounded-full overflow-hidden">
             <div 
-              className="h-full bg-destructive rounded-full transition-all duration-1000 ease-out"
+              className="h-full bg-amber-600 rounded-full transition-all duration-1000 ease-out"
               style={{ 
                 width: `${humanPercentage}%`,
                 animation: 'progress-bar-static 1.4s ease-out forwards'

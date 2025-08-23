@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Bot, User, Sparkles } from "lucide-react";
+import { Zap, User, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
@@ -274,7 +274,7 @@ ANFORDERUNGEN:
                   title={t(lang, "landing_automatable")}
                   value={`${displayAutomatable}%`}
                   description={t(lang, "landing_automatable_desc")}
-                  icon={Bot}
+                  icon={Zap}
                   variant="primary"
                 />
                 
@@ -283,7 +283,7 @@ ANFORDERUNGEN:
                   value={`${displayHuman}%`}
                   description={t(lang, "landing_human_desc")}
                   icon={User}
-                  variant="destructive"
+                  variant="human"
                 />
               </div>
             </section>

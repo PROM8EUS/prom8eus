@@ -20,6 +20,54 @@ import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
 import { AIToolRecommendations } from './AIToolRecommendations';
 import BusinessCase from './BusinessCase';
 
+// Circular Pie Chart Component (same as in TaskList)
+const CircularPieChart = ({ automationRatio, humanRatio, size = 60 }: { 
+  automationRatio: number; 
+  humanRatio: number; 
+  size?: number;
+}) => {
+  const radius = size / 2;
+  const circumference = 2 * Math.PI * (radius - 2);
+  
+  // Calculate stroke dasharray for automation (brand color)
+  const automationStrokeDasharray = (automationRatio / 100) * circumference;
+  const humanStrokeDasharray = (humanRatio / 100) * circumference;
+  
+  return (
+    <div className="relative inline-block">
+      <svg width={size} height={size} className="transform -rotate-90">
+        {/* Background circle */}
+        <circle
+          cx={radius}
+          cy={radius}
+          r={radius - 2}
+          fill="none"
+          stroke="#ccfbf1"
+          strokeWidth="4"
+        />
+        {/* Automation segment (brand color) */}
+        <circle
+          cx={radius}
+          cy={radius}
+          r={radius - 2}
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="4"
+          strokeDasharray={`${automationStrokeDasharray} ${circumference}`}
+          strokeLinecap="round"
+          className="transition-all duration-700 ease-out"
+        />
+      </svg>
+      {/* Center text */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xs font-bold text-primary">{automationRatio}%</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 
 type TaskPanelProps = {
@@ -547,29 +595,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               return (
                 <div key={subtask.id} className="p-4 border rounded-lg bg-white shadow-sm">
                   <div className="flex items-center gap-4">
-                    {/* Mini Pie Chart for each subtask */}
-                    <div className="relative w-10 h-10 flex-shrink-0">
-                      <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#f3f4f6"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth="3"
-                          strokeDasharray={`${subtask.automationPotential * 100}, 100`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-primary">
-                          {Math.round(subtask.automationPotential * 100)}%
-                        </span>
-                      </div>
+                    {/* Circular Progress Chart for each subtask */}
+                    <div className="flex-shrink-0">
+                      <CircularPieChart 
+                        automationRatio={Math.round(subtask.automationPotential * 100)} 
+                        humanRatio={Math.round((1 - subtask.automationPotential) * 100)} 
+                        size={40} 
+                      />
                     </div>
                     
                     <div className="flex-1 min-w-0">

@@ -202,7 +202,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'LLM',
     industry: ['tech', 'general'],
     logo: {
-      url: '/logos/chatgpt.png',
+      url: 'https://logo.clearbit.com/chat.openai.com',
       alt: 'ChatGPT Logo',
       backgroundColor: '#10a37f',
       textColor: '#ffffff'
@@ -219,7 +219,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'LLM',
     industry: ['tech', 'general'],
     logo: {
-      url: '/logos/claude.png',
+      url: 'https://logo.clearbit.com/claude.ai',
       alt: 'Claude Logo',
       backgroundColor: '#CC785C',
       textColor: '#ffffff'
@@ -236,7 +236,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'Code Assistant',
     industry: ['tech'],
     logo: {
-      url: '/logos/github-copilot.png',
+      url: 'https://logo.clearbit.com/github.com',
       alt: 'GitHub Copilot Logo',
       backgroundColor: '#ffffff',
       textColor: '#000000'
@@ -340,7 +340,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'Office Integration',
     industry: ['healthcare', 'hr', 'finance', 'general'],
     logo: {
-      url: '/logos/microsoft-copilot.png',
+      url: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Microsoft_Office_logo_%282019%E2%80%93present%29.svg',
       alt: 'Microsoft Copilot Logo',
       backgroundColor: '#0078d4',
       textColor: '#ffffff'
@@ -359,7 +359,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'Data Analysis',
     industry: ['finance', 'production', 'general'],
     logo: {
-      url: '/logos/excel-ai.png',
+      url: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
       alt: 'Excel AI Logo',
       backgroundColor: '#217346',
       textColor: '#ffffff'
@@ -376,7 +376,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'Business Intelligence',
     industry: ['finance', 'production', 'marketing'],
     logo: {
-      url: '/logos/power-bi-ai.png',
+      url: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
       alt: 'Power BI Logo',
       backgroundColor: '#f2c811',
       textColor: '#000000'
@@ -393,7 +393,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'Data Analysis',
     industry: ['finance', 'hr', 'general'],
     logo: {
-      url: '/logos/google-sheets-ai.png',
+      url: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282020-present%29.svg',
       alt: 'Google Sheets Logo',
       backgroundColor: '#34a853',
       textColor: '#ffffff'
@@ -410,7 +410,7 @@ export const AI_TOOLS: AITool[] = [
     category: 'Database',
     industry: ['finance', 'hr', 'production', 'general'],
     logo: {
-      url: '/logos/airtable-ai.png',
+      url: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Airtable_logo.svg',
       alt: 'Airtable Logo',
       backgroundColor: '#ff6b35',
       textColor: '#ffffff'
