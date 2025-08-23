@@ -266,7 +266,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         <TabsContent value="subtasks" className="space-y-4">
           {isGenerating ? (
             <div className="text-center py-8 text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-sm">
                 {lang === 'de' ? 'Generiere spezifische Teilaufgaben...' : 'Generating specific subtasks...'}
               </p>
@@ -278,39 +278,39 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               const hoursAfter = subtask.manualHoursShare * 8 * (1 - subtask.automationPotential);
               
               return (
-                <div key={subtask.id} className="p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div key={subtask.id} className="p-4 border rounded-lg bg-white shadow-sm">
+                  <div className="flex items-center gap-4">
                     {/* Mini Pie Chart for each subtask */}
-                    <div className="relative w-8 h-8 flex-shrink-0">
-                      <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 36 36">
+                    <div className="relative w-10 h-10 flex-shrink-0">
+                      <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 36 36">
                         <path
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                           fill="none"
-                          stroke="#e5e7eb"
-                          strokeWidth="2"
+                          stroke="#f3f4f6"
+                          strokeWidth="3"
                         />
                         <path
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                           fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="2"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="3"
                           strokeDasharray={`${subtask.automationPotential * 100}, 100`}
                           strokeLinecap="round"
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-blue-600">
+                        <span className="text-[10px] font-bold text-primary">
                           {Math.round(subtask.automationPotential * 100)}%
                         </span>
                       </div>
                     </div>
                     
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{subtask.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-gray-900 mb-1">{subtask.title}</div>
+                      <div className="flex items-center justify-between">
                         <div className="flex gap-1">
                           {subtask.systems?.slice(0, 2).map((system) => (
-                            <Badge key={system} variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                            <Badge key={system} variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                               {system}
                             </Badge>
                           ))}
@@ -320,8 +320,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-gray-600 font-medium">
-                          {hoursBefore.toFixed(1)}h → {hoursAfter.toFixed(1)}h
+                        <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                          <span className="text-gray-400">{hoursBefore.toFixed(1)}h</span>
+                          <span className="text-primary">→</span>
+                          <span className="text-green-600 font-semibold">{hoursAfter.toFixed(1)}h</span>
                         </div>
                       </div>
                     </div>
@@ -336,7 +338,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         <TabsContent value="solutions" className="space-y-4">
           {isGenerating ? (
             <div className="text-center py-8 text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-sm">
                 {lang === 'de' ? 'Generiere Lösungen...' : 'Generating solutions...'}
               </p>
