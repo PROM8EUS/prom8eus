@@ -155,23 +155,66 @@ const Results = () => {
   const generateShareUrl = (data: AnalysisResult) => {
     const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Store analysis data in localStorage with the unique ID
-    localStorage.setItem(analysisId, JSON.stringify(data));
-    
-    // Generate shareable URL with current page
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/results?share=${analysisId}&lang=${lang}`;
+    try {
+      // Clean up old analysis data first
+      cleanupOldAnalysisData();
+      
+      // Store analysis data in localStorage with the unique ID
+      localStorage.setItem(analysisId, JSON.stringify(data));
+      
+      // Generate shareable URL with current page
+      const baseUrl = window.location.origin;
+      return `${baseUrl}/results?share=${analysisId}&lang=${lang}`;
+    } catch (error) {
+      console.warn('Failed to store analysis data, using session-based sharing:', error);
+      // Fallback: use sessionStorage instead
+      sessionStorage.setItem('sharedAnalysis', JSON.stringify(data));
+      const baseUrl = window.location.origin;
+      return `${baseUrl}/results?session=${analysisId}&lang=${lang}`;
+    }
+  };
+
+  // Clean up old analysis data to prevent quota exceeded
+  const cleanupOldAnalysisData = () => {
+    try {
+      const keys = Object.keys(localStorage);
+      const analysisKeys = keys.filter(key => key.startsWith('analysis_'));
+      
+      // Keep only the 5 most recent analysis entries
+      if (analysisKeys.length > 5) {
+        // Sort by timestamp (newest first)
+        analysisKeys.sort((a, b) => {
+          const timestampA = parseInt(a.split('_')[1]);
+          const timestampB = parseInt(b.split('_')[1]);
+          return timestampB - timestampA;
+        });
+        
+        // Remove oldest entries
+        const keysToRemove = analysisKeys.slice(5);
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      }
+    } catch (error) {
+      console.warn('Failed to cleanup old analysis data:', error);
+    }
   };
 
   useEffect(() => {
     // Check if this is a shared view
     const shareId = searchParams.get("share");
-    if (shareId) {
+    const sessionId = searchParams.get("session");
+    
+    if (shareId || sessionId) {
       setIsSharedView(true);
       
-      // Try to load shared analysis from localStorage
+      // Try to load shared analysis from localStorage or sessionStorage
       try {
-        const sharedData = localStorage.getItem(shareId);
+        let sharedData = null;
+        if (shareId) {
+          sharedData = localStorage.getItem(shareId);
+        } else if (sessionId) {
+          sharedData = sessionStorage.getItem('sharedAnalysis');
+        }
+        
         if (sharedData) {
           const parsedResult: AnalysisResult = JSON.parse(sharedData);
           setAnalysisData(parsedResult);

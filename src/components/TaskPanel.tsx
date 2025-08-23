@@ -257,6 +257,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
     });
   };
 
+  // Initialize solutions count when subtasks change
+  useEffect(() => {
+    setSolutionsCount(0);
+  }, [task?.subtasks, generatedSubtasks]);
+
   // Update solutions count when solutions are loaded
   const handleSolutionsLoaded = (count: number) => {
     setSolutionsCount(count);
@@ -422,6 +427,49 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
       ];
     }
   }, [task?.subtasks, generatedSubtasks]);
+
+  // Preload workflows when task panel becomes visible
+  useEffect(() => {
+    if (isVisible && realSubtasks && realSubtasks.length > 0) {
+      // Preload workflows in background
+      const taskText = realSubtasks.map(subtask => subtask.title).join(' ') || (task.title || task.name || '');
+      const selectedApps = Object.values(selectedTools).flat();
+      
+      // Import and call the workflow loading function
+      import('../lib/n8nApi').then(({ n8nApiClient }) => {
+        n8nApiClient.fastSearchWorkflows(taskText, selectedApps)
+          .then(workflows => {
+            setSolutionsCount(workflows.length);
+          })
+          .catch(error => {
+            console.warn('Failed to preload workflows:', error);
+          });
+      });
+    }
+  }, [isVisible, realSubtasks, selectedTools, task.title, task.name]);
+
+  // Reload workflows when selected tools change
+  useEffect(() => {
+    if (isVisible && realSubtasks && realSubtasks.length > 0) {
+      const taskText = realSubtasks.map(subtask => subtask.title).join(' ') || (task.title || task.name || '');
+      const selectedApps = Object.values(selectedTools).flat();
+      
+      // Debounce the reload to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        import('../lib/n8nApi').then(({ n8nApiClient }) => {
+          n8nApiClient.fastSearchWorkflows(taskText, selectedApps)
+            .then(workflows => {
+              setSolutionsCount(workflows.length);
+            })
+            .catch(error => {
+              console.warn('Failed to reload workflows:', error);
+            });
+        });
+      }, 500); // 500ms debounce
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedTools, isVisible, realSubtasks, task.title, task.name]);
 
   // Calculate business case based on actual subtask effort reduction
   let manualHoursTotal = 0;
@@ -677,15 +725,12 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Task-Specific Workflows */}
-              <TaskSpecificWorkflows
-                taskText={task.title || task.name || ''}
-                lang={lang}
-                selectedApplications={Object.values(selectedTools).flat()}
-                onSolutionsLoaded={handleSolutionsLoaded}
-              />
-            </div>
+            <TaskSpecificWorkflows
+              taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
+              lang={lang}
+              selectedApplications={Object.values(selectedTools).flat()}
+              onSolutionsLoaded={handleSolutionsLoaded}
+            />
           )}
         </TabsContent>
       </Tabs>

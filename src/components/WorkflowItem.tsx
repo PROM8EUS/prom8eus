@@ -15,23 +15,23 @@ import {
 
 export interface WorkflowItemData {
   id: string;
-  title: string;
+  name: string; // Changed from title
   description: string;
   category: string;
-  tags: string[];
-  difficulty: 'easy' | 'medium' | 'hard';
-  estimatedTime: number;
-  estimatedCost: number;
-  tools: string[];
+  difficulty: 'Easy' | 'Medium' | 'Hard'; // Changed to match N8nWorkflow
+  estimatedTime: string; // Changed from number to string
+  estimatedCost: string; // Changed from number to string
+  integrations: string[]; // Changed from tools
   nodes: number;
   connections: number;
-  author: string;
   downloads: number;
   rating: number;
   createdAt: string;
-  updatedAt: string;
   url: string;
   jsonUrl: string;
+  active: boolean;
+  triggerType: string;
+  author?: string; // Optional author field
 }
 
 interface WorkflowItemProps {
@@ -51,39 +51,60 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
 }) => {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'hard': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Easy': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Hard': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getDifficultyText = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return lang === 'de' ? 'Einfach' : 'Easy';
-      case 'medium': return lang === 'de' ? 'Mittel' : 'Medium';
-      case 'hard': return lang === 'de' ? 'Schwer' : 'Hard';
+      case 'Easy': return lang === 'de' ? 'Einfach' : 'Easy';
+      case 'Medium': return lang === 'de' ? 'Mittel' : 'Medium';
+      case 'Hard': return lang === 'de' ? 'Schwer' : 'Hard';
       default: return difficulty;
     }
   };
 
   const calculateTotalROI = (workflow: WorkflowItemData) => {
-    const monthlyTimeSavings = workflow.estimatedTime * 4;
-    const hourlyRate = workflow.category === 'finance' ? 80 : workflow.category === 'marketing' ? 70 : 60;
+    // Parse estimatedTime string (e.g., "30 min", "2 h")
+    let hours = 0;
+    if (typeof workflow.estimatedTime === 'string') {
+      if (workflow.estimatedTime.includes('min')) {
+        hours = parseInt(workflow.estimatedTime.replace(' min', '')) / 60;
+      } else if (workflow.estimatedTime.includes('h')) {
+        hours = parseInt(workflow.estimatedTime.replace(' h', ''));
+      }
+    } else {
+      hours = workflow.estimatedTime;
+    }
+    
+    const monthlyTimeSavings = hours * 4;
+    const hourlyRate = workflow.category === 'Finance' ? 80 : workflow.category === 'Marketing' ? 70 : 60;
     const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
-    return monthlyCostSavings - workflow.estimatedCost;
+    
+    // Parse estimatedCost string (e.g., "€100")
+    let cost = 0;
+    if (typeof workflow.estimatedCost === 'string') {
+      cost = parseInt(workflow.estimatedCost.replace('€', ''));
+    } else {
+      cost = workflow.estimatedCost;
+    }
+    
+    return monthlyCostSavings - cost;
   };
 
   if (compact) {
     return (
-      <Card className="hover:shadow-sm hover:border-primary/50 transition-all cursor-pointer" onClick={() => onDetails?.(workflow)}>
+      <Card className="w-full hover:shadow-sm hover:border-primary/50 transition-all cursor-pointer" onClick={() => onDetails?.(workflow)}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Zap className="w-4 h-4 text-primary flex-shrink-0" />
                 <h4 className="font-medium text-sm truncate">
-                  {workflow.title}
+                  {workflow.name}
                 </h4>
                 <Badge variant="outline" className={getDifficultyColor(workflow.difficulty)}>
                   {getDifficultyText(workflow.difficulty)}
@@ -96,7 +117,7 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  {workflow.estimatedTime}h
+                  {workflow.estimatedTime}
                 </div>
                 <div className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3" />
@@ -108,8 +129,8 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
                 </div>
                 <div className="flex items-center gap-1">
                   <Wrench className="w-3 h-3" />
-                  {workflow.tools.slice(0, 1).join(', ')}
-                  {workflow.tools.length > 1 && ` +${workflow.tools.length - 1}`}
+                  {workflow.integrations.slice(0, 1).join(', ')}
+                  {workflow.integrations.length > 1 && ` +${workflow.integrations.length - 1}`}
                 </div>
               </div>
             </div>
@@ -123,7 +144,8 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
                     e.stopPropagation();
                     onDownload(workflow);
                   }}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 hover:bg-primary/10"
+                  title={lang === 'de' ? 'Workflow herunterladen' : 'Download workflow'}
                 >
                   <Download className="w-4 h-4" />
                 </Button>
@@ -137,7 +159,7 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
 
   // Full size workflow card
   return (
-    <Card className="hover:shadow-md hover:border-primary/50 transition-all cursor-pointer" onClick={() => onDetails?.(workflow)}>
+    <Card className="w-full hover:shadow-md hover:border-primary/50 transition-all cursor-pointer" onClick={() => onDetails?.(workflow)}>
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header */}
@@ -146,7 +168,7 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold">
-                  {workflow.title}
+                  {workflow.name}
                 </h3>
                 <Badge variant="outline" className={getDifficultyColor(workflow.difficulty)}>
                   {getDifficultyText(workflow.difficulty)}
@@ -171,7 +193,7 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
                   {lang === 'de' ? 'Zeitersparnis' : 'Time Savings'}
                 </div>
                 <div className="text-lg font-bold text-green-700">
-                  {workflow.estimatedTime}h
+                  {workflow.estimatedTime}
                 </div>
               </div>
             </div>
@@ -193,8 +215,8 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
             <div className="flex items-center gap-2">
               <Wrench className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
-                {workflow.tools.slice(0, 2).join(', ')}
-                {workflow.tools.length > 2 && ` +${workflow.tools.length - 2}`}
+                {workflow.integrations.slice(0, 2).join(', ')}
+                {workflow.integrations.length > 2 && ` +${workflow.integrations.length - 2}`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -209,18 +231,14 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
             </div>
           </div>
 
-          {/* Tags */}
+          {/* Trigger Type */}
           <div className="flex flex-wrap gap-2">
-            {workflow.tags.slice(0, 4).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {workflow.tags.length > 4 && (
-              <Badge variant="secondary" className="text-xs">
-                +{workflow.tags.length - 4}
-              </Badge>
-            )}
+            <Badge variant="outline" className="text-xs">
+              {workflow.triggerType}
+            </Badge>
+            <Badge variant={workflow.active ? "default" : "secondary"} className="text-xs">
+              {workflow.active ? (lang === 'de' ? 'Aktiv' : 'Active') : (lang === 'de' ? 'Inaktiv' : 'Inactive')}
+            </Badge>
           </div>
 
           {/* Action Buttons */}
@@ -233,7 +251,7 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
                   e.stopPropagation();
                   onDownload(workflow);
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 hover:bg-primary/10"
               >
                 <Download className="w-4 h-4" />
                 {lang === 'de' ? 'Download' : 'Download'}
