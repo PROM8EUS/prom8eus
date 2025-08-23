@@ -160,12 +160,26 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
     }
   }, [task?.subtasks, generatedSubtasks]);
 
-  // Calculate business case
-  const manualHoursTotal = 8; // Default 8 hours
+  // Calculate business case based on actual subtask effort reduction
+  let manualHoursTotal = 0;
   let residualHoursTotal = 0;
+  
+  // Calculate total manual hours from subtasks
   realSubtasks.forEach(s => {
-    residualHoursTotal += s.manualHoursShare * manualHoursTotal * (1 - s.automationPotential);
+    manualHoursTotal += s.manualHoursShare * 8; // 8 hours base per task
   });
+  
+  // Calculate residual hours after automation
+  realSubtasks.forEach(s => {
+    residualHoursTotal += s.manualHoursShare * 8 * (1 - s.automationPotential);
+  });
+  
+  // Fallback to default values if no subtasks
+  if (realSubtasks.length === 0) {
+    manualHoursTotal = 8;
+    residualHoursTotal = 4; // Assume 50% automation potential
+  }
+  
   const monthlySolutionCost = 78; // Default cost
 
   if (!isVisible) return null;
@@ -223,9 +237,14 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
               <div 
                 className="bg-green-600 h-2 rounded-full transition-all duration-300"
                 style={{ 
-                  width: `${Math.round(((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) / (manualHoursTotal * hourlyRate * 4.33) * 100)}%` 
+                  width: `${Math.max(0, Math.round(((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) / (manualHoursTotal * hourlyRate * 4.33) * 100))}%` 
                 }}
               ></div>
+            </div>
+            <div className="text-center mt-2 text-sm">
+              <span className={((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                {((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost)) > 0 ? '+' : ''}€{Math.round((manualHoursTotal * hourlyRate * 4.33) - (residualHoursTotal * hourlyRate * 4.33 + monthlySolutionCost))} monatliche Einsparung
+              </span>
             </div>
           </div>
         </CardContent>
@@ -255,8 +274,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
           ) : (
             <div className="space-y-2">
               {realSubtasks.map((subtask) => {
-              const hoursBefore = subtask.manualHoursShare * manualHoursTotal;
-              const hoursAfter = subtask.manualHoursShare * manualHoursTotal * (1 - subtask.automationPotential);
+              const hoursBefore = subtask.manualHoursShare * 8; // 8 hours base per task
+              const hoursAfter = subtask.manualHoursShare * 8 * (1 - subtask.automationPotential);
               
               return (
                 <div key={subtask.id} className="p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">

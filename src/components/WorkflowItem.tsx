@@ -71,7 +71,7 @@ export const WorkflowItem: React.FC<WorkflowItemProps> = ({
     const monthlyTimeSavings = workflow.estimatedTime * 4;
     const hourlyRate = workflow.category === 'finance' ? 80 : workflow.category === 'marketing' ? 70 : 60;
     const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
-    return monthlyCostSavings + workflow.estimatedCost;
+    return monthlyCostSavings - workflow.estimatedCost;
   };
 
   if (compact) {

@@ -330,5 +330,5 @@ export function calculateTotalROI(workflow: WorkflowTemplate): number {
   const monthlyTimeSavings = workflow.estimatedTimeSavings * 4; // 4 weeks
   const hourlyRate = 60; // EUR 60/hour
   const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
-  return monthlyCostSavings + workflow.estimatedCostSavings;
+  return monthlyCostSavings - workflow.estimatedCostSavings;
 }

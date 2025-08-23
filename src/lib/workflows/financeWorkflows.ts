@@ -302,5 +302,5 @@ export function calculateFinanceROI(workflow: WorkflowTemplate): number {
   const monthlyTimeSavings = workflow.estimatedTimeSavings * 4;
   const hourlyRate = 80; // Higher rate for finance professionals
   const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
-  return monthlyCostSavings + workflow.estimatedCostSavings;
+  return monthlyCostSavings - workflow.estimatedCostSavings;
 }

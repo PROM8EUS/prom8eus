@@ -95,7 +95,7 @@ const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({
     const monthlyTimeSavings = workflow.estimatedTimeSavings * 4;
     const hourlyRate = workflow.source === 'finance' ? 80 : workflow.source === 'healthcare' ? 70 : 60;
     const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
-    return monthlyCostSavings + workflow.estimatedCostSavings;
+    return monthlyCostSavings - workflow.estimatedCostSavings;
   };
 
   const handleDownloadWorkflow = (workflow: WorkflowTemplate) => {

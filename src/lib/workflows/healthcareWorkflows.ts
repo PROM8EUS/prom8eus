@@ -302,5 +302,5 @@ export function calculateHealthcareROI(workflow: WorkflowTemplate): number {
   const monthlyTimeSavings = workflow.estimatedTimeSavings * 4;
   const hourlyRate = 70; // Healthcare professional rate
   const monthlyCostSavings = monthlyTimeSavings * hourlyRate;
-  return monthlyCostSavings + workflow.estimatedCostSavings;
+  return monthlyCostSavings - workflow.estimatedCostSavings;
 }
