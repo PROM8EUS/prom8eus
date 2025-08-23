@@ -321,7 +321,7 @@ export class N8nApi {
       const workflow: N8nWorkflow = {
         id: `${categoryName}_${id}`,
         name: name,
-        description: workflowData.description || `Automation workflow for ${services}`,
+        description: this.generateDescription(services, purpose, trigger, categoryName, workflowData),
         category: this.mapCategory(categoryName),
         difficulty: difficulty,
         estimatedTime: estimatedTime,
@@ -384,6 +384,127 @@ export class N8nApi {
 
   private getRandomDownloads(): number {
     return Math.floor(Math.random() * 1000) + 10; // 10 to 1009
+  }
+
+  private generateDescription(services: string, purpose: string, trigger: string, categoryName: string, workflowData: any): string {
+    // Try to extract description from workflow data first
+    if (workflowData.description) {
+      return workflowData.description;
+    }
+    
+    if (workflowData.notes) {
+      return workflowData.notes;
+    }
+    
+    // Try to extract from node parameters
+    const nodeDescriptions = this.extractNodeDescriptions(workflowData.nodes);
+    if (nodeDescriptions.length > 0) {
+      return nodeDescriptions.join('. ');
+    }
+    
+    // Fallback to generated description
+    const descriptions: { [key: string]: string[] } = {
+      'Communication': [
+        `Automatisiert ${services} Kommunikation mit ${purpose.toLowerCase()} Funktionalität`,
+        `Workflow zur ${purpose.toLowerCase()} Verwaltung über ${services}`,
+        `Integration von ${services} für ${purpose.toLowerCase()} Prozesse`
+      ],
+      'Sales': [
+        `Automatisiertes ${services} Sales Management mit ${purpose.toLowerCase()}`,
+        `Workflow für ${purpose.toLowerCase()} in ${services} Verkaufsprozessen`,
+        `${services} Integration zur ${purpose.toLowerCase()} Optimierung`
+      ],
+      'Finance': [
+        `Finanzautomatisierung mit ${services} für ${purpose.toLowerCase()}`,
+        `${services} Workflow zur ${purpose.toLowerCase()} Verwaltung`,
+        `Automatisierte ${purpose.toLowerCase()} Prozesse in ${services}`
+      ],
+      'E-commerce': [
+        `E-Commerce Automatisierung mit ${services} für ${purpose.toLowerCase()}`,
+        `${services} Workflow für ${purpose.toLowerCase()} im Online-Handel`,
+        `Automatisierte ${purpose.toLowerCase()} für ${services} Shop-Systeme`
+      ],
+      'Data': [
+        `Datenautomatisierung mit ${services} für ${purpose.toLowerCase()}`,
+        `${services} Workflow zur ${purpose.toLowerCase()} Datenverarbeitung`,
+        `Automatisierte ${purpose.toLowerCase()} mit ${services} Datenintegration`
+      ],
+      'Marketing': [
+        `Marketing-Automatisierung mit ${services} für ${purpose.toLowerCase()}`,
+        `${services} Workflow für ${purpose.toLowerCase()} Marketing-Kampagnen`,
+        `Automatisierte ${purpose.toLowerCase()} in ${services} Marketing-Tools`
+      ],
+      'HR': [
+        `HR-Automatisierung mit ${services} für ${purpose.toLowerCase()}`,
+        `${services} Workflow zur ${purpose.toLowerCase()} Personalverwaltung`,
+        `Automatisierte ${purpose.toLowerCase()} Prozesse in ${services} HR-Systemen`
+      ]
+    };
+
+    const category = this.mapCategory(categoryName);
+    const categoryDescriptions = descriptions[category] || descriptions['Data'];
+    const randomIndex = Math.floor(Math.random() * categoryDescriptions.length);
+    
+    return categoryDescriptions[randomIndex];
+  }
+
+  private extractNodeDescriptions(nodes: any[]): string[] {
+    const descriptions: string[] = [];
+    
+    if (!nodes || !Array.isArray(nodes)) return descriptions;
+    
+    for (const node of nodes) {
+      if (node.parameters) {
+        // Extract meaningful information from node parameters
+        const nodeDesc = this.extractNodeParameterDescription(node);
+        if (nodeDesc) {
+          descriptions.push(nodeDesc);
+        }
+      }
+    }
+    
+    return descriptions.slice(0, 2); // Limit to 2 descriptions to avoid too long text
+  }
+
+  private extractNodeParameterDescription(node: any): string | null {
+    const nodeType = node.type || '';
+    const parameters = node.parameters || {};
+    
+    // Extract operation type
+    const operation = parameters.operation || '';
+    
+    // Extract resource/table information
+    const resource = parameters.resource || '';
+    const table = parameters.table?.cachedResultName || parameters.table?.value || '';
+    
+    // Extract base/app information
+    const base = parameters.base?.cachedResultName || parameters.base?.value || '';
+    
+    if (nodeType.includes('airtable')) {
+      if (operation === 'create') {
+        return `Erstellt neue Einträge in ${table || 'Airtable Tabelle'}`;
+      } else if (operation === 'read') {
+        return `Liest Daten aus ${table || 'Airtable Tabelle'}`;
+      } else if (operation === 'update') {
+        return `Aktualisiert Einträge in ${table || 'Airtable Tabelle'}`;
+      }
+    } else if (nodeType.includes('slack')) {
+      if (operation === 'post') {
+        return `Sendet Nachrichten an Slack`;
+      }
+    } else if (nodeType.includes('googleSheets')) {
+      if (operation === 'append') {
+        return `Fügt Daten zu Google Sheets hinzu`;
+      } else if (operation === 'read') {
+        return `Liest Daten aus Google Sheets`;
+      }
+    } else if (nodeType.includes('webhook')) {
+      return `Empfängt Webhook-Daten`;
+    } else if (nodeType.includes('schedule')) {
+      return `Zeitgesteuerte Ausführung`;
+    }
+    
+    return null;
   }
 
   private getTriggerType(trigger: string): string {
