@@ -15,63 +15,19 @@ import { SharedAnalysisService } from "@/lib/sharedAnalysis";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-interface AnalysisResult {
-  totalScore: number;
-  ratio: {
-    automatisierbar: number;
-    mensch: number;
-  };
-  tasks: Array<{
-    text: string;
-    score: number;
-    label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
-    category: string;
-    confidence: number;
-    subtasks?: Array<{
-      id: string;
-      title: string;
-      description: string;
-      automationPotential: number;
-      estimatedTime: number;
-      priority: 'low' | 'medium' | 'high' | 'critical';
-      complexity: 'low' | 'medium' | 'high';
-      systems: string[];
-      risks: string[];
-      opportunities: string[];
-      dependencies: string[];
-    }>;
-  }>;
-  summary: string;
-  recommendations: string[];
-  originalText?: string;
-}
+// Import the correct types from runAnalysis
+import type { AnalysisResult } from "@/lib/runAnalysis";
+import type { Task as AnalysisTask } from "@/lib/runAnalysis";
 
-interface TaskForDisplay {
-  id: string;
-  name: string;
-  score: number;
-  category: 'automatisierbar' | 'teilweise' | 'mensch';
-  description: string;
-  subtasks?: Array<{
-    id: string;
-    title: string;
-    description: string;
-    automationPotential: number;
-    estimatedTime: number;
-    priority: 'low' | 'medium' | 'high' | 'critical';
-    complexity: 'low' | 'medium' | 'high';
-    systems: string[];
-    risks: string[];
-    opportunities: string[];
-    dependencies: string[];
-  }>;
-}
+// Import Task type from TaskList component
+import type { Task } from "@/components/TaskList";
 
 const Landing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const lang = resolveLang(searchParams.get("lang") || undefined);
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Clear old sessionStorage to force new analysis
@@ -89,12 +45,28 @@ const Landing = () => {
             console.log('Loaded shared analysis from server:', shareId);
             // Use the original text to regenerate the analysis
             const originalText = serverResult.data.originalText;
-            if (originalText) {
+            if (originalText && originalText.trim().length > 10) {
               // Run new analysis with the original text
               const { runAnalysis } = await import('@/lib/runAnalysis');
               const newAnalysis = await runAnalysis(originalText, lang);
-              setAnalysisData(newAnalysis);
-              return;
+              
+              // Check if the analysis produced any tasks
+              if (newAnalysis && newAnalysis.tasks && newAnalysis.tasks.length > 0) {
+                console.log('✅ Successfully regenerated analysis with', newAnalysis.tasks.length, 'tasks');
+                setAnalysisData(newAnalysis);
+                return;
+              } else {
+                console.warn('⚠️ Regenerated analysis produced no tasks, trying fallback');
+                // If regeneration produces no tasks, try to create a simple analysis
+                const fallbackAnalysis = createFallbackAnalysis(originalText, lang);
+                if (fallbackAnalysis) {
+                  console.log('✅ Using fallback analysis');
+                  setAnalysisData(fallbackAnalysis);
+                  return;
+                }
+              }
+            } else {
+              console.warn('⚠️ Original text is too short or empty:', originalText?.length || 0);
             }
           }
           
@@ -121,12 +93,15 @@ const Landing = () => {
             ? 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.'
             : 'The shared analysis is no longer available or has expired. Please perform a new analysis.';
           
-          // Show error message to user
-          alert(errorMessage);
+          // Set error message for UI display
+          setErrorMessage(errorMessage);
           
         } catch (error) {
           console.error('Error loading shared analysis:', error);
           setAnalysisData(null);
+          setErrorMessage(lang === 'de' 
+            ? 'Fehler beim Laden der geteilten Analyse. Bitte versuchen Sie es erneut.'
+            : 'Error loading shared analysis. Please try again.');
         }
       };
       
@@ -136,8 +111,59 @@ const Landing = () => {
     }
   }, [searchParams, lang]);
 
+  // Function to create a fallback analysis when the original text doesn't contain extractable tasks
+  const createFallbackAnalysis = (originalText: string, lang: 'de' | 'en'): AnalysisResult | null => {
+    try {
+      console.log('Creating fallback analysis for text:', originalText.substring(0, 100) + '...');
+      
+      // Create a simple task from the original text
+      const simpleTask: AnalysisTask = {
+        text: originalText.length > 60 ? originalText.substring(0, 60) + '...' : originalText,
+        score: 50, // Medium automation potential
+        label: "Teilweise Automatisierbar",
+        signals: ["Fallback analysis for short input"],
+        aiTools: ['chatgpt', 'claude'],
+        industry: 'general',
+        category: 'general',
+        confidence: 60,
+        automationRatio: 50,
+        humanRatio: 50,
+        complexity: 'medium',
+        automationTrend: 'stable',
+        subtasks: []
+      };
+
+      return {
+        totalScore: 50,
+        ratio: {
+          automatisierbar: 0,
+          mensch: 100
+        },
+        tasks: [simpleTask],
+        summary: lang === 'de' 
+          ? 'Analyse für kurzen Eingabetext erstellt'
+          : 'Analysis created for short input text',
+        recommendations: [
+          lang === 'de' 
+            ? 'Für eine detailliertere Analyse fügen Sie bitte mehr Text hinzu.'
+            : 'For a more detailed analysis, please add more text.'
+        ],
+        originalText: originalText
+      };
+    } catch (error) {
+      console.error('Error creating fallback analysis:', error);
+      return null;
+    }
+  };
+
   const handleStartAnalysis = () => {
+    setErrorMessage(null); // Clear any error messages
     navigate('/');
+  };
+
+  // Function to clear error message
+  const clearError = () => {
+    setErrorMessage(null);
   };
 
   // Function to perform new analysis with pattern engine
@@ -193,7 +219,7 @@ const Landing = () => {
   };
 
   // Get display tasks for TaskList component
-  const getDisplayTasks = (): TaskForDisplay[] => {
+  const getDisplayTasks = (): Task[] => {
     if (!analysisData?.tasks || analysisData.tasks.length === 0) {
       // Return empty array if no real data - no more mock data
       return [];
@@ -201,10 +227,20 @@ const Landing = () => {
 
     return analysisData.tasks.map((task, index) => ({
       id: String(index + 1),
+      text: task.text,
       name: task.text.length > 60 ? task.text.substring(0, 60) + '...' : task.text,
       score: Math.round(task.score),
-      category: task.label,
-      description: `${translateCategory(lang, task.category)} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || 70)}%)`,
+      label: task.label,
+      category: task.label === "Automatisierbar" ? "automatisierbar" : 
+                task.label === "Teilweise Automatisierbar" ? "teilweise" : "mensch",
+      description: `${translateCategory(lang, task.category || 'general')} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || 70)}%)`,
+      complexity: task.complexity,
+      automationTrend: task.automationTrend,
+      humanRatio: task.humanRatio,
+      automationRatio: task.automationRatio,
+      confidence: task.confidence,
+      aiTools: task.aiTools,
+      industry: task.industry,
       subtasks: task.subtasks // Pass through subtasks from pattern engine
     }));
   };
@@ -224,6 +260,27 @@ const Landing = () => {
   return (
     <div className="bg-background">
       <Header />
+      
+      {/* Error Message Display */}
+      {errorMessage && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md mx-4">
+          <Alert variant="destructive" className="shadow-lg">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{errorMessage}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearError}
+                className="ml-2 h-6 w-6 p-0 hover:bg-destructive/20"
+              >
+                ×
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      
       <div className="min-h-screen">
         <main className="px-6 py-12 pt-24">
         <div className="max-w-6xl mx-auto space-y-16">

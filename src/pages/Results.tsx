@@ -18,6 +18,15 @@ import { detectIndustry } from "@/lib/runAnalysis";
 import { generateSummary } from "@/lib/runAnalysis";
 import { SharedAnalysisService } from "@/lib/sharedAnalysis";
 
+// Import correct types
+import type { AnalysisResult as RunAnalysisResult, Task as RunAnalysisTask } from "@/lib/runAnalysis";
+import type { Task as TaskListTask } from "@/components/TaskList";
+
+// Use imported types
+type AnalysisResult = RunAnalysisResult;
+type AnalysisTask = RunAnalysisTask;
+type Task = TaskListTask;
+
 // Animated Letter Component
 const AnimatedLetter = ({ letter, index, isVisible }: { letter: string; index: number; isVisible: boolean }) => {
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -62,31 +71,6 @@ const AnimatedWord = ({ word, isVisible }: { word: string; isVisible: boolean })
     </span>
   );
 };
-
-interface AnalysisTask {
-  text: string;
-  score: number;
-  label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
-  category: string;
-  confidence: number;
-  aiTools?: string[];
-  complexity?: 'low' | 'medium' | 'high';
-  automationTrend?: 'increasing' | 'stable' | 'decreasing';
-  automationRatio?: number;
-  humanRatio?: number;
-}
-
-interface AnalysisResult {
-  totalScore: number;
-  ratio: {
-    automatisierbar: number;
-    mensch: number;
-  };
-  tasks: AnalysisTask[];
-  summary: string;
-  recommendations: string[];
-  originalText?: string;
-}
 
 interface TaskForDisplay {
   id: string;
@@ -285,11 +269,13 @@ const Results = () => {
                 ? 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.'
                 : 'The shared analysis is no longer available or has expired. Please perform a new analysis.';
               
-              // Show error message to user
-              alert(errorMessage);
+              // Set error message for UI display
+              setAnalysisError(errorMessage);
               
-              // Redirect to home page
-              navigate('/');
+              // Redirect to home page after 3 seconds
+              setTimeout(() => {
+                navigate('/');
+              }, 3000);
               return;
             }
           } else if (sessionId) {
@@ -456,8 +442,22 @@ const Results = () => {
   const humanTasks = analysisData?.ratio?.mensch ?? 0;
   const totalScore = analysisData?.totalScore ?? 72;
 
-  const handleShare = () => {
-    setShareModalOpen(true);
+  const handleShare = async () => {
+    if (analysisData) {
+      try {
+        const url = await generateShareUrl(analysisData);
+        setShareUrl(url);
+        setShareModalOpen(true);
+      } catch (error) {
+        console.error('Error generating share URL:', error);
+        // Fallback to localStorage sharing
+        const fallbackUrl = generateLocalShareUrl(analysisData);
+        setShareUrl(fallbackUrl);
+        setShareModalOpen(true);
+      }
+    } else {
+      console.error('No analysis data available for sharing');
+    }
   };
 
   const handleLearnMore = () => {
@@ -543,7 +543,21 @@ const Results = () => {
 
               {/* Task List */}
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-                <TaskList tasks={displayTasks} lang={lang} />
+                <TaskList tasks={displayTasks.map(task => ({
+                  id: task.id,
+                  text: task.name,
+                  name: task.name,
+                  score: task.score,
+                  label: task.category === 'automatisierbar' ? 'Automatisierbar' : 
+                         task.category === 'teilweise' ? 'Teilweise Automatisierbar' : 'Mensch',
+                  category: task.category,
+                  description: task.description,
+                  complexity: task.complexity,
+                  automationTrend: task.automationTrend,
+                  humanRatio: task.humanRatio,
+                  automationRatio: task.automationRatio,
+                  aiTools: task.aiTools
+                }))} lang={lang} />
               </div>
             </>
           ) : (

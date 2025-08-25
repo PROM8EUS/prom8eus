@@ -9,7 +9,7 @@ import { AITool, getToolById, getToolDescription, getToolFeatures, getToolsByInd
 import TaskPanel from './TaskPanel';
 import { AIToolRecommendations } from './AIToolRecommendations';
 
-interface Task {
+export interface Task {
   id?: string;
   text: string;
   name?: string;

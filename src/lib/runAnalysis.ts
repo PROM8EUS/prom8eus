@@ -2,7 +2,7 @@ import { extractTasks } from './extractTasks';
 import { getToolsByIndustry } from './catalog/aiTools';
 import { fastAnalysisEngine, FastAnalysisResult } from './patternEngine/fastAnalysisEngine';
 
-interface Task {
+export interface Task {
   text: string;
   score: number;
   label: "Automatisierbar" | "Teilweise Automatisierbar" | "Mensch";
@@ -30,7 +30,7 @@ interface Task {
   }>;
 }
 
-interface AnalysisResult {
+export interface AnalysisResult {
   totalScore: number;
   ratio: {
     automatisierbar: number;
