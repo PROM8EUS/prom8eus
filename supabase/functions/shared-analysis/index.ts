@@ -36,11 +36,18 @@ serve(async (req) => {
       
       console.log('Storing shared analysis:', { shareId, jobTitle });
       
-      const { data: result, error } = await supabase.rpc('store_shared_analysis', {
-        share_id_param: shareId,
-        original_text_param: originalText,
-        job_title_param: jobTitle || null
-      });
+      // Direct insert instead of using RPC function
+      const { data: result, error } = await supabase
+        .from('shared_analyses')
+        .insert({
+          share_id: shareId,
+          original_text: originalText,
+          job_title: jobTitle || null,
+          analysis_data: {}, // Empty object to satisfy NOT NULL constraint
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+        })
+        .select('share_id')
+        .single();
 
       if (error) {
         console.error('Error storing shared analysis:', error);
@@ -59,7 +66,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          shareId: result
+          shareId: result?.share_id || shareId
         }),
         { 
           status: 200, 
@@ -72,25 +79,17 @@ serve(async (req) => {
       
       console.log('Retrieving shared analysis:', shareId);
       
-      const { data: result, error } = await supabase.rpc('get_shared_analysis', {
-        share_id_param: shareId
-      });
+      // Direct select instead of using RPC function
+      const { data: result, error } = await supabase
+        .from('shared_analyses')
+        .select('original_text, job_title, created_at, views')
+        .eq('share_id', shareId)
+        .eq('is_public', true)
+        .gt('expires_at', new Date().toISOString())
+        .single();
 
       if (error) {
         console.error('Error retrieving shared analysis:', error);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: error.message 
-          }),
-          { 
-            status: 500, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-
-      if (!result || result.length === 0) {
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -103,16 +102,33 @@ serve(async (req) => {
         );
       }
 
-      const analysis = result[0];
+      if (!result) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Die geteilte Analyse ist nicht mehr verfügbar oder abgelaufen. Bitte führen Sie eine neue Analyse durch.' 
+          }),
+          { 
+            status: 404, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      // Update view count
+      await supabase
+        .from('shared_analyses')
+        .update({ views: (result.views || 0) + 1 })
+        .eq('share_id', shareId);
       
       return new Response(
         JSON.stringify({
           success: true,
           data: {
-            originalText: analysis.original_text,
-            jobTitle: analysis.job_title,
-            createdAt: analysis.created_at,
-            views: analysis.view_count
+            originalText: result.original_text,
+            jobTitle: result.job_title,
+            createdAt: result.created_at,
+            views: (result.views || 0) + 1
           }
         }),
         { 

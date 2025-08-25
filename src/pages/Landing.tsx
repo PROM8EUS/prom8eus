@@ -28,6 +28,7 @@ const Landing = () => {
   const lang = resolveLang(searchParams.get("lang") || undefined);
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoadingSharedAnalysis, setIsLoadingSharedAnalysis] = useState(false);
 
   useEffect(() => {
     // Clear old sessionStorage to force new analysis
@@ -38,6 +39,7 @@ const Landing = () => {
     if (shareId) {
       // Load shared analysis data from server first, then fallback to localStorage
       const loadSharedAnalysis = async () => {
+        setIsLoadingSharedAnalysis(true);
         try {
           // Try server first
           const serverResult = await SharedAnalysisService.getAnalysis(shareId);
@@ -54,6 +56,7 @@ const Landing = () => {
               if (newAnalysis && newAnalysis.tasks && newAnalysis.tasks.length > 0) {
                 console.log('✅ Successfully regenerated analysis with', newAnalysis.tasks.length, 'tasks');
                 setAnalysisData(newAnalysis);
+                setIsLoadingSharedAnalysis(false);
                 return;
               } else {
                 console.warn('⚠️ Regenerated analysis produced no tasks, trying fallback');
@@ -62,6 +65,7 @@ const Landing = () => {
                 if (fallbackAnalysis) {
                   console.log('✅ Using fallback analysis');
                   setAnalysisData(fallbackAnalysis);
+                  setIsLoadingSharedAnalysis(false);
                   return;
                 }
               }
@@ -78,6 +82,7 @@ const Landing = () => {
               const parsedData = JSON.parse(localData);
               console.log('Loaded shared analysis from localStorage:', shareId);
               setAnalysisData(parsedData);
+              setIsLoadingSharedAnalysis(false);
               return;
             } catch (parseError) {
               console.error('Error parsing localStorage data:', parseError);
@@ -95,6 +100,7 @@ const Landing = () => {
           
           // Set error message for UI display
           setErrorMessage(errorMessage);
+          setIsLoadingSharedAnalysis(false);
           
         } catch (error) {
           console.error('Error loading shared analysis:', error);
@@ -102,6 +108,7 @@ const Landing = () => {
           setErrorMessage(lang === 'de' 
             ? 'Fehler beim Laden der geteilten Analyse. Bitte versuchen Sie es erneut.'
             : 'Error loading shared analysis. Please try again.');
+          setIsLoadingSharedAnalysis(false);
         }
       };
       
@@ -292,6 +299,20 @@ const Landing = () => {
                 maxScore={100} 
                 jobTitle={displayJobTitle}
               />
+            ) : isLoadingSharedAnalysis ? (
+              <div className="text-center space-y-6">
+                <div className="max-w-2xl mx-auto">
+                  <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+                    {t(lang, "loading_analysis")}
+                  </h1>
+                  <div className="flex justify-center items-center space-x-2 mb-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-xl text-muted-foreground">
+                      {lang === 'de' ? 'Analyse wird geladen...' : 'Loading analysis...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="text-center space-y-6">
                 <div className="max-w-2xl mx-auto">
@@ -354,35 +375,38 @@ const Landing = () => {
             </>
           )}
 
-          {/* Call to Action */}
-          <section className="text-center animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <div className="space-y-6">
-              <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-sm font-medium">{t(lang, "landing_ai_analysis")}</span>
+          {/* Call to Action - Only show if not loading shared analysis */}
+          {!isLoadingSharedAnalysis && (
+            <section className="text-center animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="space-y-6">
+                <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm font-medium">{t(lang, "landing_ai_analysis")}</span>
+                </div>
+                
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {t(lang, "landing_discover")}
+                </h2>
+                
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  {t(lang, "landing_desc")}
+                </p>
+                
+                <Button
+                  onClick={handleStartAnalysis}
+                  size="lg"
+                  className="px-8 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200"
+                >
+                  {t(lang, "landing_start")}
+                </Button>
               </div>
-              
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                {t(lang, "landing_discover")}
-              </h2>
-              
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {t(lang, "landing_desc")}
-              </p>
-              
-              <Button
-                onClick={handleStartAnalysis}
-                size="lg"
-                className="px-8 py-6 text-lg font-semibold hover:scale-105 transition-transform duration-200"
-              >
-                {t(lang, "landing_start")}
-              </Button>
-            </div>
-          </section>
+            </section>
+          )}
 
-          {/* Additional Benefits */}
-          <section className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
-            <div className="bg-muted/20 rounded-2xl p-8 md:p-12 text-center">
+          {/* Additional Benefits - Only show if not loading shared analysis */}
+          {!isLoadingSharedAnalysis && (
+            <section className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
+              <div className="bg-muted/20 rounded-2xl p-8 md:p-12 text-center">
               <h3 className="text-xl md:text-2xl font-semibold text-foreground mb-4">
                 {t(lang, "landing_why_title")}
               </h3>
@@ -411,6 +435,7 @@ const Landing = () => {
               </div>
             </div>
           </section>
+          )}
         </div>
         </main>
       </div>

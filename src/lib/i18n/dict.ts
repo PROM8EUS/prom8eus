@@ -10,6 +10,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     headline: "Automatisierungspotenzial sofort erkennen",
     sub: "Fügen Sie Ihre Aufgabenbeschreibung oder Stellenanzeige ein – unsere KI zeigt Ihnen, welche Teile automatisierbar sind.",
     start: "Analyse starten",
+    loading_analysis: "Analyse lädt",
     lang_switch: "EN",    // shows opposite language
     
     // New About page content
@@ -551,6 +552,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     headline: "See your automation potential instantly", 
     sub: "Paste a task description or job posting — our AI highlights which parts are automatable.",
     start: "Start analysis",
+    loading_analysis: "Loading Analysis",
     lang_switch: "DE",    // shows opposite language
     
     // Header

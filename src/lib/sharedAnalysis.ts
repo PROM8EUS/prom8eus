@@ -15,18 +15,21 @@ export interface StoreAnalysisRequest {
 }
 
 export class SharedAnalysisService {
-  private static readonly FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/shared-analysis`;
+  private static readonly FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL || 'https://gasqdnyyrxmmojivlxon.supabase.co'}/functions/v1/shared-analysis`;
 
   /**
    * Store an analysis for sharing
    */
   static async storeAnalysis(request: StoreAnalysisRequest): Promise<{ success: boolean; shareId?: string; error?: string }> {
     try {
+      console.log('🔄 Storing analysis:', { shareId: request.shareId, originalTextLength: request.originalText?.length, jobTitle: request.jobTitle });
+      console.log('📡 Function URL:', this.FUNCTION_URL);
+      
       const response = await fetch(this.FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdhc3Fkbnl5cnhtbW9qaXZseG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1OTgzNzcsImV4cCI6MjA3MTE3NDM3N30.fg3QUR471VbKWFaz4HnUqx2lQxcHFmNOwAaxRNgYLLE'}`,
         },
         body: JSON.stringify({
           action: 'store',
@@ -35,15 +38,17 @@ export class SharedAnalysisService {
       });
 
       const result = await response.json();
+      console.log('📥 Store response status:', response.status, 'Result:', result);
 
       if (!response.ok) {
-        console.error('Failed to store shared analysis:', result);
+        console.error('❌ Failed to store shared analysis:', result);
         return {
           success: false,
           error: result.error || 'Failed to store analysis'
         };
       }
 
+      console.log('✅ Successfully stored analysis with shareId:', result.shareId);
       return {
         success: true,
         shareId: result.shareId
@@ -63,11 +68,14 @@ export class SharedAnalysisService {
    */
   static async getAnalysis(shareId: string): Promise<{ success: boolean; data?: SharedAnalysisData; error?: string }> {
     try {
+      console.log('🔍 Getting analysis for shareId:', shareId);
+      console.log('📡 Function URL:', this.FUNCTION_URL);
+      
       const response = await fetch(this.FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdhc3Fkbnl5cnhtbW9qaXZseG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1OTgzNzcsImV4cCI6MjA3MTE3NDM3N30.fg3QUR471VbKWFaz4HnUqx2lQxcHFmNOwAaxRNgYLLE'}`,
         },
         body: JSON.stringify({
           action: 'get',
@@ -76,9 +84,10 @@ export class SharedAnalysisService {
       });
 
       const result = await response.json();
+      console.log('📥 Get response status:', response.status, 'Result:', result);
 
       if (!response.ok) {
-        console.error('Failed to retrieve shared analysis:', result);
+        console.error('❌ Failed to retrieve shared analysis:', result);
         
         // Provide more specific error messages
         if (response.status === 404) {
@@ -94,6 +103,7 @@ export class SharedAnalysisService {
         };
       }
 
+      console.log('✅ Successfully retrieved analysis:', result.data);
       return {
         success: true,
         data: result.data

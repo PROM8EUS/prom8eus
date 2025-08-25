@@ -138,6 +138,51 @@ const Results = () => {
   const [isJobTitleVisible, setIsJobTitleVisible] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
+  // Function to create a fallback analysis when the original text doesn't contain extractable tasks
+  const createFallbackAnalysis = (originalText: string, lang: 'de' | 'en'): AnalysisResult | null => {
+    try {
+      console.log('Creating fallback analysis for text:', originalText.substring(0, 100) + '...');
+      
+      // Create a simple task from the original text
+      const simpleTask: RunAnalysisTask = {
+        text: originalText.length > 60 ? originalText.substring(0, 60) + '...' : originalText,
+        score: 50, // Medium automation potential
+        label: "Teilweise Automatisierbar",
+        signals: ["Fallback analysis for short input"],
+        aiTools: ['chatgpt', 'claude'],
+        industry: 'general',
+        category: 'general',
+        confidence: 60,
+        automationRatio: 50,
+        humanRatio: 50,
+        complexity: 'medium',
+        automationTrend: 'stable',
+        subtasks: []
+      };
+
+      return {
+        totalScore: 50,
+        ratio: {
+          automatisierbar: 0,
+          mensch: 100
+        },
+        tasks: [simpleTask],
+        summary: lang === 'de' 
+          ? 'Analyse für kurzen Eingabetext erstellt'
+          : 'Analysis created for short input text',
+        recommendations: [
+          lang === 'de' 
+            ? 'Für eine detailliertere Analyse fügen Sie bitte mehr Text hinzu.'
+            : 'For a more detailed analysis, please add more text.'
+        ],
+        originalText: originalText
+      };
+    } catch (error) {
+      console.error('Error creating fallback analysis:', error);
+      return null;
+    }
+  };
+
   // Generate unique share URL for this analysis
   const generateShareUrl = async (data: AnalysisResult): Promise<string> => {
     const shareId = SharedAnalysisService.generateShareId();
@@ -156,7 +201,7 @@ const Results = () => {
       // Store analysis data on server
       const result = await SharedAnalysisService.storeAnalysis({
         shareId,
-        originalText: analysisData.originalText || '',
+        originalText: data.originalText || '',
         jobTitle: jobTitle || ''
       });
 
@@ -258,9 +303,22 @@ const Results = () => {
               if (originalText) {
                 // Run new analysis with the original text
                 const newAnalysis = await runAnalysis(originalText, lang);
-                setAnalysisData(newAnalysis);
-                setJobTitle(serverResult.data.jobTitle || '');
-                return;
+                
+                // Check if the analysis produced any tasks
+                if (newAnalysis && newAnalysis.tasks && newAnalysis.tasks.length > 0) {
+                  setAnalysisData(newAnalysis);
+                  setJobTitle(serverResult.data.jobTitle || '');
+                  return;
+                } else {
+                  console.warn('⚠️ Regenerated analysis produced no tasks, using fallback');
+                  // If regeneration produces no tasks, create a fallback analysis
+                  const fallbackAnalysis = createFallbackAnalysis(originalText, lang);
+                  if (fallbackAnalysis) {
+                    setAnalysisData(fallbackAnalysis);
+                    setJobTitle(serverResult.data.jobTitle || '');
+                    return;
+                  }
+                }
               }
             } else {
               // Show error message for expired analysis
@@ -271,11 +329,6 @@ const Results = () => {
               
               // Set error message for UI display
               setAnalysisError(errorMessage);
-              
-              // Redirect to home page after 3 seconds
-              setTimeout(() => {
-                navigate('/');
-              }, 3000);
               return;
             }
           } else if (sessionId) {
@@ -493,9 +546,6 @@ const Results = () => {
                 <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div className="space-y-2">
                   <p>{analysisError}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t(lang, "redirecting_to_home")}
-                  </p>
                 </div>
               </div>
             </div>
