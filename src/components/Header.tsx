@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { resolveLang, t } from "@/lib/i18n/i18n";
 
 interface HeaderProps {
@@ -26,9 +26,9 @@ const Header = ({ showBack = false }: HeaderProps) => {
             <span>Zurück</span>
           </Button>
         ) : (
-          <a href="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors pointer-events-auto">
+          <Link to="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors pointer-events-auto">
             PROM8EUS
-          </a>
+          </Link>
         )}
 
         {/* Right side - Logo (when showing back) or Navigation */}
@@ -39,18 +39,18 @@ const Header = ({ showBack = false }: HeaderProps) => {
         ) : (
           <nav className="flex items-center space-x-8 pointer-events-auto">
 
-            <a 
-              href="/about" 
+            <Link 
+              to="/about" 
               className="text-foreground hover:text-primary transition-colors duration-200"
             >
               {t(lang, "about")}
-            </a>
-            <a 
-              href="/contact" 
+            </Link>
+            <Link 
+              to="/contact" 
               className="text-foreground hover:text-primary transition-colors duration-200"
             >
               {t(lang, "contact")}
-            </a>
+            </Link>
           </nav>
         )}
       </div>
