@@ -17,6 +17,7 @@ import { runAnalysis } from "@/lib/runAnalysis";
 import { detectIndustry } from "@/lib/runAnalysis";
 import { generateSummary } from "@/lib/runAnalysis";
 import { SharedAnalysisService } from "@/lib/sharedAnalysis";
+import LoadingPage from "@/components/LoadingPage";
 
 // Import correct types
 import type { AnalysisResult as RunAnalysisResult, Task as RunAnalysisTask } from "@/lib/runAnalysis";
@@ -129,6 +130,12 @@ const Results = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const lang = resolveLang(searchParams.get("lang") || undefined);
+  
+  // Check for share parameters to determine if we should show loading immediately
+  const shareId = searchParams.get("share");
+  const sessionId = searchParams.get("session");
+  const isSharedUrl = !!(shareId || sessionId);
+  
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
   const [displayTasks, setDisplayTasks] = useState<TaskForDisplay[]>(mockTasks);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -137,6 +144,7 @@ const Results = () => {
   const [jobTitle, setJobTitle] = useState("");
   const [isJobTitleVisible, setIsJobTitleVisible] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isLoadingSharedAnalysis, setIsLoadingSharedAnalysis] = useState(isSharedUrl);
 
   // Function to create a fallback analysis when the original text doesn't contain extractable tasks
   const createFallbackAnalysis = (originalText: string, lang: 'de' | 'en'): AnalysisResult | null => {
@@ -308,6 +316,7 @@ const Results = () => {
                 if (newAnalysis && newAnalysis.tasks && newAnalysis.tasks.length > 0) {
                   setAnalysisData(newAnalysis);
                   setJobTitle(serverResult.data.jobTitle || '');
+                  setIsLoadingSharedAnalysis(false);
                   return;
                 } else {
                   console.warn('⚠️ Regenerated analysis produced no tasks, using fallback');
@@ -316,6 +325,7 @@ const Results = () => {
                   if (fallbackAnalysis) {
                     setAnalysisData(fallbackAnalysis);
                     setJobTitle(serverResult.data.jobTitle || '');
+                    setIsLoadingSharedAnalysis(false);
                     return;
                   }
                 }
@@ -329,6 +339,7 @@ const Results = () => {
               
               // Set error message for UI display
               setAnalysisError(errorMessage);
+              setIsLoadingSharedAnalysis(false);
               return;
             }
           } else if (sessionId) {
@@ -341,6 +352,7 @@ const Results = () => {
 
           if (parsedResult) {
             setAnalysisData(parsedResult);
+            setIsLoadingSharedAnalysis(false);
             
             // Extract job title from original text if not already set
             if (!jobTitle && parsedResult.originalText) {
@@ -369,6 +381,7 @@ const Results = () => {
             // Shared data not found - show error message and redirect to home
             console.error('Shared analysis data not found for ID:', shareId || sessionId);
             setAnalysisError('Die geteilte Analyse konnte nicht gefunden werden. Möglicherweise wurde sie gelöscht oder ist abgelaufen.');
+            setIsLoadingSharedAnalysis(false);
             // Redirect to home page after 3 seconds
             setTimeout(() => {
               navigate('/');
@@ -377,6 +390,7 @@ const Results = () => {
         } catch (error) {
           console.error('Error loading shared analysis:', error);
           setAnalysisError('Fehler beim Laden der geteilten Analyse.');
+          setIsLoadingSharedAnalysis(false);
         }
       };
 
@@ -516,6 +530,11 @@ const Results = () => {
   const handleLearnMore = () => {
     navigate('/agents-workflows');
   };
+
+  // Show LoadingPage if loading shared analysis
+  if (isLoadingSharedAnalysis) {
+    return <LoadingPage />;
+  }
 
   return (
     <div className="bg-background">
