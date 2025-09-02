@@ -59,6 +59,18 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [lastSearchParams, setLastSearchParams] = useState<string>('');
 
+  // Enhanced loading progress state
+  const [loadingProgress, setLoadingProgress] = useState<LoadingProgress>({
+    state: 'idle',
+    message: '',
+    progress: 0,
+    step: ''
+  });
+
+  const updateLoadingProgress = (state: LoadingState, message: string, progress: number, step: string) => {
+    setLoadingProgress({ state, message, progress, step });
+  };
+
   const loadWorkflows = useCallback(async (searchParams?: string) => {
     // Only show loading spinner on initial load or when no workflows exist
     if (!hasLoadedOnce || workflows.length === 0) {

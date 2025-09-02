@@ -118,6 +118,104 @@ export class N8nApi {
     }
   }
 
+  // Map AI tool IDs to n8n workflow categories
+  private mapToolIdsToCategories(toolIds: string[]): string[] {
+    const toolMapping: Record<string, string[]> = {
+      // Office & Productivity
+      'excel-ai': ['excel', 'microsoft', 'office'],
+      'google-sheets-ai': ['google-sheets', 'google', 'sheets'],
+      'google-docs-ai': ['google-docs', 'google', 'docs'],
+      'power-bi-ai': ['power-bi', 'microsoft', 'bi'],
+      'microsoft-copilot': ['microsoft', 'office', 'copilot'],
+      'airtable-ai': ['airtable'],
+      'notion-ai': ['notion'],
+      
+      // HR & Business Tools
+      'bamboohr': ['hr', 'human-resources', 'recruitment'],
+      'workday': ['hr', 'human-resources', 'erp'],
+      'hr': ['hr', 'human-resources'],
+      'personnel': ['hr', 'human-resources'],
+      'email': ['email', 'communication'],
+      
+      // AI & Development
+      'chatgpt': ['openai', 'chatgpt', 'ai'],
+      'claude': ['anthropic', 'claude', 'ai'],
+      'github-copilot': ['github', 'copilot', 'development'],
+      'code-whisperer': ['aws', 'amazon', 'development'],
+      'tabnine': ['tabnine', 'development'],
+      'gemini': ['google', 'gemini', 'ai'],
+      
+      // Creative & Marketing
+      'canva-ai': ['canva', 'design'],
+      'jasper': ['jasper', 'marketing'],
+      'copy-ai': ['copy-ai', 'marketing'],
+      'writesonic': ['writesonic', 'marketing'],
+      'perplexity': ['perplexity', 'research'],
+      'grammarly': ['grammarly', 'writing'],
+      'grok': ['grok', 'ai'],
+      
+      // Other
+      'obsidian-ai': ['obsidian'],
+      'zoom': ['zoom'],
+      'dropbox': ['dropbox']
+    };
+
+    const mappedCategories: string[] = [];
+    
+    toolIds.forEach(toolId => {
+      if (toolMapping[toolId]) {
+        mappedCategories.push(...toolMapping[toolId]);
+      } else {
+        // If no mapping found, try to use the tool ID directly
+        mappedCategories.push(toolId);
+      }
+    });
+
+    // Remove duplicates
+    return [...new Set(mappedCategories)];
+  }
+
+  // Get available categories from cache or GitHub API
+  private async getAvailableCategoriesWithCache(): Promise<string[]> {
+    try {
+      // Check cache first
+      const cached = localStorage.getItem(this.availableCategoriesCacheKey);
+      const expiry = localStorage.getItem(this.availableCategoriesExpiryKey);
+      
+      if (cached && expiry) {
+        const expiryTime = new Date(expiry).getTime();
+        const now = new Date().getTime();
+        
+        if (now < expiryTime) {
+          console.log('Using cached available categories');
+          return JSON.parse(cached);
+        }
+      }
+      
+      // Cache expired or missing, fetch from GitHub
+      console.log('Fetching available categories from GitHub API...');
+      const categories = await this.getAvailableCategories();
+      
+      // Cache the results
+      try {
+        localStorage.setItem(this.availableCategoriesCacheKey, JSON.stringify(categories));
+        
+        const expiry = new Date();
+        expiry.setHours(expiry.getHours() + this.availableCategoriesCacheExpiryHours);
+        localStorage.setItem(this.availableCategoriesExpiryKey, expiry.toISOString());
+        
+        console.log(`Cached available categories until ${expiry.toISOString()}`);
+      } catch (e) {
+        console.warn('Failed to cache available categories:', e);
+      }
+      
+      return categories;
+    } catch (error) {
+      console.error('Error getting available categories with cache:', error);
+      return [];
+    }
+  }
+
   // Public method to force refresh cache
   async refreshCache(): Promise<void> {
     console.log('Forcing cache refresh...');
