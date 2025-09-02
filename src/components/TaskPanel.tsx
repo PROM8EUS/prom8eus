@@ -13,7 +13,7 @@ import {
   HelpCircle,
   Loader2
 } from 'lucide-react';
-import { TaskSpecificWorkflows } from './TaskSpecificWorkflows';
+import SolutionsTab from './SolutionsTab';
 import BusinessCase from './BusinessCase';
 import { DynamicSubtask } from '@/lib/patternEngine/dynamicSubtaskGenerator';
 import { fastAnalysisEngine } from '@/lib/patternEngine/fastAnalysisEngine';
@@ -502,7 +502,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
             </div>
           ) : (
             <div className="min-h-[200px]">
-              <TaskSpecificWorkflows
+              <SolutionsTab
                 taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
                 lang={lang}
                 selectedApplications={Object.values(selectedTools).flat()}
@@ -516,7 +516,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
       {/* Hidden TaskSpecificWorkflows to load solutions in background */}
       {isVisible && !isGenerating && (
         <div className="hidden">
-          <TaskSpecificWorkflows
+          <SolutionsTab
             taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
             lang={lang}
             selectedApplications={Object.values(selectedTools).flat()}
