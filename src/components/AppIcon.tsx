@@ -52,13 +52,13 @@ const AppIcon: React.FC<AppIconProps> = ({
       
       // Google Apps
       'google-sheets-ai': { 
-        primary: `https://img.logo.dev/googlesheets.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        fallback: '',
+        primary: 'https://ssl.gstatic.com/images/branding/product/1x/sheets_48dp.png',
+        fallback: `https://img.logo.dev/googlesheets.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
         secondFallback: ''
       },
       'google-docs-ai': { 
-        primary: `https://img.logo.dev/googledocs.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        fallback: '',
+        primary: 'https://ssl.gstatic.com/images/branding/product/1x/docs_48dp.png',
+        fallback: `https://img.logo.dev/googledocs.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
         secondFallback: ''
       },
       'gemini': { 

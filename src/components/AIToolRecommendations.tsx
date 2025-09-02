@@ -82,12 +82,51 @@ const AIToolRecommendations: React.FC<AIToolRecommendationsProps> = ({
       <div className="space-y-4">
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {displayTools.map((tool) => (
-            <AppIconCard
+            <div 
               key={tool.id}
-              tool={tool}
+              className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer"
               onClick={() => handleToolClick(tool)}
-              lang={lang}
-            />
+            >
+              <div className="flex items-start gap-3">
+                <AppIcon tool={tool} size="lg" />
+                
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 mb-1">{tool.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">{getToolDescription(tool, lang)}</p>
+                  
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      tool.pricing === 'Free' ? 'bg-green-100 text-green-800' :
+                      tool.pricing === 'Freemium' ? 'bg-blue-100 text-blue-800' :
+                      tool.pricing === 'Paid' ? 'bg-orange-100 text-orange-800' :
+                      'bg-purple-100 text-purple-800'
+                    }`}>
+                      {tool.pricing}
+                    </span>
+                    
+                    <span className="text-xs text-gray-500">
+                      {tool.automationPotential}% {lang === 'de' ? 'Automatisierung' : 'Automation'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1">
+                    {getToolFeatures(tool, lang).slice(0, 3).map((feature, index) => (
+                      <span 
+                        key={index}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
+                      >
+                        {feature}
+                      </span>
+                    ))}
+                    {getToolFeatures(tool, lang).length > 3 && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                        +{getToolFeatures(tool, lang).length - 3} {lang === 'de' ? 'mehr' : 'more'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
