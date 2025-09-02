@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppIcon } from './AppIcon';
 import { 
   Workflow, 
   Zap, 
@@ -188,199 +189,15 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   const [generatedSubtasks, setGeneratedSubtasks] = useState<Subtask[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
-  const [applicationLogos, setApplicationLogos] = useState<Record<string, string>>({});
   const [solutionsCount, setSolutionsCount] = useState(0);
   const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
   const hasLoadedSolutions = useRef(false);
   
   // fastAnalysisEngine is already a singleton instance, no need to create new one
 
-  // Get fallback logo URL for an application
-  const getFallbackLogo = (logoKey: string): string => {
-    const fallbackLogos: Record<string, string> = {
-      'excel': 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
-      'powerpoint': 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Microsoft_Office_PowerPoint_%282019%E2%80%93present%29.svg',
-      'word': 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Microsoft_Office_Word_%282019%E2%80%93present%29.svg',
-      'outlook': 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
-      'teams': 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg',
-      'sharepoint': 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
-      'powerbi': 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
-      'onedrive': 'https://upload.wikimedia.org/wikipedia/commons/7/7c/OneDrive_logo.svg',
-      'google-sheets': 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg',
-      'google-docs': 'https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282020%29.svg',
-      'calendar': 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg',
-      'salesforce': 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
-      'slack': 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
-      'notion': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
-      'asana': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Asana_logo.svg',
-      'trello': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Trello_logo.svg',
-      'figma': 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
-      'canva': 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/canva.svg',
-      'zoom': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Zoom_logo.svg',
-      'dropbox': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Dropbox_Icon.svg'
-    };
-    return fallbackLogos[logoKey] || '';
-  };
 
-  // Load real application logos using multiple sources with proper fallback hierarchy
-  const loadApplicationLogos = async () => {
-    // Map application names to their real domains and alternative sources
-    const logoMapping = {
-      // Microsoft Office
-      'excel': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
-        fallback: 'https://logo.clearbit.com/excel.microsoft.com?size=32&format=png'
-      },
-      'powerpoint': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Microsoft_Office_PowerPoint_%282019%E2%80%93present%29.svg',
-        fallback: 'https://logo.clearbit.com/powerpoint.microsoft.com?size=32&format=png'
-      },
-      'word': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Microsoft_Office_Word_%282019%E2%80%93present%29.svg',
-        fallback: 'https://logo.clearbit.com/word.microsoft.com?size=32&format=png'
-      },
-      'outlook': {
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
-        fallback: 'https://logo.clearbit.com/outlook.microsoft.com?size=32&format=png'
-      },
-      'teams': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg',
-        fallback: 'https://logo.clearbit.com/teams.microsoft.com?size=32&format=png'
-      },
-      'sharepoint': {
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
-        fallback: 'https://logo.clearbit.com/sharepoint.microsoft.com?size=32&format=png'
-      },
-      'powerbi': {
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
-        fallback: 'https://logo.clearbit.com/powerbi.microsoft.com?size=32&format=png'
-      },
-      'onedrive': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftonedrive.svg',
-        fallback: 'https://logo.clearbit.com/onedrive.live.com?size=32&format=png'
-      },
-      'google-docs': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/googledrive.svg',
-        fallback: 'https://logo.clearbit.com/docs.google.com?size=32&format=png'
-      },
-      
-      // Google Workspace
-      'google-sheets': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg',
-        fallback: 'https://logo.clearbit.com/sheets.google.com?size=32&format=png'
-      },
 
-      'calendar': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg',
-        fallback: 'https://logo.clearbit.com/calendar.google.com?size=32&format=png'
-      },
-      
-      // Other applications
-      'salesforce': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
-        fallback: 'https://logo.clearbit.com/salesforce.com?size=32&format=png'
-      },
-      'slack': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
-        fallback: 'https://logo.clearbit.com/slack.com?size=32&format=png'
-      },
-      'notion': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
-        fallback: 'https://logo.clearbit.com/notion.so?size=32&format=png'
-      },
-      'asana': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/asana.svg',
-        fallback: 'https://logo.clearbit.com/asana.com?size=32&format=png'
-      },
-      'trello': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/trello.svg',
-        fallback: 'https://logo.clearbit.com/trello.com?size=32&format=png'
-      },
-      'figma': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
-        fallback: 'https://logo.clearbit.com/figma.com?size=32&format=png'
-      },
-      'canva': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/canva.svg',
-        fallback: 'https://logo.clearbit.com/canva.com?size=32&format=png'
-      },
-      'zoom': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/zoom.svg',
-        fallback: 'https://logo.clearbit.com/zoom.us?size=32&format=png'
-      },
-      'dropbox': { 
-        primary: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/dropbox.svg',
-        fallback: 'https://logo.clearbit.com/dropbox.com?size=32&format=png'
-      }
-    };
 
-    const logos: Record<string, string> = {};
-    
-    // Test each logo source and use the first working one
-    for (const [appId, sources] of Object.entries(logoMapping)) {
-      try {
-        // Try primary (app logo) first
-        const primaryResponse = await fetch(sources.primary, { method: 'HEAD' });
-        if (primaryResponse.ok) {
-          logos[appId] = sources.primary;
-          continue;
-        }
-      } catch (error) {
-        // Primary failed, try fallback
-      }
-      
-      try {
-        // Try fallback (company logo) second
-        const fallbackResponse = await fetch(sources.fallback, { method: 'HEAD' });
-        if (fallbackResponse.ok) {
-          logos[appId] = sources.fallback;
-          continue;
-        }
-      } catch (error) {
-        // Fallback failed, will use letter fallback
-      }
-      
-      // If both fail, will use letter fallback in the component
-    }
-
-    setApplicationLogos(logos);
-  };
-
-  // Test logo availability and use working ones
-  const testAndLoadLogos = async () => {
-    const testLogos = {
-      'powerbi': [
-        'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/powerbi.svg',
-        'https://upload.wikimedia.org/wikipedia/commons/c/cf/Power_bi_logo_black.svg'
-      ],
-      'outlook': [
-        'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg',
-        'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftoutlook.svg'
-      ],
-      'sharepoint': [
-        'https://upload.wikimedia.org/wikipedia/commons/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg',
-        'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/microsoftsharepoint.svg'
-      ]
-    };
-
-    const workingLogos: Record<string, string> = {};
-    
-    for (const [appId, urls] of Object.entries(testLogos)) {
-      for (const url of urls) {
-        try {
-          const response = await fetch(url, { method: 'HEAD' });
-          if (response.ok) {
-            workingLogos[appId] = url;
-            break;
-          }
-        } catch (error) {
-          continue;
-        }
-      }
-    }
-
-    setApplicationLogos(prev => ({ ...prev, ...workingLogos }));
-  };
 
   // Handle tool selection
   const handleToolToggle = (subtaskId: string, toolId: string) => {
@@ -427,7 +244,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   const getTypicalApplications = (subtask: Subtask) => {
     // Define typical applications based on subtask content with Simple Icons mapping
     const applications = [
-      { id: 'excel', name: 'Excel', logoKey: 'excel', category: 'data' },
+      { id: 'excel-ai', name: 'Excel AI', logoKey: 'excel-ai', category: 'data' },
       { id: 'powerpoint', name: 'PowerPoint', logoKey: 'powerpoint', category: 'presentation' },
       { id: 'word', name: 'Word', logoKey: 'word', category: 'documentation' },
       { id: 'outlook', name: 'Outlook', logoKey: 'outlook', category: 'communication' },
@@ -484,11 +301,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
     return applications.slice(0, 6);
   };
   
-  // Load application logos on component mount
-  useEffect(() => {
-    loadApplicationLogos();
-    testAndLoadLogos(); // Test and load problematic logos
-  }, []);
+
 
   // Generate subtasks when task becomes visible
   useEffect(() => {

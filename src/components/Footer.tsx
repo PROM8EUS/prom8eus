@@ -27,9 +27,19 @@ const Footer = ({ onAdminTrigger }: FooterProps = {}) => {
             EUS
           </div>
           
-          {/* Copyright */}
-          <div className="text-sm text-muted-foreground">
-            © {currentYear} PROM8EUS. {t(lang, "copyright")}
+          {/* Copyright and Attribution */}
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div>© {currentYear} PROM8EUS. {t(lang, "copyright")}</div>
+            <div>
+              <a 
+                href="https://logo.dev" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                Logos provided by Logo.dev
+              </a>
+            </div>
           </div>
         </div>
       </div>

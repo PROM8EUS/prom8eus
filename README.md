@@ -140,3 +140,47 @@ Wir freuen uns über Beiträge zur weiteren Optimierung:
 ## 📄 Lizenz
 
 MIT License - siehe LICENSE Datei für Details.
+
+## Environment Variables
+
+This project uses environment variables for configuration. Copy `.env.example` to `.env` and fill in your actual values:
+
+```bash
+cp .env.example .env
+```
+
+### Required Environment Variables
+
+- **Supabase Configuration**: Database and authentication settings
+- **Logo.dev API Key**: For AI tool logo fallbacks (get your keys from [logo.dev](https://logo.dev))
+
+### Logo.dev API Setup
+
+1. Sign up at [logo.dev](https://logo.dev)
+2. Get your API keys from the dashboard
+3. Add them to your `.env` file:
+   ```bash
+   VITE_LOGO_DEV_API_KEY=your_public_key_here
+   ```
+
+### Logo Fallback System
+
+The app uses a three-tier logo fallback system with intelligent 404 detection:
+1. **Primary**: Wikimedia Commons (high-quality SVGs)
+2. **Fallback**: logo.dev API (with your API key)
+3. **Text Fallback**: First letter of the tool name
+
+**Smart Fallback Logic**:
+- Automatically detects 404 responses from primary URLs
+- Pre-validates fallback URLs before attempting to load them
+- Gracefully handles network errors and HTTP status codes
+- Provides detailed logging for debugging
+
+**Logo.dev API Integration**:
+- Uses the correct `img.logo.dev` endpoint format
+- Includes proper token authentication and size parameters
+- **Important**: Requires attribution link to logo.dev on your site
+
+**Note**: Never commit your `.env` file to version control. It's already added to `.gitignore`.
+
+## Getting Started
