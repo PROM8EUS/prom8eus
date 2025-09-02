@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppIcon } from './AppIcon';
+import ScoreCircle from './ScoreCircle';
 import { 
   Workflow, 
   Zap, 
@@ -17,53 +18,20 @@ import BusinessCase from './BusinessCase';
 import { DynamicSubtask } from '@/lib/patternEngine/dynamicSubtaskGenerator';
 import { fastAnalysisEngine } from '@/lib/patternEngine/fastAnalysisEngine';
 
-// Circular Pie Chart Component
-const CircularPieChart = ({ automationRatio, humanRatio, size = 60, showPercentage = true }: { 
+// ScoreCircle wrapper for consistent styling
+const ScoreCircleWrapper = ({ automationRatio, size = 60, lang = 'de' }: { 
   automationRatio: number; 
-  humanRatio: number; 
   size?: number;
-  showPercentage?: boolean;
+  lang?: string;
 }) => {
-  const radius = size / 2;
-  const circumference = 2 * Math.PI * (radius - 2);
-  
-  // Calculate stroke dasharray for automation (brand color)
-  const automationStrokeDasharray = (automationRatio / 100) * circumference;
-  const humanStrokeDasharray = (humanRatio / 100) * circumference;
-  
   return (
-    <div className="relative inline-block">
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
-        <circle
-          cx={radius}
-          cy={radius}
-          r={radius - 2}
-          fill="none"
-          stroke="#ccfbf1"
-          strokeWidth="4"
-        />
-        {/* Automation segment (brand color) */}
-        <circle
-          cx={radius}
-          cy={radius}
-          r={radius - 2}
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="4"
-          strokeDasharray={`${automationStrokeDasharray} ${circumference}`}
-          strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
-        />
-      </svg>
-      {/* Center text - only show if showPercentage is true */}
-      {showPercentage && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-xs font-bold text-primary">{automationRatio}%</div>
-          </div>
-        </div>
-      )}
+    <div style={{ width: size, height: size }}>
+      <ScoreCircle 
+        score={automationRatio} 
+        maxScore={100} 
+        variant="xsmall" 
+        lang={lang}
+      />
     </div>
   );
 };
@@ -497,11 +465,10 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
                   <div className="flex items-center gap-4">
                     {/* Circular Progress Chart for each subtask */}
                     <div className="flex-shrink-0 flex items-center">
-                      <CircularPieChart 
+                      <ScoreCircleWrapper 
                         automationRatio={Math.round(subtask.automationPotential * 100)} 
-                        humanRatio={Math.round((1 - subtask.automationPotential) * 100)} 
                         size={32}
-                        showPercentage={false}
+                        lang={lang}
                       />
                     </div>
                     

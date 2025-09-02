@@ -8,6 +8,7 @@ import { AppIcon } from './AppIcon';
 import { AITool, getToolById, getToolDescription, getToolFeatures, getToolsByIndustry, getTopToolsByIndustry } from '../lib/catalog/aiTools';
 import TaskPanel from './TaskPanel';
 import { AIToolRecommendations } from './AIToolRecommendations';
+import ScoreCircle from './ScoreCircle';
 
 export interface Task {
   id?: string;
@@ -52,54 +53,7 @@ interface TaskListProps {
   lang?: "de" | "en";
 }
 
-// Circular Pie Chart Component
-const CircularPieChart = ({ automationRatio, humanRatio, size = 60 }: { 
-  automationRatio: number; 
-  humanRatio: number; 
-  size?: number;
-}) => {
-  const radius = size / 2;
-  const circumference = 2 * Math.PI * (radius - 2);
-  
-  // Calculate stroke dasharray for automation (brand color)
-  const automationStrokeDasharray = (automationRatio / 100) * circumference;
-  const humanStrokeDasharray = (humanRatio / 100) * circumference;
-  
-  return (
-    <div className="relative inline-block">
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
-        <circle
-          cx={radius}
-          cy={radius}
-          r={radius - 2}
-          fill="none"
-          stroke="#ccfbf1"
-          strokeWidth="4"
-        />
-        {/* Automation segment (brand color) */}
-        <circle
-          cx={radius}
-          cy={radius}
-          r={radius - 2}
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="4"
-          strokeDasharray={`${automationStrokeDasharray} ${circumference}`}
-          strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
-        />
 
-      </svg>
-      {/* Center text */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-xs font-bold text-primary">{automationRatio}%</div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
 
@@ -445,37 +399,28 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                   onClick={() => toggleTask(taskId)}
                 >
                   <div className="flex items-center space-x-3 flex-1">
-                    {/* Icon based on category - replaced with pie chart for human tasks */}
-                    {automationCategory === 'mensch' ? (
-                      <div className="flex items-center justify-end">
-                        {(() => {
-                          let automationRatio = task.automationRatio;
-                          let humanRatio = task.humanRatio;
-                          
-                          // Fallback: Berechne Ratios basierend auf Score wenn nicht vorhanden
-                          if (automationRatio === undefined || humanRatio === undefined) {
-                            automationRatio = task.score || 50;
-                            humanRatio = 100 - automationRatio;
-                          }
-                          
-                          return (
-                            <CircularPieChart automationRatio={automationRatio} humanRatio={humanRatio} size={50} />
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      <div className={`p-2 rounded-full ${
-                        automationCategory === 'automatisierbar' 
-                          ? 'bg-primary/10 text-primary' 
-                          : 'bg-yellow-100 text-yellow-600'
-                      }`}>
-                        {automationCategory === 'automatisierbar' ? (
-                          <Zap className="w-4 h-4" />
-                        ) : (
-                          <Zap className="w-4 h-4" />
-                        )}
-                      </div>
-                    )}
+                    {/* ScoreCircle for all tasks */}
+                    <div className="flex items-center justify-end">
+                      {(() => {
+                        let automationRatio = task.automationRatio;
+                        let humanRatio = task.humanRatio;
+                        
+                        // Fallback: Berechne Ratios basierend auf Score wenn nicht vorhanden
+                        if (automationRatio === undefined || humanRatio === undefined) {
+                          automationRatio = task.score || 50;
+                          humanRatio = 100 - automationRatio;
+                        }
+                        
+                        return (
+                          <ScoreCircle 
+                            score={automationRatio} 
+                            maxScore={100} 
+                            variant="small" 
+                            lang={currentLang}
+                          />
+                        );
+                      })()}
+                    </div>
                     
                     {/* Task info */}
                     <div className="flex-1">
@@ -586,10 +531,11 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                                 <div className="flex items-center space-x-3 flex-1">
                                   {/* Circular Progress Chart for Subtask */}
                                   <div className="flex items-center justify-end">
-                                    <CircularPieChart 
-                                      automationRatio={subtask.automationPotential} 
-                                      humanRatio={100 - subtask.automationPotential} 
-                                      size={40} 
+                                    <ScoreCircle 
+                                      score={subtask.automationPotential} 
+                                      maxScore={100} 
+                                      variant="xsmall" 
+                                      lang={currentLang}
                                     />
                                   </div>
                                   

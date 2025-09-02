@@ -2,11 +2,12 @@ interface ScoreCircleProps {
   score: number;
   maxScore: number;
   label: string;
-  variant?: 'default' | 'small';
+  variant?: 'default' | 'small' | 'xsmall';
   lang?: 'de' | 'en';
+  showPercentage?: boolean;
 }
 
-const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de' }: ScoreCircleProps) => {
+const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de', showPercentage = true }: ScoreCircleProps) => {
   const percentage = (score / maxScore) * 100;
   
   // Format score based on language and variant
@@ -21,6 +22,48 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de' 
     return Math.round(score).toString();
   };
   
+  if (variant === 'xsmall') {
+    const xsmallRadius = 12;
+    const xsmallCircumference = 2 * Math.PI * xsmallRadius;
+    const xsmallStrokeDasharray = xsmallCircumference;
+    const xsmallStrokeDashoffset = xsmallCircumference - (percentage / 100) * xsmallCircumference;
+
+    return (
+      <div className="relative w-8 h-8">
+        <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+          {/* Background circle */}
+          <circle
+            cx="16"
+            cy="16"
+            r={xsmallRadius}
+            stroke="hsl(var(--muted))"
+            strokeWidth="3"
+            fill="transparent"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="16"
+            cy="16"
+            r={xsmallRadius}
+            stroke="hsl(var(--primary))"
+            strokeWidth="3"
+            fill="transparent"
+            strokeDasharray={xsmallStrokeDasharray}
+            strokeDashoffset={xsmallStrokeDasharray}
+            strokeLinecap="round"
+            className="animate-progress-circle"
+            style={{
+              '--stroke-dasharray': `${xsmallStrokeDasharray}px`,
+              '--progress-offset': `${xsmallStrokeDashoffset}px`
+            } as React.CSSProperties}
+          />
+        </svg>
+        
+        {/* No text for xsmall variant - always hidden */}
+      </div>
+    );
+  }
+
   if (variant === 'small') {
     const smallRadius = 20;
     const smallCircumference = 2 * Math.PI * smallRadius;
@@ -58,7 +101,7 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de' 
           />
         </svg>
         
-        {/* Score text in center */}
+        {/* Score text in center - always show for small variant */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-sm font-bold text-foreground">{formatScore(score)}</span>
         </div>
@@ -103,11 +146,13 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de' 
           />
         </svg>
         
-        {/* Score text in center */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl md:text-5xl font-bold text-foreground">{formatScore(score)}</span>
-          <span className="text-xl md:text-2xl text-muted-foreground">/{maxScore}</span>
-        </div>
+        {/* Score text in center - only show if showPercentage is true */}
+        {showPercentage && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-4xl md:text-5xl font-bold text-foreground">{formatScore(score)}</span>
+            <span className="text-xl md:text-2xl text-muted-foreground">/{maxScore}</span>
+          </div>
+        )}
       </div>
       
       <div className="text-center">
