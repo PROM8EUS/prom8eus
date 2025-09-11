@@ -115,6 +115,8 @@ const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const ITEM_HEIGHT = 16; // px — compact height to avoid changing tab size
+
   useEffect(() => {
     if (isLoading) {
       setCurrentIndex(0);
@@ -125,8 +127,8 @@ const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: 
     // Only animate when count changes and we're not loading
     if (count > 0 && !isAnimating && !isLoading) {
       setIsAnimating(true);
-      const duration = 3000; // 3 second animation (slower)
-      const steps = 120; // More steps for smoother animation
+      const duration = 2000; // 2s for a subtler animation
+      const steps = Math.min(80, Math.max(30, count * 20));
       const stepDuration = duration / steps;
       
       let currentStep = 0;
@@ -150,12 +152,12 @@ const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: 
     }
   }, [count, isLoading, isAnimating]);
 
-  // Always show badge, but with different content based on state
+  // Loading shimmer — compact and brand-colored
   if (isLoading) {
     return (
-      <Badge className="ml-1 text-xs bg-primary text-primary-foreground flex items-center gap-1 animate-pulse">
-        <Loader2 className="w-3 h-3 animate-spin" />
-      </Badge>
+      <span className="ml-1 inline-flex items-center justify-center h-5 min-w-[18px] px-1.5 rounded-full bg-primary/80 text-primary-foreground text-[10px] leading-none animate-pulse">
+        ·
+      </span>
     );
   }
 
@@ -165,22 +167,23 @@ const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: 
   }
 
   return (
-    <Badge className="ml-1 text-xs bg-primary text-primary-foreground overflow-hidden">
-      <div className="relative h-5">
-        <div 
-          className="transition-transform duration-100 ease-out"
-          style={{
-            transform: `translateY(-${currentIndex * 20}px)`,
-          }}
+    <span className="ml-1 inline-flex items-center justify-center h-5 min-w-[18px] px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] leading-none overflow-hidden">
+      <span 
+        className="relative"
+        style={{ height: ITEM_HEIGHT, display: 'inline-block' }}
+      >
+        <span 
+          className="transition-transform duration-100 ease-out block"
+          style={{ transform: `translateY(-${currentIndex * ITEM_HEIGHT}px)` }}
         >
           {Array.from({ length: count }, (_, i) => i + 1).map((num) => (
-            <div key={num} className="h-5 flex items-center justify-center text-sm font-medium">
+            <span key={num} className="flex items-center justify-center" style={{ height: ITEM_HEIGHT, lineHeight: `${ITEM_HEIGHT}px` }}>
               {num}
-            </div>
+            </span>
           ))}
-        </div>
-      </div>
-    </Badge>
+        </span>
+      </span>
+    </span>
   );
 };
 
@@ -484,24 +487,36 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
     }
   }, [isVisible, realSubtasks, selectedTools, task.title, task.name]);
 
+  // New: selected period synced with BusinessCase
+  type Period = 'year' | 'month' | 'week' | 'day';
+  const [period, setPeriod] = useState<Period>('month');
+  const HOURS_PER_PERIOD: Record<Period, number> = {
+    year: 2080,
+    month: 160,
+    week: 40,
+    day: 8,
+  };
+
   // Calculate business case based on actual subtask effort reduction
   let manualHoursTotal = 0;
   let residualHoursTotal = 0;
+  const basePerTaskHours = 8; // baseline per subtask for a day
+  const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['day'];
   
   // Calculate total manual hours from subtasks
   realSubtasks.forEach(s => {
-    manualHoursTotal += s.manualHoursShare * 8; // 8 hours base per task
+    manualHoursTotal += s.manualHoursShare * basePerTaskHours * scale;
   });
   
   // Calculate residual hours after automation
   realSubtasks.forEach(s => {
-    residualHoursTotal += s.manualHoursShare * 8 * (1 - s.automationPotential);
+    residualHoursTotal += s.manualHoursShare * basePerTaskHours * (1 - s.automationPotential) * scale;
   });
   
   // Fallback to default values if no subtasks
   if (realSubtasks.length === 0) {
-    manualHoursTotal = 8;
-    residualHoursTotal = 4; // Assume 50% automation potential
+    manualHoursTotal = basePerTaskHours * scale;
+    residualHoursTotal = (basePerTaskHours * 0.5) * scale; // Assume 50% automation potential
   }
 
   if (!isVisible) return null;
@@ -518,11 +533,13 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
           subtasks: realSubtasks.map(s => ({
             id: s.id,
             title: s.title,
-            estimatedTime: s.manualHoursShare * 8,
+            estimatedTime: s.manualHoursShare * basePerTaskHours, // base at day; BusinessCase scales by period
             automationPotential: s.automationPotential
           }))
         }}
         lang={lang}
+        period={period}
+        onPeriodChange={(p) => setPeriod(p)}
       />
 
       {/* Subtasks and Solutions */}
@@ -550,8 +567,8 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
           ) : (
             <div className="space-y-0">
               {realSubtasks.map((subtask, index) => {
-              const hoursBefore = subtask.manualHoursShare * 8; // 8 hours base per task
-              const hoursAfter = subtask.manualHoursShare * 8 * (1 - subtask.automationPotential);
+              const hoursBefore = subtask.manualHoursShare * basePerTaskHours * scale;
+              const hoursAfter = subtask.manualHoursShare * basePerTaskHours * (1 - subtask.automationPotential) * scale;
               
               return (
                 <div key={subtask.id} className={`py-2 px-4 ${index < realSubtasks.length - 1 ? 'border-b' : ''}`}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Solution, SolutionType, SolutionFilter, SolutionSort } from '../types/solutions';
+import { Solution, SolutionType } from '../types/solutions';
 import { createSolutionFilters } from '../lib/solutions/solutionFilters';
 import { createSolutionScoring } from '../lib/solutions/solutionScoring';
 import { createSolutionMatcher } from '../lib/solutions/solutionMatcher';
@@ -8,17 +8,8 @@ import { AIAgent } from '../lib/solutions/aiAgentsCatalog';
 import { N8nWorkflow } from '../lib/n8nApi';
 import SolutionCard from './SolutionCard';
 import SolutionDetailModal from './SolutionDetailModal';
-import SolutionFilters from './SolutionFilters';
 import SolutionIcon from './ui/SolutionIcon';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Label } from './ui/label';
-import { Filter, Calendar, Clock, User, Tag, Star, TrendingUp, Download, MessageSquare } from 'lucide-react';
-import ProfessionalSetup from './ProfessionalSetup';
 
 interface SolutionsTabProps {
   taskText?: string;
@@ -45,8 +36,6 @@ export default function SolutionsTab({
   onSolutionSelect 
 }: SolutionsTabProps) {
   const [activeTab, setActiveTab] = useState<'all' | 'workflows' | 'agents'>('all');
-  const [filters, setFilters] = useState<SolutionFilter>({});
-  const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [selectedSolution, setSelectedSolution] = useState<Solution | null>(null);
   const [showSolutionModal, setShowSolutionModal] = useState(false);
 
@@ -55,12 +44,6 @@ export default function SolutionsTab({
 
   // Mock data - in real implementation, this would come from API
   const [solutions, setSolutions] = useState<Solution[]>([]);
-
-  // Initialize solution services with the actual solutions data
-  const solutionFilters = useMemo(() => createSolutionFilters(solutions), [solutions]);
-  const solutionScoring = useMemo(() => createSolutionScoring(), []);
-  const solutionMatcher = useMemo(() => createSolutionMatcher(), []);
-  const solutionCombinations = useMemo(() => createSolutionCombinations(), []);
 
   useEffect(() => {
     loadSolutions();
@@ -78,7 +61,6 @@ export default function SolutionsTab({
     setError(null);
     
     try {
-      // Mock data generation - replace with actual API calls
       const mockSolutions = generateMockSolutions();
       setSolutions(mockSolutions);
     } catch (err) {
@@ -92,58 +74,18 @@ export default function SolutionsTab({
   // Filter solutions based on active tab
   const filteredSolutions = useMemo(() => {
     let filtered = solutions;
-    
-    // Apply tab filter
     if (activeTab === 'workflows') {
       filtered = filtered.filter(solution => solution.type === 'workflow');
     } else if (activeTab === 'agents') {
       filtered = filtered.filter(solution => solution.type === 'agent');
     }
-    // 'all' shows everything
-    
-    // Apply other filters only if we have any active filters
-    if (Object.keys(filters).length > 0) {
-      // Convert SolutionFilter to FilterCriteria
-      const filterCriteria = {
-        type: filters.type ? [filters.type] : undefined,
-        category: filters.category ? [filters.category] : undefined,
-        difficulty: filters.difficulty ? [filters.difficulty] : undefined,
-        setupTime: filters.setupTime ? [filters.setupTime] : undefined,
-        deployment: filters.deployment ? [filters.deployment] : undefined,
-        status: filters.status ? [filters.status] : undefined,
-        minAutomationPotential: filters.minAutomationPotential,
-        maxAutomationPotential: filters.maxAutomationPotential,
-        implementationPriority: filters.implementationPriority ? [filters.implementationPriority] : undefined,
-        tags: filters.tags,
-        priceRange: filters.priceRange ? [filters.priceRange] : undefined,
-        minRating: filters.minRating,
-        maxSetupTime: filters.maxSetupTime
-      };
-      
-      filtered = solutionFilters.applyFilters(filterCriteria);
-    }
-    
     return filtered;
-  }, [solutions, activeTab, filters, solutionFilters]);
+  }, [solutions, activeTab]);
 
   const handleSolutionSelect = (solution: Solution) => {
     setSelectedSolution(solution);
     setShowSolutionModal(true);
-    
     onSolutionSelect?.(solution);
-  };
-
-  const handleFilterChange = (newFilters: SolutionFilter) => {
-    setFilters(newFilters);
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-  };
-
-  const closeSolutionModal = () => {
-    setShowSolutionModal(false);
-    setSelectedSolution(null);
   };
 
   if (loading) {
@@ -164,9 +106,6 @@ export default function SolutionsTab({
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={loadSolutions} variant="outline">
-            {lang === 'de' ? 'Wiederholen' : 'Retry'}
-          </Button>
         </div>
       </div>
     );
@@ -174,7 +113,7 @@ export default function SolutionsTab({
 
   return (
     <div className="space-y-6">
-      {/* Simple Filter Row */}
+      {/* Tabs Row (filters removed) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <button
@@ -212,15 +151,6 @@ export default function SolutionsTab({
             {lang === 'de' ? 'KI-Agenten' : 'AI Agents'} {solutions.filter(s => s.type === 'agent').length}
           </button>
         </div>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFiltersModal(true)}
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          {lang === 'de' ? 'Filter' : 'Filters'}
-        </Button>
       </div>
 
       {/* Content based on active tab */}
@@ -229,8 +159,8 @@ export default function SolutionsTab({
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               {lang === 'de' 
-                ? 'Keine Lösungen gefunden. Versuchen Sie andere Filter.'
-                : 'No solutions found. Try different filters.'
+                ? 'Keine Lösungen gefunden.'
+                : 'No solutions found.'
               }
             </p>
           </div>
@@ -283,43 +213,13 @@ export default function SolutionsTab({
           onClose={() => setShowSolutionModal(false)}
           onImplement={(solution) => {
             console.log('Implement solution:', solution);
-            // TODO: Implement solution logic
           }}
           onDeploy={(solution) => {
             console.log('Deploy solution:', solution);
-            // TODO: Deploy solution logic
           }}
-          isAdmin={false} // Frontend, so show professional setup block
+          isAdmin={false}
         />
       )}
-
-      {/* Filters Modal */}
-      <Dialog open={showFiltersModal} onOpenChange={setShowFiltersModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {lang === 'de' ? 'Filter anwenden' : 'Apply Filters'}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <SolutionFilters
-            filters={filters}
-            onFiltersChange={handleFilterChange}
-            onClearFilters={clearFilters}
-            availableOptions={{
-              type: ['workflow', 'agent'],
-              category: ['Content Creation', 'Finance & Accounting', 'Marketing & Sales'],
-              difficulty: ['Beginner', 'Intermediate', 'Advanced'],
-              setupTime: ['Quick', 'Medium', 'Long'],
-              deployment: ['Local', 'Cloud', 'Hybrid'],
-              status: ['Active', 'Inactive', 'Deprecated', 'Beta'],
-              implementationPriority: ['High', 'Medium', 'Low'],
-              tags: ['ai', 'automation', 'workflow', 'finance', 'marketing'],
-              priceRange: ['Free', 'Freemium', 'Paid', 'Enterprise']
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

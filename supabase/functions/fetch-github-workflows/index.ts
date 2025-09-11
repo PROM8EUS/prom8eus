@@ -1,3 +1,4 @@
+declare const Deno: any;
 Deno.serve(async (req: Request) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -32,7 +33,16 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const workflows = await loadGithubWorkflows();
+    // GitHub sources
+    if (normalized === 'ai-enhanced') {
+      const workflows = await loadGithubWorkflows('https://api.github.com/repos/wassupjay/n8n-free-templates');
+      return new Response(JSON.stringify({ success: true, workflows, total: workflows.length }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const workflows = await loadGithubWorkflows('https://api.github.com/repos/Zie619/n8n-workflows');
     return new Response(JSON.stringify({ success: true, workflows, total: workflows.length }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -53,9 +63,8 @@ function normalizeSource(source: string): string {
   return s.replace(/\s+/g, '-');
 }
 
-async function loadGithubWorkflows() {
-  const githubToken = Deno.env.get('GITHUB_TOKEN') || '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';
-  const repoUrl = 'https://api.github.com/repos/Zie619/n8n-workflows';
+async function loadGithubWorkflows(repoUrl: string) {
+  const githubToken = Deno?.env?.get('GITHUB_TOKEN') || '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';
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.github.v3+json',
     'User-Agent': 'prom8eus-workflow-indexer',
@@ -65,37 +74,63 @@ async function loadGithubWorkflows() {
   const workflows: any[] = [];
   let workflowId = 1;
 
-  const categoriesResponse = await fetch(`${repoUrl}/contents/workflows`, { headers });
-  if (!categoriesResponse.ok) throw new Error(`GitHub categories error: ${categoriesResponse.status}`);
-  const categories = await categoriesResponse.json();
+  // Try common directories that repos might use
+  const candidateDirs = ['workflows', 'templates', 'examples'];
+
+  let categories: any[] = [];
+  for (const dir of candidateDirs) {
+    const categoriesResponse = await fetch(`${repoUrl}/contents/${dir}`, { headers });
+    if (categoriesResponse.ok) {
+      categories = await categoriesResponse.json();
+      // Mark the directory on items so we can fetch deeper
+      categories = categories.map((c: any) => ({ ...c, __root: dir }));
+      break;
+    }
+  }
+  if (!Array.isArray(categories) || categories.length === 0) {
+    // As a last resort, scan the repo root for .json workflow files
+    const rootResponse = await fetch(`${repoUrl}/contents`, { headers });
+    if (!rootResponse.ok) return workflows;
+    const files = await rootResponse.json();
+    for (const file of files) {
+      if (!file.name || !file.name.endsWith('.json')) continue;
+      workflows.push(mapGithubFileToWorkflow(file.name, file.sha, 'misc', workflowId++));
+    }
+    return workflows;
+  }
 
   for (const category of categories) {
     if (category.type !== 'dir') continue;
-    const categoryResponse = await fetch(`${repoUrl}/contents/workflows/${category.name}`, { headers });
+    const baseDir = category.__root ? `${category.__root}/` : '';
+    const categoryResponse = await fetch(`${repoUrl}/contents/${baseDir}${category.name}`, { headers });
     if (!categoryResponse.ok) continue;
     const files = await categoryResponse.json();
 
     for (const file of files) {
       if (!file.name || !file.name.endsWith('.json')) continue;
-      workflows.push({
-        id: workflowId++,
-        filename: file.name,
-        name: generateWorkflowName(file.name),
-        active: Math.random() > 0.1,
-        triggerType: determineTriggerType(file.name),
-        complexity: determineComplexity(file.name),
-        nodeCount: Math.floor(Math.random() * 20) + 3,
-        integrations: extractIntegrations(file.name),
-        description: generateDescription(file.name),
-        category: mapCategory(category.name),
-        tags: generateTags(file.name),
-        fileHash: (file.sha || '').substring(0, 8),
-        analyzedAt: new Date().toISOString(),
-      });
+      workflows.push(mapGithubFileToWorkflow(file.name, file.sha, category.name, workflowId++));
     }
   }
 
   return workflows;
+}
+
+function mapGithubFileToWorkflow(fileName: string, sha: string, categoryName: string, id: number) {
+  return {
+    id,
+    filename: fileName,
+    name: generateWorkflowName(fileName),
+    active: Math.random() > 0.1,
+    triggerType: determineTriggerType(fileName),
+    complexity: determineComplexity(fileName),
+    nodeCount: Math.floor(Math.random() * 20) + 3,
+    integrations: extractIntegrations(fileName),
+    description: generateDescription(fileName),
+    category: mapCategory(categoryName),
+    tags: generateTags(fileName),
+    fileHash: (sha || '').substring(0, 8),
+    analyzedAt: new Date().toISOString(),
+  };
 }
 
 async function loadN8nOfficialTemplates() {
@@ -111,7 +146,7 @@ async function loadN8nOfficialTemplates() {
     console.log('n8n.io: bulk fetch start');
     let res = await fetch(`${base}?page=1&perPage=6000`, { headers });
     console.log('n8n.io: bulk status', res.status);
-    let items: any[] | null = null;
+    let items: any[] = [];
     if (res.ok) {
       const data = await res.json();
       items = Array.isArray(data.workflows) ? data.workflows : [];
@@ -146,7 +181,7 @@ async function loadN8nOfficialTemplates() {
       return { workflows: generateMockN8nTemplates() };
     }
 
-    const workflows = items.map((w: any, idx: number) => {
+    const workflows = (items || []).map((w: any, idx: number) => {
       const id = Number(w.id) || (idx + 1);
       const name = (w.name || `n8n-workflow-${id}`).toString();
       const description = (w.description || `Official n8n workflow: ${name}`).toString();

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -31,6 +31,8 @@ interface BusinessCaseProps {
     }>;
   };
   lang?: 'de' | 'en';
+  period?: Period;
+  onPeriodChange?: (p: Period) => void;
 }
 
 type Period = 'year' | 'month' | 'week' | 'day';
@@ -42,10 +44,22 @@ const HOURS_PER_PERIOD: Record<Period, number> = {
   day: 8,
 };
 
-const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de' }) => {
+const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: periodProp, onPeriodChange }) => {
   const [mode, setMode] = useState<'time' | 'money'>('time');
   const [hourlyRate, setHourlyRate] = useState(40);
-  const [period, setPeriod] = useState<Period>('year');
+  const [periodState, setPeriodState] = useState<Period>('year');
+  const period = periodProp ?? periodState;
+
+  useEffect(() => {
+    if (periodProp) {
+      setPeriodState(periodProp);
+    }
+  }, [periodProp]);
+
+  const handleChangePeriod = (p: Period) => {
+    setPeriodState(p);
+    onPeriodChange?.(p);
+  };
 
   // Calculate business case metrics (realistic, from subtasks)
   const businessMetrics = useMemo(() => {
@@ -116,18 +130,21 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de' }) => {
   return (
     <div className="w-full bg-primary/5 rounded-lg p-6">
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Left: Title */}
+          <CardTitle className="flex items-center gap-2 text-lg flex-1 min-w-0">
             <Calculator className="w-5 h-5 text-primary" />
             {t(lang, 'business_case')}
           </CardTitle>
-          <div className="flex items-center gap-3">
-            {/* Period selector (left of switch) */}
+
+          {/* Center: Zeitraum + Stundensatz (wraps on small screens) */}
+          <div className="flex flex-wrap items-center gap-3 md:justify-center">
+            {/* Period selector */}
             <div className="flex items-center gap-2">
               <Label className="text-sm font-medium whitespace-nowrap">
                 {lang === 'de' ? 'Zeitraum' : 'Period'}
               </Label>
-              <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+              <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
                 <SelectTrigger className="h-8 w-28">
                   <SelectValue />
                 </SelectTrigger>
@@ -139,11 +156,12 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de' }) => {
                 </SelectContent>
               </Select>
             </div>
+
             {/* Hourly Rate Input (money mode) */}
             {mode === 'money' && (
               <div className="flex items-center gap-2">
                 <Label htmlFor="hourly-rate" className="text-sm font-medium whitespace-nowrap">
-                  {t(lang, 'business_case_hourly_rate')}
+                  {lang === 'de' ? 'Stundensatz (€)' : 'Hourly Rate (€)'}
                 </Label>
                 <div className="flex items-center space-x-1">
                   <Input
@@ -159,7 +177,10 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de' }) => {
                 </div>
               </div>
             )}
-            {/* Mode Toggle */}
+          </div>
+
+          {/* Right: Mode Toggle */}
+          <div className="flex items-center justify-end">
             <div className="flex items-center bg-primary/10 rounded-lg p-1.5">
               <button
                 onClick={() => setMode('time')}
