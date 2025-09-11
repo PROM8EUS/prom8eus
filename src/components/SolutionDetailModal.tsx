@@ -3,6 +3,8 @@ import { Solution } from '../types/solutions';
 import SolutionIcon from './ui/SolutionIcon';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
@@ -30,7 +32,11 @@ import {
   Code,
   Database,
   Globe,
-  Server
+  Server,
+  Timer,
+  ThumbsUp,
+  DollarSign,
+  Send
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -40,6 +46,7 @@ interface SolutionDetailModalProps {
   onClose: () => void;
   onImplement?: (solution: Solution) => void;
   onDeploy?: (solution: Solution) => void;
+  isAdmin?: boolean; // New prop to determine if we're in admin area
 }
 
 export default function SolutionDetailModal({
@@ -47,11 +54,27 @@ export default function SolutionDetailModal({
   isOpen,
   onClose,
   onImplement,
-  onDeploy
+  onDeploy,
+  isAdmin = false
 }: SolutionDetailModalProps) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showSetupForm, setShowSetupForm] = useState(false);
+  const [setupForm, setSetupForm] = useState({
+    name: '',
+    email: '',
+    company: '',
+    requirements: ''
+  });
 
   if (!solution) return null;
+
+  const handleSetupRequest = () => {
+    const subject = encodeURIComponent(`Einrichtungsanfrage: ${solution.name}`);
+    const body = encodeURIComponent(`Hallo,\n\nich interessiere mich für die professionelle Einrichtung der Lösung "${solution.name}".\n\nMeine Details:\n- Name: ${setupForm.name}\n- E-Mail: ${setupForm.email}\n- Firma: ${setupForm.company || 'Nicht angegeben'}\n\nLösungs-Details:\n- Name: ${solution.name}\n- Beschreibung: ${solution.description}\n- Kategorie: ${solution.category}\n- Automatisierungspotenzial: ${solution.automationPotential}%\n- Geschätzter ROI: ${solution.estimatedROI}\n- Zeit bis zur Wertschöpfung: ${solution.timeToValue}\n\nMeine Anforderungen:\n${setupForm.requirements}\n\nBitte kontaktieren Sie mich für weitere Details.\n\nMit freundlichen Grüßen\n${setupForm.name}`);
+    window.open(`mailto:setup@prom8eus.com?subject=${subject}&body=${body}`, '_blank');
+    setShowSetupForm(false);
+    setSetupForm({name: '', email: '', company: '', requirements: ''});
+  };
 
   const renderStars = (rating: number) => {
     return (
@@ -224,17 +247,123 @@ export default function SolutionDetailModal({
     ];
 
     return (
-      <div className="space-y-3">
-        {steps.map((step, index) => (
-          <div key={index} className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-              {index + 1}
+      <div className="space-y-6">
+        <div className="space-y-3">
+          {steps.map((step, index) => (
+            <div key={index} className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                {index + 1}
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-sm">{step}</p>
+              </div>
             </div>
-            <div className="flex-1 pt-1">
-              <p className="text-sm">{step}</p>
+          ))}
+        </div>
+
+        {/* Professional Setup Section - Only show in frontend, not admin */}
+        {!isAdmin && (
+          <div className="p-6 bg-purple-50 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold flex items-center gap-3 text-purple-900">
+                <Zap className="w-5 h-5 text-purple-600" />
+                Professionelle Einrichtung
+              </h4>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-purple-200 text-purple-700 hover:bg-purple-100 px-4"
+                onClick={() => setShowSetupForm(!showSetupForm)}
+              >
+                {showSetupForm ? 'Abbrechen' : 'Anfragen'}
+              </Button>
             </div>
+            
+            {!showSetupForm && (
+              <div className="space-y-4">
+                <p className="text-sm text-purple-700 leading-relaxed">
+                  Lassen Sie uns diese Automatisierung für Sie einrichten.
+                </p>
+                
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-purple-100 rounded-xl mb-2 shadow-sm">
+                      <Timer className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">24h Setup</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-purple-100 rounded-xl mb-2 shadow-sm">
+                      <ThumbsUp className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">Funktionsgarantie</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-purple-100 rounded-xl mb-2 shadow-sm">
+                      <DollarSign className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">Geld zurück</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-purple-100 rounded-xl mb-2 shadow-sm">
+                      <CheckCircle className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">Zahlung bei Erfolg</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-purple-100 rounded-xl mb-2 shadow-sm">
+                      <Users className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">30d Support</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-purple-100 rounded-xl mb-2 shadow-sm">
+                      <Zap className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">Sofort startklar</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showSetupForm && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    placeholder="Name"
+                    value={setupForm.name}
+                    onChange={(e) => setSetupForm({...setupForm, name: e.target.value})}
+                  />
+                  <Input
+                    placeholder="E-Mail"
+                    type="email"
+                    value={setupForm.email}
+                    onChange={(e) => setSetupForm({...setupForm, email: e.target.value})}
+                  />
+                </div>
+                <Input
+                  placeholder="Firma (optional)"
+                  value={setupForm.company}
+                  onChange={(e) => setSetupForm({...setupForm, company: e.target.value})}
+                />
+                <Textarea
+                  placeholder="Ihre Anforderungen und Kontext..."
+                  value={setupForm.requirements}
+                  onChange={(e) => setSetupForm({...setupForm, requirements: e.target.value})}
+                  rows={3}
+                />
+                <Button 
+                  className="w-full"
+                  onClick={handleSetupRequest}
+                  disabled={!setupForm.name || !setupForm.email}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Anfrage senden
+                </Button>
+              </div>
+            )}
           </div>
-        ))}
+        )}
       </div>
     );
   };
@@ -364,6 +493,18 @@ export default function SolutionDetailModal({
             <SolutionIcon type={solution.type} size="lg" variant="filled" />
             <div className="flex-1">
               <DialogTitle className="text-xl">{solution.name}</DialogTitle>
+              <div className="mt-2 flex items-center gap-3">
+                {solution.authorAvatarUrl && (
+                  <img src={solution.authorAvatarUrl} alt={solution.author} className="w-6 h-6 rounded-full" />
+                )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Created by</span>
+                  <span className="font-medium text-foreground">{solution.author}</span>
+                  {solution.authorVerified && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-orange-500 text-white text-[10px]">✓</span>
+                  )}
+                </div>
+              </div>
               <DialogDescription className="text-base mt-2">
                 {solution.description}
               </DialogDescription>

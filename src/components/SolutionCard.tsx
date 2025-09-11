@@ -1,292 +1,314 @@
 import React from 'react';
-import { Solution } from '../types/solutions';
-import SolutionIcon from './ui/SolutionIcon';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { Progress } from './ui/progress';
-import { Star, Clock, TrendingUp, Users, Activity, ExternalLink, Play, BookOpen, Github } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Star, Eye, Download, Zap, Clock, Play, Settings } from 'lucide-react';
 
-interface SolutionCardProps {
-  solution: Solution;
-  viewMode: 'grid' | 'list';
-  onSelect?: () => void;
-  className?: string;
+export interface SolutionData {
+  id: string;
+  name: string;
+  filename?: string;
+  description: string;
+  category: string;
+  priority: 'Low' | 'Medium' | 'High';
+  type: 'workflow' | 'ai-agent';
+  
+  // Metrics
+  automationScore?: number;
+  roi?: string;
+  timeToValue?: string;
+  successRate?: string;
+  userCount?: string;
+  avgTime?: string;
+  rating?: number;
+  reviewCount?: number;
+  
+  // Workflow specific
+  nodeCount?: number;
+  triggerType?: 'Complex' | 'Webhook' | 'Manual' | 'Scheduled';
+  complexity?: 'Low' | 'Medium' | 'High';
+  integrations?: string[];
+  tags?: string[];
+  
+  // AI Agent specific
+  agentType?: string;
+  capabilities?: string[];
+  
+  // Common
+  active?: boolean;
+  lastUpdated?: string;
 }
 
-export default function SolutionCard({ 
-  solution, 
-  viewMode, 
-  onSelect,
-  className 
-}: SolutionCardProps) {
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-1">
-        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-        <span className="text-sm font-medium">{rating}</span>
-        <span className="text-xs text-muted-foreground">({solution.metrics.reviewCount})</span>
-      </div>
-    );
+interface SolutionCardProps {
+  solution: SolutionData;
+  onView?: (solution: SolutionData) => void;
+  onDownload?: (solution: SolutionData) => void;
+  className?: string;
+  isAdmin?: boolean; // New prop to determine context
+}
+
+function SolutionCard({ solution, onView, onDownload, className, isAdmin = false }: SolutionCardProps) {
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'workflow':
+        return <Settings className="w-5 h-5" />;
+      case 'ai-agent':
+        return <Zap className="w-5 h-5" />;
+      default:
+        return <Settings className="w-5 h-5" />;
+    }
   };
 
-  const renderAutomationPotential = () => {
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Automation</span>
-          <span className="font-medium">{solution.automationPotential}%</span>
-        </div>
-        <Progress value={solution.automationPotential} className="h-2" />
-      </div>
-    );
+  const getTriggerIcon = (triggerType?: string) => {
+    switch (triggerType) {
+      case 'Webhook': return <Zap className="h-4 w-4" />;
+      case 'Scheduled': return <Clock className="h-4 w-4" />;
+      case 'Manual': return <Play className="h-4 w-4" />;
+      case 'Complex': return <Settings className="h-4 w-4" />;
+      default: return <Settings className="h-4 w-4" />;
+    }
   };
 
-  const renderMetrics = () => {
-    return (
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Users className="h-3 w-3" />
-          <span>{solution.metrics.usageCount}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Activity className="h-3 w-3" />
-          <span>{solution.metrics.successRate.toFixed(1)}%</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          <span>{solution.metrics.averageExecutionTime}s</span>
-        </div>
-      </div>
-    );
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High': return 'bg-red-100 text-red-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      case 'Low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const renderTags = () => {
-    return (
-      <div className="flex flex-wrap gap-1">
-        {solution.tags.slice(0, 3).map((tag) => (
-          <Badge key={tag} variant="secondary" className="text-xs">
-            {tag}
-          </Badge>
-        ))}
-        {solution.tags.length > 3 && (
-          <Badge variant="outline" className="text-xs">
-            +{solution.tags.length - 3}
-          </Badge>
-        )}
-      </div>
-    );
+  const getComplexityColor = (complexity?: string) => {
+    switch (complexity) {
+      case 'High': return 'bg-red-100 text-red-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      case 'Low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const renderActions = () => {
+  // Admin view - compact and technical
+  if (isAdmin) {
     return (
-      <div className="flex items-center gap-2">
-        {solution.documentationUrl && (
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <BookOpen className="h-4 w-4" />
-          </Button>
-        )}
-        {solution.demoUrl && (
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Play className="h-4 w-4" />
-          </Button>
-        )}
-        {solution.githubUrl && (
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Github className="h-4 w-4" />
-          </Button>
-        )}
-        <Button 
-          variant="default" 
-          size="sm" 
-          onClick={onSelect}
-          className="flex-1"
-        >
-          View Details
-        </Button>
-      </div>
-    );
-  };
-
-  if (viewMode === 'list') {
-    return (
-      <Card className={cn("hover:shadow-md transition-shadow", className)}>
+      <Card className={`hover:shadow-md transition-shadow ${className}`}>
         <CardContent className="p-4">
-          <div className="flex items-start gap-4">
-            {/* Icon and Type */}
-            <div className="flex-shrink-0">
-              <SolutionIcon type={solution.type} size="lg" variant="filled" />
+          {/* Title */}
+          <h3 
+            className="font-medium text-gray-900 text-sm leading-tight mb-2"
+            title={solution.filename || solution.name}
+          >
+            {solution.name}
+          </h3>
+          
+          {/* Tags between title and description */}
+          <div className="flex items-center gap-1 mb-2">
+            <Badge variant="outline" className="text-xs whitespace-nowrap">
+              {solution.category}
+            </Badge>
+            <Badge className={`text-xs whitespace-nowrap ${getComplexityColor(solution.complexity)}`}>
+              {solution.complexity || 'Unknown'}
+            </Badge>
+          </div>
+          
+          {/* Description */}
+          <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+            {solution.description}
+          </p>
+          
+          {/* Key Info Row */}
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+            <div className="flex items-center gap-3">
+              {solution.nodeCount && (
+                <span>{solution.nodeCount} nodes</span>
+              )}
+              {solution.triggerType && (
+                <div className="flex items-center gap-1">
+                  {getTriggerIcon(solution.triggerType)}
+                  <span>{solution.triggerType}</span>
+                </div>
+              )}
             </div>
-
-            {/* Main Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-lg truncate">{solution.name}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {solution.description}
-                  </p>
-                </div>
-                
-                <div className="flex-shrink-0 text-right">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline">{solution.category}</Badge>
-                    <Badge variant={solution.implementationPriority === 'High' ? 'default' : 'secondary'}>
-                      {solution.implementationPriority}
-                    </Badge>
-                  </div>
-                  {renderStars(solution.metrics.userRating)}
-                </div>
-              </div>
-
-              {/* Tags and Subcategories */}
-              <div className="flex items-center gap-4 mb-3">
-                {renderTags()}
-                <div className="text-xs text-muted-foreground">
-                  {solution.subcategories.join(' • ')}
-                </div>
-              </div>
-
-              {/* Metrics Row */}
-              <div className="flex items-center justify-between">
-                {renderMetrics()}
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>{solution.estimatedROI}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{solution.timeToValue}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {solution.automationScore && (
+              <span className="font-medium text-gray-900">{solution.automationScore}%</span>
+            )}
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-8 text-xs"
+              onClick={() => onView?.(solution)}
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              View
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-8 text-xs"
+              onClick={() => onDownload?.(solution)}
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Download
+            </Button>
           </div>
         </CardContent>
-
-        <CardFooter className="px-4 py-3 border-t">
-          {renderActions()}
-        </CardFooter>
       </Card>
     );
   }
 
-  // Grid view
+  // Frontend view - rich and business-focused
   return (
-    <Card className={cn("hover:shadow-md transition-shadow h-full flex flex-col", className)}>
+    <Card className={`hover:shadow-md transition-shadow ${className}`}>
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <SolutionIcon type={solution.type} size="md" variant="filled" />
-          <div className="flex items-center gap-1">
-            <Badge variant="outline" className="text-xs">
-              {solution.category}
-            </Badge>
-            <Badge 
-              variant={solution.implementationPriority === 'High' ? 'default' : 'secondary'}
-              className="text-xs"
-            >
-              {solution.implementationPriority}
-            </Badge>
-          </div>
-        </div>
-        
-        <CardTitle className="text-base line-clamp-2 leading-tight">
-          {solution.name}
-        </CardTitle>
-        
-        <CardDescription className="text-sm line-clamp-2">
-          {solution.description}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="flex-1 space-y-3">
-        {/* Automation Potential */}
-        {renderAutomationPotential()}
-
-        {/* Tags */}
-        {renderTags()}
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="text-center p-2 bg-muted rounded">
-            <div className="font-medium">{solution.estimatedROI}</div>
-            <div className="text-muted-foreground">ROI</div>
-          </div>
-          <div className="text-center p-2 bg-muted rounded">
-            <div className="font-medium">{solution.timeToValue}</div>
-            <div className="text-muted-foreground">Time to Value</div>
+        {/* Header Badges */}
+        <div className="flex items-center gap-2 mb-3">
+          <Badge variant="outline" className="text-xs">
+            {solution.category}
+          </Badge>
+          <Badge className={`text-xs ${getComplexityColor(solution.complexity)}`}>
+            {solution.complexity || 'Unknown'}
+          </Badge>
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            <Zap className="h-3 w-3" />
+            <span>{solution.complexity || 'Unknown'}</span>
           </div>
         </div>
 
-        {/* Rating and Usage */}
-        <div className="flex items-center justify-between text-sm">
-          {renderStars(solution.metrics.userRating)}
-          <div className="text-muted-foreground">
-            {solution.metrics.usageCount} users
-          </div>
-        </div>
-
-        {/* Quick Metrics */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Success: {solution.metrics.successRate.toFixed(1)}%</span>
-          <span>Avg: {solution.metrics.averageExecutionTime}s</span>
-        </div>
-      </CardContent>
-
-      <CardFooter className="pt-3 border-t">
-        {renderActions()}
-      </CardFooter>
-    </Card>
-  );
-}
-
-// Export individual components for specific use cases
-export function SolutionCardGrid({ solution, onSelect, className }: Omit<SolutionCardProps, 'viewMode'>) {
-  return (
-    <SolutionCard 
-      solution={solution} 
-      viewMode="grid" 
-      onSelect={onSelect}
-      className={className}
-    />
-  );
-}
-
-export function SolutionCardList({ solution, onSelect, className }: Omit<SolutionCardProps, 'viewMode'>) {
-  return (
-    <SolutionCard 
-      solution={solution} 
-      viewMode="list" 
-      onSelect={onSelect}
-      className={className}
-    />
-  );
-}
-
-// Compact card for use in other components
-export function SolutionCardCompact({ solution, onSelect, className }: Omit<SolutionCardProps, 'viewMode'>) {
-  return (
-    <Card className={cn("hover:shadow-sm transition-shadow", className)}>
-      <CardContent className="p-3">
+        {/* Title and Icon */}
         <div className="flex items-center gap-3">
-          <SolutionIcon type={solution.type} size="sm" />
-          
-          <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm truncate">{solution.name}</h4>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{solution.automationPotential}% automation</span>
-              <span>•</span>
-              <span>{solution.estimatedROI} ROI</span>
-            </div>
+          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+            <Settings className="w-4 h-4" />
           </div>
-
-          <Button variant="ghost" size="sm" onClick={onSelect}>
-            <ExternalLink className="h-4 w-4" />
+          <div className="flex-1">
+            <CardTitle 
+              className="text-lg font-semibold text-gray-900"
+              title={solution.filename || solution.name}
+            >
+              {solution.name}
+            </CardTitle>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <p className="text-sm text-gray-600 line-clamp-2">
+          {solution.description}
+        </p>
+        
+        {/* Automation Progress */}
+        {solution.automationScore !== undefined && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Automation</span>
+              <span className="font-medium">{solution.automationScore}%</span>
+            </div>
+            <Progress value={solution.automationScore} className="h-2" />
+          </div>
+        )}
+        
+        {/* Tags/Integrations */}
+        {(solution.tags || solution.integrations) && (
+          <div className="flex flex-wrap gap-1">
+            {(solution.tags || []).slice(0, 3).map((tag, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {solution.integrations && solution.integrations.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                +{solution.integrations.length} more
+              </Badge>
+            )}
+          </div>
+        )}
+        
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          {solution.roi && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">ROI:</span>
+              <span className="font-medium text-green-600">{solution.roi}</span>
+            </div>
+          )}
+          {solution.timeToValue && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Time to Value:</span>
+              <span className="font-medium">{solution.timeToValue}</span>
+            </div>
+          )}
+          {solution.rating && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Rating:</span>
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium">{solution.rating.toFixed(1)} ({solution.reviewCount})</span>
+              </div>
+            </div>
+          )}
+          {solution.userCount && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Users:</span>
+              <span className="font-medium">{solution.userCount} users</span>
+            </div>
+          )}
+          {solution.successRate && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Success:</span>
+              <span className="font-medium text-green-600">{solution.successRate}</span>
+            </div>
+          )}
+          {solution.avgTime && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Avg:</span>
+              <span className="font-medium">{solution.avgTime}</span>
+            </div>
+          )}
+        </div>
+        
+        {/* Technical Details */}
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center gap-4">
+            {solution.nodeCount && (
+              <span>{solution.nodeCount} nodes</span>
+            )}
+            {solution.triggerType && (
+              <div className="flex items-center gap-1">
+                {getTriggerIcon(solution.triggerType)}
+                <span>{solution.triggerType}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => onView?.(solution)}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => onDownload?.(solution)}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download
           </Button>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+export default SolutionCard;
+export { SolutionData };

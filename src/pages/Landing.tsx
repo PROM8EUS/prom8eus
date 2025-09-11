@@ -243,7 +243,7 @@ const Landing = () => {
       label: task.label,
       category: task.label === "Automatisierbar" ? "automatisierbar" : 
                 task.label === "Teilweise Automatisierbar" ? "teilweise" : "mensch",
-      description: `${translateCategory(lang, task.category || 'general')} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || 70)}%)`,
+      description: `${translateCategory(lang, task.category || 'general')} (${t(lang, 'task_confidence')}: ${Math.round(task.confidence || 85)}%)`,
       complexity: task.complexity,
       automationTrend: task.automationTrend,
       humanRatio: task.humanRatio,

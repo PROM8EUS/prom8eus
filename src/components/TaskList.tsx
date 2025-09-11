@@ -9,6 +9,8 @@ import { AITool, getToolById, getToolDescription, getToolFeatures, getToolsByInd
 import TaskPanel from './TaskPanel';
 import { AIToolRecommendations } from './AIToolRecommendations';
 import ScoreCircle from './ScoreCircle';
+import { recommendAgentsWithAI } from '../lib/aiAnalysis';
+import { isOpenAIAvailable } from '../lib/openai';
 
 export interface Task {
   id?: string;
@@ -156,6 +158,8 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
     const hasAutomationPotential = (task.score && task.score > 0) || (task.automationRatio && task.automationRatio > 0);
     
     if (hasAutomationPotential) {
+      // Note: AI recommendations will be handled asynchronously in TaskPanel
+      // For now, we use the existing pattern-based approach
       // Software Development with AI assistance
       if (taskText.includes('entwicklung') || taskText.includes('programmierung') || taskText.includes('coding') || 
           taskText.includes('react') || taskText.includes('node.js') || taskText.includes('api') || 
@@ -417,6 +421,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                             maxScore={100} 
                             variant="small" 
                             lang={currentLang}
+                            label="Automation"
                           />
                         );
                       })()}
@@ -516,7 +521,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     isExpanded ? 'max-h-[1200px] opacity-100 mt-4' : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="border-t pt-4 space-y-6">
+                  <div className="pt-1 space-y-6">
                     {/* Subtasks Section */}
                     {task.subtasks && task.subtasks.length > 0 && (
                       <div className="space-y-4">
@@ -536,6 +541,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                                       maxScore={100} 
                                       variant="xsmall" 
                                       lang={currentLang}
+                                      label="Automation"
                                     />
                                   </div>
                                   
@@ -606,7 +612,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     <TaskPanel 
                       task={task}
                       lang={lang}
-                      onOpenSolutions={openToolModal}
+                      onOpenSolutions={() => {}}
                       isVisible={isExpanded}
                     />
                   </div>

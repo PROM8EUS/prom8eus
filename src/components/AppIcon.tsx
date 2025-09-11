@@ -26,236 +26,108 @@ const AppIcon: React.FC<AppIconProps> = ({
     lg: 'text-base'
   };
 
-  // Function to get app logo URL with proper fallback hierarchy
-  const getAppLogoUrl = (tool: AITool): { primary: string; fallback: string; secondFallback: string } => {
-    // Get logo.dev API key from environment variables
-    const LOGO_DEV_API_KEY = import.meta.env.VITE_LOGO_DEV_API_KEY || 'pk_RlxzoJ1YTPivN8xYILyQTw';
-    
-    // Map tool IDs to their app logo URLs with fallbacks
-    const appLogoMap: Record<string, { primary: string; fallback: string; secondFallback: string }> = {
+  // Get logo.dev API key from environment variables
+  const LOGO_DEV_API_KEY = import.meta.env.VITE_LOGO_DEV_API_KEY || 'pk_RlxzoJ1YTPivN8xYILyQTw';
+  
+  // Map tool IDs to their logo.dev URLs
+  const getLogoUrl = (tool: AITool): string => {
+    const logoMap: Record<string, string> = {
       // Microsoft Office Apps
-      'excel-ai': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg',
-        fallback: `https://img.logo.dev/excel.com?token=${LOGO_DEV_API_KEY}&size=64&retina=true`,
-        secondFallback: ''
-      },
-      'power-bi-ai': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
-        fallback: `https://img.logo.dev/powerbi.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'microsoft-copilot': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
-        fallback: `https://img.logo.dev/copilot.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
+      'excel-ai': `https://img.logo.dev/microsoft.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'power-bi-ai': `https://img.logo.dev/powerbi.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'microsoft-copilot': `https://img.logo.dev/microsoft.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
       
       // Google Apps
-      'google-sheets-ai': { 
-        primary: 'https://ssl.gstatic.com/images/branding/product/1x/sheets_48dp.png',
-        fallback: `https://img.logo.dev/googlesheets.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'google-docs-ai': { 
-        primary: 'https://ssl.gstatic.com/images/branding/product/1x/docs_48dp.png',
-        fallback: `https://img.logo.dev/googledocs.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'gemini': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Google_Gemini_logo.svg',
-        fallback: `https://img.logo.dev/gemini.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
+      'google-sheets-ai': `https://img.logo.dev/sheets.google.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'google-docs-ai': `https://img.logo.dev/docs.google.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'gemini': `https://img.logo.dev/gemini.google.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
       
       // AI Tools
-      'chatgpt': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
-        fallback: `https://img.logo.dev/openai.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'claude': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Anthropic_logo.svg',
-        fallback: `https://img.logo.dev/anthropic.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'github-copilot': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
-        fallback: `https://img.logo.dev/github.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'code-whisperer': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg',
-        fallback: `https://img.logo.dev/amazonaws.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'tabnine': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Tabnine_logo.svg',
-        fallback: `https://img.logo.dev/tabnine.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'notion-ai': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
-        fallback: `https://img.logo.dev/notion.so?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'obsidian-ai': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Obsidian_logo.svg',
-        fallback: `https://img.logo.dev/obsidian.md?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'jasper': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Jasper_AI_logo.svg',
-        fallback: `https://img.logo.dev/jasper.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'copy-ai': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Copy.ai_logo.svg',
-        fallback: `https://img.logo.dev/copy.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'writesonic': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/w/wc/Writesonic_logo.svg',
-        fallback: `https://img.logo.dev/writesonic.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'canva-ai': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/0/00/Canva_logo.svg',
-        fallback: `https://img.logo.dev/canva.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'perplexity': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Perplexity_AI_logo.svg',
-        fallback: `https://img.logo.dev/perplexity.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'grammarly': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Grammarly_logo.svg',
-        fallback: `https://img.logo.dev/grammarly.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'grok': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.svg',
-        fallback: `https://img.logo.dev/x.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'airtable-ai': { 
-        primary: 'https://airtable.com/favicon.ico',
-        fallback: `https://img.logo.dev/airtable.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'zoom': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/9/95/Zoom_logo.svg',
-        fallback: `https://img.logo.dev/zoom.us?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      },
-      'dropbox': { 
-        primary: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg',
-        fallback: `https://img.logo.dev/dropbox.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
-        secondFallback: ''
-      }
+      'chatgpt': `https://img.logo.dev/chat.openai.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'claude': `https://img.logo.dev/claude.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'grok': `https://img.logo.dev/x.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      
+      // Development Tools
+      'github-copilot': `https://img.logo.dev/github.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'code-whisperer': `https://img.logo.dev/aws.amazon.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'tabnine': `https://img.logo.dev/tabnine.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      
+      // Content Creation
+      'canva-ai': `https://img.logo.dev/canva.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'copy-ai': `https://img.logo.dev/copy.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'writesonic': `https://img.logo.dev/writesonic.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'jasper': `https://img.logo.dev/jasper.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      
+      // Productivity
+      'notion-ai': `https://img.logo.dev/notion.so?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'obsidian-ai': `https://img.logo.dev/obsidian.md?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'airtable-ai': `https://img.logo.dev/airtable.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      
+      // Communication
+      'grammarly': `https://img.logo.dev/grammarly.com?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      'perplexity': `https://img.logo.dev/perplexity.ai?token=${LOGO_DEV_API_KEY}&size=64&format=png`,
+      
+      // Workflow Automation
+      'n8n': `https://img.logo.dev/n8n.io?token=${LOGO_DEV_API_KEY}&size=64&format=png`
     };
 
-    // Return app logo with fallback, or use original logo as fallback
-    const logoData = appLogoMap[tool.id];
-    if (logoData) {
-      return {
-        primary: logoData.primary,
-        fallback: logoData.fallback,
-        secondFallback: logoData.secondFallback
-      };
-    }
-
-    // If no app logo mapping, use original logo as primary and empty fallbacks
-    return {
-      primary: tool.logo.url,
-      fallback: '',
-      secondFallback: ''
-    };
+    return logoMap[tool.id] || '';
   };
 
-  const [currentLogoUrl, setCurrentLogoUrl] = React.useState<string>('');
-  const [logoState, setLogoState] = React.useState<'loading' | 'primary' | 'fallback' | 'error'>('loading');
+  const [logoUrl, setLogoUrl] = React.useState<string>('');
+  const [showFallback, setShowFallback] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    const logoData = getAppLogoUrl(tool);
-    console.log(`AppIcon: Setting initial logo for ${tool.id}:`, {
-      primary: logoData.primary,
-      fallback: logoData.fallback,
-      secondFallback: logoData.secondFallback,
-      toolId: tool.id
-    });
-    
-    // Set primary URL directly and let image loading handle success/failure
-    setCurrentLogoUrl(logoData.primary);
-    setLogoState('loading');
+    const url = getLogoUrl(tool);
+    if (url) {
+      setLogoUrl(url);
+      setShowFallback(false);
+    } else {
+      setShowFallback(true);
+    }
   }, [tool]);
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const logoData = getAppLogoUrl(tool);
-    
-    console.log(`AppIcon: Image error for ${tool.id}`, {
-      currentState: logoState,
-      failedUrl: currentLogoUrl,
-      primaryUrl: logoData.primary,
-      fallbackUrl: logoData.fallback,
-      secondFallbackUrl: logoData.secondFallback,
-      error: e
-    });
-    
-    if (logoState === 'loading' || logoState === 'primary') {
-      // Try logo.dev fallback
-      if (logoData.fallback) {
-        console.log(`AppIcon: Trying logo.dev API fallback for ${tool.id}:`, logoData.fallback);
-        setCurrentLogoUrl(logoData.fallback);
-        setLogoState('fallback');
-        return;
-      } else {
-        // No fallback available, go straight to error
-        console.log(`AppIcon: No fallback available for ${tool.id}, showing error`);
-        setLogoState('error');
-        return;
-      }
-    }
-    
-    // If fallback also fails, show error state
-    console.log(`AppIcon: Fallback failed for ${tool.id}, showing error`);
-    setLogoState('error');
+  const handleImageError = () => {
+    setShowFallback(true);
   };
 
   const handleImageLoad = () => {
-    console.log(`AppIcon: Image loaded successfully for ${tool.id}:`, currentLogoUrl);
-    setLogoState(logoState === 'loading' ? 'primary' : 'fallback');
+    setShowFallback(false);
   };
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className="relative">
-        {/* Logo Image - Try app logo first */}
-        <img
-          src={currentLogoUrl}
-          alt={tool.logo.alt}
-          className={`${sizeClasses[size]} rounded-lg object-contain shadow-sm`}
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e5e7eb'
-          }}
-          onError={handleImageError}
-          onLoad={handleImageLoad}
-        />
+        {/* Logo Image from logo.dev */}
+        {!showFallback && logoUrl && (
+          <img
+            src={logoUrl}
+            alt={tool.logo.alt}
+            className={`${sizeClasses[size]} rounded-lg object-contain shadow-sm`}
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb'
+            }}
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+          />
+        )}
         
         {/* Fallback Icon */}
-        <div 
-          className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shadow-sm ${logoState === 'error' ? 'flex' : 'hidden'}`}
-          style={{
-            backgroundColor: '#ffffff',
-            color: '#374151',
-            border: '1px solid #e5e7eb'
-          }}
-        >
-          <span className={`font-bold ${textSizes[size]}`}>
-            {tool.name.charAt(0).toUpperCase()}
-          </span>
-        </div>
+        {showFallback && (
+          <div 
+            className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shadow-sm`}
+            style={{
+              backgroundColor: tool.logo.backgroundColor || '#6366f1',
+              color: '#ffffff',
+              border: '1px solid #e5e7eb'
+            }}
+          >
+            <span className={`font-bold ${textSizes[size]}`}>
+              {tool.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
       </div>
       
       {showName && (
@@ -378,34 +250,21 @@ interface AppIconGridProps {
   tools: AITool[];
   columns?: number;
   className?: string;
-  onToolClick?: (tool: AITool) => void;
 }
 
 const AppIconGrid: React.FC<AppIconGridProps> = ({
   tools,
   columns = 3,
-  className = '',
-  onToolClick
+  className = ''
 }) => {
-  const gridCols = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 md:grid-cols-2',
-    3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
-    5: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
-  };
-
   return (
-    <div className={`grid gap-4 ${gridCols[columns as keyof typeof gridCols]} ${className}`}>
+    <div className={`grid gap-4 ${className}`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
       {tools.map((tool) => (
-        <AppIconCard
-          key={tool.id}
-          tool={tool}
-          onClick={() => onToolClick?.(tool)}
-        />
+        <AppIconCard key={tool.id} tool={tool} />
       ))}
     </div>
   );
 };
 
 export { AppIcon, AppIconList, AppIconCard, AppIconGrid };
+export default AppIcon;

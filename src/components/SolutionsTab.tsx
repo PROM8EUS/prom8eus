@@ -7,6 +7,7 @@ import { createSolutionCombinations } from '../lib/solutions/solutionCombination
 import { AIAgent } from '../lib/solutions/aiAgentsCatalog';
 import { N8nWorkflow } from '../lib/n8nApi';
 import SolutionCard from './SolutionCard';
+import SolutionDetailModal from './SolutionDetailModal';
 import SolutionFilters from './SolutionFilters';
 import SolutionIcon from './ui/SolutionIcon';
 import { Button } from './ui/button';
@@ -143,7 +144,6 @@ export default function SolutionsTab({
   const closeSolutionModal = () => {
     setShowSolutionModal(false);
     setSelectedSolution(null);
-    
   };
 
   if (loading) {
@@ -243,9 +243,31 @@ export default function SolutionsTab({
                 onClick={() => handleSolutionSelect(solution)}
               >
                 <SolutionCard
-                  solution={solution}
-                  viewMode="grid"
-                  onSelect={() => handleSolutionSelect(solution)}
+                  solution={{
+                    id: solution.id,
+                    name: solution.name,
+                    description: solution.description,
+                    category: solution.category,
+                    priority: solution.implementationPriority === 'High' ? 'High' : solution.implementationPriority === 'Medium' ? 'Medium' : 'Low',
+                    type: solution.type === 'agent' ? 'ai-agent' : 'workflow',
+                    automationScore: solution.automationPotential,
+                    roi: solution.estimatedROI,
+                    timeToValue: solution.timeToValue,
+                    successRate: `${solution.metrics.successRate}%`,
+                    userCount: `${solution.metrics.usageCount}`,
+                    avgTime: `${solution.metrics.averageExecutionTime}s`,
+                    rating: solution.metrics.userRating,
+                    reviewCount: solution.metrics.reviewCount,
+                    nodeCount: solution.type === 'workflow' ? solution.workflowMetadata?.nodeCount : undefined,
+                    triggerType: solution.type === 'workflow' ? solution.workflowMetadata?.triggerType as any : undefined,
+                    complexity: solution.difficulty === 'Beginner' ? 'Low' : solution.difficulty === 'Intermediate' ? 'Medium' : 'High',
+                    integrations: solution.integrations.map(i => i.platform),
+                    tags: solution.tags,
+                    active: solution.status === 'Active',
+                    lastUpdated: solution.updatedAt.toISOString()
+                  }}
+                  onView={() => handleSolutionSelect(solution)}
+                  onDownload={() => console.log('Download solution:', solution)}
                 />
               </div>
             ))}
@@ -254,274 +276,48 @@ export default function SolutionsTab({
       </div>
 
       {/* Solution Details Modal */}
-      <Dialog open={showSolutionModal} onOpenChange={setShowSolutionModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <SolutionIcon type={selectedSolution?.type || 'workflow'} className="h-6 w-6" />
-              {selectedSolution?.name}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedSolution && (
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="overview">
-                  {lang === 'de' ? 'Übersicht' : 'Overview'}
-                </TabsTrigger>
-                <TabsTrigger value="implementation">
-                  {lang === 'de' ? 'Implementierung' : 'Implementation'}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6 mt-6">
-                {/* Key Metrics Row */}
-                <div className="flex items-center space-x-6 border-b pb-4">
-                  <div className="text-center">
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lang === 'de' ? 'Kategorie' : 'Category'}
-                    </div>
-                    <div className="font-bold text-gray-900">{selectedSolution.category}</div>
-                  </div>
-
-                  <div className="w-px h-12 bg-gray-200"></div>
-
-                  <div className="text-center">
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lang === 'de' ? 'Zeitersparnis' : 'Time Savings'}
-                    </div>
-                    <div className="font-bold text-gray-900">
-                      {selectedSolution.useCases?.[0]?.estimatedTimeSavings || '2h'}
-                    </div>
-                  </div>
-
-                  <div className="w-px h-12 bg-gray-200"></div>
-
-                  <div className="text-center">
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lang === 'de' ? 'Monatliche Einsparung' : 'Monthly Savings'}
-                    </div>
-                    <div className="font-bold text-gray-900">
-                      {selectedSolution.estimatedROI || '€380'}
-                    </div>
-                  </div>
-
-                  <div className="w-px h-12 bg-gray-200"></div>
-
-                  <div className="text-center">
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lang === 'de' ? 'Komplexität' : 'Complexity'}
-                    </div>
-                    <div className="font-bold text-gray-900">
-                      {selectedSolution.difficulty === 'Beginner' ? '25' : selectedSolution.difficulty === 'Intermediate' ? '46' : '78'}
-                    </div>
-                  </div>
-
-                  <div className="w-px h-12 bg-gray-200"></div>
-
-                  <div className="text-center">
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lang === 'de' ? 'Verwendungen' : 'Usage Count'}
-                    </div>
-                    <div className="font-bold text-gray-900">
-                      {selectedSolution.metrics?.usageCount || '23'}
-                    </div>
-                  </div>
-
-                  <div className="w-px h-12 bg-gray-200"></div>
-
-                  <div className="text-center">
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lang === 'de' ? 'Bewertung' : 'Rating'}
-                    </div>
-                    <div className="font-bold text-gray-900">
-                      {selectedSolution.metrics?.userRating || '4.5'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">{selectedSolution.description}</p>
-                  
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2">
-                    {selectedSolution.tags?.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Use Cases */}
-                {selectedSolution.useCases && selectedSolution.useCases.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="font-semibold">
-                      {lang === 'de' ? 'Anwendungsfälle' : 'Use Cases'}
-                    </h4>
-                    {selectedSolution.useCases.map((useCase, index) => (
-                      <div key={index} className="p-3 border rounded-lg">
-                        <h5 className="font-medium mb-2">{useCase.scenario}</h5>
-                        <p className="text-sm text-muted-foreground mb-2">{useCase.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{lang === 'de' ? 'Potenzial' : 'Potential'}: {useCase.automationPotential}%</span>
-                          <span>{lang === 'de' ? 'Aufwand' : 'Effort'}: {useCase.implementationEffort}</span>
-                          <span>{lang === 'de' ? 'Zeitersparnis' : 'Time Savings'}: {useCase.estimatedTimeSavings}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-
-              </TabsContent>
-
-              <TabsContent value="implementation" className="space-y-6 mt-6">
-                <div className="space-y-6">
-
-
-                  {/* Implementation Details */}
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">
-                      {lang === 'de' ? 'Implementierungsdetails' : 'Implementation Details'}
-                    </h4>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Schwierigkeit' : 'Difficulty'}
-                          </span>
-                          <Badge variant="outline">{selectedSolution.difficulty}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Setup-Zeit' : 'Setup Time'}
-                          </span>
-                          <Badge variant="outline">{selectedSolution.setupTime}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Deployment' : 'Deployment'}
-                          </span>
-                          <Badge variant="outline">{selectedSolution.deployment}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Priorität' : 'Priority'}
-                          </span>
-                          <Badge variant="outline">{selectedSolution.implementationPriority}</Badge>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'ROI' : 'ROI'}
-                          </span>
-                          <span className="text-sm text-green-600">{selectedSolution.estimatedROI}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Zeit bis zum Wert' : 'Time to Value'}
-                          </span>
-                          <span className="text-sm">{selectedSolution.timeToValue}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Status' : 'Status'}
-                          </span>
-                          <Badge variant={selectedSolution.status === 'Active' ? 'default' : 'secondary'}>
-                            {selectedSolution.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {lang === 'de' ? 'Version' : 'Version'}
-                          </span>
-                          <span className="text-sm">{selectedSolution.version}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Requirements */}
-                  {selectedSolution.requirements && selectedSolution.requirements.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-semibold">
-                        {lang === 'de' ? 'Anforderungen' : 'Requirements'}
-                      </h4>
-                      {selectedSolution.requirements.map((req, index) => (
-                        <div key={index} className="p-3 border rounded-lg">
-                          <h5 className="font-medium mb-2">{req.category}</h5>
-                          <div className="space-y-1">
-                            {req.items.map((item, itemIndex) => (
-                              <div key={itemIndex} className="flex items-center gap-2 text-sm">
-                                <div className={`w-2 h-2 rounded-full ${
-                                  req.importance === 'Required' ? 'bg-red-500' : 'bg-yellow-500'
-                                }`} />
-                                <span>{item}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {req.importance}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-
-
-                  {/* Professional Setup Section */}
-                  <ProfessionalSetup lang={lang} />
-
-
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedSolution && (
+        <SolutionDetailModal
+          solution={selectedSolution}
+          isOpen={showSolutionModal}
+          onClose={() => setShowSolutionModal(false)}
+          onImplement={(solution) => {
+            console.log('Implement solution:', solution);
+            // TODO: Implement solution logic
+          }}
+          onDeploy={(solution) => {
+            console.log('Deploy solution:', solution);
+            // TODO: Deploy solution logic
+          }}
+          isAdmin={false} // Frontend, so show professional setup block
+        />
+      )}
 
       {/* Filters Modal */}
       <Dialog open={showFiltersModal} onOpenChange={setShowFiltersModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {lang === 'de' ? 'Filter & Suche' : 'Filters & Search'}
+              {lang === 'de' ? 'Filter anwenden' : 'Apply Filters'}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <SolutionFilters
-              filters={filters}
-              onFiltersChange={handleFilterChange}
-              onClearFilters={clearFilters}
-              availableOptions={{
-                type: ['workflow', 'agent'],
-                category: ['HR & Recruitment', 'Finance & Accounting', 'Marketing & Sales', 'Customer Support', 'Data Analysis', 'Content Creation', 'Project Management', 'Development & DevOps', 'Research & Analysis', 'Communication', 'General Business'],
-                difficulty: ['Beginner', 'Intermediate', 'Advanced'],
-                setupTime: ['Quick', 'Medium', 'Long'],
-                deployment: ['Local', 'Cloud', 'Hybrid'],
-                status: ['Active', 'Inactive', 'Deprecated', 'Beta'],
-                implementationPriority: ['High', 'Medium', 'Low'],
-                tags: ['hr', 'finance', 'marketing', 'automation', 'ai', 'workflow'],
-                priceRange: ['Free', 'Freemium', 'Paid', 'Enterprise']
-              }}
-            />
-            
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={clearFilters}>
-                {lang === 'de' ? 'Alle Filter löschen' : 'Clear all filters'}
-              </Button>
-              <Button onClick={() => setShowFiltersModal(false)}>
-                {lang === 'de' ? 'Schließen' : 'Close'}
-              </Button>
-            </div>
-          </div>
+          <SolutionFilters
+            filters={filters}
+            onFiltersChange={handleFilterChange}
+            onClearFilters={clearFilters}
+            availableOptions={{
+              type: ['workflow', 'agent'],
+              category: ['Content Creation', 'Finance & Accounting', 'Marketing & Sales'],
+              difficulty: ['Beginner', 'Intermediate', 'Advanced'],
+              setupTime: ['Quick', 'Medium', 'Long'],
+              deployment: ['Local', 'Cloud', 'Hybrid'],
+              status: ['Active', 'Inactive', 'Deprecated', 'Beta'],
+              implementationPriority: ['High', 'Medium', 'Low'],
+              tags: ['ai', 'automation', 'workflow', 'finance', 'marketing'],
+              priceRange: ['Free', 'Freemium', 'Paid', 'Enterprise']
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
@@ -532,120 +328,129 @@ export default function SolutionsTab({
 function generateMockSolutions(): Solution[] {
   const mockWorkflows: Solution[] = [
     {
-      id: 'workflow-1',
-      name: 'HR Onboarding Automation',
-      description: 'Automated workflow for new employee onboarding process',
+      id: '1',
+      name: 'Scrape and summarize webpages with AI',
+      description: 'Automatically scrape webpages and summarize content using AI',
       type: 'workflow',
-      category: 'HR & Recruitment',
-      subcategories: ['onboarding', 'hr-processes'],
+      category: 'Content Creation',
+      subcategories: ['Web Scraping', 'AI Processing'],
       difficulty: 'Intermediate',
       setupTime: 'Medium',
       deployment: 'Cloud',
       status: 'Active',
-      tags: ['hr', 'onboarding', 'automation'],
-      automationPotential: 85,
-      estimatedROI: '200-300%',
-      timeToValue: '2-4 weeks',
+      tags: ['ai', 'web-scraping', 'summarization'],
+      automationPotential: 74,
+      estimatedROI: '200-275%',
+      timeToValue: '1-2 weeks',
       implementationPriority: 'High',
       createdAt: new Date('2024-01-15'),
       updatedAt: new Date('2024-01-20'),
-      version: '1.0.0',
-      author: 'Automation Team',
+      version: '1.2.0',
+      author: 'Community',
+      documentationUrl: 'https://docs.n8n.io/workflows/web-scraping-ai',
+      demoUrl: 'https://demo.n8n.io/web-scraping-ai',
+      githubUrl: 'https://github.com/n8n-io/workflows/tree/main/web-scraping-ai',
+      pricing: 'Free',
       requirements: [
         {
-          category: 'System Access',
-          items: ['HR system access', 'Email system access'],
-          importance: 'Required'
+          category: 'Integrations',
+          items: ['OpenAI API', 'Web Scraper', 'HTTP Request'],
+          importance: 'Required',
+          alternatives: []
         }
       ],
       useCases: [
         {
-          scenario: 'New Employee Onboarding',
-          description: 'Automate the complete onboarding process',
-          automationPotential: 85,
+          scenario: 'Content Research',
+          description: 'Automatically research and summarize competitor content',
+          automationPotential: 74,
           implementationEffort: 'Medium',
-          expectedOutcome: 'Reduce onboarding time by 60%',
-          prerequisites: ['HR system integration'],
-          estimatedTimeSavings: '4-6 hours per employee',
+          expectedOutcome: 'Reduced research time by 70%',
+          prerequisites: ['OpenAI API Key'],
+          estimatedTimeSavings: '5-8 hours per week',
           businessImpact: 'High'
-        }
-      ],
-      integrations: [
-        {
-          platform: 'HR System',
-          type: 'API',
-          description: 'Integration with HR management system',
-          setupComplexity: 'Medium',
-          apiKeyRequired: true
-        }
-      ],
-      metrics: {
-        usageCount: 150,
-        successRate: 95.5,
-        averageExecutionTime: 120,
-        errorRate: 2.1,
-        userRating: 4.5,
-        reviewCount: 23,
-        lastUsed: new Date(),
-        performanceScore: 88
-      },
-      workflow: {} as N8nWorkflow,
-      workflowMetadata: {
-        nodeCount: 12,
-        triggerType: 'webhook',
-        executionTime: '2-5 minutes',
-        complexity: 'Moderate',
-        dependencies: ['HR API', 'Email service'],
-        estimatedExecutionTime: '3 minutes'
-      }
-    }
-  ];
-
-  const mockAgents: Solution[] = [
-    {
-      id: 'agent-1',
-      name: 'Financial Advisor Agent',
-      description: 'AI-powered financial analysis and reporting agent',
-      type: 'agent',
-      category: 'Finance & Accounting',
-      subcategories: ['financial-analysis', 'reporting'],
-      difficulty: 'Beginner',
-      setupTime: 'Quick',
-      deployment: 'Cloud',
-      status: 'Active',
-      tags: ['finance', 'ai', 'analysis'],
-      automationPotential: 80,
-      estimatedROI: '250-400%',
-      timeToValue: '1-2 weeks',
-      implementationPriority: 'High',
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-18'),
-      version: '1.0.0',
-      author: 'AI Solutions Team',
-      requirements: [
-        {
-          category: 'API Access',
-          items: ['OpenAI API key', 'Financial data access'],
-          importance: 'Required'
-        }
-      ],
-      useCases: [
-        {
-          scenario: 'Financial Report Generation',
-          description: 'Automated financial report creation and analysis',
-          automationPotential: 80,
-          implementationEffort: 'Low',
-          expectedOutcome: 'Generate reports 5x faster',
-          prerequisites: ['Financial data sources'],
-          estimatedTimeSavings: '8-12 hours per month',
-          businessImpact: 'Medium'
         }
       ],
       integrations: [
         {
           platform: 'OpenAI',
           type: 'API',
-          description: 'AI model integration for analysis',
+          description: 'AI text processing and summarization',
+          setupComplexity: 'Low',
+          apiKeyRequired: true
+        }
+      ],
+      metrics: {
+        usageCount: 105,
+        successRate: 95.0,
+        averageExecutionTime: 45,
+        errorRate: 2.0,
+        userRating: 4.3,
+        reviewCount: 29,
+        lastUsed: new Date('2024-01-20'),
+        performanceScore: 74
+      },
+      workflow: {} as N8nWorkflow,
+      workflowMetadata: {
+        nodeCount: 8,
+        triggerType: 'Webhook',
+        executionTime: '45s',
+        complexity: 'Moderate',
+        dependencies: ['OpenAI API'],
+        estimatedExecutionTime: '45s'
+      }
+    }
+  ];
+
+  const mockAgents: Solution[] = [
+    {
+      id: '2',
+      name: 'Financial Data Analysis Agent',
+      description: 'AI agent that analyzes financial data and generates insights',
+      type: 'agent',
+      category: 'Finance & Accounting',
+      subcategories: ['Data Analysis', 'Financial Reporting'],
+      difficulty: 'Advanced',
+      setupTime: 'Long',
+      deployment: 'Cloud',
+      status: 'Active',
+      tags: ['finance', 'ai', 'data-analysis'],
+      automationPotential: 89,
+      estimatedROI: '300-450%',
+      timeToValue: '2-3 weeks',
+      implementationPriority: 'High',
+      createdAt: new Date('2024-01-10'),
+      updatedAt: new Date('2024-01-18'),
+      version: '2.1.0',
+      author: 'Finance Team',
+      documentationUrl: 'https://docs.prom8eus.com/agents/financial-analysis',
+      demoUrl: 'https://demo.prom8eus.com/financial-agent',
+      pricing: 'Freemium',
+      requirements: [
+        {
+          category: 'Data Sources',
+          items: ['Financial APIs', 'Database Access', 'Excel Files'],
+          importance: 'Required',
+          alternatives: []
+        }
+      ],
+      useCases: [
+        {
+          scenario: 'Monthly Financial Reports',
+          description: 'Automatically generate comprehensive financial reports',
+          automationPotential: 89,
+          implementationEffort: 'High',
+          expectedOutcome: 'Automated monthly reporting with 95% accuracy',
+          prerequisites: ['Financial data access', 'AI model training'],
+          estimatedTimeSavings: '12-16 hours per month',
+          businessImpact: 'High'
+        }
+      ],
+      integrations: [
+        {
+          platform: 'OpenAI GPT-4',
+          type: 'API',
+          description: 'Advanced financial data analysis',
           setupComplexity: 'Low',
           apiKeyRequired: true
         }

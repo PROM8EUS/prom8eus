@@ -41,6 +41,9 @@ export interface BaseSolution {
   updatedAt: Date;
   version: string;
   author: string;
+  authorUsername?: string;
+  authorAvatarUrl?: string;
+  authorVerified?: boolean;
   documentationUrl?: string;
   demoUrl?: string;
   githubUrl?: string;

@@ -15,15 +15,86 @@ import {
 } from 'lucide-react';
 import SolutionsTab from './SolutionsTab';
 import BusinessCase from './BusinessCase';
-import { DynamicSubtask } from '@/lib/patternEngine/dynamicSubtaskGenerator';
-import { fastAnalysisEngine } from '@/lib/patternEngine/fastAnalysisEngine';
+import { DynamicSubtask } from '@/lib/types';
+import { generateSubtasksWithAI } from '@/lib/aiAnalysis';
+import { isOpenAIAvailable } from '@/lib/openai';
+
+// Simple string->SHA256 helper for stable cache keys
+async function sha256(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input.trim().toLowerCase());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const SUBTASK_CACHE_NS = 'subtasks_cache_v1';
+const SUBTASK_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
+
+type CachedSubtasks = {
+  createdAt: string;
+  subtasks: Subtask[];
+};
+
+function readSubtaskCache(): Record<string, CachedSubtasks> {
+  try {
+    const raw = localStorage.getItem(SUBTASK_CACHE_NS);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSubtaskCache(cache: Record<string, CachedSubtasks>) {
+  try {
+    localStorage.setItem(SUBTASK_CACHE_NS, JSON.stringify(cache));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+async function getCachedSubtasksForText(taskText: string): Promise<Subtask[] | null> {
+  const key = await sha256(taskText);
+  const cache = readSubtaskCache();
+  const entry = cache[key];
+  if (!entry) return null;
+  const age = Date.now() - new Date(entry.createdAt).getTime();
+  if (age > SUBTASK_CACHE_TTL_MS) return null;
+  console.log(`✅ [SubtasksCache] Hit for ${key}, age ${(age/1000).toFixed(0)}s, items: ${entry.subtasks.length}`);
+  return entry.subtasks;
+}
+
+async function setCachedSubtasksForText(taskText: string, subtasks: Subtask[]): Promise<void> {
+  const key = await sha256(taskText);
+  const cache = readSubtaskCache();
+  cache[key] = { createdAt: new Date().toISOString(), subtasks };
+  writeSubtaskCache(cache);
+  console.log(`💾 [SubtasksCache] Saved ${subtasks.length} items for ${key}`);
+}
 
 // ScoreCircle wrapper for consistent styling
-const ScoreCircleWrapper = ({ automationRatio, size = 60, lang = 'de' }: { 
+const ScoreCircleWrapper = ({ automationRatio, size = 60, lang = 'de', animateKey }: { 
   automationRatio: number; 
   size?: number;
   lang?: string;
+  animateKey?: string;
 }) => {
+  const key = animateKey ? `scorecircle-animated-${animateKey}` : undefined;
+  const shouldAnimate = (() => {
+    if (!key) return true;
+    try {
+      const done = sessionStorage.getItem(key);
+      return !done;
+    } catch {
+      return true;
+    }
+  })();
+
+  // After first mount, mark as animated so reopening tabs won't re-animate
+  if (key && shouldAnimate) {
+    try { sessionStorage.setItem(key, '1'); } catch {}
+  }
+
   return (
     <div style={{ width: size, height: size }}>
       <ScoreCircle 
@@ -31,6 +102,9 @@ const ScoreCircleWrapper = ({ automationRatio, size = 60, lang = 'de' }: {
         maxScore={100} 
         variant="xsmall" 
         lang={lang}
+        animate={shouldAnimate}
+        label=""
+        showPercentage={false}
       />
     </div>
   );
@@ -112,6 +186,7 @@ const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: 
 
 
 
+
 type TaskPanelProps = {
   task: {
     title?: string;
@@ -161,7 +236,6 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
   const hasLoadedSolutions = useRef(false);
   
-  // fastAnalysisEngine is already a singleton instance, no need to create new one
 
 
 
@@ -279,38 +353,57 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
         console.log('🔄 [TaskPanel] Generating subtasks for:', taskText);
         setIsGenerating(true);
         
-        try {
-          const analysis = fastAnalysisEngine.analyzeTask(taskText);
-          console.log('✅ [TaskPanel] Generated subtasks:', analysis.subtasks?.length || 0);
-          
-          if (analysis.subtasks && analysis.subtasks.length > 0) {
-            const mappedSubtasks = analysis.subtasks.map(subtask => ({
-              id: subtask.id,
-              title: subtask.title,
-              systems: subtask.systems || [],
-              aiTools: subtask.aiTools || [],
-              selectedTools: [],
-              manualHoursShare: (100 - subtask.automationPotential) / 100,
-              automationPotential: subtask.automationPotential / 100,
-              risks: subtask.risks || [],
-              assumptions: [],
-              kpis: [],
-              qualityGates: []
-            }));
-            setGeneratedSubtasks(mappedSubtasks);
-          } else {
-            console.log('⚠️ [TaskPanel] No subtasks generated, using fallback');
+        const generateSubtasks = async () => {
+          try {
+            // 0) Try cache per analysis first
+            const cached = await getCachedSubtasksForText(taskText);
+            if (cached && cached.length > 0) {
+              console.log('✅ [TaskPanel] Using cached subtasks:', cached.length);
+              setGeneratedSubtasks(cached);
+              return;
+            }
+            
+            // 1) Try AI-powered generation first if available
+            if (isOpenAIAvailable()) {
+              console.log('🤖 [TaskPanel] Using AI for subtask generation...');
+              const aiResult = await generateSubtasksWithAI(taskText, lang);
+              
+              if (aiResult.aiEnabled && aiResult.subtasks.length > 0) {
+                console.log('✅ [TaskPanel] AI generated subtasks:', aiResult.subtasks.length);
+                const mappedSubtasks = aiResult.subtasks.map(subtask => ({
+                  id: subtask.id,
+                  title: subtask.title,
+                  systems: subtask.systems || [],
+                  aiTools: subtask.aiTools || [],
+                  selectedTools: [],
+                  manualHoursShare: (100 - subtask.automationPotential) / 100,
+                  automationPotential: subtask.automationPotential / 100,
+                  risks: subtask.risks || [],
+                  assumptions: [],
+                  kpis: [],
+                  qualityGates: []
+                }));
+                setGeneratedSubtasks(mappedSubtasks);
+                await setCachedSubtasksForText(taskText, mappedSubtasks);
+                return;
+              }
+            }
+            
+            // No fallback - AI is required
+            console.log('❌ [TaskPanel] AI subtask generation failed - no fallback available');
             setGeneratedSubtasks([]);
+          } catch (error) {
+            console.error('❌ [TaskPanel] Error generating subtasks:', error);
+            setGeneratedSubtasks([]);
+          } finally {
+            setIsGenerating(false);
           }
-        } catch (error) {
-          console.error('❌ [TaskPanel] Error generating subtasks:', error);
-          setGeneratedSubtasks([]);
-        } finally {
-          setIsGenerating(false);
-        }
+        };
+        
+        generateSubtasks();
       }
     }
-  }, [isVisible, task, fastAnalysisEngine]);
+  }, [isVisible, task, lang]);
   
   // Use real subtasks from task prop or generated subtasks
   const realSubtasks = useMemo(() => {
@@ -469,6 +562,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
                         automationRatio={Math.round(subtask.automationPotential * 100)} 
                         size={32}
                         lang={lang}
+                        animateKey={subtask.id}
                       />
                     </div>
                     

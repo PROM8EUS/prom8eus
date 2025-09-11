@@ -10,6 +10,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Legal from "./pages/Legal";
 import AgentsWorkflows from "./pages/AgentsWorkflows";
+import Admin from "./pages/Admin";
 
 import NotFound from "./pages/NotFound";
 import TestAnalysis from "./components/TestAnalysis";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/agents-workflows" element={<AgentsWorkflows />} />
+          <Route path="/admin/*" element={<Admin />} />
 
           <Route path="/test" element={<TestAnalysis />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

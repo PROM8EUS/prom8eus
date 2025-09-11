@@ -5,9 +5,10 @@ interface ScoreCircleProps {
   variant?: 'default' | 'small' | 'xsmall';
   lang?: 'de' | 'en';
   showPercentage?: boolean;
+  animate?: boolean;
 }
 
-const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de', showPercentage = true }: ScoreCircleProps) => {
+const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de', showPercentage = true, animate = true }: ScoreCircleProps) => {
   const percentage = (score / maxScore) * 100;
   
   // Format score based on language and variant
@@ -49,9 +50,9 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de',
             strokeWidth="3"
             fill="transparent"
             strokeDasharray={xsmallStrokeDasharray}
-            strokeDashoffset={xsmallStrokeDasharray}
+            strokeDashoffset={animate ? xsmallStrokeDasharray : xsmallStrokeDashoffset}
             strokeLinecap="round"
-            className="animate-progress-circle"
+            className={animate ? 'animate-progress-circle' : undefined}
             style={{
               '--stroke-dasharray': `${xsmallStrokeDasharray}px`,
               '--progress-offset': `${xsmallStrokeDashoffset}px`
@@ -91,9 +92,9 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de',
             strokeWidth="3"
             fill="transparent"
             strokeDasharray={smallStrokeDasharray}
-            strokeDashoffset={smallStrokeDasharray}
+            strokeDashoffset={animate ? smallStrokeDasharray : smallStrokeDashoffset}
             strokeLinecap="round"
-            className="animate-progress-circle"
+            className={animate ? 'animate-progress-circle' : undefined}
             style={{
               '--stroke-dasharray': `${smallStrokeDasharray}px`,
               '--progress-offset': `${smallStrokeDashoffset}px`
@@ -136,9 +137,9 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de',
             strokeWidth="12"
             fill="transparent"
             strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDasharray}
+            strokeDashoffset={animate ? strokeDasharray : strokeDashoffset}
             strokeLinecap="round"
-            className="animate-progress-circle"
+            className={animate ? 'animate-progress-circle' : undefined}
             style={{
               '--stroke-dasharray': `${strokeDasharray}px`,
               '--progress-offset': `${strokeDashoffset}px`
