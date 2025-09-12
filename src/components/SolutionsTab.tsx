@@ -1,15 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Solution, SolutionType } from '../types/solutions';
-import { createSolutionFilters } from '../lib/solutions/solutionFilters';
-import { createSolutionScoring } from '../lib/solutions/solutionScoring';
-import { createSolutionMatcher } from '../lib/solutions/solutionMatcher';
-import { createSolutionCombinations } from '../lib/solutions/solutionCombinations';
-import { AIAgent } from '../lib/solutions/aiAgentsCatalog';
-import { N8nWorkflow } from '../lib/n8nApi';
 import SolutionCard from './SolutionCard';
 import SolutionDetailModal from './SolutionDetailModal';
 import SolutionIcon from './ui/SolutionIcon';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { workflowIndexer } from '@/lib/workflowIndexer';
+import { rerankWorkflows } from '@/lib/aiRerank';
 
 interface SolutionsTabProps {
   taskText?: string;
@@ -42,27 +37,223 @@ export default function SolutionsTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock data - in real implementation, this would come from API
   const [solutions, setSolutions] = useState<Solution[]>([]);
 
   useEffect(() => {
     loadSolutions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskText, JSON.stringify(selectedApplications), JSON.stringify(subtasks)]);
 
-  // Notify parent component when solutions are loaded
   useEffect(() => {
     if (solutions.length > 0 && onSolutionsLoaded) {
       onSolutionsLoaded(solutions.length);
     }
   }, [solutions, onSolutionsLoaded]);
 
+  const normalizeTool = (s: string) => s.toLowerCase();
+  const tokenize = (t: string) => (t || '').toLowerCase().split(/[^a-z0-9]+/).filter(x => x.length > 3);
+  const buildKeywordSet = (text: string, subs: typeof subtasks) => {
+    const base = tokenize(text);
+    const sub = (subs || []).flatMap(s => tokenize(s.name).concat((s.keywords || []).map(k => k.toLowerCase())));
+    return new Set([...base, ...sub]);
+  };
+  const buildPerSubtaskKeywords = (subs: typeof subtasks) =>
+    (subs || []).map(s => new Set(tokenize(s.name).concat((s.keywords || []).map(k => k.toLowerCase()))));
+  const haystack = (w: any) => `${(w.name||'').toLowerCase()} ${(w.description||'').toLowerCase()} ${(w.tags||[]).join(' ').toLowerCase()} ${(w.integrations||[]).join(' ').toLowerCase()}`;
+  const countMatches = (text: string, kws: Set<string>) => {
+    let hits = 0; kws.forEach(k => { if (text.includes(k)) hits++; });
+    return hits;
+  };
+
   const loadSolutions = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const mockSolutions = generateMockSolutions();
-      setSolutions(mockSolutions);
+      const q = [taskText || '', ...(subtasks || []).map(s => s.name)].filter(Boolean).join(' ');
+      const apps = (selectedApplications || []).map(normalizeTool);
+      const kw = buildKeywordSet(q, subtasks);
+      const perSubKw = buildPerSubtaskKeywords(subtasks);
+
+      // primary fetch: broad pool from unified cache (avoid prefiltering by q)
+      let searchParams: any = { source: 'all', limit: 1200, offset: 0 };
+      if (apps.length > 0) searchParams.integrations = apps;
+      let { workflows } = await workflowIndexer.searchWorkflows(searchParams);
+
+      // secondary fetch: query-scoped pool driven by task/subtasks
+      let scoped: any[] = [];
+      try {
+        const qRes = await workflowIndexer.searchWorkflows({ source: 'all', q, limit: 1200, offset: 0 });
+        scoped = qRes.workflows || [];
+      } catch {}
+
+      // choose candidate base: prefer scoped if it has signal
+      let basePool: any[] = (scoped && scoped.length >= 80) ? scoped : workflows;
+      if ((!basePool || basePool.length === 0) && (workflows && workflows.length > 0)) basePool = workflows;
+
+      if ((!basePool || basePool.length === 0)) {
+        console.info('[Solutions] No cached results. Forcing refresh from sources...');
+        try { await workflowIndexer.forceRefreshWorkflows('github'); } catch (e) { console.warn('[Solutions] GitHub refresh failed', e); }
+        try { await workflowIndexer.forceRefreshWorkflows('n8n.io'); } catch (e) { console.warn('[Solutions] n8n.io refresh failed', e); }
+        const retry = await workflowIndexer.searchWorkflows(searchParams);
+        basePool = retry.workflows;
+      }
+
+      // strict prefilter: workflow must match multiple subtasks
+      const minSubtasks = Math.max(1, Math.ceil((perSubKw.length || 1) * 0.4));
+      const scored = (basePool || []).map((w: any) => {
+        const text = haystack(w);
+        const subMatches = perSubKw.map(set => countMatches(text, set) > 0 ? 1 : 0);
+        const matchedSubtasks = subMatches.reduce((a, b) => a + b, 0);
+        const strongHits = countMatches(text, kw);
+        const score = matchedSubtasks * 10 + strongHits; // prioritize subtask coverage
+        return { w, matchedSubtasks, strongHits, score };
+      });
+      let candidates = scored
+        .filter(s => s.matchedSubtasks >= minSubtasks)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 400)
+        .map(s => s.w);
+      // If nothing passes, relax to at least one subtask match
+      if (candidates.length === 0) {
+        candidates = scored
+          .filter(s => s.matchedSubtasks >= 1)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 400)
+          .map(s => s.w);
+      }
+      if (candidates.length === 0) candidates = basePool;
+
+      // per-source merge fallback if still empty or very small
+      if (!candidates || candidates.length < 10) {
+        console.info('[Solutions] Merging per-source pools as fallback');
+        const [gh, n8n] = await Promise.all([
+          workflowIndexer.searchWorkflows({ source: 'github', limit: 2000, offset: 0 }),
+          workflowIndexer.searchWorkflows({ source: 'n8n.io', limit: 6000, offset: 0 })
+        ]);
+        const merged = [...(gh?.workflows || []), ...(n8n?.workflows || [])];
+        const seen = new Set<string>();
+        const rescored = merged.filter((w: any) => {
+          const key = String((w as any).id || (w as any).filename || (w as any).name);
+          if (seen.has(key)) return false; seen.add(key);
+          const m = perSubKw.map(set => countMatches(haystack(w), set) > 0 ? 1 : 0);
+          return m.reduce((a,b)=>a+b,0) >= 1;
+        });
+        candidates = rescored.slice(0, 600);
+        if (candidates.length < 30) candidates = merged; // last resort
+      }
+
+      // Per-subtask recommendation: get top items per subtask, then rerank union to 6
+      let unionSet: any[] = [];
+      const unionSeen = new Set<string>();
+      for (const s of (subtasks || [])) {
+        const sKw = new Set(tokenize(s.name).concat((s.keywords || []).map((k: string) => k.toLowerCase())));
+        const subCandidates = (candidates || []).filter((w: any) => countMatches(haystack(w), sKw) > 0);
+        if (subCandidates.length === 0) continue;
+        const subR = await rerankWorkflows(s.name, subCandidates as any, selectedApplications || [], {
+          subtasks: [s.name],
+          diversify: true,
+          topK: Math.min(3, subCandidates.length)
+        });
+        for (const r of subR) {
+          const key = String((r.workflow as any).id || (r.workflow as any).filename || (r.workflow as any).name);
+          if (unionSeen.has(key)) continue; unionSeen.add(key); unionSet.push(r.workflow);
+        }
+        if (unionSet.length >= 10) break; // cap to keep fast
+      }
+      // If union still small, backfill from global candidates
+      if (unionSet.length < 6) {
+        const backfill = await rerankWorkflows(q, candidates as any, selectedApplications || [], {
+          subtasks: (subtasks || []).map(s => s.name),
+          diversify: true,
+          topK: Math.min(12, (candidates as any[]).length)
+        });
+        for (const r of backfill) {
+          const key = String((r.workflow as any).id || (r.workflow as any).filename || (r.workflow as any).name);
+          if (unionSeen.has(key)) continue; unionSeen.add(key); unionSet.push(r.workflow);
+          if (unionSet.length >= 12) break;
+        }
+      }
+      // Final rerank across union to pick most relevant 6
+      const finalR = await rerankWorkflows(q, unionSet as any, selectedApplications || [], {
+        subtasks: (subtasks || []).map(s => s.name),
+        diversify: true,
+        topK: Math.min(6, unionSet.length)
+      });
+      const top = finalR.map(r => r.workflow);
+
+      // map to Solution type (workflow solutions)
+      const mapped: Solution[] = top.map((w, idx) => ({
+        id: String(w.id ?? idx),
+        name: w.name || 'n8n Workflow',
+        description: w.description || '',
+        type: 'workflow',
+        category: 'Development & DevOps',
+        subcategories: [],
+        difficulty: (w as any).complexity === 'High' ? 'Advanced' : (w as any).complexity === 'Low' ? 'Beginner' : 'Intermediate',
+        setupTime: 'Medium',
+        deployment: 'Cloud',
+        status: (w as any).active ? 'Active' : 'Inactive',
+        tags: (w as any).tags || [],
+        automationPotential: Math.min(95, Math.max(40, ((w as any).nodeCount || (w as any).nodes || 0) * 4 + (w.integrations?.length || 0) * 3)),
+        estimatedROI: '—',
+        timeToValue: '—',
+        implementationPriority: 'Medium',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        version: '1.0.0',
+        author: (w as any).authorName || (w as any).authorUsername || 'Community',
+        authorUsername: (w as any).authorUsername,
+        authorAvatarUrl: (w as any).authorAvatar,
+        authorVerified: (w as any).authorVerified,
+        documentationUrl: undefined,
+        demoUrl: undefined,
+        githubUrl: undefined,
+        pricing: 'Free',
+        requirements: [],
+        useCases: [],
+        integrations: (w.integrations || []).map((x: string) => ({ platform: x, type: 'API', description: '', setupComplexity: 'Low', apiKeyRequired: false })),
+        metrics: {
+          usageCount: 0,
+          successRate: 95,
+          averageExecutionTime: 30,
+          errorRate: 2,
+          userRating: 4.4,
+          reviewCount: 0,
+          lastUsed: new Date(),
+          performanceScore: 80
+        },
+        workflow: {
+          id: String(w.id ?? idx),
+          name: w.name || '',
+          description: w.description || '',
+          category: (w as any).category || 'General',
+          difficulty: ((w as any).complexity === 'High' ? 'Hard' : (w as any).complexity === 'Low' ? 'Easy' : 'Medium') as any,
+          estimatedTime: '—',
+          estimatedCost: '—',
+          nodes: (w as any).nodeCount || (w as any).nodes || 0,
+          connections: 0,
+          downloads: 0,
+          rating: 4.4,
+          createdAt: (w as any).analyzedAt || new Date().toISOString(),
+          url: '',
+          jsonUrl: '',
+          active: !!(w as any).active,
+          triggerType: (w as any).triggerType || 'Manual',
+          integrations: w.integrations || [],
+          author: (w as any).authorName || (w as any).authorUsername || 'Community'
+        } as any,
+        workflowMetadata: {
+          nodeCount: (w as any).nodeCount || (w as any).nodes || 0,
+          triggerType: (w as any).triggerType || 'Manual',
+          executionTime: '—',
+          complexity: ((w as any).complexity === 'High' ? 'Complex' : (w as any).complexity === 'Low' ? 'Simple' : 'Moderate') as any,
+          dependencies: [],
+          estimatedExecutionTime: '—'
+        }
+      }));
+
+      setSolutions(mapped);
     } catch (err) {
       setError('Failed to load solutions');
       console.error('Error loading solutions:', err);
@@ -71,7 +262,6 @@ export default function SolutionsTab({
     }
   };
 
-  // Filter solutions based on active tab
   const filteredSolutions = useMemo(() => {
     let filtered = solutions;
     if (activeTab === 'workflows') {
@@ -113,7 +303,6 @@ export default function SolutionsTab({
 
   return (
     <div className="space-y-6">
-      {/* Tabs Row (filters removed) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <button
@@ -126,7 +315,6 @@ export default function SolutionsTab({
           >
             {lang === 'de' ? 'Alle' : 'All'} {solutions.length}
           </button>
-          
           <button
             onClick={() => setActiveTab('workflows')}
             className={`text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -138,7 +326,6 @@ export default function SolutionsTab({
             <SolutionIcon type="workflow" className="h-4 w-4" />
             {lang === 'de' ? 'Workflows' : 'Workflows'} {solutions.filter(s => s.type === 'workflow').length}
           </button>
-          
           <button
             onClick={() => setActiveTab('agents')}
             className={`text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -153,7 +340,6 @@ export default function SolutionsTab({
         </div>
       </div>
 
-      {/* Content based on active tab */}
       <div className="space-y-4">
         {filteredSolutions.length === 0 ? (
           <div className="text-center py-12">
@@ -169,7 +355,7 @@ export default function SolutionsTab({
             {filteredSolutions.map((solution) => (
               <div 
                 key={solution.id}
-                className="cursor-pointer transform transition-transform hover:scale-105"
+                className="cursor-pointer transition-shadow hover:shadow-md"
                 onClick={() => handleSolutionSelect(solution)}
               >
                 <SolutionCard
@@ -180,33 +366,30 @@ export default function SolutionsTab({
                     category: solution.category,
                     priority: solution.implementationPriority === 'High' ? 'High' : solution.implementationPriority === 'Medium' ? 'Medium' : 'Low',
                     type: solution.type === 'agent' ? 'ai-agent' : 'workflow',
-                    automationScore: solution.automationPotential,
-                    roi: solution.estimatedROI,
-                    timeToValue: solution.timeToValue,
-                    successRate: `${solution.metrics.successRate}%`,
-                    userCount: `${solution.metrics.usageCount}`,
-                    avgTime: `${solution.metrics.averageExecutionTime}s`,
                     rating: solution.metrics.userRating,
                     reviewCount: solution.metrics.reviewCount,
-                    nodeCount: solution.type === 'workflow' ? solution.workflowMetadata?.nodeCount : undefined,
-                    triggerType: solution.type === 'workflow' ? solution.workflowMetadata?.triggerType as any : undefined,
+                    triggerType: solution.type === 'workflow' ? (solution.workflowMetadata?.triggerType as any) : undefined,
                     complexity: solution.difficulty === 'Beginner' ? 'Low' : solution.difficulty === 'Intermediate' ? 'Medium' : 'High',
                     integrations: solution.integrations.map(i => i.platform),
                     tags: solution.tags,
                     active: solution.status === 'Active',
-                    lastUpdated: solution.updatedAt.toISOString()
+                    lastUpdated: solution.updatedAt.toISOString(),
+                    authorName: (solution.author && solution.author.toLowerCase() !== 'community')
+                      ? solution.author
+                      : (solution.authorUsername || 'Community'),
+                    authorAvatarUrl: solution.authorAvatarUrl,
+                    authorVerified: !!solution.authorVerified,
+                    pricing: solution.pricing,
                   }}
                   onView={() => handleSolutionSelect(solution)}
-                  onDownload={() => console.log('Download solution:', solution)}
                 />
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Solution Details Modal */}
-      {selectedSolution && (
+          
+          {selectedSolution && (
         <SolutionDetailModal
           solution={selectedSolution}
           isOpen={showSolutionModal}
@@ -222,161 +405,4 @@ export default function SolutionsTab({
       )}
     </div>
   );
-}
-
-// Mock data generation - replace with actual API calls
-function generateMockSolutions(): Solution[] {
-  const mockWorkflows: Solution[] = [
-    {
-      id: '1',
-      name: 'Scrape and summarize webpages with AI',
-      description: 'Automatically scrape webpages and summarize content using AI',
-      type: 'workflow',
-      category: 'Content Creation',
-      subcategories: ['Web Scraping', 'AI Processing'],
-      difficulty: 'Intermediate',
-      setupTime: 'Medium',
-      deployment: 'Cloud',
-      status: 'Active',
-      tags: ['ai', 'web-scraping', 'summarization'],
-      automationPotential: 74,
-      estimatedROI: '200-275%',
-      timeToValue: '1-2 weeks',
-      implementationPriority: 'High',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-20'),
-      version: '1.2.0',
-      author: 'Community',
-      documentationUrl: 'https://docs.n8n.io/workflows/web-scraping-ai',
-      demoUrl: 'https://demo.n8n.io/web-scraping-ai',
-      githubUrl: 'https://github.com/n8n-io/workflows/tree/main/web-scraping-ai',
-      pricing: 'Free',
-      requirements: [
-        {
-          category: 'Integrations',
-          items: ['OpenAI API', 'Web Scraper', 'HTTP Request'],
-          importance: 'Required',
-          alternatives: []
-        }
-      ],
-      useCases: [
-        {
-          scenario: 'Content Research',
-          description: 'Automatically research and summarize competitor content',
-          automationPotential: 74,
-          implementationEffort: 'Medium',
-          expectedOutcome: 'Reduced research time by 70%',
-          prerequisites: ['OpenAI API Key'],
-          estimatedTimeSavings: '5-8 hours per week',
-          businessImpact: 'High'
-        }
-      ],
-      integrations: [
-        {
-          platform: 'OpenAI',
-          type: 'API',
-          description: 'AI text processing and summarization',
-          setupComplexity: 'Low',
-          apiKeyRequired: true
-        }
-      ],
-      metrics: {
-        usageCount: 105,
-        successRate: 95.0,
-        averageExecutionTime: 45,
-        errorRate: 2.0,
-        userRating: 4.3,
-        reviewCount: 29,
-        lastUsed: new Date('2024-01-20'),
-        performanceScore: 74
-      },
-      workflow: {} as N8nWorkflow,
-      workflowMetadata: {
-        nodeCount: 8,
-        triggerType: 'Webhook',
-        executionTime: '45s',
-        complexity: 'Moderate',
-        dependencies: ['OpenAI API'],
-        estimatedExecutionTime: '45s'
-      }
-    }
-  ];
-
-  const mockAgents: Solution[] = [
-    {
-      id: '2',
-      name: 'Financial Data Analysis Agent',
-      description: 'AI agent that analyzes financial data and generates insights',
-      type: 'agent',
-      category: 'Finance & Accounting',
-      subcategories: ['Data Analysis', 'Financial Reporting'],
-      difficulty: 'Advanced',
-      setupTime: 'Long',
-      deployment: 'Cloud',
-      status: 'Active',
-      tags: ['finance', 'ai', 'data-analysis'],
-      automationPotential: 89,
-      estimatedROI: '300-450%',
-      timeToValue: '2-3 weeks',
-      implementationPriority: 'High',
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-18'),
-      version: '2.1.0',
-      author: 'Finance Team',
-      documentationUrl: 'https://docs.prom8eus.com/agents/financial-analysis',
-      demoUrl: 'https://demo.prom8eus.com/financial-agent',
-      pricing: 'Freemium',
-      requirements: [
-        {
-          category: 'Data Sources',
-          items: ['Financial APIs', 'Database Access', 'Excel Files'],
-          importance: 'Required',
-          alternatives: []
-        }
-      ],
-      useCases: [
-        {
-          scenario: 'Monthly Financial Reports',
-          description: 'Automatically generate comprehensive financial reports',
-          automationPotential: 89,
-          implementationEffort: 'High',
-          expectedOutcome: 'Automated monthly reporting with 95% accuracy',
-          prerequisites: ['Financial data access', 'AI model training'],
-          estimatedTimeSavings: '12-16 hours per month',
-          businessImpact: 'High'
-        }
-      ],
-      integrations: [
-        {
-          platform: 'OpenAI GPT-4',
-          type: 'API',
-          description: 'Advanced financial data analysis',
-          setupComplexity: 'Low',
-          apiKeyRequired: true
-        }
-      ],
-      metrics: {
-        usageCount: 89,
-        successRate: 97.2,
-        averageExecutionTime: 45,
-        errorRate: 1.8,
-        userRating: 4.7,
-        reviewCount: 15,
-        lastUsed: new Date(),
-        performanceScore: 92
-      },
-      agent: {} as AIAgent,
-      agentMetadata: {
-        model: 'GPT-4',
-        apiProvider: 'OpenAI',
-        rateLimits: '100 requests/hour',
-        responseTime: '2-5 seconds',
-        accuracy: 94,
-        trainingData: 'Financial datasets',
-        lastTraining: new Date('2024-01-15')
-      }
-    }
-  ];
-
-  return [...mockWorkflows, ...mockAgents];
 }

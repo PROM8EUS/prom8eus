@@ -268,30 +268,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           </div>
         </div>
 
-        {/* Summary Card */}
-        <div className={`p-4 rounded-lg border ${
-          businessMetrics.totalSavingsMoney > 0 
-            ? 'bg-green-50 border-green-200' 
-            : 'bg-orange-50 border-orange-200'
-        }`}>
-          <div className="flex items-center gap-2 mb-2">
-            {businessMetrics.totalSavingsMoney > 0 ? (
-              <TrendingUp className="w-4 h-4 text-green-600" />
-            ) : (
-              <TrendingDown className="w-4 h-4 text-orange-600" />
-            )}
-            <span className="font-medium text-sm">
-              {mode === 'money' ? 'Finanzielle Bewertung' : 'Zeitbewertung'}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {mode === 'money' 
-              ? businessMetrics.totalSavingsMoney > 0
-                ? `Diese Aufgabe kann pro ${periodLabel(period)} ${businessMetrics.totalSavingsMoney.toLocaleString('de-DE')} € einsparen.`
-                : `Diese Aufgabe würde pro ${periodLabel(period)} ${Math.abs(businessMetrics.totalSavingsMoney).toLocaleString('de-DE')} € kosten.`
-              : `Diese Aufgabe kann ${businessMetrics.savedHours.toFixed(1)} Stunden pro ${periodLabel(period)} einsparen.`}
-          </p>
-        </div>
+        {/* Summary removed per request */}
       </div>
     </div>
   );

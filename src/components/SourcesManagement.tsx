@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AI_TOOLS } from '@/lib/catalog/aiTools';
-import { n8nApiClient } from '@/lib/n8nApi';
 import { WorkflowBrowser } from './WorkflowBrowser';
 import { getGitHubConfig } from '@/lib/config';
 import { workflowIndexer } from '@/lib/workflowIndexer';

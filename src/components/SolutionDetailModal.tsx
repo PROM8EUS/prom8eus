@@ -39,6 +39,7 @@ import {
   Send
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import CreatorBadge from './CreatorBadge';
 
 interface SolutionDetailModalProps {
   solution: Solution | null;
@@ -494,16 +495,11 @@ export default function SolutionDetailModal({
             <div className="flex-1">
               <DialogTitle className="text-xl">{solution.name}</DialogTitle>
               <div className="mt-2 flex items-center gap-3">
-                {solution.authorAvatarUrl && (
-                  <img src={solution.authorAvatarUrl} alt={solution.author} className="w-6 h-6 rounded-full" />
-                )}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>Created by</span>
-                  <span className="font-medium text-foreground">{solution.author}</span>
-                  {solution.authorVerified && (
-                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-orange-500 text-white text-[10px]">✓</span>
-                  )}
-                </div>
+                <CreatorBadge
+                  name={solution.author || (solution as any).authorName || 'Community'}
+                  avatarUrl={(solution as any).authorAvatarUrl}
+                  verified={(solution as any).authorVerified}
+                />
               </div>
               <DialogDescription className="text-base mt-2">
                 {solution.description}

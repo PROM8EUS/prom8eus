@@ -464,28 +464,10 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   // Preload workflows when task panel becomes visible
   useEffect(() => {
     if (isVisible && realSubtasks && realSubtasks.length > 0) {
-      // Preload workflows in background
-      const taskText = realSubtasks.map(subtask => subtask.title).join(' ') || (task.title || task.name || '');
-      const selectedApps = Object.values(selectedTools).flat();
-      
-      // Import and call the workflow loading function
-      import('../lib/n8nApi').then(({ n8nApiClient }) => {
-        n8nApiClient.fastSearchWorkflows(taskText, selectedApps)
-          .then(workflows => {
-            // Only update if count actually changed to prevent unnecessary re-renders
-            setSolutionsCount(prevCount => {
-              if (prevCount !== workflows.length) {
-                return workflows.length;
-              }
-              return prevCount;
-            });
-          })
-          .catch(error => {
-            console.warn('Failed to preload workflows:', error);
-          });
-      });
+      // Mark as loading; SolutionsTab will perform loading via indexer and update count
+      setIsLoadingSolutions(true);
     }
-  }, [isVisible, realSubtasks, selectedTools, task.title, task.name]);
+  }, [isVisible, realSubtasks]);
 
   // New: selected period synced with BusinessCase
   type Period = 'year' | 'month' | 'week' | 'day';

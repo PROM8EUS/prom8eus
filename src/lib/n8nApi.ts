@@ -33,10 +33,17 @@ export class N8nApi {
   private cacheKey = 'n8n_workflows_cache';
   private cacheExpiryKey = 'n8n_workflows_cache_expiry';
   private cacheExpiryHours = 24; // Cache für 24 Stunden
+  private availableCategoriesCacheKey = 'n8n_available_categories_cache';
+  private availableCategoriesExpiryKey = 'n8n_available_categories_cache_expiry';
+  private availableCategoriesCacheExpiryHours = 24;
 
   constructor() {
-    // Try to get GitHub token from localStorage or hardcoded
-    this.githubToken = localStorage.getItem('github_token') || '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';
+    // Only use an explicit user-provided token; never fallback to hardcoded
+    this.githubToken = localStorage.getItem('github_token');
+  }
+
+  private hasToken(): boolean {
+    return typeof this.githubToken === 'string' && this.githubToken.length > 0;
   }
 
   // Method to set GitHub token
@@ -51,11 +58,9 @@ export class N8nApi {
       'Accept': 'application/vnd.github.v3+json',
       'User-Agent': 'PROM8EUS/1.0'
     };
-    
-    if (this.githubToken) {
-      headers['Authorization'] = `token ${this.githubToken}`;
+    if (this.hasToken()) {
+      headers['Authorization'] = `token ${this.githubToken}` as string;
     }
-    
     return headers;
   }
 
@@ -278,6 +283,12 @@ export class N8nApi {
       return options.limit ? cachedWorkflows.slice(0, options.limit) : cachedWorkflows;
     }
 
+    // If no client token, skip direct GitHub calls to avoid 401
+    if (!this.hasToken()) {
+      console.info('Skipping direct GitHub fetch (no client token).');
+      return this.getFallbackWorkflows(options.limit ?? 20);
+    }
+
     try {
       console.log('Cache empty or expired, fetching workflows from Zie619/n8n-workflows repository...');
       
@@ -338,6 +349,11 @@ export class N8nApi {
   }
 
   private async fetchWorkflowsFromCategory(categoryName: string, limit: number): Promise<N8nWorkflow[]> {
+    // Avoid direct GitHub calls if no token
+    if (!this.hasToken()) {
+      console.info(`Skipping GitHub category fetch (${categoryName}) - no client token.`);
+      return [];
+    }
     try {
       const categoryResponse = await fetch(
         `https://api.github.com/repos/Zie619/n8n-workflows/contents/workflows/${categoryName}`,
@@ -1174,41 +1190,29 @@ export class N8nApi {
       const relevantCategories = this.getRelevantCategories(taskText, selectedApplications);
       console.log('Relevant categories:', relevantCategories);
       
-      // Validate categories exist before fetching
       const validCategories = await this.validateCategories(relevantCategories);
       console.log('Valid categories:', validCategories);
-      
-      // Fetch only from valid categories (max 5 categories for speed)
-      const limitedCategories = validCategories.slice(0, 5);
+
       const workflows: N8nWorkflow[] = [];
-      
-      for (const category of limitedCategories) {
-        try {
-          console.log(`Fetching from category: ${category}`);
-          const categoryWorkflows = await this.fetchWorkflowsFromCategory(category, 10);
-          workflows.push(...categoryWorkflows);
-          console.log(`Added ${categoryWorkflows.length} workflows from ${category}`);
-        } catch (error) {
-          console.warn(`Failed to fetch from ${category}:`, error);
-          // Continue with next category instead of stopping
-        }
-      }
-      
-      // If no workflows found from specific categories, try general categories
-      if (workflows.length === 0) {
-        console.log('No workflows found from specific categories, trying general categories...');
-        const generalCategories = ['Automation', 'Automate', 'Code', 'Webhook'];
-        
-        for (const category of generalCategories) {
+      if (validCategories.length > 0) {
+        const limitedCategories = validCategories.slice(0, 5);
+        for (const category of limitedCategories) {
           try {
-            console.log(`Fetching from general category: ${category}`);
-            const categoryWorkflows = await this.fetchWorkflowsFromCategory(category, 5);
+            console.log(`Fetching from category: ${category}`);
+            const categoryWorkflows = await this.fetchWorkflowsFromCategory(category, 10);
             workflows.push(...categoryWorkflows);
             console.log(`Added ${categoryWorkflows.length} workflows from ${category}`);
           } catch (error) {
-            console.warn(`Failed to fetch from general category ${category}:`, error);
+            console.warn(`Failed to fetch from ${category}:`, error);
           }
         }
+      } else {
+        console.info('No valid categories (likely no client token); skipping GitHub fetch.');
+      }
+
+      if (workflows.length === 0) {
+        console.log('No workflows from GitHub; returning fallback for fast search.');
+        return this.getFallbackWorkflows(10);
       }
       
       // Search in fetched workflows
@@ -1272,6 +1276,11 @@ export class N8nApi {
 
   // Get available categories for debugging
   async getAvailableCategories(): Promise<string[]> {
+    // Avoid direct GitHub calls if no token
+    if (!this.hasToken()) {
+      console.info('Skipping available categories fetch - no client token.');
+      return [];
+    }
     try {
       const response = await fetch(
         'https://api.github.com/repos/Zie619/n8n-workflows/contents/workflows',
@@ -1293,6 +1302,11 @@ export class N8nApi {
   }
 
   async getTotalWorkflowCount(): Promise<number> {
+    // Avoid direct GitHub calls if no token
+    if (!this.hasToken()) {
+      console.info('Skipping total workflow count fetch - no client token.');
+      return 0;
+    }
     try {
       // Try to get the count from GitHub API
       // Count all JSON files in the workflows directory
@@ -1426,11 +1440,17 @@ export class N8nApi {
   // Validate categories exist before fetching
   private async validateCategories(categories: string[]): Promise<string[]> {
     try {
-      // First, map AI categories to n8n categories
       const mappedCategories = this.mapAICategoriesToN8n(categories);
       
       const availableCategories = await this.getAvailableCategories();
-      const validCategories = mappedCategories.filter(cat => availableCategories.includes(cat));
+      const validCategories = availableCategories.length > 0
+        ? mappedCategories.filter(cat => availableCategories.includes(cat))
+        : [];
+      
+      if (validCategories.length === 0) {
+        console.log('No valid categories found (or GitHub unavailable), skipping category-restricted fetch.');
+        return [];
+      }
       
       if (validCategories.length !== mappedCategories.length) {
         const invalidCategories = mappedCategories.filter(cat => !availableCategories.includes(cat));
@@ -1438,16 +1458,10 @@ export class N8nApi {
         console.log('Available categories:', availableCategories.slice(0, 20)); // Show first 20
       }
       
-      if (validCategories.length === 0) {
-        // Fallback to general categories if no valid categories found
-        console.log('No valid categories found, using fallback categories');
-        return ['Automation', 'Process'];
-      }
-      
       return validCategories;
     } catch (error) {
       console.error('Error validating categories:', error);
-      return ['Automation', 'Process']; // Fallback categories
+      return [];
     }
   }
 }

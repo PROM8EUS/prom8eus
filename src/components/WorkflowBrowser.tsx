@@ -146,30 +146,21 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
       priority: workflow.complexity === 'High' ? 'High' : workflow.complexity === 'Medium' ? 'Medium' : 'Low',
       type: 'workflow',
       
-      // Workflow specific
-      nodeCount: workflow.nodeCount,
+      // Workflow specific shown on card
       triggerType: workflow.triggerType,
       complexity: workflow.complexity,
       integrations: workflow.integrations,
       tags: workflow.tags,
       
-      // Calculate automation score based on real workflow data
-      automationScore: Math.min(95, Math.max(60, 
-        (workflow.nodeCount * 5) + 
-        (workflow.integrations.length * 8) + 
-        (workflow.complexity === 'High' ? 20 : workflow.complexity === 'Medium' ? 10 : 5)
-      )),
-      roi: `${Math.floor(Math.random() * 200) + 200}-${Math.floor(Math.random() * 200) + 400}%`,
-      timeToValue: `${Math.floor(Math.random() * 3) + 1}-${Math.floor(Math.random() * 4) + 3} weeks`,
-      successRate: `${(Math.random() * 10 + 90).toFixed(1)}%`,
-      userCount: `${Math.floor(Math.random() * 500) + 50}`,
-      avgTime: `${Math.floor(Math.random() * 60) + 60}s`,
-      rating: Number((Math.random() * 1.5 + 3.5).toFixed(1)),
-      reviewCount: Math.floor(Math.random() * 50) + 10,
-      
       // Common
       active: workflow.active,
-      lastUpdated: workflow.analyzedAt
+      lastUpdated: workflow.analyzedAt,
+      
+      // Author for CreatorBadge
+      authorName: workflow.authorName || workflow.authorUsername || 'Community',
+      authorAvatarUrl: workflow.authorAvatar,
+      authorVerified: workflow.authorVerified,
+      pricing: 'Free'
     };
   };
 
@@ -224,7 +215,7 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
       createdAt: new Date(workflow.analyzedAt),
       updatedAt: new Date(workflow.analyzedAt),
       version: '1.0.0',
-      author: workflow.authorName || 'Community',
+      author: workflow.authorName || workflow.authorUsername || 'Community',
       authorUsername: workflow.authorUsername,
       authorAvatarUrl: workflow.authorAvatar,
       authorVerified: workflow.authorVerified,
@@ -426,7 +417,6 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
                   <SolutionCard
                     solution={convertWorkflowToSolution(workflow)}
                     onView={() => handleWorkflowClick(workflow)}
-                    onDownload={handleDownloadSolution}
                     isAdmin={isAdmin}
                   />
                 </div>

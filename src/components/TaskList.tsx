@@ -473,7 +473,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                   
                   <div className="flex items-center space-x-3">
                     {/* Combined Trend, Complexity and Circle */}
-                    <div className="flex items-center space-x-3 ml-auto">
+                    <div className="ml-auto flex flex-col gap-2 md:flex-row md:items-center md:space-x-3">
                       {/* Trend with text */}
                       {task.automationTrend && (
                         <div className={`flex items-center space-x-1 text-xs ${
@@ -492,7 +492,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                         </div>
                       )}
                       
-                                            {/* Complexity tag */}
+                      {/* Complexity tag */}
                       {task.complexity && (
                         <Badge className={`text-xs ${getComplexityColor(task.complexity)} pointer-events-none`}>
                           {getComplexityText(task.complexity)}

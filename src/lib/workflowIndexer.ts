@@ -53,6 +53,7 @@ export interface WorkflowSearchParams {
   category?: string;
   active?: boolean;
   source?: string;
+  integrations?: string[];
   limit?: number;
   offset?: number;
 }
@@ -195,10 +196,9 @@ export class WorkflowIndexer {
    */
   async getStats(source?: string): Promise<WorkflowStats> {
     if (source) {
-      // Get stats for specific source from cache
       try {
         const normalized = this.normalizeSourceKey(source);
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('workflow_cache')
           .select('workflows')
           .eq('source', normalized as string)
@@ -210,7 +210,7 @@ export class WorkflowIndexer {
           return this.getEmptyStats();
         }
 
-        const workflows = data.workflows || [];
+        const workflows = (data as any).workflows || [];
         return this.calculateStatsFromWorkflows(workflows);
       } catch (error) {
         console.error('Error getting stats for source:', error);
@@ -218,7 +218,6 @@ export class WorkflowIndexer {
       }
     }
 
-    // Return global stats
     if (!this.stats) {
       this.initializeStats();
     }
@@ -232,9 +231,11 @@ export class WorkflowIndexer {
     return {
       total: 0,
       active: 0,
+      inactive: 0,
+      triggers: { Complex: 0, Webhook: 0, Manual: 0, Scheduled: 0 },
       totalNodes: 0,
       uniqueIntegrations: 0
-    };
+    } as WorkflowStats;
   }
 
   /**
@@ -243,21 +244,17 @@ export class WorkflowIndexer {
   private calculateStatsFromWorkflows(workflows: WorkflowIndex[]): WorkflowStats {
     const total = workflows.length;
     const active = workflows.filter(w => w.active).length;
+    const inactive = total - active;
     const totalNodes = workflows.reduce((sum, w) => sum + (w.nodeCount || 0), 0);
     const uniqueIntegrations = new Set<string>();
-    
+    const triggers = { Complex: 0, Webhook: 0, Manual: 0, Scheduled: 0 } as any;
     workflows.forEach(workflow => {
-      workflow.integrations.forEach(integration => {
+      (workflow.integrations || []).forEach((integration: string) => {
         uniqueIntegrations.add(integration);
       });
+      if (workflow.triggerType && triggers[workflow.triggerType] !== undefined) triggers[workflow.triggerType]++;
     });
-
-    return {
-      total,
-      active,
-      totalNodes,
-      uniqueIntegrations: uniqueIntegrations.size
-    };
+    return { total, active, inactive, triggers, totalNodes, uniqueIntegrations: uniqueIntegrations.size } as WorkflowStats;
   }
 
   /**
@@ -273,21 +270,41 @@ export class WorkflowIndexer {
   async forceRefreshWorkflows(source?: string): Promise<{ success: boolean; count: number; error?: string }> {
     try {
       console.log(`Manually triggering workflow refresh for source: ${source || 'all'}...`);
-      
-      // Clear current cache
       this.workflows = [];
       this.lastFetchTime = null;
-      
-      // Fetch fresh workflows for specific source
+
+      const normalized = this.normalizeSourceKey(source);
+      if (!normalized || normalized === 'all') {
+        // Refresh all sources and save aggregated 'all'
+        const [gh, n8n, ai] = await Promise.all([
+          this.loadRealWorkflows({ source: 'github' }),
+          this.loadRealWorkflows({ source: 'n8n.io' }),
+          this.loadRealWorkflows({ source: 'ai-enhanced' })
+        ]);
+        const merged: WorkflowIndex[] = [];
+        const seen = new Set<string>();
+        [gh, n8n, ai].forEach(arr => {
+          (arr || []).forEach(w => {
+            const key = String(w.id || w.filename || w.name);
+            if (seen.has(key)) return;
+            seen.add(key);
+            merged.push(w);
+          });
+        });
+        if (merged.length > 0) {
+          this.updateStatsFromWorkflows(merged);
+          await this.saveToServerCache(merged, 'all');
+          console.log(`Successfully refreshed ${merged.length} workflows for source: all`);
+          return { success: true, count: merged.length };
+        }
+        return { success: false, count: 0, error: 'No workflows loaded' };
+      }
+
+      // Single-source refresh
       const workflows = await this.loadRealWorkflows({ source });
-      
       if (workflows.length > 0) {
-        // Update stats
         this.updateStatsFromWorkflows(workflows);
-        
-        // Save to cache with source
         await this.saveToServerCache(workflows, source);
-        
         console.log(`Successfully refreshed ${workflows.length} workflows for source: ${source || 'all'}`);
         return { success: true, count: workflows.length };
       } else {
@@ -305,7 +322,6 @@ export class WorkflowIndexer {
   async getCacheStatus(source?: string): Promise<{ hasCache: boolean; lastFetch: Date | null; workflowCount: number }> {
     try {
       if (!source) {
-        // Return global cache status if no source specified
         return {
           hasCache: this.workflows.length > 0,
           lastFetch: this.getLastFetchTime(),
@@ -313,41 +329,33 @@ export class WorkflowIndexer {
         };
       }
 
-      // Get cache status for specific source from database
       const normalized = this.normalizeSourceKey(source);
-      const { data, error } = await supabase
+      // Support sharded caches like "n8n.io#1"
+      const { data, error } = await (supabase as any)
         .from('workflow_cache')
-        .select('workflows, last_fetch_time, updated_at')
-        .eq('source', normalized as string)
-        .eq('version', this.cacheVersion)
-        .maybeSingle();
+        .select('source, workflows, last_fetch_time, updated_at')
+        .like('source', `${normalized}%`)
+        .eq('version', this.cacheVersion);
 
-      if (error || !data) {
+      if (error || !data || (Array.isArray(data) && data.length === 0)) {
         console.log(`No cache found for source: ${normalized || source}`);
-        return {
-          hasCache: false,
-          lastFetch: null,
-          workflowCount: 0
-        };
+        return { hasCache: false, lastFetch: null, workflowCount: 0 };
       }
 
-      const workflows = data.workflows || [];
-      const lastFetch = data.last_fetch_time ? new Date(data.last_fetch_time) : null;
+      const rows: any[] = Array.isArray(data) ? data : [data];
+      const totalCount = rows.reduce((sum, r) => sum + ((r?.workflows || []).length || 0), 0);
+      const lastFetchTs = rows.reduce((ts: number | null, r: any) => {
+        const t = r?.last_fetch_time ? new Date(r.last_fetch_time).getTime() : null;
+        if (!t) return ts; return ts ? Math.max(ts, t) : t;
+      }, null);
+      const lastFetch = lastFetchTs ? new Date(lastFetchTs) : null;
 
-      console.log(`Cache status for ${normalized || source}: ${workflows.length} workflows, last fetch: ${lastFetch}`);
+      console.log(`Cache status for ${normalized || source}: ${totalCount} workflows, last fetch: ${lastFetch}`);
 
-      return {
-        hasCache: workflows.length > 0,
-        lastFetch: lastFetch,
-        workflowCount: workflows.length
-      };
+      return { hasCache: totalCount > 0, lastFetch, workflowCount: totalCount };
     } catch (error) {
       console.error('Error getting cache status:', error);
-      return {
-        hasCache: false,
-        lastFetch: null,
-        workflowCount: 0
-      };
+      return { hasCache: false, lastFetch: null, workflowCount: 0 };
     }
   }
 
@@ -361,7 +369,6 @@ export class WorkflowIndexer {
   }> {
     const requestedSource = this.normalizeSourceKey(params.source) || this.currentSourceKey || 'all';
 
-    // If memory holds a different source than requested, reload cache for the requested source
     if (params.source) {
       const normalized = this.normalizeSourceKey(params.source) || 'all';
       if (this.currentSourceKey !== normalized) {
@@ -369,93 +376,80 @@ export class WorkflowIndexer {
       }
     }
 
-    // First, try to load from cache if we don't have workflows
     if (this.workflows.length === 0) {
       console.log('No workflows in memory, loading from server cache...');
       await this.loadFromServerCache(params.source);
+      // If 'all' still empty, try union from per-source caches
+      const normalized = this.normalizeSourceKey(params.source) || 'all';
+      if ((normalized === 'all') && this.workflows.length === 0) {
+        await this.loadAllFromServerCacheUnion();
+      }
     }
 
-    // If we have cached workflows, use them
     if (this.workflows.length > 0) {
       console.log(`Using ${this.workflows.length} cached workflows`);
-      // Ensure stats are up to date with cached workflows
       this.updateStatsFromWorkflows(this.workflows);
       const filteredWorkflows = this.filterWorkflows(this.workflows, params);
-      
-      // Apply pagination
+
       const offset = params.offset || 0;
       const limit = params.limit || 20;
       const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit);
 
-      return {
-        workflows: paginatedWorkflows,
-        total: filteredWorkflows.length,
-        hasMore: offset + limit < filteredWorkflows.length
-      };
+      return { workflows: paginatedWorkflows, total: filteredWorkflows.length, hasMore: offset + limit < filteredWorkflows.length };
     }
 
     try {
-      // Try to load real workflows from GitHub API
       console.log('Attempting to load real workflows from GitHub API...');
       const realWorkflows = await this.loadRealWorkflows(params);
       if (realWorkflows.length > 0) {
         console.log(`Successfully loaded ${realWorkflows.length} real workflows from GitHub API`);
-        // Update stats based on real workflows
         this.updateStatsFromWorkflows(realWorkflows);
-        
-        // Apply filters to real workflows
+
         let filteredWorkflows = realWorkflows;
-        
-        if (params.q) {
-          const query = params.q.toLowerCase();
-          filteredWorkflows = filteredWorkflows.filter(workflow =>
-            workflow.name.toLowerCase().includes(query) ||
-            workflow.description.toLowerCase().includes(query) ||
+
+    if (params.q) {
+      const query = params.q.toLowerCase();
+      filteredWorkflows = filteredWorkflows.filter(workflow =>
+        workflow.name.toLowerCase().includes(query) ||
+        workflow.description.toLowerCase().includes(query) ||
             workflow.integrations.some(integration => integration.toLowerCase().includes(query))
-          );
-        }
-        
-        if (params.triggerType && params.triggerType !== 'all') {
-          filteredWorkflows = filteredWorkflows.filter(workflow =>
-            workflow.triggerType.toLowerCase() === params.triggerType.toLowerCase()
-          );
-        }
-        
+      );
+    }
+
+        if (params.trigger && params.trigger !== 'all') {
+      filteredWorkflows = filteredWorkflows.filter(workflow =>
+            workflow.triggerType.toLowerCase() === params.trigger!.toLowerCase()
+      );
+    }
+
         if (params.complexity && params.complexity !== 'all') {
-          filteredWorkflows = filteredWorkflows.filter(workflow =>
+      filteredWorkflows = filteredWorkflows.filter(workflow =>
             workflow.complexity.toLowerCase() === params.complexity.toLowerCase()
-          );
-        }
-        
+      );
+    }
+
         if (params.category && params.category !== 'all') {
-          filteredWorkflows = filteredWorkflows.filter(workflow =>
+      filteredWorkflows = filteredWorkflows.filter(workflow =>
             workflow.category.toLowerCase() === params.category.toLowerCase()
-          );
+      );
+    }
+
+    if (params.active !== undefined) {
+          filteredWorkflows = filteredWorkflows.filter(workflow => workflow.active === params.active);
         }
-        
-        if (params.active !== undefined) {
-          filteredWorkflows = filteredWorkflows.filter(workflow =>
-            workflow.active === params.active
-          );
-        }
-        
+
         if (params.source) {
-          filteredWorkflows = filteredWorkflows.filter(workflow =>
+      filteredWorkflows = filteredWorkflows.filter(workflow =>
             workflow.filename.includes(params.source!.toLowerCase()) ||
             workflow.name.toLowerCase().includes(params.source!.toLowerCase())
           );
         }
-        
-        // Apply pagination
+
         const offset = params.offset || 0;
         const limit = params.limit || 20;
         const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit);
-        
-        return {
-          workflows: paginatedWorkflows,
-          total: filteredWorkflows.length,
-          hasMore: offset + limit < filteredWorkflows.length
-        };
+
+        return { workflows: paginatedWorkflows, total: filteredWorkflows.length, hasMore: offset + limit < filteredWorkflows.length };
       } else {
         console.log('No real workflows loaded, falling back to mock data');
       }
@@ -464,70 +458,41 @@ export class WorkflowIndexer {
       console.log('Falling back to mock workflow data');
     }
 
-    // Fallback to mock data - generate more realistic numbers
     const mockWorkflows: WorkflowIndex[] = this.generateMockWorkflows();
-
-    // Apply filters
     let filteredWorkflows = mockWorkflows;
-
     if (params.q) {
       const query = params.q.toLowerCase();
       filteredWorkflows = filteredWorkflows.filter(workflow =>
         workflow.name.toLowerCase().includes(query) ||
         workflow.description.toLowerCase().includes(query) ||
-        workflow.integrations.some(integration => 
-          integration.toLowerCase().includes(query)
-        ) ||
+        workflow.integrations.some(integration => integration.toLowerCase().includes(query)) ||
         workflow.tags.some(tag => tag.toLowerCase().includes(query))
       );
     }
-
     if (params.trigger) {
-      filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.triggerType === params.trigger
-      );
+      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.triggerType === params.trigger);
     }
-
     if (params.complexity) {
-      filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.complexity === params.complexity
-      );
+      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.complexity === params.complexity);
     }
-
     if (params.category) {
-      filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.category === params.category
-      );
+      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.category === params.category);
     }
-
     if (params.active !== undefined) {
-      filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.active === params.active
-      );
+      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.active === params.active);
     }
-
     if (params.source) {
-      // Filter by source - for now, we'll use the filename pattern
-      // In a real implementation, this would filter by actual source repository
       filteredWorkflows = filteredWorkflows.filter(workflow =>
         workflow.filename.includes(params.source!.toLowerCase()) ||
         workflow.name.toLowerCase().includes(params.source!.toLowerCase())
       );
     }
 
-    // Apply pagination
     const offset = params.offset || 0;
     const limit = params.limit || 20;
     const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit);
-
-    // Update stats based on filtered workflows
     this.updateStatsFromWorkflows(filteredWorkflows);
-
-    return {
-      workflows: paginatedWorkflows,
-      total: filteredWorkflows.length,
-      hasMore: offset + limit < filteredWorkflows.length
-    };
+    return { workflows: paginatedWorkflows, total: filteredWorkflows.length, hasMore: offset + limit < filteredWorkflows.length };
   }
 
   /**
@@ -603,7 +568,14 @@ export class WorkflowIndexer {
     // Author fields
     const authorName: string | undefined = input?.authorName || input?.author || input?.user?.name || input?.user?.username;
     const authorUsername: string | undefined = input?.authorUsername || input?.user?.username;
-    const authorAvatar: string | undefined = input?.authorAvatar || input?.user?.avatar;
+    const toAbsoluteAvatar = (url?: string): string | undefined => {
+      if (!url) return undefined;
+      if (url.startsWith('http://') || url.startsWith('https://')) return url;
+      if (url.startsWith('//')) return `https:${url}`;
+      if (url.startsWith('/')) return `https://api.n8n.io${url}`;
+      return url;
+    };
+    const authorAvatar: string | undefined = toAbsoluteAvatar(input?.authorAvatar || input?.user?.avatar);
     const authorVerified: boolean | undefined = typeof input?.authorVerified === 'boolean' ? input?.authorVerified : (input?.user?.verified === true);
 
     // Trigger type
@@ -620,7 +592,7 @@ export class WorkflowIndexer {
     const complexityCandidate = (input?.complexity || '').toString();
     if (['Low', 'Medium', 'High'].includes(complexityCandidate)) {
       complexity = complexityCandidate as any;
-    } else {
+        } else {
       complexity = this.determineComplexity(filename);
     }
 
@@ -679,19 +651,8 @@ export class WorkflowIndexer {
   private async loadRealWorkflows(params: WorkflowSearchParams): Promise<WorkflowIndex[]> {
     try {
       console.log('Loading real workflows from GitHub API via Supabase Edge Function...');
-      
-      // Get Supabase URL and anon key from the client
-      const supabaseUrl = supabase.supabaseUrl;
-      const supabaseAnonKey = supabase.supabaseKey;
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        console.error('Supabase configuration missing');
-        return [];
-      }
-      
       const normalized = this.normalizeSourceKey(params.source);
 
-      // Paginated path for n8n.io to avoid large payloads and aggregate all templates
       if (normalized === 'n8n.io') {
         // Client-side fetch for n8n.io: try bulk once, then fallback to light pagination
         const startTs = Date.now();
@@ -837,6 +798,13 @@ export class WorkflowIndexer {
       }
 
       // Default single-call path for other sources
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('Supabase configuration missing');
+        return [];
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/fetch-github-workflows`, {
         method: 'POST',
         headers: {
@@ -1017,26 +985,95 @@ export class WorkflowIndexer {
   private async loadFromServerCache(source?: string): Promise<void> {
     try {
       const normalized = this.normalizeSourceKey(source);
-      const { data, error } = await supabase
-        .from('workflow_cache')
-        .select('*')
-        .eq('source', (normalized || 'all'))
-        .eq('version', this.cacheVersion)
-        .maybeSingle();
 
-      if (error) {
-        console.log(`No cached workflows found for source: ${(normalized || 'all')}, will fetch fresh data`);
+      // Build union for 'all' from per-source caches
+      if (!normalized || normalized === 'all') {
+        // Fetch rows, including shards via LIKE
+        const sourcesAll = ['all', 'github', 'n8n.io', 'ai-enhanced'];
+        const fetched: any[] = [];
+        for (const s of sourcesAll) {
+          const { data, error } = await (supabase as any)
+            .from('workflow_cache')
+            .select('source, workflows, last_fetch_time')
+            .eq('version', this.cacheVersion)
+            .like('source', `${s}%`);
+          if (!error && data) {
+            if (Array.isArray(data)) fetched.push(...data); else fetched.push(data);
+          }
+        }
+
+        if (fetched.length === 0) {
+          console.log(`No cached workflows found for union: ${(normalized || 'all')}, will fetch fresh data`);
+          return;
+        }
+
+        const allRow = fetched.find((r: any) => r.source === 'all');
+        const perSourceRows = fetched.filter((r: any) => r.source !== 'all');
+ 
+        const merged: WorkflowIndex[] = [];
+        const seen = new Set<string>();
+        let newestTs: number | null = null;
+        perSourceRows.forEach(r => {
+          const list: any[] = r?.workflows || [];
+          const ts = r?.last_fetch_time ? new Date(r.last_fetch_time).getTime() : null;
+          if (ts && (!newestTs || ts > newestTs)) newestTs = ts;
+          list.forEach(w => {
+            const key = String(w?.id || w?.filename || w?.name || Math.random());
+            if (seen.has(key)) return;
+            seen.add(key);
+            merged.push(this.normalizeWorkflowShape(w));
+          });
+        });
+ 
+        // Decide which set to use
+        let use: WorkflowIndex[] = merged;
+        if (merged.length === 0 && allRow) {
+          use = (allRow.workflows || []).map((w: any) => this.normalizeWorkflowShape(w));
+          newestTs = allRow?.last_fetch_time ? new Date(allRow.last_fetch_time).getTime() : null;
+        }
+ 
+        if (use.length > 0) {
+          this.workflows = use;
+          this.lastFetchTime = newestTs || (allRow?.last_fetch_time ? new Date(allRow.last_fetch_time).getTime() : null);
+          this.currentSourceKey = 'all';
+          this.updateStatsFromWorkflows(this.workflows);
+          console.log(`Loaded ${this.workflows.length} workflows from server cache for source: all (union)`);
+ 
+          // If union larger than stored 'all', update 'all'
+          const allCount = Array.isArray(allRow?.workflows) ? allRow.workflows.length : 0;
+          if (merged.length > allCount) {
+            await this.saveToServerCache(this.workflows, 'all');
+          }
+        }
         return;
       }
 
-      if (data && data.workflows && data.last_fetch_time) {
-        this.workflows = data.workflows;
-        this.lastFetchTime = new Date(data.last_fetch_time).getTime();
-        this.currentSourceKey = normalized || 'all';
-        // Recalculate stats from actual workflows to ensure accuracy
-        this.updateStatsFromWorkflows(this.workflows);
-        console.log(`Loaded ${this.workflows.length} workflows from server cache for source: ${(normalized || 'all')}`);
+      // Default: load a specific source cache (support shards via LIKE)
+      const { data, error } = await (supabase as any)
+        .from('workflow_cache')
+        .select('source, workflows, last_fetch_time')
+        .like('source', `${normalized}%`)
+        .eq('version', this.cacheVersion);
+
+      if (error || !data) {
+        console.log(`No cached workflows found for source: ${normalized}, will fetch fresh data`);
+        return;
       }
+
+      const rows: any[] = Array.isArray(data) ? data : [data];
+      const allWorkflows: any[] = [];
+      let newestTs: number | null = null;
+      rows.forEach((r: any) => {
+        const list = r?.workflows || [];
+        const ts = r?.last_fetch_time ? new Date(r.last_fetch_time).getTime() : null;
+        if (ts && (!newestTs || ts > newestTs)) newestTs = ts;
+        list.forEach((w: any) => allWorkflows.push(w));
+      });
+      this.workflows = allWorkflows;
+      this.lastFetchTime = newestTs || null;
+      this.currentSourceKey = normalized;
+      this.updateStatsFromWorkflows(this.workflows);
+      console.log(`Loaded ${this.workflows.length} workflows from server cache for source: ${normalized}`);
     } catch (error) {
       console.warn('Failed to load server cache:', error);
     }
@@ -1049,9 +1086,7 @@ export class WorkflowIndexer {
     try {
       const sourceKey = this.normalizeSourceKey(source) || 'all';
       console.log(`Saving ${workflows.length} workflows to cache for source: ${sourceKey}`);
-      
-      // Use upsert to handle both insert and update cases
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('workflow_cache')
         .upsert({
           version: this.cacheVersion,
@@ -1059,9 +1094,7 @@ export class WorkflowIndexer {
           last_fetch_time: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           source: sourceKey
-        }, {
-          onConflict: 'version,source'
-        });
+        }, { onConflict: 'version,source' });
 
       if (error) {
         console.error('Error saving to server cache:', error);
@@ -1079,8 +1112,32 @@ export class WorkflowIndexer {
   private filterWorkflows(workflows: WorkflowIndex[], params: WorkflowSearchParams): WorkflowIndex[] {
     let filtered = [...workflows];
 
+    const normalize = (s: string) => s.toLowerCase().trim();
+    const integrationSynonyms: Record<string, string[]> = {
+      'http request': ['http', 'http-request', 'request', 'api', 'fetch'],
+      'webhook': ['webhook', 'hook', 'callback'],
+      'gmail': ['gmail', 'google mail', 'email', 'mail'],
+      'google sheets': ['google sheets', 'sheets', 'spreadsheet'],
+      'google drive': ['google drive', 'drive'],
+      'openai': ['openai', 'gpt', 'chatgpt', 'ai'],
+      'slack': ['slack'],
+    };
+    const expandIntegrations = (names: string[]): string[] => {
+      const out = new Set<string>();
+      names.map(normalize).forEach(n => {
+        out.add(n);
+        Object.entries(integrationSynonyms).forEach(([canon, syns]) => {
+          if (n === canon || syns.includes(n)) {
+            out.add(canon);
+            syns.forEach(s => out.add(s));
+          }
+        });
+      });
+      return Array.from(out);
+    };
+
     if (params.q) {
-      const query = params.q.toLowerCase();
+      const query = normalize(params.q);
       filtered = filtered.filter(workflow =>
         workflow.name.toLowerCase().includes(query) ||
         workflow.description.toLowerCase().includes(query) ||
@@ -1091,21 +1148,30 @@ export class WorkflowIndexer {
       );
     }
 
-    if (params.trigger) {
+    if (params.integrations && params.integrations.length > 0) {
+      const wanted = expandIntegrations(params.integrations);
+      filtered = filtered.filter(w => {
+        const have = expandIntegrations(w.integrations || []);
+        // require at least one overlap
+        return wanted.some(x => have.includes(x));
+      });
+    }
+
+    if (params.trigger && params.trigger !== 'all') {
       filtered = filtered.filter(workflow =>
-        workflow.triggerType === params.trigger
+        workflow.triggerType.toLowerCase() === String(params.trigger).toLowerCase()
       );
     }
 
     if (params.complexity) {
       filtered = filtered.filter(workflow =>
-        workflow.complexity === params.complexity
+        workflow.complexity.toLowerCase() === params.complexity.toLowerCase()
       );
     }
 
     if (params.category) {
       filtered = filtered.filter(workflow =>
-        workflow.category === params.category
+        workflow.category.toLowerCase() === params.category.toLowerCase()
       );
     }
 
@@ -1119,18 +1185,14 @@ export class WorkflowIndexer {
       const sourceLower = params.source.toLowerCase();
       const normalized = this.normalizeSourceKey(params.source);
 
-      // If the in-memory list is already scoped to this source, do not filter again
       if (!normalized || this.currentSourceKey !== normalized) {
         filtered = filtered.filter(workflow => {
-          // Check if it's an n8n.io Official Templates workflow
           if (sourceLower.includes('n8n.io') || sourceLower.includes('official')) {
             return workflow.filename.startsWith('n8n-');
           }
-          // Check if it's a GitHub Community workflow
           if (sourceLower.includes('github') || sourceLower.includes('community')) {
             return !workflow.filename.startsWith('n8n-');
           }
-          // Check if it's AI-Enhanced workflows
           if (sourceLower.includes('ai-enhanced') || sourceLower.includes('free templates')) {
             return workflow.category === 'ai_ml' || 
                    workflow.integrations.some(integration => 
@@ -1139,7 +1201,6 @@ export class WorkflowIndexer {
                      integration.toLowerCase().includes('llm')
                    );
           }
-          // Default filtering
           return workflow.filename.includes(sourceLower) ||
                  workflow.name.toLowerCase().includes(sourceLower);
         });
@@ -1147,6 +1208,48 @@ export class WorkflowIndexer {
     }
 
     return filtered;
+  }
+
+  /**
+   * Load union of cached sources and set as current 'all'
+   */
+  private async loadAllFromServerCacheUnion(): Promise<void> {
+    try {
+      const sources = ['github', 'n8n.io', 'ai-enhanced'];
+      const rows: any[] = [];
+      for (const s of sources) {
+        const { data, error } = await (supabase as any)
+          .from('workflow_cache')
+          .select('source, workflows, last_fetch_time')
+          .eq('version', this.cacheVersion)
+          .eq('source', s)
+          .maybeSingle();
+        if (!error && data) rows.push(data);
+      }
+      if (rows.length === 0) {
+        console.log('No per-source caches available for union');
+        return;
+      }
+      const merged: WorkflowIndex[] = [];
+      const seen = new Set<string>();
+      for (const row of rows) {
+        const list: any[] = (row as any).workflows || [];
+        for (const w of list) {
+          const key = String(w?.id || w?.filename || w?.name || Math.random());
+          if (seen.has(key)) continue;
+          seen.add(key);
+          merged.push(this.normalizeWorkflowShape(w));
+        }
+      }
+      if (merged.length > 0) {
+        this.workflows = merged;
+        this.currentSourceKey = 'all';
+        this.updateStatsFromWorkflows(this.workflows);
+        console.log(`Union loaded ${merged.length} workflows from per-source caches into 'all'`);
+      }
+    } catch (e) {
+      console.warn('Failed to union per-source caches for all', e);
+    }
   }
 }
 

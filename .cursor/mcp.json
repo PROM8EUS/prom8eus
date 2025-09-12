@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "bash",
+      "args": [
+        "-lc",
+        "export SUPABASE_ACCESS_TOKEN=\"$(security find-generic-password -a prom8eus-mcp -s supabase-access-token -w)\" && npx -y @supabase/mcp-server-supabase@latest --access-token \"$SUPABASE_ACCESS_TOKEN\" --project-ref gasqdnyyrxmmojivlxon"
+      ]
+    }
+  }
+}
+
+

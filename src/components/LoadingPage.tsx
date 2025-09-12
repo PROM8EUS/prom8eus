@@ -16,13 +16,6 @@ const LoadingPage = () => {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-80 max-w-full mx-auto">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full animate-progress-bar"></div>
-          </div>
-        </div>
-
         {/* Loading Text */}
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-foreground">
