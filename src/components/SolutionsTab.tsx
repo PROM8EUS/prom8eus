@@ -65,6 +65,36 @@ export default function SolutionsTab({
     return hits;
   };
 
+  // Infer preferred developer integrations from subtasks
+  const inferPreferredIntegrations = (subs: typeof subtasks): string[] => {
+    const tokens = new Set<string>();
+    (subs || []).forEach(s => {
+      tokenize(s.name).forEach(t => tokens.add(t));
+      (s.keywords || []).forEach(k => tokens.add(k.toLowerCase()));
+    });
+    const add = (arr: string[], v: string) => { if (!arr.includes(v)) arr.push(v); };
+    const preferred: string[] = [];
+    const has = (t: string) => tokens.has(t);
+    if (has('react') || has('frontend') || has('web')) {
+      add(preferred, 'HTTP Request');
+      add(preferred, 'Webhook');
+      add(preferred, 'GitHub');
+      add(preferred, 'GraphQL');
+    }
+    if (has('node') || has('backend') || has('api') || has('server')) {
+      add(preferred, 'HTTP Request');
+      add(preferred, 'Webhook');
+      add(preferred, 'PostgreSQL');
+      add(preferred, 'MySQL');
+      add(preferred, 'MongoDB');
+      add(preferred, 'GitHub');
+    }
+    if (has('deploy') || has('vercel') || has('netlify')) {
+      add(preferred, 'GitHub');
+    }
+    return preferred;
+  };
+
   const loadSolutions = async () => {
     setLoading(true);
     setError(null);
@@ -72,12 +102,21 @@ export default function SolutionsTab({
     try {
       const q = [taskText || '', ...(subtasks || []).map(s => s.name)].filter(Boolean).join(' ');
       const apps = (selectedApplications || []).map(normalizeTool);
+      // Derive more tools from subtasks (heuristic extraction)
+      const subtaskTools = new Set<string>();
+      (subtasks || []).forEach(s => {
+        (s.keywords || []).forEach(k => subtaskTools.add(normalizeTool(k)));
+        tokenize(s.name).forEach(t => subtaskTools.add(normalizeTool(t)));
+      });
+      const wantedTools = new Set<string>([...apps, ...Array.from(subtaskTools)]);
       const kw = buildKeywordSet(q, subtasks);
       const perSubKw = buildPerSubtaskKeywords(subtasks);
+      const inferred = inferPreferredIntegrations(subtasks);
 
       // primary fetch: broad pool from unified cache (avoid prefiltering by q)
       let searchParams: any = { source: 'all', limit: 1200, offset: 0 };
-      if (apps.length > 0) searchParams.integrations = apps;
+      const wantedCombined = new Set<string>([...Array.from(wantedTools), ...inferred.map(normalizeTool)]);
+      if (wantedCombined.size > 0) searchParams.integrations = Array.from(wantedCombined);
       let { workflows } = await workflowIndexer.searchWorkflows(searchParams);
 
       // secondary fetch: query-scoped pool driven by task/subtasks
@@ -106,9 +145,19 @@ export default function SolutionsTab({
         const subMatches = perSubKw.map(set => countMatches(text, set) > 0 ? 1 : 0);
         const matchedSubtasks = subMatches.reduce((a, b) => a + b, 0);
         const strongHits = countMatches(text, kw);
-        const score = matchedSubtasks * 10 + strongHits; // prioritize subtask coverage
+        // Integration/trigger overlap boost
+        const have = new Set<string>((w.integrations || []).map((x: string) => normalizeTool(x)));
+        let toolOverlap = 0; Array.from(wantedCombined).forEach(t => { if (have.has(t)) toolOverlap++; });
+        const triggerBonus = ((w.triggerType || '').toString().toLowerCase().includes('webhook') && Array.from(wantedTools).includes('webhook')) ? 1 : 0;
+        const score = matchedSubtasks * 14 + strongHits + toolOverlap * 8 + triggerBonus * 3;
         return { w, matchedSubtasks, strongHits, score };
       });
+      // Require at least minimal overlap with preferred integrations if available
+      if (wantedCombined.size > 0) {
+        const wc = Array.from(wantedCombined);
+        const hasOverlap = (w: any) => (w.integrations || []).some((x: string) => wc.includes(normalizeTool(x)));
+        basePool = (scored.map(s => s.w)).filter(hasOverlap);
+      }
       let candidates = scored
         .filter(s => s.matchedSubtasks >= minSubtasks)
         .sort((a, b) => b.score - a.score)
