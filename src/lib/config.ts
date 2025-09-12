@@ -30,6 +30,13 @@ export interface AppConfig {
     enableWorkflowSearch: boolean;
     enableAgentRecommendations: boolean;
   };
+  recommendations: {
+    enableLLM: boolean;
+    topK: number;
+    llmTimeoutMs: number;
+    enableCache: boolean;
+    cacheTTLMinutes: number;
+  };
 }
 
 /**
@@ -66,6 +73,13 @@ export const getConfig = (): AppConfig => {
       enableAiAnalysis: import.meta.env.VITE_ENABLE_AI_ANALYSIS === 'true' || true,
       enableWorkflowSearch: import.meta.env.VITE_ENABLE_WORKFLOW_SEARCH === 'true' || true,
       enableAgentRecommendations: import.meta.env.VITE_ENABLE_AGENT_RECOMMENDATIONS === 'true' || true,
+    },
+    recommendations: {
+      enableLLM: import.meta.env.VITE_RECOMMENDATIONS_ENABLE_LLM === 'true' || true,
+      topK: parseInt(import.meta.env.VITE_RECOMMENDATIONS_TOP_K || '6'),
+      llmTimeoutMs: parseInt(import.meta.env.VITE_RECOMMENDATIONS_LLM_TIMEOUT_MS || '5000'),
+      enableCache: import.meta.env.VITE_RECOMMENDATIONS_ENABLE_CACHE === 'true' || true,
+      cacheTTLMinutes: parseInt(import.meta.env.VITE_RECOMMENDATIONS_CACHE_TTL_MINUTES || '60'),
     },
   };
 };
@@ -112,6 +126,14 @@ export const getGitHubConfig = () => {
 export const isAIEnabled = (): boolean => {
   const config = getConfig();
   return config.features.enableAiAnalysis && !!config.openai.apiKey;
+};
+
+/**
+ * Get recommendations configuration specifically
+ */
+export const getRecommendationsConfig = () => {
+  const config = getConfig();
+  return config.recommendations;
 };
 
 

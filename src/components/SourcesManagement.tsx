@@ -69,6 +69,8 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
   const [selectedWorkflowSource, setSelectedWorkflowSource] = useState<WorkflowSource | null>(null);
   const [githubTokenStatus, setGithubTokenStatus] = useState<'configured' | 'missing' | 'invalid'>('missing');
   const [workflowStats, setWorkflowStats] = useState<any>(null);
+  const [isIndexing, setIsIndexing] = useState(false);
+  const [indexingProgress, setIndexingProgress] = useState<string>('');
 
   useEffect(() => {
     loadSources();
@@ -322,6 +324,49 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
     loadWorkflowStats();
   };
 
+  const handleIndexWorkflows = async () => {
+    setIsIndexing(true);
+    setIndexingProgress('Starting workflow indexing...');
+    
+    try {
+      // Get Supabase URL from config
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error('Supabase URL not configured');
+      }
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/index-workflows`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          sources: ['github', 'n8n.io', 'ai-enhanced'],
+          batchSize: 800
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Indexing failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setIndexingProgress(`Indexed ${result.updated} features and ${result.embedded} embeddings`);
+      
+      // Reload stats after indexing
+      await loadWorkflowStats();
+      
+    } catch (error) {
+      console.error('Error indexing workflows:', error);
+      setIndexingProgress(`Error: ${(error as Error).message}`);
+    } finally {
+      setIsIndexing(false);
+      // Clear progress message after 3 seconds
+      setTimeout(() => setIndexingProgress(''), 3000);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -360,11 +405,32 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                githubTokenStatus === 'invalid' ? 'Ungültig' : 'Nicht konfiguriert'}
             </Badge>
           </div>
+          
+          {/* Indexing Progress */}
+          {indexingProgress && (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+              {indexingProgress}
+            </div>
+          )}
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          {lang === 'de' ? 'Quelle hinzufügen' : 'Add Source'}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleIndexWorkflows}
+            disabled={isIndexing}
+            variant="outline"
+          >
+            {isIndexing ? (
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Database className="w-4 h-4 mr-2" />
+            )}
+            {lang === 'de' ? 'Workflows indizieren' : 'Index Workflows'}
+          </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            {lang === 'de' ? 'Quelle hinzufügen' : 'Add Source'}
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -411,6 +477,21 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                     <span>Nodes: <span className="font-medium text-gray-900">{workflowStats.totalNodes.toLocaleString()}</span></span>
                   </div>
                 )}
+                
+                {/* Index Button for Individual Source */}
+                <Button 
+                  onClick={handleIndexWorkflows}
+                  disabled={isIndexing}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isIndexing ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Database className="w-4 h-4 mr-2" />
+                  )}
+                  {lang === 'de' ? 'Indizieren' : 'Index'}
+                </Button>
               </div>
               
               {/* Workflow Browser */}

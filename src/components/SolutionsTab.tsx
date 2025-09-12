@@ -5,6 +5,7 @@ import SolutionDetailModal from './SolutionDetailModal';
 import SolutionIcon from './ui/SolutionIcon';
 import { workflowIndexer } from '@/lib/workflowIndexer';
 import { rerankWorkflows } from '@/lib/aiRerank';
+import { recommendWorkflows } from '@/lib/recommendations/client';
 
 interface SolutionsTabProps {
   taskText?: string;
@@ -113,6 +114,58 @@ export default function SolutionsTab({
       const perSubKw = buildPerSubtaskKeywords(subtasks);
       const inferred = inferPreferredIntegrations(subtasks);
 
+      // First try server recommendation pipeline (Edge Function)
+      try {
+        const efSolutions = await recommendWorkflows({
+          taskText: taskText || '',
+          subtasks: (subtasks || []).map(s => ({ id: s.id, name: s.name, keywords: s.keywords })),
+          selectedApplications,
+          flags: { topK: 6 }
+        });
+        if (efSolutions && efSolutions.length > 0) {
+          const mappedEF = efSolutions.map((s, idx) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description || '',
+            type: 'workflow' as const,
+            category: 'Development & DevOps' as any,
+            subcategories: [],
+            difficulty: 'Intermediate' as any,
+            setupTime: 'Medium' as any,
+            deployment: 'Cloud' as any,
+            status: 'Active' as any,
+            tags: [],
+            automationPotential: 70,
+            estimatedROI: '—',
+            timeToValue: '—',
+            implementationPriority: 'Medium' as any,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            version: '1.0.0',
+            author: s.authorName || 'Community',
+            authorUsername: undefined,
+            authorAvatarUrl: s.authorAvatarUrl,
+            authorVerified: s.authorVerified,
+            documentationUrl: undefined,
+            demoUrl: undefined,
+            githubUrl: undefined,
+            pricing: 'Free' as any,
+            requirements: [],
+            useCases: [],
+            integrations: (s.integrations || []).map(x => ({ platform: x, type: 'API' as any, description: '', setupComplexity: 'Low' as any, apiKeyRequired: false })),
+            metrics: { usageCount: 0, successRate: 95, averageExecutionTime: 30, errorRate: 2, userRating: 4.4, reviewCount: 0, lastUsed: new Date(), performanceScore: 80 },
+            workflow: { id: s.id, name: s.name, description: s.description || '', category: 'General', difficulty: 'Medium' as any, estimatedTime: '—', estimatedCost: '—', nodes: 0, connections: 0, downloads: 0, rating: 4.4, createdAt: new Date().toISOString(), url: '', jsonUrl: '', active: true, triggerType: 'Manual', integrations: s.integrations || [], author: s.authorName || 'Community' } as any,
+            workflowMetadata: { nodeCount: 0, triggerType: 'Manual', executionTime: '—', complexity: 'Moderate' as any, dependencies: [], estimatedExecutionTime: '—' }
+          }));
+          setSolutions(mappedEF);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('[Solutions] recommend-workflows failed, falling back to local pipeline', e);
+      }
+
+      // Fallback: local pipeline from cache
       // primary fetch: broad pool from unified cache (avoid prefiltering by q)
       let searchParams: any = { source: 'all', limit: 1200, offset: 0 };
       const wantedCombined = new Set<string>([...Array.from(wantedTools), ...inferred.map(normalizeTool)]);
