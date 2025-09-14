@@ -22,6 +22,7 @@ export interface SolutionData {
   lastUpdated?: string;
   authorName?: string;
   authorAvatarUrl?: string;
+  authorEmail?: string;
   authorVerified?: boolean;
   pricing?: 'Free' | 'Freemium' | 'Paid' | 'Enterprise';
 }
@@ -67,6 +68,7 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
                 ? solution.authorName
                 : 'Community'}
               avatarUrl={solution.authorAvatarUrl}
+              email={solution.authorEmail}
               verified={solution.authorVerified}
             />
             {solution.pricing && (

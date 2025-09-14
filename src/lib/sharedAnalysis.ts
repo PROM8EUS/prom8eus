@@ -29,7 +29,7 @@ export class SharedAnalysisService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdhc3Fkbnl5cnhtbW9qaXZseG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1OTgzNzcsImV4cCI6MjA3MTE3NDM3N30.fg3QUR471VbKWFaz4HnUqx2lQxcHFmNOwAaxRNgYLLE'}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           action: 'store',
@@ -75,7 +75,7 @@ export class SharedAnalysisService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdhc3Fkbnl5cnhtbW9qaXZseG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1OTgzNzcsImV4cCI6MjA3MTE3NDM3N30.fg3QUR471VbKWFaz4HnUqx2lQxcHFmNOwAaxRNgYLLE'}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           action: 'get',

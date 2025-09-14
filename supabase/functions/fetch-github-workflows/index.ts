@@ -64,7 +64,7 @@ function normalizeSource(source: string): string {
 }
 
 async function loadGithubWorkflows(repoUrl: string) {
-  const githubToken = Deno?.env?.get('GITHUB_TOKEN') || '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';
+  const githubToken = Deno?.env?.get('VITE_GITHUB_TOKEN');
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.github.v3+json',
     'User-Agent': 'prom8eus-workflow-indexer',

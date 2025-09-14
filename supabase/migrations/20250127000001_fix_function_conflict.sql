@@ -1,11 +1,11 @@
--- Fix the shared analysis function to resolve the "views" column ambiguity
+-- Drop the existing function to fix the return type conflict
+DROP FUNCTION IF EXISTS public.get_shared_analysis(TEXT);
+
+-- Recreate the function with the correct return type
 CREATE OR REPLACE FUNCTION public.get_shared_analysis(share_id_param TEXT)
 RETURNS TABLE (
-  analysis_data JSONB,
   original_text TEXT,
   job_title TEXT,
-  total_score INTEGER,
-  task_count INTEGER,
   created_at TIMESTAMP WITH TIME ZONE,
   view_count INTEGER
 )
@@ -22,11 +22,8 @@ BEGIN
   -- Return the analysis data
   RETURN QUERY
   SELECT 
-    sa.analysis_data,
     sa.original_text,
     sa.job_title,
-    sa.total_score,
-    sa.task_count,
     sa.created_at,
     sa.views
   FROM public.shared_analyses sa
@@ -35,3 +32,5 @@ BEGIN
     AND sa.expires_at > now();
 END;
 $$;
+
+

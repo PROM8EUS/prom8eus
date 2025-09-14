@@ -27,7 +27,7 @@ const AppIcon: React.FC<AppIconProps> = ({
   };
 
   // Get logo.dev API key from environment variables
-  const LOGO_DEV_API_KEY = import.meta.env.VITE_LOGO_DEV_API_KEY || 'pk_RlxzoJ1YTPivN8xYILyQTw';
+  const LOGO_DEV_API_KEY = import.meta.env.VITE_LOGO_DEV_API_KEY;
   
   // Map tool IDs to their logo.dev URLs
   const getLogoUrl = (tool: AITool): string => {

@@ -45,7 +45,7 @@ export interface AppConfig {
 export const getConfig = (): AppConfig => {
   // Get API key from environment variables
   const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  const githubToken = import.meta.env.VITE_GITHUB_TOKEN || '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';
+  const githubToken = import.meta.env.VITE_GITHUB_TOKEN;
 
   return {
     openai: {
@@ -90,12 +90,34 @@ export const getConfig = (): AppConfig => {
 export const validateConfig = (config: AppConfig): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
+  // OpenAI API Key validation
   if (!config.openai.apiKey) {
-    errors.push('OpenAI API key is required');
+    errors.push('OpenAI API key is required (VITE_OPENAI_API_KEY)');
+  } else if (!config.openai.apiKey.startsWith('sk-')) {
+    errors.push('OpenAI API key format appears invalid (should start with "sk-")');
   }
 
-  if (config.openai.apiKey && !config.openai.apiKey.startsWith('sk-')) {
-    errors.push('OpenAI API key format appears invalid');
+  // Supabase configuration validation
+  if (!config.supabase.url) {
+    errors.push('Supabase URL is required (VITE_SUPABASE_URL)');
+  } else if (!config.supabase.url.includes('supabase.co')) {
+    errors.push('Supabase URL format appears invalid (should contain "supabase.co")');
+  }
+
+  if (!config.supabase.anonKey) {
+    errors.push('Supabase anon key is required (VITE_SUPABASE_ANON_KEY)');
+  } else if (!config.supabase.anonKey.startsWith('eyJ')) {
+    errors.push('Supabase anon key format appears invalid (should be a JWT token)');
+  }
+
+  // GitHub token validation (optional but format check if provided)
+  if (config.github.token && !config.github.token.startsWith('ghp_') && !config.github.token.startsWith('github_pat_')) {
+    errors.push('GitHub token format appears invalid (should start with "ghp_" or "github_pat_")');
+  }
+
+  // Admin password validation (security check)
+  if (config.app.env === 'production' && import.meta.env.VITE_ADMIN_PASSWORD === 'admin123') {
+    errors.push('Default admin password detected in production environment - please set a secure password');
   }
 
   return {

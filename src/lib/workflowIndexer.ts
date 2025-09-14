@@ -1048,32 +1048,67 @@ export class WorkflowIndexer {
         return;
       }
 
-      // Default: load a specific source cache (support shards via LIKE)
-      const { data, error } = await (supabase as any)
-        .from('workflow_cache')
-        .select('source, workflows, last_fetch_time')
-        .like('source', `${normalized}%`)
-        .eq('version', this.cacheVersion);
+      // Default: load a specific source cache using Edge Function (handles large data)
+      try {
+        const { data: edgeData, error: edgeError } = await supabase.functions.invoke('get-workflow-cache', {
+          body: {
+            source: normalized,
+            version: this.cacheVersion,
+            pageSize: 10000 // Large page size to get all workflows
+          }
+        });
 
-      if (error || !data) {
-        console.log(`No cached workflows found for source: ${normalized}, will fetch fresh data`);
-        return;
+        if (edgeError || !edgeData || !edgeData.data) {
+          console.log(`No cached workflows found for source: ${normalized}, will fetch fresh data`);
+          return;
+        }
+
+        const allWorkflows: any[] = edgeData.data || [];
+        let newestTs: number | null = null;
+        
+        // Find the newest timestamp from the sources metadata
+        if (edgeData.sources && Array.isArray(edgeData.sources)) {
+          edgeData.sources.forEach((source: any) => {
+            const ts = source.last_fetch_time ? new Date(source.last_fetch_time).getTime() : null;
+            if (ts && (!newestTs || ts > newestTs)) newestTs = ts;
+          });
+        }
+
+        this.workflows = allWorkflows;
+        this.lastFetchTime = newestTs || null;
+        this.currentSourceKey = normalized;
+        this.updateStatsFromWorkflows(this.workflows);
+        console.log(`Loaded ${this.workflows.length} workflows from server cache for source: ${normalized}`);
+      } catch (edgeError) {
+        console.warn('Failed to load server cache via Edge Function, falling back to direct API:', edgeError);
+        
+        // Fallback to direct API call (may fail with large data)
+        const { data, error } = await (supabase as any)
+          .from('workflow_cache')
+          .select('source, workflows, last_fetch_time')
+          .like('source', `${normalized}%`)
+          .eq('version', this.cacheVersion);
+
+        if (error || !data) {
+          console.log(`No cached workflows found for source: ${normalized}, will fetch fresh data`);
+          return;
+        }
+
+        const rows: any[] = Array.isArray(data) ? data : [data];
+        const allWorkflows: any[] = [];
+        let newestTs: number | null = null;
+        rows.forEach((r: any) => {
+          const list = r?.workflows || [];
+          const ts = r?.last_fetch_time ? new Date(r.last_fetch_time).getTime() : null;
+          if (ts && (!newestTs || ts > newestTs)) newestTs = ts;
+          list.forEach((w: any) => allWorkflows.push(w));
+        });
+        this.workflows = allWorkflows;
+        this.lastFetchTime = newestTs || null;
+        this.currentSourceKey = normalized;
+        this.updateStatsFromWorkflows(this.workflows);
+        console.log(`Loaded ${this.workflows.length} workflows from server cache for source: ${normalized}`);
       }
-
-      const rows: any[] = Array.isArray(data) ? data : [data];
-      const allWorkflows: any[] = [];
-      let newestTs: number | null = null;
-      rows.forEach((r: any) => {
-        const list = r?.workflows || [];
-        const ts = r?.last_fetch_time ? new Date(r.last_fetch_time).getTime() : null;
-        if (ts && (!newestTs || ts > newestTs)) newestTs = ts;
-        list.forEach((w: any) => allWorkflows.push(w));
-      });
-      this.workflows = allWorkflows;
-      this.lastFetchTime = newestTs || null;
-      this.currentSourceKey = normalized;
-      this.updateStatsFromWorkflows(this.workflows);
-      console.log(`Loaded ${this.workflows.length} workflows from server cache for source: ${normalized}`);
     } catch (error) {
       console.warn('Failed to load server cache:', error);
     }

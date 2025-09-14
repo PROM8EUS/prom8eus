@@ -43,6 +43,7 @@ export interface BaseSolution {
   author: string;
   authorUsername?: string;
   authorAvatarUrl?: string;
+  authorEmail?: string;
   authorVerified?: boolean;
   documentationUrl?: string;
   demoUrl?: string;

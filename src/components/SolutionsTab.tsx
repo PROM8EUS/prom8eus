@@ -145,6 +145,7 @@ export default function SolutionsTab({
             author: s.authorName || 'Community',
             authorUsername: undefined,
             authorAvatarUrl: s.authorAvatarUrl,
+            authorEmail: undefined, // Edge Function doesn't provide email yet
             authorVerified: s.authorVerified,
             documentationUrl: undefined,
             demoUrl: undefined,
@@ -307,6 +308,7 @@ export default function SolutionsTab({
         author: (w as any).authorName || (w as any).authorUsername || 'Community',
         authorUsername: (w as any).authorUsername,
         authorAvatarUrl: (w as any).authorAvatar,
+        authorEmail: (w as any).authorUsername, // Use username as potential email
         authorVerified: (w as any).authorVerified,
         documentationUrl: undefined,
         demoUrl: undefined,
@@ -480,6 +482,7 @@ export default function SolutionsTab({
                       ? solution.author
                       : (solution.authorUsername || 'Community'),
                     authorAvatarUrl: solution.authorAvatarUrl,
+                    authorEmail: solution.authorEmail,
                     authorVerified: !!solution.authorVerified,
                     pricing: solution.pricing,
                   }}
