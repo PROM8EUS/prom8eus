@@ -503,22 +503,25 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
 
   if (!isVisible) return null;
 
+  // Memoize task object to prevent unnecessary re-renders
+  const businessCaseTask = useMemo(() => ({
+    name: task.name || task.title,
+    text: task.description,
+    automationRatio: realSubtasks.reduce((acc, s) => acc + s.automationPotential, 0) / Math.max(realSubtasks.length, 1) * 100,
+    humanRatio: realSubtasks.reduce((acc, s) => acc + (1 - s.automationPotential), 0) / Math.max(realSubtasks.length, 1) * 100,
+    subtasks: realSubtasks.map(s => ({
+      id: s.id,
+      title: s.title,
+      estimatedTime: s.manualHoursShare * basePerTaskHours, // base at day; BusinessCase scales by period
+      automationPotential: s.automationPotential
+    }))
+  }), [task.name, task.title, task.description, realSubtasks, basePerTaskHours]);
+
   return (
     <div className="space-y-6">
       {/* Business Case */}
       <BusinessCase 
-        task={{
-          name: task.name || task.title,
-          text: task.description,
-          automationRatio: realSubtasks.reduce((acc, s) => acc + s.automationPotential, 0) / Math.max(realSubtasks.length, 1) * 100,
-          humanRatio: realSubtasks.reduce((acc, s) => acc + (1 - s.automationPotential), 0) / Math.max(realSubtasks.length, 1) * 100,
-          subtasks: realSubtasks.map(s => ({
-            id: s.id,
-            title: s.title,
-            estimatedTime: s.manualHoursShare * basePerTaskHours, // base at day; BusinessCase scales by period
-            automationPotential: s.automationPotential
-          }))
-        }}
+        task={businessCaseTask}
         lang={lang}
         period={period}
         onPeriodChange={(p) => setPeriod(p)}
