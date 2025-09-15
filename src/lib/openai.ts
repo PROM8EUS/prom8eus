@@ -307,7 +307,7 @@ JSON-Format:
         "id": "workflow-1",
         "name": "Workflow Name",
         "description": "Beschreibung des Workflows",
-        "automationPotential": 85,
+      "automationPotential": 85,
         "setupTime": "2-4 Wochen",
         "cost": "Freemium",
         "systems": ["n8n", "Zapier"],
@@ -393,7 +393,7 @@ JSON Format:
         "id": "workflow-1",
         "name": "Workflow Name",
         "description": "Workflow description",
-        "automationPotential": 85,
+      "automationPotential": 85,
         "setupTime": "2-4 weeks",
         "cost": "Freemium",
         "systems": ["n8n", "Zapier"],
@@ -458,8 +458,8 @@ FOCUS: Consistent numbers across all areas. Physical tasks have low automation v
 
     try {
       const response = await this.chatCompletion([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
       ], {
         temperature: 0.4,
         max_tokens: 3000, // Mehr Token für komplette Analyse
@@ -481,7 +481,7 @@ FOCUS: Consistent numbers across all areas. Physical tasks have low automation v
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
           console.log('✅ Extracted JSON from response');
-          return parsed;
+      return parsed;
         }
         
         throw error;

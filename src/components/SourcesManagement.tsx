@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppIconCard, AppIcon } from '@/components/AppIcon';
 import { getToolDescription, getToolFeatures } from '@/lib/catalog/aiTools';
+import WorkflowRefreshControls from '@/components/WorkflowRefreshControls';
 import { 
   Plus, 
   Edit, 
@@ -68,6 +69,10 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
   const [selectedTool, setSelectedTool] = useState<any>(null);
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
   const [selectedWorkflowSource, setSelectedWorkflowSource] = useState<WorkflowSource | null>(null);
+  const [managedSource, setManagedSource] = useState<WorkflowSource | null>(null);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [editSource, setEditSource] = useState<Partial<WorkflowSource> | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string>('');
   const [githubTokenStatus, setGithubTokenStatus] = useState<'configured' | 'missing' | 'invalid'>('missing');
   const [workflowStats, setWorkflowStats] = useState<any>(null);
   const [isIndexing, setIsIndexing] = useState(false);
@@ -119,49 +124,59 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
     setIsLoading(true);
     
     try {
-      // Load real workflow sources
-      const workflowSourcesData: WorkflowSource[] = [
+      // Define supported sources (display metadata)
+      const baseSources: Array<Omit<WorkflowSource, 'workflowCount' | 'lastUpdated' | 'status'>> = [
         {
-          id: '1',
+          id: 'github',
           name: 'n8n Community Workflows',
           type: 'github',
           url: 'https://github.com/Zie619/n8n-workflows',
           description: 'Community-driven n8n workflow collection with ready-to-use workflows for automation',
-          category: 'General',
-          workflowCount: 0, // Will be updated with real count
-          lastUpdated: new Date().toISOString().split('T')[0],
-          status: 'active'
+          category: 'General'
         },
         {
-          id: '2',
+          id: 'n8n.io',
           name: 'n8n.io Official Templates',
           type: 'api',
           url: 'https://n8n.io/workflows/',
-          description: 'Official n8n workflow templates and examples (5,386+ templates)',
-          category: 'Official',
-          workflowCount: 5386,
-          lastUpdated: new Date().toISOString().split('T')[0],
-          status: 'active'
+          description: 'Official n8n workflow templates and examples',
+          category: 'Official'
         },
         {
-          id: '3',
+          id: 'ai-enhanced',
           name: 'n8n Free Templates (AI-Enhanced)',
           type: 'github',
           url: 'https://github.com/wassupjay/n8n-free-templates',
-          description: '200+ plug-and-play n8n workflows that fuse classic automation with AI stack—vector DBs, embeddings, and LLMs',
-          category: 'AI-Enhanced',
-          workflowCount: 200,
-          lastUpdated: new Date().toISOString().split('T')[0],
-          status: 'active'
+          description: 'Plug-and-play n8n workflows combining classic automation with AI stack',
+          category: 'AI-Enhanced'
         }
       ];
 
-      // Use estimated counts for now (GitHub API requires valid token)
-      workflowSourcesData[0].workflowCount = 2053;
-      workflowSourcesData[1].workflowCount = 5386;
-      workflowSourcesData[2].workflowCount = 200;
+      // Enrich with real cache status and stats
+      const enriched = await Promise.all(baseSources.map(async (s) => {
+        const cache = await workflowIndexer.getCacheStatus(s.id);
+        const stats = await workflowIndexer.getStats(s.id);
+        const last = cache.lastFetch ? cache.lastFetch.toISOString().split('T')[0] : '-';
+        const status: WorkflowSource['status'] = cache.hasCache ? 'active' : 'inactive';
+        return {
+          ...s,
+          workflowCount: stats.total || cache.workflowCount || 0,
+          lastUpdated: last,
+          status
+        } as WorkflowSource;
+      }));
 
-      setWorkflowSources(workflowSourcesData);
+      // Apply persisted overrides (edited fields)
+      const overridesRaw = localStorage.getItem('workflow_source_overrides');
+      let overrides: Record<string, Partial<WorkflowSource>> = {};
+      try { overrides = overridesRaw ? JSON.parse(overridesRaw) : {}; } catch {}
+      const withOverrides = enriched.map((s) => {
+        const o = overrides[s.id];
+        if (!o) return s;
+        return { ...s, ...o } as WorkflowSource;
+      });
+
+      setWorkflowSources(withOverrides);
 
       // Load real AI agent sources (Repositories of AI Agents)
       const aiAgentSourcesData: AIAgentSource[] = [
@@ -292,6 +307,36 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
     // Load workflow stats for the specific source
     const sourceKey = getSourceKey(source.name);
     await loadWorkflowStats(sourceKey);
+  };
+
+  const openManageModal = async (source: WorkflowSource) => {
+    setManagedSource(source);
+    setEditSource({ ...source });
+    const sourceKey = getSourceKey(source.name) || source.id;
+    await loadWorkflowStats(sourceKey);
+    setIsManageModalOpen(true);
+  };
+
+  const saveSourceEdits = async () => {
+    if (!managedSource || !editSource) return;
+    // Persist overrides in localStorage
+    const overridesRaw = localStorage.getItem('workflow_source_overrides');
+    let overrides: Record<string, Partial<WorkflowSource>> = {};
+    try { overrides = overridesRaw ? JSON.parse(overridesRaw) : {}; } catch {}
+    overrides[managedSource.id] = {
+      name: editSource.name,
+      type: editSource.type as any,
+      url: editSource.url,
+      description: editSource.description,
+      category: editSource.category
+    };
+    localStorage.setItem('workflow_source_overrides', JSON.stringify(overrides));
+    setSaveMessage(lang === 'de' ? 'Änderungen gespeichert' : 'Changes saved');
+    await loadSources();
+    // Update current state view
+    const updated = (await workflowSources.find(s => s.id === managedSource.id)) || managedSource;
+    setManagedSource(updated);
+    setTimeout(() => setSaveMessage(''), 2000);
   };
 
   const handleBackToSources = () => {
@@ -513,7 +558,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                           View Source
                         </a>
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openManageModal(source); }}>
                         Manage
                       </Button>
                     </div>
@@ -622,6 +667,117 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
               <div>
                 <h4 className="font-medium mb-2">Category</h4>
                 <Badge variant="outline">{selectedTool.category}</Badge>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Source Modal */}
+      <Dialog open={isManageModalOpen} onOpenChange={setIsManageModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {managedSource && (
+                <>
+                  {getTypeIcon(managedSource.type)}
+                  <span>{managedSource.name}</span>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {managedSource && (
+            <div className="space-y-4">
+              {/* Live cache controls */}
+              <WorkflowRefreshControls source={managedSource.id} onRefresh={async () => {
+                // Reload live stats into card list after refresh
+                await loadSources();
+                const key = getSourceKey(managedSource.name) || managedSource.id;
+                await loadWorkflowStats(key);
+              }} />
+
+              {/* Stats overview */}
+              {workflowStats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-muted/30 p-3 rounded">
+                  <div>
+                    <Label className="text-gray-500">Total</Label>
+                    <p className="font-medium">{workflowStats.total?.toLocaleString?.() || 0}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Active</Label>
+                    <p className="font-medium">{workflowStats.active?.toLocaleString?.() || 0}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Integrations</Label>
+                    <p className="font-medium">{workflowStats.uniqueIntegrations || 0}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Nodes</Label>
+                    <p className="font-medium">{workflowStats.totalNodes?.toLocaleString?.() || 0}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit form */}
+              {editSource && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Name</Label>
+                      <Input value={editSource.name || ''} onChange={(e) => setEditSource({ ...editSource, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Type</Label>
+                      <Select value={(editSource.type as any) || 'github'} onValueChange={(v) => setEditSource({ ...editSource, type: v as any })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="github">github</SelectItem>
+                          <SelectItem value="api">api</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>URL</Label>
+                      <Input value={editSource.url || ''} onChange={(e) => setEditSource({ ...editSource, url: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Category</Label>
+                      <Input value={editSource.category || ''} onChange={(e) => setEditSource({ ...editSource, category: e.target.value })} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Beschreibung</Label>
+                      <Textarea value={editSource.description || ''} onChange={(e) => setEditSource({ ...editSource, description: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={saveSourceEdits}>
+                      {lang === 'de' ? 'Speichern' : 'Save'}
+                    </Button>
+                    {saveMessage && (
+                      <span className="text-sm text-green-700">{saveMessage}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick actions */}
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={async () => {
+                  await workflowIndexer.forceRefreshWorkflows(managedSource.id);
+                  await loadSources();
+                }}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {lang === 'de' ? 'Quelle aktualisieren' : 'Refresh Source'}
+                </Button>
+                <Button variant="secondary" asChild>
+                  <a href={managedSource.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {lang === 'de' ? 'Quelle anzeigen' : 'Open Source'}
+                  </a>
+                </Button>
               </div>
             </div>
           )}

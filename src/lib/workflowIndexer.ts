@@ -58,6 +58,24 @@ export interface WorkflowSearchParams {
   offset?: number;
 }
 
+export interface SourceQualityMetrics {
+  completeness: number; // 0-100: How complete the data is
+  accuracy: number; // 0-100: How accurate the data is
+  freshness: number; // 0-100: How fresh the data is
+  consistency: number; // 0-100: How consistent the data structure is
+  overall: number; // 0-100: Overall quality score
+}
+
+export interface SourcePerformanceMetrics {
+  responseTime: number; // Average response time in ms
+  successRate: number; // 0-100: Success rate percentage
+  errorRate: number; // 0-100: Error rate percentage
+  uptime: number; // 0-100: Uptime percentage
+  lastChecked: Date;
+  totalRequests: number;
+  failedRequests: number;
+}
+
 export class WorkflowIndexer {
   private baseUrl = 'https://api.github.com/repos/Zie619/n8n-workflows';
   private workflows: WorkflowIndex[] = [];
@@ -66,6 +84,8 @@ export class WorkflowIndexer {
   private cacheVersion = 'v1.5.0';
   private lastFetchTime: number | null = null;
   private currentSourceKey: string | undefined = undefined;
+  private sourceQualityCache = new Map<string, SourceQualityMetrics>();
+  private sourcePerformanceCache = new Map<string, SourcePerformanceMetrics>();
 
   constructor() {
     this.initializeStats();

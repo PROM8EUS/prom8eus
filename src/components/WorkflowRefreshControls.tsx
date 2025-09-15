@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { RefreshCw, Clock, Database, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { RefreshCw, Clock, Database, CheckCircle, XCircle, Loader2, Trash2 } from 'lucide-react';
 import { workflowIndexer } from '@/lib/workflowIndexer';
 
 interface WorkflowRefreshControlsProps {
@@ -17,6 +17,7 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
   const [workflowCount, setWorkflowCount] = useState(0);
   const [hasCache, setHasCache] = useState(false);
   const [refreshResult, setRefreshResult] = useState<{ success: boolean; count: number; error?: string } | null>(null);
+  const [invalidateMsg, setInvalidateMsg] = useState<string>('');
 
   // Convert source name to cache key
   const getCacheKey = (sourceName?: string) => {
@@ -75,6 +76,30 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
     }
   };
 
+  const handleInvalidate = async () => {
+    try {
+      const cacheKey = getCacheKey(source);
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const supabaseAnon = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnon) throw new Error('Supabase config missing');
+      const resp = await fetch(`${supabaseUrl}/rest/v1/workflow_cache?source=like.${cacheKey}%`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseAnon,
+          'Authorization': `Bearer ${supabaseAnon}`
+        }
+      });
+      if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
+      setInvalidateMsg('Cache invalidiert');
+      await loadCacheStatus();
+      if (onRefresh) onRefresh();
+      setTimeout(() => setInvalidateMsg(''), 2500);
+    } catch (e) {
+      setInvalidateMsg(`Fehler: ${(e as Error).message}`);
+      setTimeout(() => setInvalidateMsg(''), 3500);
+    }
+  };
+
   const formatLastFetch = (date: Date | null) => {
     if (!date) return 'Nie';
     
@@ -104,19 +129,30 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
             />
           </div>
           
-          <Button 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            size="sm"
-            className="flex items-center gap-1.5"
-          >
-            {isRefreshing ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3" />
-            )}
-            {isRefreshing ? 'Lädt...' : 'Aktualisieren'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={handleInvalidate}
+              disabled={isRefreshing}
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3 h-3" /> Invalidate
+            </Button>
+            <Button 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              {isRefreshing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
+              {isRefreshing ? 'Lädt...' : 'Aktualisieren'}
+            </Button>
+          </div>
         </div>
 
         {/* Compact Status Row */}
@@ -153,6 +189,9 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
           </div>
         )}
       </CardContent>
+      {invalidateMsg && (
+        <div className="px-4 pb-3 text-xs text-gray-600">{invalidateMsg}</div>
+      )}
     </Card>
   );
 }
