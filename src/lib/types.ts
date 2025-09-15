@@ -23,11 +23,46 @@ export interface FastAnalysisResult {
   confidence: number;
   pattern: string;
   category: string;
-  complexity: 'low' | 'medium' | 'high';
-  trend: 'increasing' | 'stable' | 'decreasing';
-  systems: string[];
-  label: 'Automatisierbar' | 'Teilweise Automatisierbar' | 'Mensch';
+  complexity?: 'low' | 'medium' | 'high';
+  trend?: 'increasing' | 'stable' | 'decreasing';
+  systems?: string[];
+  label?: 'Automatisierbar' | 'Teilweise Automatisierbar' | 'Mensch';
   reasoning: string;
-  analysisTime: number;
+  analysisTime?: number;
   subtasks?: DynamicSubtask[];
+  businessCase?: {
+    manualHours: number;
+    automatedHours: number;
+    automationPotential: number;
+    savedHours: number;
+    setupCostHours: number;
+    setupCostMoney: number;
+    roi: number;
+    paybackPeriodYears: number;
+    hourlyRateEmployee: number;
+    hourlyRateFreelancer: number;
+    employmentType: 'employee' | 'freelancer';
+    reasoning: string;
+  };
+  solutions?: {
+    workflows: Array<{
+      id: string;
+      name: string;
+      description: string;
+      automationPotential: number;
+      setupTime: string;
+      cost: string;
+      systems: string[];
+      benefits: string[];
+    }>;
+    agents: Array<{
+      id: string;
+      name: string;
+      technology: string;
+      implementation: string;
+      difficulty: string;
+      setupTime: string;
+      benefits: string[];
+    }>;
+  };
 }

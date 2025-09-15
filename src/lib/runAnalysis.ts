@@ -28,6 +28,41 @@ export interface Task {
     opportunities: string[];
     dependencies: string[];
   }>;
+  businessCase?: {
+    manualHours: number;
+    automatedHours: number;
+    automationPotential: number;
+    savedHours: number;
+    setupCostHours: number;
+    setupCostMoney: number;
+    roi: number;
+    paybackPeriodYears: number;
+    hourlyRateEmployee: number;
+    hourlyRateFreelancer: number;
+    employmentType: 'employee' | 'freelancer';
+    reasoning: string;
+  };
+  solutions?: {
+    workflows: Array<{
+      id: string;
+      name: string;
+      description: string;
+      automationPotential: number;
+      setupTime: string;
+      cost: string;
+      systems: string[];
+      benefits: string[];
+    }>;
+    agents: Array<{
+      id: string;
+      name: string;
+      technology: string;
+      implementation: string;
+      difficulty: string;
+      setupTime: string;
+      benefits: string[];
+    }>;
+  };
 }
 
 export interface AnalysisResult {
@@ -53,20 +88,9 @@ export async function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Pr
   }
 
   try {
-    // Import AI analysis dynamically to avoid circular dependencies
-    const { analyzeJobWithAI } = await import('./aiAnalysis');
-    const aiResult = await analyzeJobWithAI(jobText, lang);
-    
-    if (!aiResult.aiEnabled || aiResult.tasks.length === 0) {
-      throw new Error('AI-Analyse fehlgeschlagen - keine Aufgaben extrahiert');
-    }
-    
-    console.log('✅ AI-enhanced task extraction successful:', aiResult.tasks.length, 'tasks');
-    const extractedTasks = aiResult.tasks.map(t => t.text);
-
-    // Step 2: AI-enhanced analysis
-    console.log('🚀 Starting AI-enhanced analysis...');
-    const fastResults = await analyzeTasksWithAI(extractedTasks, jobText, lang);
+    // Direct complete analysis (tasks + subtasks + business case + solutions)
+    console.log('🚀 Starting complete AI analysis...');
+    const fastResults = await analyzeJobWithCompleteAI(jobText, lang);
     
     // Step 3: Convert FastAnalysisResult to Task format with subtasks
     console.log('🔄 Converting to task format...');
@@ -90,7 +114,9 @@ export async function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Pr
       humanRatio: 100 - result.automationPotential,
       complexity: result.complexity,
       automationTrend: result.trend || 'stable' as const,
-      subtasks: result.subtasks || [] // Include subtasks from pattern engine
+      subtasks: result.subtasks || [], // Include subtasks from complete analysis
+      businessCase: result.businessCase, // Include complete business case data
+      solutions: result.solutions
     };
   });
   
@@ -836,15 +862,93 @@ function calculateSimilarity(str1: string, str2: string): number {
 }
 
 /**
+ * Complete Job Analysis - generates main tasks with subtasks, business case, and solutions
+ */
+async function analyzeJobWithCompleteAI(
+  jobText: string,
+  lang: 'de' | 'en' = 'de'
+): Promise<FastAnalysisResult[]> {
+  console.log('🤖 Starting COMPLETE job analysis...');
+  
+  if (!isOpenAIAvailable()) {
+    throw new Error('OpenAI API nicht verfügbar. Bitte API-Key konfigurieren.');
+  }
+
+  try {
+    // First extract main tasks from job description
+    const { analyzeJobWithAI } = await import('./aiAnalysis');
+    const aiResult = await analyzeJobWithAI(jobText, lang);
+    
+    if (!aiResult.aiEnabled || aiResult.tasks.length === 0) {
+      throw new Error('AI-Analyse fehlgeschlagen - keine Aufgaben extrahiert');
+    }
+    
+    console.log('✅ Main tasks extracted:', aiResult.tasks.length, 'tasks');
+    const mainTasks = aiResult.tasks.map(t => t.text);
+
+    // Now analyze each main task completely
+    const results: FastAnalysisResult[] = [];
+    
+    for (let i = 0; i < mainTasks.length; i++) {
+      const taskText = mainTasks[i];
+      console.log(`📋 Processing main task ${i + 1}/${mainTasks.length}: ${taskText.slice(0, 50)}...`);
+      
+      try {
+        // Use the complete analysis method for each main task
+        const completeAnalysis = await openaiClient.generateCompleteAnalysis(taskText, lang);
+        
+        // Convert to FastAnalysisResult format
+        const result: FastAnalysisResult = {
+          text: taskText,
+          automationPotential: completeAnalysis.businessCase.automationPotential,
+          confidence: 90, // High confidence since it's AI-generated
+          category: 'general', // Could be enhanced to detect category
+          pattern: 'ai-analyzed',
+          reasoning: completeAnalysis.businessCase.reasoning,
+          subtasks: completeAnalysis.subtasks,
+          solutions: completeAnalysis.solutions,
+          businessCase: completeAnalysis.businessCase // Include the complete business case data
+        };
+        
+        results.push(result);
+        console.log(`✅ Main task ${i + 1} completed with ${completeAnalysis.subtasks.length} subtasks`);
+        
+      } catch (error) {
+        console.error(`❌ Failed to analyze main task ${i + 1}:`, error);
+        // Fallback to basic analysis
+        const fallbackResult: FastAnalysisResult = {
+          text: taskText,
+          automationPotential: 50,
+          confidence: 30,
+          category: 'general',
+          pattern: 'fallback',
+          reasoning: 'Fallback analysis due to AI error',
+          subtasks: [],
+          solutions: { workflows: [], agents: [] }
+        };
+        results.push(fallbackResult);
+      }
+    }
+    
+    console.log(`✅ Complete job analysis finished: ${results.length} main tasks processed`);
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Complete job analysis failed:', error);
+    throw error;
+  }
+}
+
+/**
  * AI-Enhanced Task Analysis (OPTIMIZED)
  * Uses OpenAI to analyze individual tasks with better accuracy and token savings
  */
-async function analyzeTasksWithAI(
+async function analyzeTasksWithCompleteAI(
   taskTexts: string[], 
   jobContext: string, 
   lang: 'de' | 'en' = 'de'
 ): Promise<FastAnalysisResult[]> {
-  console.log('🤖 Starting OPTIMIZED AI-enhanced task analysis...');
+  console.log('🤖 Starting COMPLETE AI analysis (subtasks + business case + solutions)...');
   
   if (!isOpenAIAvailable()) {
     throw new Error('OpenAI API nicht verfügbar. Bitte API-Key konfigurieren.');
@@ -852,61 +956,48 @@ async function analyzeTasksWithAI(
 
   const results: FastAnalysisResult[] = [];
   
-  // OPTIMIZATION: Batch processing for similar tasks
-  const batchSize = 3; // Process 3 tasks at once
-  const batches = [];
-  
-  for (let i = 0; i < taskTexts.length; i += batchSize) {
-    batches.push(taskTexts.slice(i, i + batchSize));
-  }
-  
-  console.log(`📦 Processing ${batches.length} batches of up to ${batchSize} tasks each`);
-  
-  // Process each batch
-  for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-    const batch = batches[batchIndex];
-    console.log(`🔄 Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} tasks`);
+  // Process each task individually with complete analysis
+  for (let i = 0; i < taskTexts.length; i++) {
+    const taskText = taskTexts[i];
+    console.log(`📋 Processing task ${i + 1}/${taskTexts.length}: ${taskText.slice(0, 50)}...`);
     
-    // OPTIMIZATION: Process similar tasks together
-    if (batch.length > 1) {
-      try {
-        // Try batch processing first
-        const batchResult = await processBatchWithAI(batch, jobContext, lang);
-        results.push(...batchResult);
-        continue;
-      } catch (error) {
-        console.warn('⚠️ Batch processing failed, falling back to individual analysis:', error);
-      }
-    }
-    
-    // Fallback: Individual processing
-    for (const taskText of batch) {
-      console.log(`🔍 Analyzing task individually: ${taskText.substring(0, 50)}...`);
+    try {
+      // Use the new complete analysis method
+      const completeAnalysis = await openaiClient.generateCompleteAnalysis(taskText, lang);
       
-      const aiResult = await openaiClient.analyzeTask(taskText, jobContext, lang);
-      
-      // Convert AI result to FastAnalysisResult format
+      // Convert to FastAnalysisResult format
       const result: FastAnalysisResult = {
         text: taskText,
-        automationPotential: aiResult.automationPotential,
-        confidence: aiResult.confidence,
-        pattern: aiResult.category,
-        category: aiResult.industry,
-        complexity: aiResult.complexity,
-        trend: aiResult.trend,
-        systems: aiResult.systems,
-        label: aiResult.automationPotential >= 70 ? 'Automatisierbar' : 
-               aiResult.automationPotential >= 30 ? 'Teilweise Automatisierbar' : 'Mensch',
-        reasoning: aiResult.reasoning,
-        analysisTime: aiResult.analysisTime,
-        subtasks: aiResult.subtasks
+        automationPotential: completeAnalysis.businessCase.automationPotential,
+        confidence: 90, // High confidence since it's AI-generated
+        category: 'general', // Could be enhanced to detect category
+        pattern: 'ai-analyzed',
+        reasoning: completeAnalysis.businessCase.reasoning,
+        subtasks: completeAnalysis.subtasks,
+        solutions: completeAnalysis.solutions
       };
       
       results.push(result);
+      console.log(`✅ Task ${i + 1} completed with ${completeAnalysis.subtasks.length} subtasks`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to analyze task ${i + 1}:`, error);
+      // Fallback to basic analysis
+      const fallbackResult: FastAnalysisResult = {
+        text: taskText,
+        automationPotential: 50,
+        confidence: 30,
+        category: 'general',
+        pattern: 'fallback',
+        reasoning: 'Fallback analysis due to AI error',
+        subtasks: [],
+        solutions: { workflows: [], agents: [] }
+      };
+      results.push(fallbackResult);
     }
   }
   
-  console.log(`✅ OPTIMIZED AI analysis completed for ${results.length} tasks`);
+  console.log(`✅ Complete analysis finished: ${results.length} tasks processed`);
   return results;
 }
 

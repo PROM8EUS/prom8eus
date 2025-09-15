@@ -205,6 +205,294 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
   }
 
   /**
+   * Generate complete analysis (subtasks + business case + solutions) in one call
+   */
+  async generateCompleteAnalysis(
+    taskText: string,
+    lang: 'de' | 'en' = 'de'
+  ): Promise<{
+    subtasks: Array<{
+      id: string;
+      title: string;
+      description: string;
+      automationPotential: number;
+      estimatedTime: number;
+      priority: string;
+      complexity: string;
+      systems: string[];
+      risks: string[];
+      opportunities: string[];
+      dependencies: string[];
+    }>;
+    businessCase: {
+      manualHours: number;
+      automatedHours: number;
+      automationPotential: number;
+      savedHours: number;
+      setupCostHours: number;
+      setupCostMoney: number;
+      roi: number;
+      paybackPeriodYears: number;
+      hourlyRateEmployee: number;
+      hourlyRateFreelancer: number;
+      employmentType: 'employee' | 'freelancer';
+      reasoning: string;
+    };
+    solutions: {
+      workflows: Array<{
+        id: string;
+        name: string;
+        description: string;
+        automationPotential: number;
+        setupTime: string;
+        cost: string;
+        systems: string[];
+        benefits: string[];
+      }>;
+      agents: Array<{
+        id: string;
+        name: string;
+        technology: string;
+        implementation: string;
+        difficulty: string;
+        setupTime: string;
+        benefits: string[];
+      }>;
+    };
+  }> {
+    const systemPrompt = lang === 'de'
+      ? `Du bist ein Experte für Arbeitsplatzautomatisierung und Business Case Analyse. Führe eine komplette Analyse durch: Teilaufgaben, Business Case und Lösungen.
+
+WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
+
+AUFGABE: Analysiere die Aufgabe vollständig und erstelle:
+1. 3-5 spezifische Teilaufgaben mit Automatisierungspotenzial
+2. Realistischen Business Case basierend auf durchschnittlichen Zeiten
+3. Passende Workflow- und AI-Agent-Lösungen
+
+JSON-Format:
+{
+  "subtasks": [
+    {
+      "id": "task-1",
+      "title": "Spezifische Teilaufgabe",
+      "description": "Detaillierte Beschreibung",
+      "automationPotential": 75,
+      "estimatedTime": 30,
+      "priority": "high",
+      "complexity": "medium",
+      "systems": ["Excel", "Python"],
+      "risks": ["Datenqualität"],
+      "opportunities": ["Automatisierung"],
+      "dependencies": ["API-Zugang"]
+    }
+  ],
+  "businessCase": {
+    "manualHours": 1600.0,
+    "automatedHours": 160.0,
+    "automationPotential": 90,
+    "savedHours": 1440.0,
+    "setupCostHours": 30.0,
+    "setupCostMoney": 1500.0,
+    "roi": 13714.3,
+    "paybackPeriodYears": 0.0,
+    "hourlyRateEmployee": 60.0,
+    "hourlyRateFreelancer": 45.0,
+    "employmentType": "employee",
+    "reasoning": "Begründung: manualHours Stunden pro Jahr für diese Aufgabe. Mit automationPotential% Automatisierung bleiben automatedHours Stunden manuell. Setup-Kosten: setupCostHours Stunden zu setupCostMoney€. ROI: roi% über 3 Jahre. Amortisation: paybackPeriodYears Jahre."
+  },
+  "solutions": {
+    "workflows": [
+      {
+        "id": "workflow-1",
+        "name": "Workflow Name",
+        "description": "Beschreibung des Workflows",
+        "automationPotential": 85,
+        "setupTime": "2-4 Wochen",
+        "cost": "Freemium",
+        "systems": ["n8n", "Zapier"],
+        "benefits": ["Zeitersparnis", "Konsistenz"]
+      }
+    ],
+    "agents": [
+      {
+        "id": "agent-1",
+        "name": "AI Agent Name",
+        "technology": "OpenAI GPT-4",
+        "implementation": "API Integration",
+        "difficulty": "Mittel",
+        "setupTime": "1-2 Wochen",
+        "benefits": ["Automatisierung", "Skalierbarkeit"]
+      }
+    ]
+  }
+}
+
+Berechnungslogik (ALLE WERTE PRO JAHR):
+- manualHours: Realistische durchschnittliche Zeit für diese Aufgabe PRO JAHR (240-2400h)
+- automatedHours: manualHours * (1 - automationPotential/100)
+- automationPotential: Realistischer Wert für diese Art von Arbeit (10-90%)
+- savedHours: manualHours - automatedHours
+- setupCostHours: Realistische Setup-Zeit basierend auf Komplexität (5-50h)
+- setupCostMoney: setupCostHours * angemessener Stundensatz
+- hourlyRateEmployee: Brutto-Stundensatz für Angestellte (35-80€/h je nach Aufgabe)
+- hourlyRateFreelancer: Netto-Stundensatz für Freelancer (25-60€/h je nach Aufgabe)
+- employmentType: "employee" oder "freelancer" basierend auf der Aufgabe
+- roi: ((savedHours * Stundensatz * 3 Jahre) - setupCostMoney) / setupCostMoney * 100
+- paybackPeriodYears: setupCostMoney / (savedHours * Stundensatz)
+
+WICHTIG: 
+- Alle Zeiten sind PRO JAHR (nicht pro Monat/Woche/Tag)
+- Verwende konsistente Zahlen in der Begründung
+- ROI ist immer ein PROZENTSATZ, nie Euro
+- Amortisationszeit in Jahren (0.0 = sofort, N/A = nicht berechenbar)
+- Begründung muss exakt die berechneten Zahlen verwenden`
+      : `You are an expert in workplace automation and business case analysis. Perform a complete analysis: subtasks, business case, and solutions.
+
+IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
+
+TASK: Analyze the task completely and create:
+1. 3-5 specific subtasks with automation potential
+2. Realistic business case based on average times
+3. Suitable workflow and AI agent solutions
+
+JSON Format:
+{
+  "subtasks": [
+    {
+      "id": "task-1",
+      "title": "Specific subtask",
+      "description": "Detailed description",
+      "automationPotential": 75,
+      "estimatedTime": 30,
+      "priority": "high",
+      "complexity": "medium",
+      "systems": ["Excel", "Python"],
+      "risks": ["Data quality"],
+      "opportunities": ["Automation"],
+      "dependencies": ["API access"]
+    }
+  ],
+  "businessCase": {
+    "manualHours": 1600.0,
+    "automatedHours": 160.0,
+    "automationPotential": 90,
+    "savedHours": 1440.0,
+    "setupCostHours": 30.0,
+    "setupCostMoney": 1500.0,
+    "roi": 13714.3,
+    "paybackPeriodYears": 0.0,
+    "hourlyRateEmployee": 60.0,
+    "hourlyRateFreelancer": 45.0,
+    "employmentType": "employee",
+    "reasoning": "Reasoning: manualHours hours per year for this task. With automationPotential% automation, automatedHours hours remain manual. Setup costs: setupCostHours hours at setupCostMoney€. ROI: roi% over 3 years. Payback period: paybackPeriodYears years."
+  },
+  "solutions": {
+    "workflows": [
+      {
+        "id": "workflow-1",
+        "name": "Workflow Name",
+        "description": "Workflow description",
+        "automationPotential": 85,
+        "setupTime": "2-4 weeks",
+        "cost": "Freemium",
+        "systems": ["n8n", "Zapier"],
+        "benefits": ["Time savings", "Consistency"]
+      }
+    ],
+    "agents": [
+      {
+        "id": "agent-1",
+        "name": "AI Agent Name",
+        "technology": "OpenAI GPT-4",
+        "implementation": "API Integration",
+        "difficulty": "Medium",
+        "setupTime": "1-2 weeks",
+        "benefits": ["Automation", "Scalability"]
+      }
+    ]
+  }
+}
+
+Calculation logic (ALL VALUES PER YEAR):
+- manualHours: Realistic average time for this task PER YEAR (240-2400h)
+- automatedHours: manualHours * (1 - automationPotential/100)
+- automationPotential: Realistic value for this type of work (10-90%)
+- savedHours: manualHours - automatedHours
+- setupCostHours: Realistic setup time based on complexity (5-50h)
+- setupCostMoney: setupCostHours * appropriate hourly rate
+- hourlyRateEmployee: Gross hourly rate for employees (35-80€/h depending on task)
+- hourlyRateFreelancer: Net hourly rate for freelancers (25-60€/h depending on task)
+- employmentType: "employee" or "freelancer" based on the task
+- roi: ((savedHours * hourly rate * 3 years) - setupCostMoney) / setupCostMoney * 100
+- paybackPeriodYears: setupCostMoney / (savedHours * hourly rate)
+
+IMPORTANT: 
+- All times are PER YEAR (not per month/week/day)
+- Use consistent numbers in reasoning
+- ROI is always a PERCENTAGE, never Euro
+- Payback period in years (0.0 = immediate, N/A = not calculable)
+- Reasoning must use exact calculated numbers`;
+
+    const userPrompt = lang === 'de'
+      ? `Führe eine komplette Analyse dieser Aufgabe durch:
+
+AUFGABE: ${taskText}
+
+ERSTELLE:
+1. 3-5 spezifische Teilaufgaben mit realistischen Automatisierungswerten
+2. Business Case basierend auf durchschnittlichen Zeiten für diese Aufgabe/Stelle
+3. Passende Workflow- und AI-Agent-Lösungen
+
+FOKUS: Konsistente Zahlen zwischen allen Bereichen. Physische Tätigkeiten haben niedrige Automatisierungswerte (10-30%), Software-Aufgaben haben hohe Werte (70-95%).`
+      : `Perform a complete analysis of this task:
+
+TASK: ${taskText}
+
+CREATE:
+1. 3-5 specific subtasks with realistic automation values
+2. Business case based on average times for this task/position
+3. Suitable workflow and AI agent solutions
+
+FOCUS: Consistent numbers across all areas. Physical tasks have low automation values (10-30%), software tasks have high values (70-95%).`;
+
+    try {
+      const response = await this.chatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ], {
+        temperature: 0.4,
+        max_tokens: 3000, // Mehr Token für komplette Analyse
+      });
+
+      const content = response.content;
+      if (!content) {
+        throw new Error('No response content from OpenAI');
+      }
+
+      try {
+        return JSON.parse(content);
+      } catch (error) {
+        console.error('❌ Complete analysis JSON parsing failed:', error);
+        console.log('Raw response:', content);
+        
+        // Try to extract JSON from response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log('✅ Extracted JSON from response');
+          return parsed;
+        }
+        
+        throw error;
+      }
+    } catch (error) {
+      console.error('❌ Complete analysis generation failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate business case analysis based on subtasks
    */
   async generateBusinessCase(
@@ -249,12 +537,12 @@ JSON-Format:
   "hourlyRateEmployee": 45.0,
   "hourlyRateFreelancer": 35.0,
   "employmentType": "employee",
-  "reasoning": "Detaillierte Begründung basierend auf durchschnittlichen Zeiten und Stundensätzen für diese Aufgabe"
+  "reasoning": "Begründung: manualHours Stunden pro Jahr für diese Aufgabe. Mit automationPotential% Automatisierung bleiben automatedHours Stunden manuell. Setup-Kosten: setupCostHours Stunden zu setupCostMoney€. ROI: roi% über 3 Jahre. Amortisation: paybackPeriodYears Jahre."
 }
 
-Berechnungslogik:
-- manualHours: Realistische durchschnittliche Zeit für diese Aufgabe (pro Monat: 20-200h, pro Jahr: 240-2400h)
-- automatedHours: manualHours * (realistisches Automatisierungspotenzial für diese Aufgabe)
+Berechnungslogik (ALLE WERTE PRO JAHR):
+- manualHours: Realistische durchschnittliche Zeit für diese Aufgabe PRO JAHR (240-2400h)
+- automatedHours: manualHours * (1 - automationPotential/100) - die verbleibenden manuellen Stunden
 - automationPotential: Realistischer Wert für diese Art von Arbeit (10-90%)
 - savedHours: manualHours - automatedHours
 - setupCostHours: Realistische Setup-Zeit basierend auf Komplexität (5-50h)
@@ -263,7 +551,7 @@ Berechnungslogik:
 - hourlyRateFreelancer: Netto-Stundensatz für Freelancer (25-60€/h je nach Aufgabe)
 - employmentType: "employee" oder "freelancer" basierend auf der Aufgabe
 - roi: ((savedHours * Stundensatz * 3 Jahre) - setupCostMoney) / setupCostMoney * 100
-- paybackPeriodYears: setupCostMoney / (savedHours * Stundensatz * 12 Monate)
+- paybackPeriodYears: setupCostMoney / (savedHours * Stundensatz)
 
 Stundensatz-Beispiele:
 - Senior Software Engineer: Angestellter 60€/h, Freelancer 45€/h
@@ -312,7 +600,12 @@ HAUPTAUFGABE: ${taskText}
 TEILAUFGABEN (nur als Referenz für Automatisierungspotenzial):
 ${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.automationPotential}% Automatisierung)`).join('\n')}
 
-WICHTIG: Berechne realistische Business Case Kennzahlen basierend auf durchschnittlichen Zeiten für diese spezifische Aufgabe/Stelle, nicht auf den Teilaufgaben-Zeiten.`
+WICHTIG: 
+- Alle Zeiten sind PRO JAHR (nicht pro Monat/Woche/Tag)
+- Verwende konsistente Zahlen in der Begründung
+- ROI ist immer ein PROZENTSATZ, nie Euro
+- Amortisationszeit in Jahren (0.0 = sofort, N/A = nicht berechenbar)
+- Begründung muss exakt die berechneten Zahlen verwenden`
       : `Analyze this task and calculate the business case based on average times:
 
 MAIN TASK: ${taskText}
@@ -320,7 +613,12 @@ MAIN TASK: ${taskText}
 SUBTASKS (only as reference for automation potential):
 ${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.automationPotential}% automation)`).join('\n')}
 
-IMPORTANT: Calculate realistic business case metrics based on average times for this specific task/position, not on subtask times.`;
+IMPORTANT: 
+- All times are PER YEAR (not per month/week/day)
+- Use consistent numbers in reasoning
+- ROI is always a PERCENTAGE, never Euro
+- Payback period in years (0.0 = immediate, N/A = not calculable)
+- Reasoning must use exact calculated numbers`;
 
     try {
       const response = await this.chatCompletion([

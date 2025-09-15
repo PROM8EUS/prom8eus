@@ -61,6 +61,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempHourlyRate, setTempHourlyRate] = useState(hourlyRate);
+  const [isEmployee, setIsEmployee] = useState(true);
   const period = periodProp ?? periodState;
 
   useEffect(() => {
@@ -74,41 +75,64 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
     setTempHourlyRate(hourlyRate);
   }, [hourlyRate]);
 
-  // Generate business case data when task or subtasks change
+  // Use existing business case data or generate if not available
   useEffect(() => {
-    const generateBusinessCase = async () => {
-      if (!task?.text || !task?.subtasks || task.subtasks.length === 0) {
-        setBusinessCaseData(null);
-        return;
+    if (task?.businessCase) {
+      // Use existing business case data from complete analysis
+      console.log('✅ Using existing business case data');
+      setBusinessCaseData(task.businessCase);
+      
+      // Set AI hourly rate as default if no manual rate is set
+      if (!hourlyRate || hourlyRate === 40) {
+        const aiRate = task.businessCase.employmentType === 'employee' 
+          ? task.businessCase.hourlyRateEmployee 
+          : task.businessCase.hourlyRateFreelancer;
+        setHourlyRate(aiRate);
+        setAiHourlyRate(aiRate);
       }
-
-      setLoading(true);
+      
+      // Set initial employment type
+      setIsEmployee(task.businessCase.employmentType === 'employee');
+      setLoading(false);
       setError(null);
+    } else if (task?.text && task?.subtasks && task.subtasks.length > 0) {
+      // Fallback: generate business case if not available
+      const generateBusinessCase = async () => {
+        setLoading(true);
+        setError(null);
 
-      try {
-        console.log('🤖 Generating business case for:', task.text);
-        const data = await openaiClient.generateBusinessCase(task.text, task.subtasks, lang);
-        console.log('✅ Business case generated:', data);
-        setBusinessCaseData(data);
-        
-        // Set AI hourly rate as default if no manual rate is set
-        if (!hourlyRate || hourlyRate === 40) {
-          const aiRate = data.employmentType === 'employee' 
-            ? data.hourlyRateEmployee 
-            : data.hourlyRateFreelancer;
-          setHourlyRate(aiRate);
-          setAiHourlyRate(aiRate);
+        try {
+          console.log('🤖 Generating business case for:', task.text);
+          const data = await openaiClient.generateBusinessCase(task.text, task.subtasks, lang);
+          console.log('✅ Business case generated:', data);
+          setBusinessCaseData(data);
+          
+          // Set AI hourly rate as default if no manual rate is set
+          if (!hourlyRate || hourlyRate === 40) {
+            const aiRate = data.employmentType === 'employee' 
+              ? data.hourlyRateEmployee 
+              : data.hourlyRateFreelancer;
+            setHourlyRate(aiRate);
+            setAiHourlyRate(aiRate);
+          }
+          
+          // Set initial employment type
+          setIsEmployee(data.employmentType === 'employee');
+        } catch (err) {
+          console.error('❌ Business case generation failed:', err);
+          setError(err instanceof Error ? err.message : 'Failed to generate business case');
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error('❌ Business case generation failed:', err);
-        setError(err instanceof Error ? err.message : 'Failed to generate business case');
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    generateBusinessCase();
-  }, [task?.text, task?.subtasks, lang]);
+      generateBusinessCase();
+    } else {
+      setBusinessCaseData(null);
+      setLoading(false);
+      setError(null);
+    }
+  }, [task?.businessCase, task?.text, task?.subtasks, lang, hourlyRate]);
 
   const handleChangePeriod = (p: Period) => {
     setPeriodState(p);
@@ -170,130 +194,167 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
 
   return (
     <div className="w-full bg-primary/5 rounded-lg p-6">
-      <div className="mb-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {/* Left: Title */}
-          <CardTitle className="flex items-center gap-2 text-lg flex-1 min-w-0">
-            <Calculator className="w-5 h-5 text-primary" />
-            {t(lang, 'business_case')}
-          </CardTitle>
+             <div className="mb-6">
+               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                 {/* Title */}
+                 <CardTitle className="flex items-center gap-2 text-lg flex-shrink-0">
+                   <Calculator className="w-5 h-5 text-primary" />
+                   {t(lang, 'business_case')}
+                 </CardTitle>
 
-          {/* Right: Both Dropdowns + Edit Icon */}
-          <div className="flex items-center gap-3 justify-end flex-wrap">
-            {/* Period selector */}
-            <div className="flex items-center gap-2">
-              <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
-                <SelectTrigger className="h-8 w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="year">{periodLabel('year')}</SelectItem>
-                  <SelectItem value="month">{periodLabel('month')}</SelectItem>
-                  <SelectItem value="week">{periodLabel('week')}</SelectItem>
-                  <SelectItem value="day">{periodLabel('day')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                 {/* Controls - right aligned on larger screens, no wrapping */}
+                 <div className="flex items-center gap-3 sm:justify-end">
+                     {/* Period selector */}
+                     <div className="flex items-center gap-2">
+                       <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
+                         <SelectTrigger className="h-8 w-24">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="year">{periodLabel('year')}</SelectItem>
+                           <SelectItem value="month">{periodLabel('month')}</SelectItem>
+                           <SelectItem value="week">{periodLabel('week')}</SelectItem>
+                           <SelectItem value="day">{periodLabel('day')}</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
 
-            {/* Mode Dropdown + Edit Icon */}
-            <div className="flex items-center gap-2">
-              <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
-                <SelectTrigger className="w-28 h-8">
-                  <div className="flex items-center gap-2">
-                    {mode === 'time' ? (
-                      <Clock className="w-3 h-3" />
-                    ) : (
-                      <DollarSign className="w-3 h-3" />
-                    )}
-                    <span className="text-sm">{t(lang, mode === 'time' ? 'business_case_time' : 'business_case_money')}</span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="time">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-3 h-3" />
-                      <span>{t(lang, 'business_case_time')}</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="money">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-3 h-3" />
-                      <span>{t(lang, 'business_case_money')}</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {/* Edit Icon - only active for money mode */}
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`h-8 w-8 p-0 ${mode === 'money' ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50 cursor-not-allowed'}`}
-                    disabled={mode === 'time'}
-                  >
-                    <Edit3 className="w-3 h-3" />
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>
-                    {lang === 'de' ? 'Stundensatz anpassen' : 'Adjust Hourly Rate'}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-4">
-                    <Label htmlFor="modal-hourly-rate">
-                      {lang === 'de' ? 'Stundensatz (€)' : 'Hourly Rate (€)'}
-                    </Label>
-                    
-                    {/* Slider */}
-                    <div className="space-y-2">
-                      <Slider
-                        value={[tempHourlyRate]}
-                        onValueChange={(value) => setTempHourlyRate(value[0])}
-                        max={200}
-                        min={0}
-                        step={1}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>0 €/h</span>
-                        <span>200 €/h</span>
-                      </div>
-                    </div>
-                    
-                    {/* Manual Input */}
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        id="modal-hourly-rate"
-                        type="number"
-                        value={tempHourlyRate}
-                        onChange={(e) => setTempHourlyRate(Number(e.target.value))}
-                        className="flex-1"
-                        min="0"
-                        max="200"
-                        step="0.50"
-                      />
-                      <span className="text-sm text-muted-foreground">€/h</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={handleCancelHourlyRate}>
-                      {lang === 'de' ? 'Abbrechen' : 'Cancel'}
-                    </Button>
-                    <Button onClick={handleSaveHourlyRate}>
-                      {lang === 'de' ? 'Speichern' : 'Save'}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            </div>
-          </div>
-        </div>
-      </div>
+                     {/* Mode Dropdown + Edit Icon */}
+                     <div className="flex items-center gap-2">
+                       <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
+                         <SelectTrigger className="w-24 h-8">
+                           <div className="flex items-center gap-1">
+                             {mode === 'time' ? (
+                               <Clock className="w-3 h-3" />
+                             ) : (
+                               <DollarSign className="w-3 h-3" />
+                             )}
+                             <span className="text-sm">{t(lang, mode === 'time' ? 'business_case_time' : 'business_case_money')}</span>
+                           </div>
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="time">
+                             <div className="flex items-center gap-2">
+                               <Clock className="w-3 h-3" />
+                               <span>{t(lang, 'business_case_time')}</span>
+                             </div>
+                           </SelectItem>
+                           <SelectItem value="money">
+                             <div className="flex items-center gap-2">
+                               <DollarSign className="w-3 h-3" />
+                               <span>{t(lang, 'business_case_money')}</span>
+                             </div>
+                           </SelectItem>
+                         </SelectContent>
+                       </Select>
+                       
+                       {/* Edit Icon - only active for money mode */}
+                       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                         <DialogTrigger asChild>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             className={`h-8 w-8 p-0 ${mode === 'money' ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50 cursor-not-allowed'}`}
+                             disabled={mode === 'time'}
+                           >
+                             <Edit3 className="w-3 h-3" />
+                           </Button>
+                         </DialogTrigger>
+                       <DialogContent className="sm:max-w-md">
+                         <DialogHeader>
+                           <DialogTitle>
+                             {lang === 'de' ? 'Stundensatz anpassen' : 'Adjust Hourly Rate'}
+                           </DialogTitle>
+                         </DialogHeader>
+                         <div className="space-y-4">
+                           {/* Employment Type Selection */}
+                           {businessCaseData && (
+                             <div className="space-y-3">
+                               <Label>
+                                 {lang === 'de' ? 'Anstellungstyp:' : 'Employment Type:'}
+                               </Label>
+                               <ToggleGroup
+                                 type="single"
+                                 value={isEmployee ? 'employee' : 'freelancer'}
+                                 onValueChange={(value) => {
+                                   if (value) {
+                                     const checked = value === 'employee';
+                                     setIsEmployee(checked);
+                                     const newRate = checked 
+                                       ? businessCaseData.hourlyRateEmployee 
+                                       : businessCaseData.hourlyRateFreelancer;
+                                     setTempHourlyRate(newRate);
+                                   }
+                                 }}
+                                 className="justify-start"
+                               >
+                                 <ToggleGroupItem value="employee" className="flex-1">
+                                   {lang === 'de' ? 'Angestellter' : 'Employee'}
+                                   <span className="ml-2 text-xs opacity-75">
+                                     {businessCaseData.hourlyRateEmployee.toFixed(0)} €/h {lang === 'de' ? '(Brutto)' : '(Gross)'}
+                                   </span>
+                                 </ToggleGroupItem>
+                                 <ToggleGroupItem value="freelancer" className="flex-1">
+                                   {lang === 'de' ? 'Freelancer' : 'Freelancer'}
+                                   <span className="ml-2 text-xs opacity-75">
+                                     {businessCaseData.hourlyRateFreelancer.toFixed(0)} €/h {lang === 'de' ? '(Netto)' : '(Net)'}
+                                   </span>
+                                 </ToggleGroupItem>
+                               </ToggleGroup>
+                             </div>
+                           )}
+
+                           <div className="space-y-4">
+                             <Label htmlFor="modal-hourly-rate">
+                               {lang === 'de' ? 'Stundensatz (€)' : 'Hourly Rate (€)'}
+                             </Label>
+                             
+                             {/* Slider */}
+                             <div className="space-y-2">
+                               <Slider
+                                 value={[tempHourlyRate]}
+                                 onValueChange={(value) => setTempHourlyRate(value[0])}
+                                 max={200}
+                                 min={0}
+                                 step={1}
+                                 className="w-full"
+                               />
+                               <div className="flex justify-between text-xs text-muted-foreground">
+                                 <span>0 €/h</span>
+                                 <span>200 €/h</span>
+                               </div>
+                             </div>
+                             
+                             {/* Manual Input */}
+                             <div className="flex items-center space-x-2">
+                               <Input
+                                 id="modal-hourly-rate"
+                                 type="number"
+                                 value={tempHourlyRate}
+                                 onChange={(e) => setTempHourlyRate(Number(e.target.value))}
+                                 className="flex-1"
+                                 min="0"
+                                 max="200"
+                                 step="0.50"
+                               />
+                               <span className="text-sm text-muted-foreground">€/h</span>
+                             </div>
+                           </div>
+                           <div className="flex justify-end space-x-2">
+                             <Button variant="outline" onClick={handleCancelHourlyRate}>
+                               {lang === 'de' ? 'Abbrechen' : 'Cancel'}
+                             </Button>
+                             <Button onClick={handleSaveHourlyRate}>
+                               {lang === 'de' ? 'Speichern' : 'Save'}
+                             </Button>
+                           </div>
+                         </div>
+                       </DialogContent>
+                       </Dialog>
+                     </div>
+                   </div>
+               </div>
+             </div>
       <div className="space-y-6">
         {/* Loading State */}
         {loading && (
@@ -328,36 +389,6 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           </div>
         )}
 
-        {/* Employment Type and Hourly Rate Info */}
-        {!loading && !error && businessMetrics && (
-          <div className="mb-4 p-3 bg-muted/30 rounded-lg">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">
-                  {lang === 'de' ? 'Anstellungstyp:' : 'Employment Type:'}
-                </span>
-                <Badge variant="outline" className="text-xs">
-                  {businessMetrics.employmentType === 'employee' 
-                    ? (lang === 'de' ? 'Angestellter' : 'Employee')
-                    : (lang === 'de' ? 'Freelancer' : 'Freelancer')
-                  }
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">
-                  {lang === 'de' ? 'AI-Stundensatz:' : 'AI Hourly Rate:'}
-                </span>
-                <span className="font-medium">
-                  {businessMetrics.aiHourlyRate.toFixed(0)} €/h
-                  {businessMetrics.employmentType === 'employee' 
-                    ? (lang === 'de' ? ' (Brutto)' : ' (Gross)')
-                    : (lang === 'de' ? ' (Netto)' : ' (Net)')
-                  }
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Metrics Display */}
         {!loading && !error && businessMetrics && (
@@ -405,7 +436,8 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Amortisationszeit</span>
                 <span className="font-semibold">
-                  {businessMetrics.paybackPeriod > 0 ? `${businessMetrics.paybackPeriod.toFixed(1)} Jahre` : 'N/A'}
+                  {businessMetrics.paybackPeriod === 0 ? 'Sofort' : 
+                   businessMetrics.paybackPeriod > 0 ? `${businessMetrics.paybackPeriod.toFixed(1)} Jahre` : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -420,10 +452,10 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           </div>
         )}
 
-        {/* AI Reasoning (if available) */}
-        {!loading && !error && businessMetrics.reasoning && (
-          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-            <div className="text-sm font-medium mb-2">
+        {/* AI Reasoning (if available) - Inside the main business case block */}
+        {!loading && !error && businessMetrics && businessMetrics.reasoning && (
+          <div className="mt-6 p-4 bg-primary/10 rounded-lg">
+            <div className="text-sm font-medium mb-2 text-primary">
               {lang === 'de' ? 'AI-Begründung:' : 'AI Reasoning:'}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -431,6 +463,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
