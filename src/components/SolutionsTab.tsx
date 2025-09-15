@@ -399,14 +399,17 @@ export default function SolutionsTab({
     onSolutionSelect?.(solution);
   };
 
+  // Render skeletons while loading
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            {lang === 'de' ? 'Lade Lösungen...' : 'Loading solutions...'}
-          </p>
+      <div className="space-y-4">
+        <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+        <div className="relative">
+          <div className="grid grid-flow-col auto-cols-[340px] grid-rows-2 gap-6 overflow-hidden">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-[340px] h-[180px] rounded border bg-muted/30 animate-pulse" />
+            ))}
+          </div>
         </div>
       </div>
     );
