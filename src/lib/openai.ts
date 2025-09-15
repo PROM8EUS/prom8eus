@@ -419,7 +419,7 @@ Difficulties: Easy, Medium, Hard`;
   }
 
   /**
-   * Find best AI agents and workflows for a specific task (OPTIMIZED)
+   * Find best AI agents and workflows for a specific task (ENHANCED)
    */
   async findBestSolutions(
     taskText: string,
@@ -445,28 +445,96 @@ Difficulties: Easy, Medium, Hard`;
       reasoning: string;
     }>;
   }> {
-    // Stark verkürzter Prompt
-    const systemPrompt = lang === 'de' 
-      ? `Empfehle AI-Lösungen. JSON:
-{"agents":[{"name":"Agent","technology":"Tech","implementation":"Schritte","difficulty":"Mittel","setupTime":"2-4h","matchScore":95,"reasoning":"Begründung"}],"workflows":[{"name":"Workflow","technology":"Tech","steps":["1","2"],"difficulty":"Einfach","setupTime":"1-2h","matchScore":90,"reasoning":"Begründung"}]}`
-      : `Recommend AI solutions. JSON:
-{"agents":[{"name":"Agent","technology":"Tech","implementation":"Steps","difficulty":"Medium","setupTime":"2-4h","matchScore":95,"reasoning":"Reasoning"}],"workflows":[{"name":"Workflow","technology":"Tech","steps":["1","2"],"difficulty":"Easy","setupTime":"1-2h","matchScore":90,"reasoning":"Reasoning"}]}`;
+    // Erweiterte Workflow-Beispiele basierend auf verfügbaren Workflows
+    const workflowExamples = lang === 'de' 
+      ? `VERFÜGBARE WORKFLOWS:
+1. Code-Review-Automatisierung: GitHub Copilot + ChatGPT + CI/CD
+2. Datenanalyse-Pipeline: Excel AI + Power BI + Python Scripts
+3. Content-Erstellung: Jasper + Canva AI + Social Media Scheduler
+4. E-Mail-Marketing: Copy.ai + Mailchimp + Analytics Dashboard
+5. Bug-Tracking: GitHub Issues + Claude + Automated Testing
+6. Social Media Management: ChatGPT + Buffer + Analytics
+7. Dokumentation: Notion AI + GitHub + Automated Updates
+8. Lead-Generierung: Perplexity + CRM + Email Automation
+9. Performance-Monitoring: Power BI + Alerts + Automated Reports
+10. Customer Support: ChatGPT + Zendesk + Knowledge Base
 
-    // Kürzerer User-Prompt
+BEISPIELE FÜR SPEZIFISCHE AUFGABEN:
+- "Debug application issues" → Bug-Tracking Workflow
+- "Manage advertising campaigns" → E-Mail-Marketing Workflow  
+- "Analyze market research" → Datenanalyse-Pipeline
+- "Create content strategies" → Content-Erstellung Workflow
+- "Optimize database queries" → Performance-Monitoring Workflow`
+      : `AVAILABLE WORKFLOWS:
+1. Code Review Automation: GitHub Copilot + ChatGPT + CI/CD
+2. Data Analysis Pipeline: Excel AI + Power BI + Python Scripts
+3. Content Creation: Jasper + Canva AI + Social Media Scheduler
+4. Email Marketing: Copy.ai + Mailchimp + Analytics Dashboard
+5. Bug Tracking: GitHub Issues + Claude + Automated Testing
+6. Social Media Management: ChatGPT + Buffer + Analytics
+7. Documentation: Notion AI + GitHub + Automated Updates
+8. Lead Generation: Perplexity + CRM + Email Automation
+9. Performance Monitoring: Power BI + Alerts + Automated Reports
+10. Customer Support: ChatGPT + Zendesk + Knowledge Base
+
+EXAMPLES FOR SPECIFIC TASKS:
+- "Debug application issues" → Bug Tracking Workflow
+- "Manage advertising campaigns" → Email Marketing Workflow
+- "Analyze market research" → Data Analysis Pipeline
+- "Create content strategies" → Content Creation Workflow
+- "Optimize database queries" → Performance Monitoring Workflow`;
+
+    const systemPrompt = lang === 'de' 
+      ? `Du bist ein Experte für AI-Workflow-Automatisierung. Empfehle spezifische Workflows basierend auf den Teilaufgaben.
+
+${workflowExamples}
+
+JSON-Format:
+{"agents":[{"name":"GitHub Copilot","technology":"AI Code Assistant","implementation":"1. Install VS Code Extension 2. Configure API Key 3. Start coding with AI suggestions","difficulty":"Einfach","setupTime":"30min","matchScore":95,"reasoning":"Perfekt für Code-Review und Debugging"}],"workflows":[{"name":"Bug-Tracking Workflow","technology":"GitHub + Claude + Testing","steps":["1. Automatische Bug-Erkennung","2. AI-gestützte Analyse","3. Automatische Test-Generierung","4. Status-Updates"],"difficulty":"Mittel","setupTime":"2-4h","matchScore":90,"reasoning":"Automatisiert kompletten Bug-Lifecycle"}]}
+
+WICHTIG: Basiere Empfehlungen auf den konkreten Teilaufgaben, nicht auf generischen Lösungen!`
+      : `You are an expert in AI workflow automation. Recommend specific workflows based on subtasks.
+
+${workflowExamples}
+
+JSON Format:
+{"agents":[{"name":"GitHub Copilot","technology":"AI Code Assistant","implementation":"1. Install VS Code Extension 2. Configure API Key 3. Start coding with AI suggestions","difficulty":"Easy","setupTime":"30min","matchScore":95,"reasoning":"Perfect for code review and debugging"}],"workflows":[{"name":"Bug Tracking Workflow","technology":"GitHub + Claude + Testing","steps":["1. Automatic bug detection","2. AI-powered analysis","3. Automated test generation","4. Status updates"],"difficulty":"Medium","setupTime":"2-4h","matchScore":90,"reasoning":"Automates complete bug lifecycle"}]}
+
+IMPORTANT: Base recommendations on concrete subtasks, not generic solutions!`;
+
+    // Detaillierter User-Prompt mit Teilaufgaben
+    const subtasksText = subtasks.map((subtask, index) => 
+      `${index + 1}. ${subtask.title || subtask.text} (${subtask.automationPotential || 50}% automatisierbar)`
+    ).join('\n');
+
     const userPrompt = lang === 'de'
-      ? `Aufgabe: ${taskText.slice(0, 300)}\nUnteraufgaben: ${subtasks.slice(0, 3).map(s => s.title || s.text).join(', ')}`
-      : `Task: ${taskText.slice(0, 300)}\nSubtasks: ${subtasks.slice(0, 3).map(s => s.title || s.text).join(', ')}`;
+      ? `HAUPTAUFGABE: ${taskText}
+
+TEILAUFGABEN:
+${subtasksText}
+
+Empfehle spezifische AI-Agenten und Workflows, die zu diesen Teilaufgaben passen. Fokussiere auf konkrete, umsetzbare Lösungen.`
+      : `MAIN TASK: ${taskText}
+
+SUBTASKS:
+${subtasksText}
+
+Recommend specific AI agents and workflows that match these subtasks. Focus on concrete, actionable solutions.`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
-    const response = await this.chatCompletion(messages, { max_tokens: 800 }); // Reduziert von 1500
+    const response = await this.chatCompletion(messages, { max_tokens: 1200 }); // Erhöht für bessere Workflows
     
     try {
       const result = JSON.parse(response.content);
-      return result;
+      
+      // Post-Processing: Verbessere Workflows basierend auf Teilaufgaben
+      const enhancedResult = this.enhanceWorkflowRecommendations(result, subtasks, lang);
+      
+      return enhancedResult;
     } catch (error) {
       console.error('Failed to parse AI solutions response:', error);
       // Fallback response
@@ -475,6 +543,115 @@ Difficulties: Easy, Medium, Hard`;
         workflows: []
       };
     }
+  }
+
+  /**
+   * Verbessert Workflow-Empfehlungen basierend auf konkreten Teilaufgaben
+   */
+  private enhanceWorkflowRecommendations(
+    result: any, 
+    subtasks: any[], 
+    lang: 'de' | 'en' = 'de'
+  ): any {
+    // Workflow-Mapping basierend auf Teilaufgaben-Keywords
+    const workflowMappings = {
+      'debug': {
+        name: lang === 'de' ? 'Bug-Tracking Workflow' : 'Bug Tracking Workflow',
+        technology: 'GitHub + Claude + Automated Testing',
+        steps: lang === 'de' 
+          ? ['1. Automatische Bug-Erkennung', '2. AI-gestützte Analyse', '3. Test-Generierung', '4. Status-Updates']
+          : ['1. Automatic bug detection', '2. AI-powered analysis', '3. Test generation', '4. Status updates'],
+        difficulty: lang === 'de' ? 'Mittel' : 'Medium',
+        setupTime: '2-4h',
+        matchScore: 95,
+        reasoning: lang === 'de' ? 'Automatisiert kompletten Bug-Lifecycle' : 'Automates complete bug lifecycle'
+      },
+      'analyze': {
+        name: lang === 'de' ? 'Datenanalyse-Pipeline' : 'Data Analysis Pipeline',
+        technology: 'Excel AI + Power BI + Python Scripts',
+        steps: lang === 'de'
+          ? ['1. Daten-Sammlung', '2. AI-gestützte Analyse', '3. Visualisierung', '4. Automatische Reports']
+          : ['1. Data collection', '2. AI-powered analysis', '3. Visualization', '4. Automated reports'],
+        difficulty: lang === 'de' ? 'Mittel' : 'Medium',
+        setupTime: '3-5h',
+        matchScore: 90,
+        reasoning: lang === 'de' ? 'Automatisiert komplette Datenanalyse' : 'Automates complete data analysis'
+      },
+      'create': {
+        name: lang === 'de' ? 'Content-Erstellung Workflow' : 'Content Creation Workflow',
+        technology: 'Jasper + Canva AI + Social Media Scheduler',
+        steps: lang === 'de'
+          ? ['1. Content-Ideen', '2. AI-gestützte Erstellung', '3. Design-Optimierung', '4. Automatische Veröffentlichung']
+          : ['1. Content ideas', '2. AI-powered creation', '3. Design optimization', '4. Automatic publishing'],
+        difficulty: lang === 'de' ? 'Einfach' : 'Easy',
+        setupTime: '1-2h',
+        matchScore: 85,
+        reasoning: lang === 'de' ? 'Automatisiert Content-Produktion' : 'Automates content production'
+      },
+      'manage': {
+        name: lang === 'de' ? 'Projekt-Management Workflow' : 'Project Management Workflow',
+        technology: 'Notion AI + GitHub + Automated Updates',
+        steps: lang === 'de'
+          ? ['1. Task-Erstellung', '2. Automatische Zuordnung', '3. Progress-Tracking', '4. Status-Updates']
+          : ['1. Task creation', '2. Automatic assignment', '3. Progress tracking', '4. Status updates'],
+        difficulty: lang === 'de' ? 'Mittel' : 'Medium',
+        setupTime: '2-3h',
+        matchScore: 80,
+        reasoning: lang === 'de' ? 'Automatisiert Projekt-Workflows' : 'Automates project workflows'
+      },
+      'optimize': {
+        name: lang === 'de' ? 'Performance-Monitoring Workflow' : 'Performance Monitoring Workflow',
+        technology: 'Power BI + Alerts + Automated Reports',
+        steps: lang === 'de'
+          ? ['1. Performance-Monitoring', '2. Automatische Alerts', '3. Optimierungs-Vorschläge', '4. Report-Generierung']
+          : ['1. Performance monitoring', '2. Automatic alerts', '3. Optimization suggestions', '4. Report generation'],
+        difficulty: lang === 'de' ? 'Schwer' : 'Hard',
+        setupTime: '4-6h',
+        matchScore: 85,
+        reasoning: lang === 'de' ? 'Automatisiert Performance-Optimierung' : 'Automates performance optimization'
+      }
+    };
+
+    // Analysiere Teilaufgaben und finde passende Workflows
+    const enhancedWorkflows = [];
+    const subtaskTexts = subtasks.map(s => (s.title || s.text).toLowerCase()).join(' ');
+
+    // Prüfe auf Keywords in Teilaufgaben
+    for (const [keyword, workflow] of Object.entries(workflowMappings)) {
+      if (subtaskTexts.includes(keyword)) {
+        enhancedWorkflows.push(workflow);
+      }
+    }
+
+    // Füge spezifische Workflows hinzu, falls noch keine vorhanden
+    if (enhancedWorkflows.length === 0) {
+      // Fallback: Generiere basierend auf Automatisierungspotenzial
+      const avgAutomation = subtasks.reduce((sum, s) => sum + (s.automationPotential || 50), 0) / subtasks.length;
+      
+      if (avgAutomation > 70) {
+        enhancedWorkflows.push(workflowMappings['analyze']);
+      } else if (avgAutomation > 50) {
+        enhancedWorkflows.push(workflowMappings['manage']);
+      } else {
+        enhancedWorkflows.push(workflowMappings['create']);
+      }
+    }
+
+    // Kombiniere AI-generierte und verbesserte Workflows
+    const finalWorkflows = [
+      ...(result.workflows || []),
+      ...enhancedWorkflows
+    ];
+
+    // Entferne Duplikate basierend auf Namen
+    const uniqueWorkflows = finalWorkflows.filter((workflow, index, self) => 
+      index === self.findIndex(w => w.name === workflow.name)
+    );
+
+    return {
+      ...result,
+      workflows: uniqueWorkflows.slice(0, 3) // Max 3 Workflows
+    };
   }
 }
 
