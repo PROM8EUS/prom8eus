@@ -32,12 +32,54 @@ export class OpenAIClient {
   private apiKey: string;
   private baseUrl: string;
   private model: string;
+  private cache = new Map<string, { response: any; timestamp: number }>();
+  private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Stunden
 
   constructor() {
     const config = getOpenAIConfig();
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || 'https://api.openai.com/v1';
     this.model = config.model || 'gpt-4o-mini';
+  }
+
+  /**
+   * Generiert einen Cache-Key für einen Prompt
+   */
+  private getCacheKey(prompt: string): string {
+    return btoa(prompt).slice(0, 32);
+  }
+
+  /**
+   * Prüft ob ein Cache-Eintrag noch gültig ist
+   */
+  private isCacheValid(timestamp: number): boolean {
+    return Date.now() - timestamp < this.CACHE_TTL;
+  }
+
+  /**
+   * Holt eine Antwort aus dem Cache
+   */
+  private getFromCache(prompt: string): any | null {
+    const key = this.getCacheKey(prompt);
+    const cached = this.cache.get(key);
+    
+    if (cached && this.isCacheValid(cached.timestamp)) {
+      console.log('🎯 Cache hit - Token gespart!');
+      return cached.response;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Speichert eine Antwort im Cache
+   */
+  private setCache(prompt: string, response: any): void {
+    const key = this.getCacheKey(prompt);
+    this.cache.set(key, {
+      response,
+      timestamp: Date.now()
+    });
   }
 
   /**
@@ -103,7 +145,7 @@ export class OpenAIClient {
   }
 
   /**
-   * Analyze job description and extract tasks using AI
+   * Analyze job description and extract tasks using AI (OPTIMIZED)
    */
   async analyzeJobDescription(jobText: string, lang: 'de' | 'en' = 'de'): Promise<{
     tasks: Array<{
@@ -114,58 +156,41 @@ export class OpenAIClient {
     }>;
     summary: string;
   }> {
+    // Kürzerer, optimierter Prompt
     const systemPrompt = lang === 'de' 
-      ? `Du bist ein Experte für Arbeitsplatzautomatisierung. Analysiere Stellenbeschreibungen und extrahiere spezifische Aufgaben mit ihrem Automatisierungspotenzial.
+      ? `Extrahiere Aufgaben aus Stellenbeschreibungen. JSON:
+{"tasks":[{"text":"Aufgabe","automationPotential":85,"category":"admin","reasoning":"Begründung"}],"summary":"Zusammenfassung"}
+Kategorien: admin, tech, analytical, creative, mgmt, comm, routine, physical`
+      : `Extract tasks from job descriptions. JSON:
+{"tasks":[{"text":"Task","automationPotential":85,"category":"admin","reasoning":"Reasoning"}],"summary":"Summary"}
+Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
 
-Antworte im JSON-Format:
-{
-  "tasks": [
-    {
-      "text": "Aufgabentext",
-      "automationPotential": 85,
-      "category": "Kategorie",
-      "reasoning": "Begründung für das Automatisierungspotenzial"
-    }
-  ],
-  "summary": "Zusammenfassung der Analyse"
-}
-
-Kategorien: administrative, technical, analytical, creative, management, communication, routine, physical
-Automatisierungspotenzial: 0-100 (0 = nicht automatisierbar, 100 = vollständig automatisierbar)`
-      : `You are an expert in workplace automation. Analyze job descriptions and extract specific tasks with their automation potential.
-
-Respond in JSON format:
-{
-  "tasks": [
-    {
-      "text": "Task description",
-      "automationPotential": 85,
-      "category": "Category",
-      "reasoning": "Reasoning for automation potential"
-    }
-  ],
-  "summary": "Analysis summary"
-}
-
-Categories: administrative, technical, analytical, creative, management, communication, routine, physical
-Automation potential: 0-100 (0 = not automatable, 100 = fully automatable)`;
-
+    // Kürzerer User-Prompt
     const userPrompt = lang === 'de'
-      ? `Analysiere diese Stellenbeschreibung und extrahiere die wichtigsten Aufgaben:\n\n${jobText}`
-      : `Analyze this job description and extract the most important tasks:\n\n${jobText}`;
+      ? `Analysiere: ${jobText.slice(0, 2000)}` // Begrenze Input-Länge
+      : `Analyze: ${jobText.slice(0, 2000)}`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
+    // Prüfe Cache zuerst
+    const cacheKey = `${systemPrompt}${userPrompt}`;
+    const cached = this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const response = await this.chatCompletion(messages, {
       temperature: 0.3,
-      max_tokens: 2000,
+      max_tokens: 1200, // Reduziert von 2000
     });
 
     try {
       const parsed = JSON.parse(response.content);
+      // Speichere im Cache
+      this.setCache(cacheKey, parsed);
       return parsed;
     } catch (error) {
       console.error('Failed to parse OpenAI response:', error);
@@ -330,7 +355,7 @@ Difficulties: Easy, Medium, Hard`;
   }
 
   /**
-   * Analyze individual task with AI
+   * Analyze individual task with AI (OPTIMIZED)
    */
   async analyzeTask(
     taskText: string, 
@@ -350,92 +375,24 @@ Difficulties: Easy, Medium, Hard`;
   }> {
     const startTime = Date.now();
     
+    // Stark verkürzter Prompt
     const systemPrompt = lang === 'de' 
-      ? `Du bist ein Experte für Arbeitsplatzautomatisierung. Analysiere einzelne Aufgaben und bewerte ihr Automatisierungspotenzial.
+      ? `Analysiere Aufgabe. JSON:
+{"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Begründung","subtasks":[{"id":"1","title":"Unteraufgabe","automationPotential":90,"estimatedTime":15}]}`
+      : `Analyze task. JSON:
+{"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Reasoning","subtasks":[{"id":"1","title":"Subtask","automationPotential":90,"estimatedTime":15}]}`;
 
-Antworte im JSON-Format:
-{
-  "automationPotential": 85,
-  "confidence": 90,
-  "category": "Datenverarbeitung",
-  "industry": "IT",
-  "complexity": "medium",
-  "trend": "increasing",
-  "systems": ["Excel", "API", "Database"],
-  "reasoning": "Diese Aufgabe kann durch API-Integration und Datenverarbeitung automatisiert werden",
-  "subtasks": [
-    {
-      "id": "subtask-1",
-      "title": "Daten sammeln",
-      "automationPotential": 90,
-      "estimatedTime": 15
-    }
-  ]
-}
-
-Bewerte das Automatisierungspotenzial (0-100):
-- 90-100%: Vollständig automatisierbar
-- 70-89%: Größtenteils automatisierbar  
-- 50-69%: Teilweise automatisierbar
-- 30-49%: Wenig automatisierbar
-- 0-29%: Nicht automatisierbar
-
-Komplexität: low, medium, high
-Trend: increasing, stable, decreasing`
-      : `You are an expert in workplace automation. Analyze individual tasks and evaluate their automation potential.
-
-Respond in JSON format:
-{
-  "automationPotential": 85,
-  "confidence": 90,
-  "category": "Data Processing",
-  "industry": "IT",
-  "complexity": "medium",
-  "trend": "increasing",
-  "systems": ["Excel", "API", "Database"],
-  "reasoning": "This task can be automated through API integration and data processing",
-  "subtasks": [
-    {
-      "id": "subtask-1",
-      "title": "Collect data",
-      "automationPotential": 90,
-      "estimatedTime": 15
-    }
-  ]
-}
-
-Rate automation potential (0-100):
-- 90-100%: Fully automatable
-- 70-89%: Mostly automatable
-- 50-69%: Partially automatable
-- 30-49%: Slightly automatable
-- 0-29%: Not automatable
-
-Complexity: low, medium, high
-Trend: increasing, stable, decreasing`;
-
+    // Kürzerer User-Prompt
     const userPrompt = lang === 'de'
-      ? `Analysiere diese Aufgabe im Kontext der Stellenbeschreibung:
-
-AUFGABE: ${taskText}
-
-KONTEXT: ${jobContext}
-
-Bewerte das Automatisierungspotenzial und erstelle Unteraufgaben.`
-      : `Analyze this task in the context of the job description:
-
-TASK: ${taskText}
-
-CONTEXT: ${jobContext}
-
-Evaluate automation potential and create subtasks.`;
+      ? `Aufgabe: ${taskText.slice(0, 500)}\nKontext: ${jobContext.slice(0, 500)}`
+      : `Task: ${taskText.slice(0, 500)}\nContext: ${jobContext.slice(0, 500)}`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
-    const response = await this.chatCompletion(messages, { max_tokens: 1000 });
+    const response = await this.chatCompletion(messages, { max_tokens: 600 }); // Reduziert von 1000
     
     try {
       const result = JSON.parse(response.content);
@@ -462,7 +419,7 @@ Evaluate automation potential and create subtasks.`;
   }
 
   /**
-   * Find best AI agents and workflows for a specific task
+   * Find best AI agents and workflows for a specific task (OPTIMIZED)
    */
   async findBestSolutions(
     taskText: string,
@@ -488,104 +445,24 @@ Evaluate automation potential and create subtasks.`;
       reasoning: string;
     }>;
   }> {
+    // Stark verkürzter Prompt
     const systemPrompt = lang === 'de' 
-      ? `Du bist ein Experte für AI-Automatisierung. Finde die besten AI-Agenten und Workflows für spezifische Aufgaben.
+      ? `Empfehle AI-Lösungen. JSON:
+{"agents":[{"name":"Agent","technology":"Tech","implementation":"Schritte","difficulty":"Mittel","setupTime":"2-4h","matchScore":95,"reasoning":"Begründung"}],"workflows":[{"name":"Workflow","technology":"Tech","steps":["1","2"],"difficulty":"Einfach","setupTime":"1-2h","matchScore":90,"reasoning":"Begründung"}]}`
+      : `Recommend AI solutions. JSON:
+{"agents":[{"name":"Agent","technology":"Tech","implementation":"Steps","difficulty":"Medium","setupTime":"2-4h","matchScore":95,"reasoning":"Reasoning"}],"workflows":[{"name":"Workflow","technology":"Tech","steps":["1","2"],"difficulty":"Easy","setupTime":"1-2h","matchScore":90,"reasoning":"Reasoning"}]}`;
 
-Antworte im JSON-Format:
-{
-  "agents": [
-    {
-      "name": "AI-Agent Name",
-      "technology": "ChatGPT + GitHub Copilot + Claude",
-      "implementation": "Schritt-für-Schritt Anleitung",
-      "difficulty": "Mittel",
-      "setupTime": "2-4 Stunden",
-      "matchScore": 95,
-      "reasoning": "Warum dieser Agent perfekt für diese Aufgabe ist"
-    }
-  ],
-  "workflows": [
-    {
-      "name": "Workflow Name",
-      "technology": "n8n + API + Automation",
-      "steps": ["Schritt 1", "Schritt 2", "Schritt 3"],
-      "difficulty": "Einfach",
-      "setupTime": "1-2 Stunden",
-      "matchScore": 90,
-      "reasoning": "Warum dieser Workflow optimal ist"
-    }
-  ]
-}
-
-Schwierigkeit: Einfach, Mittel, Schwer
-Setup-Zeit: 1-2 Stunden, 2-4 Stunden, 4-8 Stunden, 8+ Stunden
-Match-Score: 0-100 (wie gut passt die Lösung zur Aufgabe)
-
-Fokussiere dich auf:
-- Konkrete, umsetzbare Lösungen
-- Realistische Setup-Zeiten
-- Klare Implementierungsschritte
-- Hohe Match-Scores für relevante Lösungen`
-      : `You are an expert in AI automation. Find the best AI agents and workflows for specific tasks.
-
-Respond in JSON format:
-{
-  "agents": [
-    {
-      "name": "AI Agent Name",
-      "technology": "ChatGPT + GitHub Copilot + Claude",
-      "implementation": "Step-by-step implementation guide",
-      "difficulty": "Medium",
-      "setupTime": "2-4 hours",
-      "matchScore": 95,
-      "reasoning": "Why this agent is perfect for this task"
-    }
-  ],
-  "workflows": [
-    {
-      "name": "Workflow Name",
-      "technology": "n8n + API + Automation",
-      "steps": ["Step 1", "Step 2", "Step 3"],
-      "difficulty": "Easy",
-      "setupTime": "1-2 hours",
-      "matchScore": 90,
-      "reasoning": "Why this workflow is optimal"
-    }
-  ]
-}
-
-Difficulty: Easy, Medium, Hard
-Setup Time: 1-2 hours, 2-4 hours, 4-8 hours, 8+ hours
-Match Score: 0-100 (how well the solution fits the task)
-
-Focus on:
-- Concrete, actionable solutions
-- Realistic setup times
-- Clear implementation steps
-- High match scores for relevant solutions`;
-
+    // Kürzerer User-Prompt
     const userPrompt = lang === 'de'
-      ? `Finde die besten AI-Lösungen für diese Aufgabe:
-
-AUFGABE: ${taskText}
-
-UNTERAUFGABEN: ${subtasks.map(s => s.title || s.text).join(', ')}
-
-Empfehle spezifische AI-Agenten und Workflows mit hoher Relevanz.`
-      : `Find the best AI solutions for this task:
-
-TASK: ${taskText}
-
-SUBTASKS: ${subtasks.map(s => s.title || s.text).join(', ')}
-
-Recommend specific AI agents and workflows with high relevance.`;
+      ? `Aufgabe: ${taskText.slice(0, 300)}\nUnteraufgaben: ${subtasks.slice(0, 3).map(s => s.title || s.text).join(', ')}`
+      : `Task: ${taskText.slice(0, 300)}\nSubtasks: ${subtasks.slice(0, 3).map(s => s.title || s.text).join(', ')}`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
-    const response = await this.chatCompletion(messages, { max_tokens: 1500 });
+    const response = await this.chatCompletion(messages, { max_tokens: 800 }); // Reduziert von 1500
     
     try {
       const result = JSON.parse(response.content);

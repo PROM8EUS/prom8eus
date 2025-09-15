@@ -836,15 +836,15 @@ function calculateSimilarity(str1: string, str2: string): number {
 }
 
 /**
- * AI-Enhanced Task Analysis
- * Uses OpenAI to analyze individual tasks with better accuracy
+ * AI-Enhanced Task Analysis (OPTIMIZED)
+ * Uses OpenAI to analyze individual tasks with better accuracy and token savings
  */
 async function analyzeTasksWithAI(
   taskTexts: string[], 
   jobContext: string, 
   lang: 'de' | 'en' = 'de'
 ): Promise<FastAnalysisResult[]> {
-  console.log('🤖 Starting AI-enhanced task analysis...');
+  console.log('🤖 Starting OPTIMIZED AI-enhanced task analysis...');
   
   if (!isOpenAIAvailable()) {
     throw new Error('OpenAI API nicht verfügbar. Bitte API-Key konfigurieren.');
@@ -852,32 +852,146 @@ async function analyzeTasksWithAI(
 
   const results: FastAnalysisResult[] = [];
   
-  // Analyze each task with AI
-  for (const taskText of taskTexts) {
-    console.log(`🔍 Analyzing task with AI: ${taskText.substring(0, 50)}...`);
-    
-    const aiResult = await openaiClient.analyzeTask(taskText, jobContext, lang);
-    
-    // Convert AI result to FastAnalysisResult format
-    const result: FastAnalysisResult = {
-      text: taskText,
-      automationPotential: aiResult.automationPotential,
-      confidence: aiResult.confidence,
-      pattern: aiResult.category,
-      category: aiResult.industry,
-      complexity: aiResult.complexity,
-      trend: aiResult.trend,
-      systems: aiResult.systems,
-      label: aiResult.automationPotential >= 70 ? 'Automatisierbar' : 
-             aiResult.automationPotential >= 30 ? 'Teilweise Automatisierbar' : 'Mensch',
-      reasoning: aiResult.reasoning,
-      analysisTime: aiResult.analysisTime,
-      subtasks: aiResult.subtasks
-    };
-    
-    results.push(result);
+  // OPTIMIZATION: Batch processing for similar tasks
+  const batchSize = 3; // Process 3 tasks at once
+  const batches = [];
+  
+  for (let i = 0; i < taskTexts.length; i += batchSize) {
+    batches.push(taskTexts.slice(i, i + batchSize));
   }
   
-  console.log(`✅ AI analysis completed for ${results.length} tasks`);
+  console.log(`📦 Processing ${batches.length} batches of up to ${batchSize} tasks each`);
+  
+  // Process each batch
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+    const batch = batches[batchIndex];
+    console.log(`🔄 Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} tasks`);
+    
+    // OPTIMIZATION: Process similar tasks together
+    if (batch.length > 1) {
+      try {
+        // Try batch processing first
+        const batchResult = await processBatchWithAI(batch, jobContext, lang);
+        results.push(...batchResult);
+        continue;
+      } catch (error) {
+        console.warn('⚠️ Batch processing failed, falling back to individual analysis:', error);
+      }
+    }
+    
+    // Fallback: Individual processing
+    for (const taskText of batch) {
+      console.log(`🔍 Analyzing task individually: ${taskText.substring(0, 50)}...`);
+      
+      const aiResult = await openaiClient.analyzeTask(taskText, jobContext, lang);
+      
+      // Convert AI result to FastAnalysisResult format
+      const result: FastAnalysisResult = {
+        text: taskText,
+        automationPotential: aiResult.automationPotential,
+        confidence: aiResult.confidence,
+        pattern: aiResult.category,
+        category: aiResult.industry,
+        complexity: aiResult.complexity,
+        trend: aiResult.trend,
+        systems: aiResult.systems,
+        label: aiResult.automationPotential >= 70 ? 'Automatisierbar' : 
+               aiResult.automationPotential >= 30 ? 'Teilweise Automatisierbar' : 'Mensch',
+        reasoning: aiResult.reasoning,
+        analysisTime: aiResult.analysisTime,
+        subtasks: aiResult.subtasks
+      };
+      
+      results.push(result);
+    }
+  }
+  
+  console.log(`✅ OPTIMIZED AI analysis completed for ${results.length} tasks`);
   return results;
+}
+
+/**
+ * OPTIMIZATION: Batch processing for similar tasks
+ * Reduces API calls by processing multiple tasks in one request
+ */
+async function processBatchWithAI(
+  taskTexts: string[], 
+  jobContext: string, 
+  lang: 'de' | 'en' = 'de'
+): Promise<FastAnalysisResult[]> {
+  console.log('🚀 Processing batch with AI...');
+  
+  // Create a combined prompt for all tasks
+  const tasksText = taskTexts.map((task, index) => `${index + 1}. ${task}`).join('\n');
+  
+  const systemPrompt = lang === 'de' 
+    ? `Analysiere mehrere Aufgaben gleichzeitig. JSON:
+{"results":[{"taskIndex":1,"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Begründung","subtasks":[{"id":"1","title":"Unteraufgabe","automationPotential":90,"estimatedTime":15}]}]}`
+    : `Analyze multiple tasks simultaneously. JSON:
+{"results":[{"taskIndex":1,"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Reasoning","subtasks":[{"id":"1","title":"Subtask","automationPotential":90,"estimatedTime":15}]}]}`;
+
+  const userPrompt = lang === 'de'
+    ? `Analysiere diese Aufgaben:\n${tasksText}\n\nKontext: ${jobContext.slice(0, 500)}`
+    : `Analyze these tasks:\n${tasksText}\n\nContext: ${jobContext.slice(0, 500)}`;
+
+  const messages = [
+    { role: 'system' as const, content: systemPrompt },
+    { role: 'user' as const, content: userPrompt }
+  ];
+
+  const response = await openaiClient.chatCompletion(messages, { 
+    max_tokens: 800, // Reduced for batch processing
+    temperature: 0.3 
+  });
+
+  try {
+    const parsed = JSON.parse(response.content);
+    const results: FastAnalysisResult[] = [];
+    
+    // Convert batch results back to individual results
+    for (let i = 0; i < taskTexts.length; i++) {
+      const taskText = taskTexts[i];
+      const batchResult = parsed.results?.find((r: any) => r.taskIndex === i + 1) || parsed.results?.[i];
+      
+      if (batchResult) {
+        results.push({
+          text: taskText,
+          automationPotential: batchResult.automationPotential || 50,
+          confidence: batchResult.confidence || 0.7,
+          pattern: batchResult.category || 'general',
+          category: batchResult.industry || 'general',
+          complexity: batchResult.complexity || 'medium',
+          trend: batchResult.trend || 'stable',
+          systems: batchResult.systems || [],
+          label: batchResult.automationPotential >= 70 ? 'Automatisierbar' : 
+                 batchResult.automationPotential >= 30 ? 'Teilweise Automatisierbar' : 'Mensch',
+          reasoning: batchResult.reasoning || 'Batch analysis',
+          analysisTime: 0,
+          subtasks: batchResult.subtasks || []
+        });
+      } else {
+        // Fallback for missing results
+        results.push({
+          text: taskText,
+          automationPotential: 50,
+          confidence: 0.5,
+          pattern: 'general',
+          category: 'general',
+          complexity: 'medium',
+          trend: 'stable',
+          systems: [],
+          label: 'Teilweise Automatisierbar',
+          reasoning: 'Fallback analysis',
+          analysisTime: 0,
+          subtasks: []
+        });
+      }
+    }
+    
+    console.log('✅ Batch processing successful');
+    return results;
+  } catch (error) {
+    console.error('❌ Batch processing failed:', error);
+    throw error;
+  }
 }
