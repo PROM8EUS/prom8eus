@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { WorkflowBrowser } from '@/components/WorkflowBrowser';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { testWorkflowChain, printTestResults, testScenarios, TestResult } from '@/lib/workflow-test';
@@ -222,28 +223,10 @@ export function WorkflowTest() {
                   </div>
                 </div>
 
-                {/* Workflows */}
+                {/* Workflows: show real indexed results matching this task */}
                 <div>
-                  <h4 className="font-medium mb-2">Workflows ({result.solutions.workflows.length})</h4>
-                  <div className="space-y-2">
-                    {result.solutions.workflows.map((workflow: any, i: number) => (
-                      <div key={i} className="p-2 border rounded text-sm">
-                        <div className="font-medium">{workflow.name}</div>
-                        <div className="text-muted-foreground">{workflow.technology}</div>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="secondary">
-                            {workflow.matchScore}% match
-                          </Badge>
-                          <Badge variant="outline">
-                            {workflow.setupTime}
-                          </Badge>
-                          <Badge variant="outline">
-                            {workflow.difficulty}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <h4 className="font-medium mb-2">Workflows (Treffer aus Index)</h4>
+                  <WorkflowBrowser isAdmin={true} />
                 </div>
 
                 {/* AI Agents */}
