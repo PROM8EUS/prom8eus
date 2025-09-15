@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Solution, SolutionType } from '../types/solutions';
 import SolutionCard from './SolutionCard';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SolutionDetailModal from './SolutionDetailModal';
 import SolutionIcon from './ui/SolutionIcon';
 import { workflowIndexer } from '@/lib/workflowIndexer';
@@ -460,12 +461,13 @@ export default function SolutionsTab({
             <button
               type="button"
               aria-label="scroll left"
-              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white"
+              className="hidden md:flex absolute left-0 top-0 bottom-0 h-full w-12 items-center justify-center z-10 bg-gradient-to-r from-white/90 to-transparent hover:from-white"
               onClick={() => {
-                document.getElementById('solutions-scroll')?.scrollBy({ left: -600, behavior: 'smooth' });
+                const el = document.getElementById('solutions-scroll');
+                if (el) el.scrollBy({ left: -el.clientWidth, behavior: 'smooth' });
               }}
             >
-              ‹
+              <ChevronLeft className="w-6 h-6 text-gray-700" />
             </button>
             <div id="solutions-scroll" className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory">
               {filteredSolutions.map((solution) => (
@@ -506,12 +508,13 @@ export default function SolutionsTab({
             <button
               type="button"
               aria-label="scroll right"
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white"
+              className="hidden md:flex absolute right-0 top-0 bottom-0 h-full w-12 items-center justify-center z-10 bg-gradient-to-l from-white/90 to-transparent hover:from-white"
               onClick={() => {
-                document.getElementById('solutions-scroll')?.scrollBy({ left: 600, behavior: 'smooth' });
+                const el = document.getElementById('solutions-scroll');
+                if (el) el.scrollBy({ left: el.clientWidth, behavior: 'smooth' });
               }}
             >
-              ›
+              <ChevronRight className="w-6 h-6 text-gray-700" />
             </button>
           </div>
         )}
