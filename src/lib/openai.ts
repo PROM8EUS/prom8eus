@@ -223,15 +223,15 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
     reasoning: string;
   }> {
     const systemPrompt = lang === 'de'
-      ? `Du bist ein Experte für Business Case Analyse und Automatisierung. Analysiere die Hauptaufgabe und Teilaufgaben, um realistische Business Case Kennzahlen zu berechnen.
+      ? `Du bist ein Experte für Business Case Analyse und Automatisierung. Berechne realistische Business Case Kennzahlen basierend auf durchschnittlichen Zeiten für die spezifische Aufgabe und Stelle.
 
 WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
 
 AUFGABE: Berechne realistische Business Case Kennzahlen basierend auf:
-1. Der Hauptaufgabe und ihren Anforderungen
-2. Den konkreten Teilaufgaben und deren Automatisierungspotenzial
-3. Realistischen Zeitschätzungen und Setup-Kosten
-4. Praktischen ROI und Amortisationszeiten
+1. Durchschnittlichen Zeiten für diese spezifische Aufgabe/Stelle (pro Monat/Jahr/Woche)
+2. Realistischem Automatisierungspotenzial für diese Art von Arbeit
+3. Praktischen Setup-Kosten und ROI-Berechnungen
+4. Branchenüblichen Zeitschätzungen
 
 JSON-Format:
 {
@@ -243,18 +243,25 @@ JSON-Format:
   "setupCostMoney": 1720.0,
   "roi": 12190.9,
   "paybackPeriodYears": 0.0,
-  "reasoning": "Detaillierte Begründung der Berechnungen basierend auf den Teilaufgaben"
+  "reasoning": "Detaillierte Begründung basierend auf durchschnittlichen Zeiten für diese Aufgabe"
 }
 
 Berechnungslogik:
-- manualHours: Summe aller Teilaufgaben-Zeiten (realistisch für die Aufgabe)
-- automatedHours: manualHours * (durchschnittliches Automatisierungspotenzial der Teilaufgaben)
-- automationPotential: Durchschnitt der Teilaufgaben-Automatisierungswerte
+- manualHours: Realistische durchschnittliche Zeit für diese Aufgabe (pro Monat: 20-200h, pro Jahr: 240-2400h)
+- automatedHours: manualHours * (realistisches Automatisierungspotenzial für diese Aufgabe)
+- automationPotential: Realistischer Wert für diese Art von Arbeit (10-90%)
 - savedHours: manualHours - automatedHours
-- setupCostHours: Realistische Setup-Zeit basierend auf Komplexität (10-100h)
+- setupCostHours: Realistische Setup-Zeit basierend auf Komplexität (5-50h)
 - setupCostMoney: setupCostHours * 40€ (Standard-Stundensatz)
 - roi: ((savedHours * 40€ * 3 Jahre) - setupCostMoney) / setupCostMoney * 100
-- paybackPeriodYears: setupCostMoney / (savedHours * 40€ * 12 Monate)`
+- paybackPeriodYears: setupCostMoney / (savedHours * 40€ * 12 Monate)
+
+Beispiele für durchschnittliche Zeiten:
+- Webentwicklung: 40-80h/Monat
+- Datenanalyse: 20-60h/Monat  
+- Marketing: 30-100h/Monat
+- Buchhaltung: 20-40h/Monat
+- Kundenservice: 60-120h/Monat`
       : `You are an expert in business case analysis and automation. Analyze the main task and subtasks to calculate realistic business case metrics.
 
 IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
@@ -289,22 +296,22 @@ Calculation logic:
 - paybackPeriodYears: setupCostMoney / (savedHours * €40 * 12 months)`;
 
     const userPrompt = lang === 'de'
-      ? `Analysiere diese Aufgabe und berechne den Business Case:
+      ? `Analysiere diese Aufgabe und berechne den Business Case basierend auf durchschnittlichen Zeiten:
 
 HAUPTAUFGABE: ${taskText}
 
-TEILAUFGABEN:
-${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.estimatedTime}min, ${s.automationPotential}% Automatisierung)`).join('\n')}
+TEILAUFGABEN (nur als Referenz für Automatisierungspotenzial):
+${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.automationPotential}% Automatisierung)`).join('\n')}
 
-Berechne realistische Business Case Kennzahlen basierend auf den Teilaufgaben.`
-      : `Analyze this task and calculate the business case:
+WICHTIG: Berechne realistische Business Case Kennzahlen basierend auf durchschnittlichen Zeiten für diese spezifische Aufgabe/Stelle, nicht auf den Teilaufgaben-Zeiten.`
+      : `Analyze this task and calculate the business case based on average times:
 
 MAIN TASK: ${taskText}
 
-SUBTASKS:
-${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.estimatedTime}min, ${s.automationPotential}% automation)`).join('\n')}
+SUBTASKS (only as reference for automation potential):
+${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.automationPotential}% automation)`).join('\n')}
 
-Calculate realistic business case metrics based on the subtasks.`;
+IMPORTANT: Calculate realistic business case metrics based on average times for this specific task/position, not on subtask times.`;
 
     try {
       const response = await this.chatCompletion([
