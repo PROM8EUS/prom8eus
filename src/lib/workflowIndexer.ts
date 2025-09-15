@@ -780,7 +780,7 @@ export class WorkflowIndexer {
               console.log(`[n8n.io] Stopping at page ${page}.`);
               break;
             }
-            await new Promise(resolve => setTimeout(resolve, 120));
+            await new Promise(resolve => setTimeout(resolve, 50));
           }
         } catch (e) {
           console.warn('Client-side n8n.io pagination failed', e);

@@ -93,8 +93,7 @@ export class AgentsApiClient {
       this.deploymentConfigs.set(agent.id, deploymentConfig);
       this.saveDeploymentConfigs();
 
-      // Simulate deployment delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Deployment completed (removed artificial delay)
 
       console.log(`${agent.name} deployed locally successfully`);
       return deploymentConfig;
@@ -129,8 +128,7 @@ export class AgentsApiClient {
       this.deploymentConfigs.set(agent.id, deploymentConfig);
       this.saveDeploymentConfigs();
 
-      // Simulate cloud deployment delay
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Cloud deployment completed (removed artificial delay)
 
       console.log(`${agent.name} deployed to cloud successfully`);
       return deploymentConfig;
