@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Slider } from './ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { Skeleton } from './ui/skeleton';
@@ -268,10 +269,28 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <Label htmlFor="modal-hourly-rate">
                       {lang === 'de' ? 'Stundensatz (€)' : 'Hourly Rate (€)'}
                     </Label>
+                    
+                    {/* Slider */}
+                    <div className="space-y-2">
+                      <Slider
+                        value={[tempHourlyRate]}
+                        onValueChange={(value) => setTempHourlyRate(value[0])}
+                        max={200}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>0 €/h</span>
+                        <span>200 €/h</span>
+                      </div>
+                    </div>
+                    
+                    {/* Manual Input */}
                     <div className="flex items-center space-x-2">
                       <Input
                         id="modal-hourly-rate"
@@ -280,6 +299,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                         onChange={(e) => setTempHourlyRate(Number(e.target.value))}
                         className="flex-1"
                         min="0"
+                        max="200"
                         step="0.50"
                       />
                       <span className="text-sm text-muted-foreground">€/h</span>
