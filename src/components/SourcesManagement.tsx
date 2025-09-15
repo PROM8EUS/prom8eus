@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -292,19 +293,6 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      active: 'bg-green-100 text-green-800',
-      inactive: 'bg-yellow-100 text-yellow-800',
-      error: 'bg-red-100 text-red-800'
-    };
-
-    return (
-      <Badge className={variants[status as keyof typeof variants] || 'bg-gray-100 text-gray-800'}>
-        {status}
-      </Badge>
-    );
-  };
 
   const handleToolClick = (tool: any) => {
     setSelectedTool(tool);
@@ -397,13 +385,10 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
             <span className="text-sm text-gray-600">
               GitHub Token: 
             </span>
-            <Badge 
-              variant={githubTokenStatus === 'configured' ? 'default' : 'destructive'}
-              className={githubTokenStatus === 'configured' ? 'bg-green-100 text-green-800' : ''}
-            >
-              {githubTokenStatus === 'configured' ? 'Konfiguriert' : 
-               githubTokenStatus === 'invalid' ? 'Ungültig' : 'Nicht konfiguriert'}
-            </Badge>
+            <StatusBadge 
+              status={githubTokenStatus === 'configured' ? 'active' : 
+                     githubTokenStatus === 'invalid' ? 'error' : 'inactive'}
+            />
           </div>
           
           {/* Indexing Progress */}
@@ -512,7 +497,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(source.status)}
-                        {getStatusBadge(source.status)}
+                        <StatusBadge status={source.status} />
                       </div>
                     </div>
                   </CardHeader>
@@ -568,7 +553,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(source.status)}
-                      {getStatusBadge(source.status)}
+                      <StatusBadge status={source.status} />
                     </div>
                   </div>
                 </CardHeader>

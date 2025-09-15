@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { StatusBadge } from './ui/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
@@ -117,12 +118,6 @@ export default function AITestModal({ lang = 'de', onClose }: AITestModalProps) 
     return <XCircle className="w-4 h-4 text-red-500" />;
   };
 
-  const getStatusBadge = (status: boolean | undefined, error?: string) => {
-    if (error) return <Badge variant="destructive">Error</Badge>;
-    if (status === undefined) return <Badge variant="secondary">Not Tested</Badge>;
-    if (status) return <Badge variant="default" className="bg-green-500">Success</Badge>;
-    return <Badge variant="destructive">Failed</Badge>;
-  };
 
   const handleClose = () => {
     setIsOpen(false);
@@ -163,7 +158,7 @@ export default function AITestModal({ lang = 'de', onClose }: AITestModalProps) 
                 {getStatusIcon(isOpenAIAvailable())}
               </div>
               <div className="mt-2">
-                {getStatusBadge(isOpenAIAvailable())}
+                <StatusBadge status={isOpenAIAvailable() ? 'active' : 'error'} />
               </div>
             </CardContent>
           </Card>
@@ -259,7 +254,10 @@ export default function AITestModal({ lang = 'de', onClose }: AITestModalProps) 
                   <CardTitle className="text-lg flex items-center gap-2">
                     {getStatusIcon(testResults.connectivity.isAvailable, testResults.connectivity.error)}
                     {lang === 'de' ? 'Verbindungstest' : 'Connectivity Test'}
-                    {getStatusBadge(testResults.connectivity.isAvailable, testResults.connectivity.error)}
+                    <StatusBadge 
+                      status={testResults.connectivity.error ? 'error' : 
+                             testResults.connectivity.isAvailable ? 'active' : 'inactive'} 
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -315,7 +313,9 @@ export default function AITestModal({ lang = 'de', onClose }: AITestModalProps) 
                   <CardTitle className="text-lg flex items-center gap-2">
                     {getStatusIcon(!testResults.jobAnalysis.error, testResults.jobAnalysis.error)}
                     {lang === 'de' ? 'Job-Analyse' : 'Job Analysis'}
-                    {getStatusBadge(!testResults.jobAnalysis.error, testResults.jobAnalysis.error)}
+                    <StatusBadge 
+                      status={testResults.jobAnalysis.error ? 'error' : 'active'} 
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -350,7 +350,9 @@ export default function AITestModal({ lang = 'de', onClose }: AITestModalProps) 
                   <CardTitle className="text-lg flex items-center gap-2">
                     {getStatusIcon(!testResults.subtaskGeneration.error, testResults.subtaskGeneration.error)}
                     {lang === 'de' ? 'Unteraufgaben-Generierung' : 'Subtask Generation'}
-                    {getStatusBadge(!testResults.subtaskGeneration.error, testResults.subtaskGeneration.error)}
+                    <StatusBadge 
+                      status={testResults.subtaskGeneration.error ? 'error' : 'active'} 
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -382,7 +384,9 @@ export default function AITestModal({ lang = 'de', onClose }: AITestModalProps) 
                   <CardTitle className="text-lg flex items-center gap-2">
                     {getStatusIcon(!testResults.agentRecommendations.error, testResults.agentRecommendations.error)}
                     {lang === 'de' ? 'Agent-Empfehlungen' : 'Agent Recommendations'}
-                    {getStatusBadge(!testResults.agentRecommendations.error, testResults.agentRecommendations.error)}
+                    <StatusBadge 
+                      status={testResults.agentRecommendations.error ? 'error' : 'active'} 
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

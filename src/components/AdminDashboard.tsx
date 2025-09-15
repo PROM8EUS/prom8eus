@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { 
   Users, 
@@ -75,16 +76,6 @@ export default function AdminDashboard({ lang }: AdminDashboardProps) {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Success</Badge>;
-      case 'warning':
-        return <Badge variant="default" className="bg-yellow-100 text-yellow-800">Warning</Badge>;
-      default:
-        return <Badge variant="secondary">Unknown</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -214,7 +205,7 @@ export default function AdminDashboard({ lang }: AdminDashboardProps) {
                     </p>
                   </div>
                 </div>
-                {getStatusBadge(activity.status)}
+                <StatusBadge status={activity.status} />
               </div>
             ))}
           </div>
