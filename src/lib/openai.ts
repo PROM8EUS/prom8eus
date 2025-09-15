@@ -381,11 +381,19 @@ Difficulties: Easy, Medium, Hard`;
   }> {
     const startTime = Date.now();
     
-    // Stark verkürzter Prompt
+    // Verbesserter Prompt mit klarer JSON-Anweisung
     const systemPrompt = lang === 'de' 
-      ? `Analysiere Aufgabe. JSON:
+      ? `Du bist ein Experte für Arbeitsplatzautomatisierung. Analysiere Aufgaben und antworte NUR mit gültigem JSON.
+
+WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
+
+JSON-Format:
 {"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Begründung","subtasks":[{"id":"1","title":"Unteraufgabe","automationPotential":90,"estimatedTime":15}]}`
-      : `Analyze task. JSON:
+      : `You are an expert in workplace automation. Analyze tasks and respond ONLY with valid JSON.
+
+IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
+
+JSON Format:
 {"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Reasoning","subtasks":[{"id":"1","title":"Subtask","automationPotential":90,"estimatedTime":15}]}`;
 
     // Kürzerer User-Prompt
@@ -401,13 +409,30 @@ Difficulties: Easy, Medium, Hard`;
     const response = await this.chatCompletion(messages, { max_tokens: 600 }); // Reduziert von 1000
     
     try {
-      const result = JSON.parse(response.content);
+      // Versuche JSON zu parsen
+      let result = JSON.parse(response.content);
       return {
         ...result,
         analysisTime: Date.now() - startTime
       };
     } catch (error) {
       console.error('Failed to parse AI response:', error);
+      console.log('Raw response:', response.content);
+      
+      // Versuche JSON aus der Antwort zu extrahieren
+      try {
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const result = JSON.parse(jsonMatch[0]);
+          return {
+            ...result,
+            analysisTime: Date.now() - startTime
+          };
+        }
+      } catch (extractError) {
+        console.error('Failed to extract JSON from response:', extractError);
+      }
+      
       // Fallback response
       return {
         automationPotential: 50,
@@ -495,18 +520,22 @@ EXAMPLES FOR SPECIFIC TASKS:
 
 ${workflowExamples}
 
+WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
+
 JSON-Format:
 {"agents":[{"name":"GitHub Copilot","technology":"AI Code Assistant","implementation":"1. Install VS Code Extension 2. Configure API Key 3. Start coding with AI suggestions","difficulty":"Einfach","setupTime":"30min","matchScore":95,"reasoning":"Perfekt für Code-Review und Debugging"}],"workflows":[{"name":"Bug-Tracking Workflow","technology":"GitHub + Claude + Testing","steps":["1. Automatische Bug-Erkennung","2. AI-gestützte Analyse","3. Automatische Test-Generierung","4. Status-Updates"],"difficulty":"Mittel","setupTime":"2-4h","matchScore":90,"reasoning":"Automatisiert kompletten Bug-Lifecycle"}]}
 
-WICHTIG: Basiere Empfehlungen auf den konkreten Teilaufgaben, nicht auf generischen Lösungen!`
+Basiere Empfehlungen auf den konkreten Teilaufgaben, nicht auf generischen Lösungen!`
       : `You are an expert in AI workflow automation. Recommend specific workflows based on subtasks.
 
 ${workflowExamples}
 
+IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
+
 JSON Format:
 {"agents":[{"name":"GitHub Copilot","technology":"AI Code Assistant","implementation":"1. Install VS Code Extension 2. Configure API Key 3. Start coding with AI suggestions","difficulty":"Easy","setupTime":"30min","matchScore":95,"reasoning":"Perfect for code review and debugging"}],"workflows":[{"name":"Bug Tracking Workflow","technology":"GitHub + Claude + Testing","steps":["1. Automatic bug detection","2. AI-powered analysis","3. Automated test generation","4. Status updates"],"difficulty":"Medium","setupTime":"2-4h","matchScore":90,"reasoning":"Automates complete bug lifecycle"}]}
 
-IMPORTANT: Base recommendations on concrete subtasks, not generic solutions!`;
+Base recommendations on concrete subtasks, not generic solutions!`;
 
     // Detaillierter User-Prompt mit Teilaufgaben
     const subtasksText = subtasks.map((subtask, index) => 

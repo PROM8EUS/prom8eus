@@ -925,9 +925,17 @@ async function processBatchWithAI(
   const tasksText = taskTexts.map((task, index) => `${index + 1}. ${task}`).join('\n');
   
   const systemPrompt = lang === 'de' 
-    ? `Analysiere mehrere Aufgaben gleichzeitig. JSON:
+    ? `Du bist ein Experte für Arbeitsplatzautomatisierung. Analysiere mehrere Aufgaben gleichzeitig und antworte NUR mit gültigem JSON.
+
+WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
+
+JSON-Format:
 {"results":[{"taskIndex":1,"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Begründung","subtasks":[{"id":"1","title":"Unteraufgabe","automationPotential":90,"estimatedTime":15}]}]}`
-    : `Analyze multiple tasks simultaneously. JSON:
+    : `You are an expert in workplace automation. Analyze multiple tasks simultaneously and respond ONLY with valid JSON.
+
+IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
+
+JSON Format:
 {"results":[{"taskIndex":1,"automationPotential":85,"confidence":90,"category":"admin","industry":"IT","complexity":"medium","trend":"increasing","systems":["Excel"],"reasoning":"Reasoning","subtasks":[{"id":"1","title":"Subtask","automationPotential":90,"estimatedTime":15}]}]}`;
 
   const userPrompt = lang === 'de'
@@ -945,7 +953,8 @@ async function processBatchWithAI(
   });
 
   try {
-    const parsed = JSON.parse(response.content);
+    // Versuche JSON zu parsen
+    let parsed = JSON.parse(response.content);
     const results: FastAnalysisResult[] = [];
     
     // Convert batch results back to individual results
@@ -992,6 +1001,21 @@ async function processBatchWithAI(
     return results;
   } catch (error) {
     console.error('❌ Batch processing failed:', error);
+    console.log('Raw response:', response.content);
+    
+    // Versuche JSON aus der Antwort zu extrahieren
+    try {
+      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Verarbeite extrahiertes JSON...
+        console.log('✅ Extracted JSON from response');
+        // Hier könnte man das extrahierte JSON verarbeiten
+      }
+    } catch (extractError) {
+      console.error('Failed to extract JSON from response:', extractError);
+    }
+    
     throw error;
   }
 }
