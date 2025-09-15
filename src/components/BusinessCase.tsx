@@ -54,6 +54,7 @@ const HOURS_PER_PERIOD: Record<Period, number> = {
 const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: periodProp, onPeriodChange }) => {
   const [mode, setMode] = useState<'time' | 'money'>('time');
   const [hourlyRate, setHourlyRate] = useState(40);
+  const [aiHourlyRate, setAiHourlyRate] = useState<number | null>(null);
   const [periodState, setPeriodState] = useState<Period>('year');
   const [businessCaseData, setBusinessCaseData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,15 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
         const data = await openaiClient.generateBusinessCase(task.text, task.subtasks, lang);
         console.log('✅ Business case generated:', data);
         setBusinessCaseData(data);
+        
+        // Set AI hourly rate as default if no manual rate is set
+        if (!hourlyRate || hourlyRate === 40) {
+          const aiRate = data.employmentType === 'employee' 
+            ? data.hourlyRateEmployee 
+            : data.hourlyRateFreelancer;
+          setHourlyRate(aiRate);
+          setAiHourlyRate(aiRate);
+        }
       } catch (err) {
         console.error('❌ Business case generation failed:', err);
         setError(err instanceof Error ? err.message : 'Failed to generate business case');
@@ -124,20 +134,30 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
     // Scale AI-generated data for selected period
     const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
     
+    // Use AI-generated hourly rate based on employment type, or fallback to user input
+    const aiHourlyRate = businessCaseData.employmentType === 'employee' 
+      ? businessCaseData.hourlyRateEmployee 
+      : businessCaseData.hourlyRateFreelancer;
+    
+    const effectiveHourlyRate = hourlyRate || aiHourlyRate;
+    
     return {
       automationRatio: businessCaseData.automationPotential,
       manualHours: businessCaseData.manualHours * scale,
       automatedHours: businessCaseData.automatedHours * scale,
       savedHours: businessCaseData.savedHours * scale,
-      manualCost: businessCaseData.manualHours * scale * hourlyRate,
-      automatedCost: businessCaseData.automatedHours * scale * hourlyRate * 0.25, // 25% cost reduction
-      savedMoney: businessCaseData.savedHours * scale * hourlyRate,
+      manualCost: businessCaseData.manualHours * scale * effectiveHourlyRate,
+      automatedCost: businessCaseData.automatedHours * scale * effectiveHourlyRate * 0.25, // 25% cost reduction
+      savedMoney: businessCaseData.savedHours * scale * effectiveHourlyRate,
       automationSetupCost: businessCaseData.setupCostMoney,
       periodAutomationCost: businessCaseData.setupCostMoney * scale,
-      totalSavingsMoney: (businessCaseData.savedHours * scale * hourlyRate) - (businessCaseData.setupCostMoney * scale),
+      totalSavingsMoney: (businessCaseData.savedHours * scale * effectiveHourlyRate) - (businessCaseData.setupCostMoney * scale),
       roi: businessCaseData.roi,
       paybackPeriod: businessCaseData.paybackPeriodYears,
       reasoning: businessCaseData.reasoning,
+      employmentType: businessCaseData.employmentType,
+      aiHourlyRate: aiHourlyRate,
+      effectiveHourlyRate: effectiveHourlyRate,
     };
   }, [businessCaseData, hourlyRate, period]);
 
@@ -304,6 +324,37 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           <div className="flex items-center justify-center py-8">
             <div className="text-center text-muted-foreground">
               {lang === 'de' ? 'Keine Teilaufgaben verfügbar für Business Case' : 'No subtasks available for business case'}
+            </div>
+          </div>
+        )}
+
+        {/* Employment Type and Hourly Rate Info */}
+        {!loading && !error && businessMetrics && (
+          <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">
+                  {lang === 'de' ? 'Anstellungstyp:' : 'Employment Type:'}
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {businessMetrics.employmentType === 'employee' 
+                    ? (lang === 'de' ? 'Angestellter' : 'Employee')
+                    : (lang === 'de' ? 'Freelancer' : 'Freelancer')
+                  }
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">
+                  {lang === 'de' ? 'AI-Stundensatz:' : 'AI Hourly Rate:'}
+                </span>
+                <span className="font-medium">
+                  {businessMetrics.aiHourlyRate.toFixed(0)} €/h
+                  {businessMetrics.employmentType === 'employee' 
+                    ? (lang === 'de' ? ' (Brutto)' : ' (Gross)')
+                    : (lang === 'de' ? ' (Netto)' : ' (Net)')
+                  }
+                </span>
+              </div>
             </div>
           </div>
         )}

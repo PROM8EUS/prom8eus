@@ -220,18 +220,21 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
     setupCostMoney: number;
     roi: number;
     paybackPeriodYears: number;
+    hourlyRateEmployee: number;
+    hourlyRateFreelancer: number;
+    employmentType: 'employee' | 'freelancer';
     reasoning: string;
   }> {
     const systemPrompt = lang === 'de'
-      ? `Du bist ein Experte für Business Case Analyse und Automatisierung. Berechne realistische Business Case Kennzahlen basierend auf durchschnittlichen Zeiten für die spezifische Aufgabe und Stelle.
+      ? `Du bist ein Experte für Business Case Analyse und Automatisierung. Berechne realistische Business Case Kennzahlen basierend auf durchschnittlichen Zeiten und angemessenen Stundensätzen für die spezifische Aufgabe.
 
 WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
 
 AUFGABE: Berechne realistische Business Case Kennzahlen basierend auf:
 1. Durchschnittlichen Zeiten für diese spezifische Aufgabe/Stelle (pro Monat/Jahr/Woche)
 2. Realistischem Automatisierungspotenzial für diese Art von Arbeit
-3. Praktischen Setup-Kosten und ROI-Berechnungen
-4. Branchenüblichen Zeitschätzungen
+3. Angemessenen Stundensätzen (Brutto für Angestellte, Netto für Freelancer)
+4. Praktischen Setup-Kosten und ROI-Berechnungen
 
 JSON-Format:
 {
@@ -243,7 +246,10 @@ JSON-Format:
   "setupCostMoney": 1720.0,
   "roi": 12190.9,
   "paybackPeriodYears": 0.0,
-  "reasoning": "Detaillierte Begründung basierend auf durchschnittlichen Zeiten für diese Aufgabe"
+  "hourlyRateEmployee": 45.0,
+  "hourlyRateFreelancer": 35.0,
+  "employmentType": "employee",
+  "reasoning": "Detaillierte Begründung basierend auf durchschnittlichen Zeiten und Stundensätzen für diese Aufgabe"
 }
 
 Berechnungslogik:
@@ -252,16 +258,19 @@ Berechnungslogik:
 - automationPotential: Realistischer Wert für diese Art von Arbeit (10-90%)
 - savedHours: manualHours - automatedHours
 - setupCostHours: Realistische Setup-Zeit basierend auf Komplexität (5-50h)
-- setupCostMoney: setupCostHours * 40€ (Standard-Stundensatz)
-- roi: ((savedHours * 40€ * 3 Jahre) - setupCostMoney) / setupCostMoney * 100
-- paybackPeriodYears: setupCostMoney / (savedHours * 40€ * 12 Monate)
+- setupCostMoney: setupCostHours * angemessener Stundensatz
+- hourlyRateEmployee: Brutto-Stundensatz für Angestellte (35-80€/h je nach Aufgabe)
+- hourlyRateFreelancer: Netto-Stundensatz für Freelancer (25-60€/h je nach Aufgabe)
+- employmentType: "employee" oder "freelancer" basierend auf der Aufgabe
+- roi: ((savedHours * Stundensatz * 3 Jahre) - setupCostMoney) / setupCostMoney * 100
+- paybackPeriodYears: setupCostMoney / (savedHours * Stundensatz * 12 Monate)
 
-Beispiele für durchschnittliche Zeiten:
-- Webentwicklung: 40-80h/Monat
-- Datenanalyse: 20-60h/Monat  
-- Marketing: 30-100h/Monat
-- Buchhaltung: 20-40h/Monat
-- Kundenservice: 60-120h/Monat`
+Stundensatz-Beispiele:
+- Senior Software Engineer: Angestellter 60€/h, Freelancer 45€/h
+- Marketing Manager: Angestellter 45€/h, Freelancer 35€/h
+- Buchhalter: Angestellter 35€/h, Freelancer 28€/h
+- Kundenservice: Angestellter 25€/h, Freelancer 20€/h
+- Data Analyst: Angestellter 50€/h, Freelancer 40€/h`
       : `You are an expert in business case analysis and automation. Analyze the main task and subtasks to calculate realistic business case metrics.
 
 IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
