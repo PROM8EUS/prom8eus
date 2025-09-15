@@ -280,18 +280,6 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'inactive':
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
-      case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-gray-600" />;
-    }
-  };
 
 
   const handleToolClick = (tool: any) => {
@@ -496,7 +484,6 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getStatusIcon(source.status)}
                         <StatusBadge status={source.status} />
                       </div>
                     </div>
@@ -552,7 +539,6 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {getStatusIcon(source.status)}
                       <StatusBadge status={source.status} />
                     </div>
                   </div>

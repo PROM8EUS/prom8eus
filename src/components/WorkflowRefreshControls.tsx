@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RefreshCw, Clock, Database, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { workflowIndexer } from '@/lib/workflowIndexer';
 
@@ -97,9 +98,10 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4 text-gray-600" />
             <span className="font-medium text-sm">Cache Management</span>
-            <Badge variant={hasCache ? "default" : "destructive"} className="text-xs">
-              {hasCache ? 'Aktiv' : 'Leer'}
-            </Badge>
+            <StatusBadge 
+              status={hasCache ? 'active' : 'inactive'} 
+              size="sm"
+            />
           </div>
           
           <Button 
