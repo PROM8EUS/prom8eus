@@ -501,8 +501,6 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
     residualHoursTotal = (basePerTaskHours * 0.5) * scale; // Assume 50% automation potential
   }
 
-  if (!isVisible) return null;
-
   // Memoize task object to prevent unnecessary re-renders
   const businessCaseTask = useMemo(() => ({
     name: task.name || task.title,
@@ -516,6 +514,8 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
       automationPotential: s.automationPotential
     }))
   }), [task.name, task.title, task.description, realSubtasks, basePerTaskHours]);
+
+  if (!isVisible) return null;
 
   return (
     <div className="space-y-6">
