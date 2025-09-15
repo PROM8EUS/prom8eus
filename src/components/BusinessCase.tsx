@@ -167,10 +167,10 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                         <SelectValue />
                       </SelectTrigger>
               <SelectContent>
-                <SelectItem value="year" className="pl-3">{periodLabel('year')}</SelectItem>
-                <SelectItem value="month" className="pl-3">{periodLabel('month')}</SelectItem>
-                <SelectItem value="week" className="pl-3">{periodLabel('week')}</SelectItem>
-                <SelectItem value="day" className="pl-3">{periodLabel('day')}</SelectItem>
+                <SelectItem value="year">{periodLabel('year')}</SelectItem>
+                <SelectItem value="month">{periodLabel('month')}</SelectItem>
+                <SelectItem value="week">{periodLabel('week')}</SelectItem>
+                <SelectItem value="day">{periodLabel('day')}</SelectItem>
               </SelectContent>
                     </Select>
                   </div>
@@ -191,13 +191,13 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="time" className="pl-3">
+                <SelectItem value="time">
                   <div className="flex items-center gap-2">
                     <Clock className="w-3 h-3" />
                     <span>{t(lang, 'business_case_time')}</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="money" className="pl-3">
+                <SelectItem value="money">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-3 h-3" />
                     <span>{t(lang, 'business_case_money')}</span>
