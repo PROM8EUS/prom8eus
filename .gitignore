@@ -26,3 +26,4 @@ dist-ssr
 # Environment variables
 .envsupabase-mcp/
 .env
+supabase-mcp/
