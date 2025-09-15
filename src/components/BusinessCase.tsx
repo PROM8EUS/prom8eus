@@ -223,32 +223,34 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
             )}
           </div>
 
-          {/* Right: Mode Toggle */}
+          {/* Right: Mode Dropdown */}
           <div className="flex items-center justify-end">
-            <div className="flex items-center bg-primary/10 rounded-lg p-1.5">
-              <button
-                onClick={() => setMode('time')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all duration-200 ${
-                  mode === 'time'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Clock className={`w-3 h-3 ${mode === 'time' ? 'text-foreground' : 'text-muted-foreground'}`} />
-                <span>{t(lang, 'business_case_time')}</span>
-              </button>
-              <button
-                onClick={() => setMode('money')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all duration-200 ${
-                  mode === 'money'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <DollarSign className={`w-3 h-3 ${mode === 'money' ? 'text-foreground' : 'text-muted-foreground'}`} />
-                <span>{t(lang, 'business_case_money')}</span>
-              </button>
-            </div>
+            <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
+              <SelectTrigger className="w-32 h-8">
+                <div className="flex items-center gap-2">
+                  {mode === 'time' ? (
+                    <Clock className="w-3 h-3" />
+                  ) : (
+                    <DollarSign className="w-3 h-3" />
+                  )}
+                  <span className="text-sm">{t(lang, mode === 'time' ? 'business_case_time' : 'business_case_money')}</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="time">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    <span>{t(lang, 'business_case_time')}</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="money">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-3 h-3" />
+                    <span>{t(lang, 'business_case_money')}</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
