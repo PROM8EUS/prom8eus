@@ -121,7 +121,7 @@ export default function SolutionsTab({
           taskText: taskText || '',
           subtasks: (subtasks || []).map(s => ({ id: s.id, name: s.name, keywords: s.keywords })),
           selectedApplications,
-          flags: { topK: 6 }
+          flags: { topK: 50 }
         });
         if (efSolutions && efSolutions.length > 0) {
           const mappedEF = efSolutions.map((s, idx) => ({
@@ -257,32 +257,32 @@ export default function SolutionsTab({
         const subR = await rerankWorkflows(s.name, subCandidates as any, selectedApplications || [], {
           subtasks: [s.name],
           diversify: true,
-          topK: Math.min(3, subCandidates.length)
+          topK: Math.min(8, subCandidates.length)
         });
         for (const r of subR) {
           const key = String((r.workflow as any).id || (r.workflow as any).filename || (r.workflow as any).name);
           if (unionSeen.has(key)) continue; unionSeen.add(key); unionSet.push(r.workflow);
         }
-        if (unionSet.length >= 10) break; // cap to keep fast
+        if (unionSet.length >= 50) break; // allow many relevant per subtasks
       }
       // If union still small, backfill from global candidates
-      if (unionSet.length < 6) {
+      if (unionSet.length < 12) {
         const backfill = await rerankWorkflows(q, candidates as any, selectedApplications || [], {
           subtasks: (subtasks || []).map(s => s.name),
           diversify: true,
-          topK: Math.min(12, (candidates as any[]).length)
+          topK: Math.min(60, (candidates as any[]).length)
         });
         for (const r of backfill) {
           const key = String((r.workflow as any).id || (r.workflow as any).filename || (r.workflow as any).name);
           if (unionSeen.has(key)) continue; unionSeen.add(key); unionSet.push(r.workflow);
-          if (unionSet.length >= 12) break;
+          if (unionSet.length >= 60) break;
         }
       }
       // Final rerank across union to pick most relevant 6
       const finalR = await rerankWorkflows(q, unionSet as any, selectedApplications || [], {
         subtasks: (subtasks || []).map(s => s.name),
         diversify: true,
-        topK: Math.min(6, unionSet.length)
+        topK: Math.min(60, unionSet.length)
       });
       const top = finalR.map(r => r.workflow);
 
