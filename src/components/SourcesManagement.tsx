@@ -588,6 +588,8 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                 tool={tool}
                 onClick={() => handleToolClick(tool)}
                 className="cursor-pointer hover:shadow-md transition-shadow"
+                lang={lang}
+                showMeta
               />
             ))}
           </div>

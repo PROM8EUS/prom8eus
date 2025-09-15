@@ -172,15 +172,19 @@ interface AppIconCardProps {
   tool: AITool;
   onClick?: (tool: AITool) => void;
   className?: string;
+  lang?: 'de' | 'en';
+  showMeta?: boolean;
 }
 
 const AppIconCard: React.FC<AppIconCardProps> = ({
   tool,
   onClick,
-  className = ''
+  className = '',
+  lang = 'de',
+  showMeta = true
 }) => {
-  const features = getToolFeatures(tool.id) || [];
-  const description = getToolDescription(tool.id) || '';
+  const features = (getToolFeatures as any)(tool, lang) || [];
+  const description = (getToolDescription as any)(tool, lang) || '';
 
   return (
     <div
@@ -191,7 +195,25 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
         <AppIcon tool={tool} size="lg" />
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 mb-1">{tool.name}</h3>
-          <p className="text-sm text-gray-600 mb-2">{description}</p>
+          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{description}</p>
+
+          {showMeta && (
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                tool.pricing === 'Free' ? 'bg-green-100 text-green-800' :
+                tool.pricing === 'Freemium' ? 'bg-blue-100 text-blue-800' :
+                tool.pricing === 'Paid' ? 'bg-orange-100 text-orange-800' :
+                'bg-purple-100 text-purple-800'
+              }`}>
+                {tool.pricing}
+              </span>
+              {typeof tool.automationPotential === 'number' && (
+                <span className="text-xs text-gray-500">
+                  {tool.automationPotential}% {lang === 'de' ? 'Automatisierung' : 'Automation'}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap gap-1">
             {(features || []).slice(0, 3).map((feature: string, index: number) => (
               <span
