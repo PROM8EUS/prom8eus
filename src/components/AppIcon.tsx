@@ -26,49 +26,87 @@ const AppIcon: React.FC<AppIconProps> = ({
     lg: 'text-base'
   };
 
-  // Map tool IDs to their local logo files
-  const getLogoUrl = (tool: AITool): string => {
-    const logoMap: Record<string, string> = {
-      'excel-ai': '/logos/excel-ai.png',
-      'power-bi-ai': '/logos/power-bi-ai.png',
-      'microsoft-copilot': '/logos/microsoft-copilot.png',
-      'google-sheets-ai': '/logos/google-sheets-ai.png',
-      'chatgpt': '/logos/chatgpt.png',
-      'claude': '/logos/claude.png',
-      'grok': '/logos/grok.png',
-      'github-copilot': '/logos/github-copilot.png',
-      'code-whisperer': '/logos/code-whisperer.png',
-      'tabnine': '/logos/tabnine.png',
-      'canva-ai': '/logos/canva-ai.png',
-      'copy-ai': '/logos/copy-ai.png',
-      'writesonic': '/logos/writesonic.png',
-      'jasper': '/logos/jasper.png',
-      'grammarly': '/logos/grammarly.png',
-      'notion-ai': '/logos/notion-ai.png',
-      'obsidian-ai': '/logos/obsidian-ai.png',
-      'airtable-ai': '/logos/airtable-ai.png',
-      'perplexity': '/logos/perplexity.png',
-      'gemini': '/logos/gemini.png'
-    };
-
-    return logoMap[tool.id] || '';
+  // Mapping of tool IDs to logo.dev domains
+  const logoDevDomains: Record<string, string> = {
+    'excel-ai': 'microsoft.com',
+    'power-bi-ai': 'powerbi.com',
+    'microsoft-copilot': 'microsoft.com',
+    'google-sheets-ai': 'sheets.google.com',
+    'chatgpt': 'chat.openai.com',
+    'claude': 'claude.ai',
+    'grok': 'x.com',
+    'github-copilot': 'github.com',
+    'code-whisperer': 'aws.amazon.com',
+    'tabnine': 'tabnine.com',
+    'canva-ai': 'canva.com',
+    'copy-ai': 'copy.ai',
+    'writesonic': 'writesonic.com',
+    'jasper': 'jasper.ai',
+    'grammarly': 'grammarly.com',
+    'notion-ai': 'notion.so',
+    'obsidian-ai': 'obsidian.md',
+    'airtable-ai': 'airtable.com',
+    'perplexity': 'perplexity.ai',
+    'gemini': 'gemini.google.com',
+    'n8n': 'n8n.io'
   };
 
+  // Prefer cached data URL → local asset → logo.dev fetch
   const [logoUrl, setLogoUrl] = React.useState<string>('');
   const [showFallback, setShowFallback] = React.useState<boolean>(false);
 
+  const localAssetPath = `/logos/${tool.id}.png`;
+  const storageKey = `logo_cache_${tool.id}`;
+  const LOGO_DEV_API_KEY = (import.meta as any)?.env?.VITE_LOGO_DEV_API_KEY;
+
+  const fetchAndCacheLogoDev = async (): Promise<string | null> => {
+    try {
+      const domain = logoDevDomains[tool.id];
+      if (!domain || !LOGO_DEV_API_KEY) return null;
+      const url = `https://img.logo.dev/${domain}?token=${LOGO_DEV_API_KEY}&size=128&format=png`;
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      try {
+        localStorage.setItem(storageKey, dataUrl);
+      } catch (_) {
+        // ignore quota errors
+      }
+      return dataUrl;
+    } catch (_err) {
+      return null;
+    }
+  };
+
   React.useEffect(() => {
-    const url = getLogoUrl(tool);
-    if (url) {
-      setLogoUrl(url);
+    // 1) Use cached data URL if present
+    const cached = localStorage.getItem(storageKey);
+    if (cached) {
+      setLogoUrl(cached);
+      setShowFallback(false);
+      return;
+    }
+    // 2) Try local asset first; if it fails, we'll fetch from logo.dev
+    setLogoUrl(localAssetPath);
+    setShowFallback(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tool.id]);
+
+  const handleImageError = async () => {
+    // If local asset failed, try fetching from logo.dev and cache
+    const dataUrl = await fetchAndCacheLogoDev();
+    if (dataUrl) {
+      setLogoUrl(dataUrl);
       setShowFallback(false);
     } else {
       setShowFallback(true);
     }
-  }, [tool]);
-
-  const handleImageError = () => {
-    setShowFallback(true);
   };
 
   const handleImageLoad = () => {
@@ -141,8 +179,8 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
   onClick,
   className = ''
 }) => {
-  const features = getToolFeatures(tool.id);
-  const description = getToolDescription(tool.id);
+  const features = getToolFeatures(tool.id) || [];
+  const description = getToolDescription(tool.id) || '';
 
   return (
     <div
@@ -155,7 +193,7 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
           <h3 className="font-semibold text-gray-900 mb-1">{tool.name}</h3>
           <p className="text-sm text-gray-600 mb-2">{description}</p>
           <div className="flex flex-wrap gap-1">
-            {features.slice(0, 3).map((feature, index) => (
+            {(features || []).slice(0, 3).map((feature: string, index: number) => (
               <span
                 key={index}
                 className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
@@ -163,9 +201,9 @@ const AppIconCard: React.FC<AppIconCardProps> = ({
                 {feature}
               </span>
             ))}
-            {features.length > 3 && (
+            {(features || []).length > 3 && (
               <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
-                +{features.length - 3} mehr
+                +{(features || []).length - 3} mehr
               </span>
             )}
           </div>
