@@ -205,6 +205,141 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
   }
 
   /**
+   * Generate business case analysis based on subtasks
+   */
+  async generateBusinessCase(
+    taskText: string, 
+    subtasks: any[], 
+    lang: 'de' | 'en' = 'de'
+  ): Promise<{
+    manualHours: number;
+    automatedHours: number;
+    automationPotential: number;
+    savedHours: number;
+    setupCostHours: number;
+    setupCostMoney: number;
+    roi: number;
+    paybackPeriodYears: number;
+    reasoning: string;
+  }> {
+    const systemPrompt = lang === 'de'
+      ? `Du bist ein Experte für Business Case Analyse und Automatisierung. Analysiere die Hauptaufgabe und Teilaufgaben, um realistische Business Case Kennzahlen zu berechnen.
+
+WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
+
+AUFGABE: Berechne realistische Business Case Kennzahlen basierend auf:
+1. Der Hauptaufgabe und ihren Anforderungen
+2. Den konkreten Teilaufgaben und deren Automatisierungspotenzial
+3. Realistischen Zeitschätzungen und Setup-Kosten
+4. Praktischen ROI und Amortisationszeiten
+
+JSON-Format:
+{
+  "manualHours": 160.0,
+  "automatedHours": 99.2,
+  "automationPotential": 67,
+  "savedHours": 60.8,
+  "setupCostHours": 43.0,
+  "setupCostMoney": 1720.0,
+  "roi": 12190.9,
+  "paybackPeriodYears": 0.0,
+  "reasoning": "Detaillierte Begründung der Berechnungen basierend auf den Teilaufgaben"
+}
+
+Berechnungslogik:
+- manualHours: Summe aller Teilaufgaben-Zeiten (realistisch für die Aufgabe)
+- automatedHours: manualHours * (durchschnittliches Automatisierungspotenzial der Teilaufgaben)
+- automationPotential: Durchschnitt der Teilaufgaben-Automatisierungswerte
+- savedHours: manualHours - automatedHours
+- setupCostHours: Realistische Setup-Zeit basierend auf Komplexität (10-100h)
+- setupCostMoney: setupCostHours * 40€ (Standard-Stundensatz)
+- roi: ((savedHours * 40€ * 3 Jahre) - setupCostMoney) / setupCostMoney * 100
+- paybackPeriodYears: setupCostMoney / (savedHours * 40€ * 12 Monate)`
+      : `You are an expert in business case analysis and automation. Analyze the main task and subtasks to calculate realistic business case metrics.
+
+IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
+
+TASK: Calculate realistic business case metrics based on:
+1. The main task and its requirements
+2. The concrete subtasks and their automation potential
+3. Realistic time estimates and setup costs
+4. Practical ROI and payback periods
+
+JSON Format:
+{
+  "manualHours": 160.0,
+  "automatedHours": 99.2,
+  "automationPotential": 67,
+  "savedHours": 60.8,
+  "setupCostHours": 43.0,
+  "setupCostMoney": 1720.0,
+  "roi": 12190.9,
+  "paybackPeriodYears": 0.0,
+  "reasoning": "Detailed reasoning for calculations based on subtasks"
+}
+
+Calculation logic:
+- manualHours: Sum of all subtask times (realistic for the task)
+- automatedHours: manualHours * (average automation potential of subtasks)
+- automationPotential: Average of subtask automation values
+- savedHours: manualHours - automatedHours
+- setupCostHours: Realistic setup time based on complexity (10-100h)
+- setupCostMoney: setupCostHours * €40 (standard hourly rate)
+- roi: ((savedHours * €40 * 3 years) - setupCostMoney) / setupCostMoney * 100
+- paybackPeriodYears: setupCostMoney / (savedHours * €40 * 12 months)`;
+
+    const userPrompt = lang === 'de'
+      ? `Analysiere diese Aufgabe und berechne den Business Case:
+
+HAUPTAUFGABE: ${taskText}
+
+TEILAUFGABEN:
+${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.estimatedTime}min, ${s.automationPotential}% Automatisierung)`).join('\n')}
+
+Berechne realistische Business Case Kennzahlen basierend auf den Teilaufgaben.`
+      : `Analyze this task and calculate the business case:
+
+MAIN TASK: ${taskText}
+
+SUBTASKS:
+${subtasks.map((s, i) => `${i + 1}. ${s.title} (${s.estimatedTime}min, ${s.automationPotential}% automation)`).join('\n')}
+
+Calculate realistic business case metrics based on the subtasks.`;
+
+    try {
+      const response = await this.chatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]);
+
+      const content = response.content;
+      if (!content) {
+        throw new Error('No response content from OpenAI');
+      }
+
+      try {
+        return JSON.parse(content);
+      } catch (error) {
+        console.error('❌ Business case JSON parsing failed:', error);
+        console.log('Raw response:', content);
+        
+        // Try to extract JSON from response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log('✅ Extracted JSON from response');
+          return parsed;
+        }
+        
+        throw error;
+      }
+    } catch (error) {
+      console.error('❌ Business case generation failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate subtasks for a given task using AI
    */
   async generateSubtasks(taskText: string, lang: 'de' | 'en' = 'de'): Promise<Array<{

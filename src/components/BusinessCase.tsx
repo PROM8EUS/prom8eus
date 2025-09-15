@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
+import { Skeleton } from './ui/skeleton';
 import { 
   Clock, 
   DollarSign, 
@@ -12,9 +13,11 @@ import {
   TrendingDown,
   Calculator,
   Euro,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 import { t } from '../lib/i18n/i18n';
+import { openaiClient } from '../lib/openai';
 
 interface BusinessCaseProps {
   task: {
@@ -48,6 +51,9 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
   const [mode, setMode] = useState<'time' | 'money'>('time');
   const [hourlyRate, setHourlyRate] = useState(40);
   const [periodState, setPeriodState] = useState<Period>('year');
+  const [businessCaseData, setBusinessCaseData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const period = periodProp ?? periodState;
 
   useEffect(() => {
@@ -56,26 +62,69 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
     }
   }, [periodProp]);
 
+  // Generate business case data when task or subtasks change
+  useEffect(() => {
+    const generateBusinessCase = async () => {
+      if (!task?.text || !task?.subtasks || task.subtasks.length === 0) {
+        setBusinessCaseData(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log('🤖 Generating business case for:', task.text);
+        const data = await openaiClient.generateBusinessCase(task.text, task.subtasks, lang);
+        console.log('✅ Business case generated:', data);
+        setBusinessCaseData(data);
+      } catch (err) {
+        console.error('❌ Business case generation failed:', err);
+        setError(err instanceof Error ? err.message : 'Failed to generate business case');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    generateBusinessCase();
+  }, [task?.text, task?.subtasks, lang]);
+
   const handleChangePeriod = (p: Period) => {
     setPeriodState(p);
     onPeriodChange?.(p);
   };
 
-  // Calculate business case metrics (realistic, from subtasks)
+  // Use AI-generated business case data or fallback to calculated metrics
   const businessMetrics = useMemo(() => {
-    const automationRatio = task.automationRatio ?? 0; // percent for display only
+    if (businessCaseData) {
+      // Scale AI-generated data for selected period
+      const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
+      
+      return {
+        automationRatio: businessCaseData.automationPotential,
+        manualHours: businessCaseData.manualHours * scale,
+        automatedHours: businessCaseData.automatedHours * scale,
+        savedHours: businessCaseData.savedHours * scale,
+        manualCost: businessCaseData.manualHours * scale * hourlyRate,
+        automatedCost: businessCaseData.automatedHours * scale * hourlyRate * 0.25, // 25% cost reduction
+        savedMoney: businessCaseData.savedHours * scale * hourlyRate,
+        automationSetupCost: businessCaseData.setupCostMoney,
+        periodAutomationCost: businessCaseData.setupCostMoney * scale,
+        totalSavingsMoney: (businessCaseData.savedHours * scale * hourlyRate) - (businessCaseData.setupCostMoney * scale),
+        roi: businessCaseData.roi,
+        paybackPeriod: businessCaseData.paybackPeriodYears,
+        reasoning: businessCaseData.reasoning,
+      };
+    }
 
-    // Derive hours from subtasks. If none provided, assume base 8h per task.
+    // Fallback to calculated metrics if no AI data
+    const automationRatio = task.automationRatio ?? 0;
     const baseHours = task.subtasks && task.subtasks.length > 0
       ? task.subtasks.reduce((sum, s) => sum + (s.estimatedTime || 0), 0)
-      : 8; // default one workday
+      : 8;
 
-    // Scale hours for selected period
-    // estimatedTime is assumed per day baseline; scale to selected period
     const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['day'];
     const manualHours = baseHours * scale;
-
-    // Automated hours derived from subtask-level automationPotential (0..1)
     const automatedHoursFromSubtasks = task.subtasks && task.subtasks.length > 0
       ? task.subtasks.reduce((sum, s) => sum + (s.estimatedTime || 0) * (s.automationPotential || 0), 0) * scale
       : manualHours * (automationRatio / 100);
@@ -83,26 +132,20 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
     const automatedHours = Math.min(manualHours, automatedHoursFromSubtasks);
     const savedHours = Math.max(0, manualHours - automatedHours);
 
-    // Costs
     const manualCost = manualHours * hourlyRate;
-    const automationCostReduction = 0.25; // automated hour costs ~25% of manual
-    const automatedCost = automatedHours * hourlyRate * automationCostReduction;
+    const automatedCost = automatedHours * hourlyRate * 0.25;
     const savedMoney = manualCost - automatedCost;
 
-    // Setup costs (rough, proportional to scope) — allow small constant + variable
-    const setupBase = 500; // base setup
-    const setupVariable = savedHours * 0.5 * hourlyRate; // half-hour per saved hour as setup effort
+    const setupBase = 500;
+    const setupVariable = savedHours * 0.5 * hourlyRate;
     const automationSetupCost = Math.max(1000, setupBase + setupVariable);
-    const amortizationYears = 3;
-    const annualAutomationCost = automationSetupCost / amortizationYears;
-
-    // For non-year periods, scale annual cost appropriately
+    const annualAutomationCost = automationSetupCost / 3;
     const annualToPeriod = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
     const periodAutomationCost = annualAutomationCost * annualToPeriod;
 
     const totalSavingsMoney = savedMoney - periodAutomationCost;
     const roi = totalSavingsMoney > 0 ? (totalSavingsMoney / periodAutomationCost) * 100 : 0;
-    const paybackPeriod = totalSavingsMoney > 0 ? (automationSetupCost / (totalSavingsMoney / annualToPeriod)) : 0; // in years
+    const paybackPeriod = totalSavingsMoney > 0 ? (automationSetupCost / (totalSavingsMoney / annualToPeriod)) : 0;
 
     return {
       automationRatio,
@@ -117,8 +160,9 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
       totalSavingsMoney,
       roi,
       paybackPeriod,
+      reasoning: null,
     };
-  }, [task, hourlyRate, period]);
+  }, [businessCaseData, task, hourlyRate, period]);
 
   const periodLabel = (p: Period) => ({
     year: lang === 'de' ? 'Jahr' : 'Year',
@@ -209,66 +253,111 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
         </div>
       </div>
       <div className="space-y-6">
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <span className="text-muted-foreground">
+                {lang === 'de' ? 'Business Case wird berechnet...' : 'Calculating business case...'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="text-destructive mb-2">
+                {lang === 'de' ? 'Fehler beim Berechnen des Business Case' : 'Error calculating business case'}
+              </div>
+              <div className="text-sm text-muted-foreground">{error}</div>
+            </div>
+          </div>
+        )}
+
+        {/* No Data State */}
+        {!loading && !error && !businessCaseData && !task?.subtasks && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center text-muted-foreground">
+              {lang === 'de' ? 'Keine Teilaufgaben verfügbar für Business Case' : 'No subtasks available for business case'}
+            </div>
+          </div>
+        )}
+
         {/* Metrics Display */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Manuell</span>
-              <span className="font-semibold text-destructive">
-                {mode === 'money' 
-                  ? `${businessMetrics.manualCost.toLocaleString('de-DE')} €`
-                  : `${businessMetrics.manualHours.toFixed(1)} h`}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Automatisiert</span>
-              <span className="font-semibold text-primary">
-                {mode === 'money'
-                  ? `${businessMetrics.automatedCost.toLocaleString('de-DE')} €`
-                  : `${businessMetrics.automatedHours.toFixed(1)} h`}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Automatisierungspotenzial</span>
-              <span className="font-semibold text-primary">{businessMetrics.automationRatio.toFixed(0)}%</span>
-            </div>
-            <div className="pt-2">
+        {!loading && !error && (businessCaseData || businessMetrics) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Einsparung</span>
-                <span className="font-bold text-green-600">
+                <span className="text-sm text-muted-foreground">Manuell</span>
+                <span className="font-semibold text-destructive">
+                  {mode === 'money' 
+                    ? `${businessMetrics.manualCost.toLocaleString('de-DE')} €`
+                    : `${businessMetrics.manualHours.toFixed(1)} h`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Automatisiert</span>
+                <span className="font-semibold text-primary">
                   {mode === 'money'
-                    ? `${businessMetrics.totalSavingsMoney.toLocaleString('de-DE')} €`
-                    : `${businessMetrics.savedHours.toFixed(1)} h`}
+                    ? `${businessMetrics.automatedCost.toLocaleString('de-DE')} €`
+                    : `${businessMetrics.automatedHours.toFixed(1)} h`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Automatisierungspotenzial</span>
+                <span className="font-semibold text-primary">{businessMetrics.automationRatio.toFixed(0)}%</span>
+              </div>
+              <div className="pt-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Einsparung</span>
+                  <span className="font-bold text-green-600">
+                    {mode === 'money'
+                      ? `${businessMetrics.totalSavingsMoney.toLocaleString('de-DE')} €`
+                      : `${businessMetrics.savedHours.toFixed(1)} h`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">ROI</span>
+                <span className={`font-semibold ${businessMetrics.roi > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {businessMetrics.roi > 0 ? '+' : ''}{businessMetrics.roi.toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Amortisationszeit</span>
+                <span className="font-semibold">
+                  {businessMetrics.paybackPeriod > 0 ? `${businessMetrics.paybackPeriod.toFixed(1)} Jahre` : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Setup-Kosten</span>
+                <span className="font-semibold">
+                  {mode === 'money' 
+                    ? `${businessMetrics.automationSetupCost.toLocaleString('de-DE')} €`
+                    : `${Math.round(businessMetrics.automationSetupCost / hourlyRate)} h`}
                 </span>
               </div>
             </div>
           </div>
+        )}
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">ROI</span>
-              <span className={`font-semibold ${businessMetrics.roi > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {businessMetrics.roi > 0 ? '+' : ''}{businessMetrics.roi.toFixed(1)}%
-              </span>
+        {/* AI Reasoning (if available) */}
+        {!loading && !error && businessMetrics.reasoning && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <div className="text-sm font-medium mb-2">
+              {lang === 'de' ? 'AI-Begründung:' : 'AI Reasoning:'}
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Amortisationszeit</span>
-              <span className="font-semibold">
-                {businessMetrics.paybackPeriod > 0 ? `${businessMetrics.paybackPeriod.toFixed(1)} Jahre` : 'N/A'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Setup-Kosten</span>
-              <span className="font-semibold">
-                {mode === 'money' 
-                  ? `${businessMetrics.automationSetupCost.toLocaleString('de-DE')} €`
-                  : `${Math.round(businessMetrics.automationSetupCost / hourlyRate)} h`}
-              </span>
+            <div className="text-sm text-muted-foreground">
+              {businessMetrics.reasoning}
             </div>
           </div>
-        </div>
-
-        {/* Summary removed per request */}
+        )}
       </div>
     </div>
   );
