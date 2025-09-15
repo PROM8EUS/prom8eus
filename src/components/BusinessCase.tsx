@@ -163,15 +163,15 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                   {/* Period selector */}
                   <div className="flex items-center gap-2">
                     <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
-                      <SelectTrigger className="h-8 w-28">
+                      <SelectTrigger className="h-8 w-24">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="year">{periodLabel('year')}</SelectItem>
-                        <SelectItem value="month">{periodLabel('month')}</SelectItem>
-                        <SelectItem value="week">{periodLabel('week')}</SelectItem>
-                        <SelectItem value="day">{periodLabel('day')}</SelectItem>
-                      </SelectContent>
+              <SelectContent>
+                <SelectItem value="year" className="pl-3">{periodLabel('year')}</SelectItem>
+                <SelectItem value="month" className="pl-3">{periodLabel('month')}</SelectItem>
+                <SelectItem value="week" className="pl-3">{periodLabel('week')}</SelectItem>
+                <SelectItem value="day" className="pl-3">{periodLabel('day')}</SelectItem>
+              </SelectContent>
                     </Select>
                   </div>
 
@@ -180,7 +180,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           {/* Right: Mode Dropdown + Edit Icon */}
           <div className="flex items-center justify-end gap-2">
             <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
-              <SelectTrigger className="w-32 h-8">
+              <SelectTrigger className="w-28 h-8">
                 <div className="flex items-center gap-2">
                   {mode === 'time' ? (
                     <Clock className="w-3 h-3" />
@@ -191,13 +191,13 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="time">
+                <SelectItem value="time" className="pl-3">
                   <div className="flex items-center gap-2">
                     <Clock className="w-3 h-3" />
                     <span>{t(lang, 'business_case_time')}</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="money">
+                <SelectItem value="money" className="pl-3">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-3 h-3" />
                     <span>{t(lang, 'business_case_money')}</span>
