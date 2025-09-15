@@ -453,7 +453,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
         )}
 
         {/* AI Reasoning (if available) - Inside the main business case block */}
-        {!loading && !error && businessMetrics && businessMetrics.reasoning && (
+        {!loading && !error && businessMetrics && (businessMetrics.reasoning ?? '').length > 0 && (
           <div className="mt-6 p-4 bg-primary/10 rounded-lg">
             <div className="text-sm font-medium mb-2 text-primary">
               {lang === 'de' ? 'AI-Begründung:' : 'AI Reasoning:'}

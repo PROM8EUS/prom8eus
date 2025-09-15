@@ -68,7 +68,7 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
                 ? solution.authorName
                 : 'Community'}
               avatarUrl={solution.authorAvatarUrl}
-              email={solution.authorEmail}
+              email={(solution.authorEmail && solution.authorEmail.includes('@')) ? solution.authorEmail : undefined}
               verified={solution.authorVerified}
             />
             {solution.pricing && (

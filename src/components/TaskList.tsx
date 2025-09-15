@@ -126,6 +126,39 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
     }
   };
 
+  // Derive a domain category when missing
+  const inferDomainCategory = (text: string): string => {
+    const t = text.toLowerCase();
+    if (/(react|node|typescript|javascript|frontend|backend|entwicklung|programmierung|api)/.test(t)) return currentLang === 'de' ? 'Software-Entwicklung' : 'Software Development';
+    if (/(datenbank|database|sql|postgres|mysql|schema|optimierung)/.test(t)) return currentLang === 'de' ? 'Datenmanagement' : 'Data Management';
+    if (/(integration|api|schnittstelle|connect|webhook)/.test(t)) return currentLang === 'de' ? 'Integration' : 'Integration';
+    if (/(test|testing|qa|qualität|qualitätssicherung|review|code review)/.test(t)) return currentLang === 'de' ? 'Qualitätssicherung' : 'Quality Assurance';
+    if (/(doku|dokumentation|documentation|bericht|report)/.test(t)) return currentLang === 'de' ? 'Dokumentation' : 'Documentation';
+    if (/(debug|fehler|bug|wartung|support)/.test(t)) return currentLang === 'de' ? 'Fehlerbehebung' : 'Debugging';
+    if (/(team|agil|meeting|koordination|zusammenarbeit)/.test(t)) return currentLang === 'de' ? 'Teamarbeit' : 'Teamwork';
+    return currentLang === 'de' ? 'Allgemein' : 'General';
+  };
+
+  // Trend/Complexity inference for variability when not provided by analysis
+  const inferTrend = (text: string): 'increasing' | 'stable' | 'decreasing' => {
+    const t = text.toLowerCase();
+    if (/(ai|automatisierung|automation|workflow|ml|machine learning)/.test(t)) return 'increasing';
+    if (/(debug|wartung|support|pflege|legacy)/.test(t)) return 'stable';
+    return 'increasing';
+  };
+
+  const inferComplexity = (text: string, score?: number): 'low' | 'medium' | 'high' => {
+    const t = text.toLowerCase();
+    if (/(debug|integration|optimierung|architecture|sicherheit|security)/.test(t)) return 'high';
+    if (/(test|review|dokumentation|documentation)/.test(t)) return 'medium';
+    if (typeof score === 'number') {
+      if (score >= 85) return 'low';
+      if (score >= 60) return 'medium';
+      return 'high';
+    }
+    return 'medium';
+  };
+
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Automatisierbar':
@@ -384,6 +417,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                                    'mensch';
           const aiAgents = getAIAgentsForTask({ ...task, category: automationCategory });
           const workflows = getWorkflowsForTask({ ...task, category: automationCategory });
+          const effectiveComplexity: 'low' | 'medium' | 'high' = (task.complexity as any) || inferComplexity(taskName, task.score);
           
           return (
             <Card 
@@ -432,38 +466,10 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       <h4 className="font-medium text-foreground">{taskName}</h4>
                       <div className="flex items-center space-x-2 mt-1">
                         <span className="text-sm text-muted-foreground">
-                          {task.description || (() => {
-                            // Simple category translation
-                            let categoryText = 'General';
-                            if (task.category === 'administrative') categoryText = 'Administrative';
-                            else if (task.category === 'communication') categoryText = 'Communication';
-                            else if (task.category === 'technical') categoryText = 'Technical';
-                            else if (task.category === 'analytical') categoryText = 'Analytical';
-                            else if (task.category === 'creative') categoryText = 'Creative';
-                            else if (task.category === 'management') categoryText = 'Management';
-                            else if (task.category === 'physical') categoryText = 'Physical';
-                            else if (task.category === 'routine') categoryText = 'Routine';
-                            
-                            // Check if we're in English mode
-                            const isEnglish = window.location.search.includes('lang=en');
-                            
-                            // Return the text
-                            if (isEnglish) {
-                              return `${categoryText} (Confidence: ${task.confidence || task.score}%)`;
-                            } else {
-                              // German translations
-                              if (task.category === 'administrative') categoryText = 'Administrativ';
-                              else if (task.category === 'communication') categoryText = 'Kommunikation';
-                              else if (task.category === 'technical') categoryText = 'Technisch';
-                              else if (task.category === 'analytical') categoryText = 'Analytisch';
-                              else if (task.category === 'creative') categoryText = 'Kreativ';
-                              else if (task.category === 'management') categoryText = 'Management';
-                              else if (task.category === 'physical') categoryText = 'Physisch';
-                              else if (task.category === 'routine') categoryText = 'Routine';
-                              else categoryText = 'Allgemein';
-                              
-                              return `${categoryText} (${t(lang, 'task_confidence')}: ${task.confidence || task.score}%)`;
-                            }
+                          {(() => {
+                            // Domain category primary label instead of "AI Analyzed"
+                            const cat = inferDomainCategory(taskName);
+                            return cat;
                           })()}
                         </span>
                       </div>
@@ -475,34 +481,32 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     {/* Combined Trend, Complexity and Circle */}
                     <div className="ml-auto flex flex-col gap-2 md:flex-row md:items-center md:space-x-3">
                       {/* Trend with text */}
-                      {task.automationTrend && (
+                      {(task.automationTrend || taskName) && (
                         <div className={`flex items-center space-x-1 text-xs ${
-                          task.automationTrend === 'increasing' ? 'text-primary' :
-                          task.automationTrend === 'decreasing' ? 'text-destructive' :
+                          (task.automationTrend || inferTrend(taskName)) === 'increasing' ? 'text-primary' :
+                          (task.automationTrend || inferTrend(taskName)) === 'decreasing' ? 'text-destructive' :
                           'text-muted-foreground'
                         }`}>
-                          {task.automationTrend === 'increasing' ? <TrendingUp className="w-3 h-3" /> :
-                           task.automationTrend === 'decreasing' ? <TrendingDown className="w-3 h-3" /> :
+                          {(task.automationTrend || inferTrend(taskName)) === 'increasing' ? <TrendingUp className="w-3 h-3" /> :
+                           (task.automationTrend || inferTrend(taskName)) === 'decreasing' ? <TrendingDown className="w-3 h-3" /> :
                            <Minus className="w-3 h-3" />}
                           <span>
-                            {task.automationTrend === 'increasing' ? (currentLang === 'de' ? 'Steigender Trend' : 'Increasing Trend') :
-                             task.automationTrend === 'decreasing' ? (currentLang === 'de' ? 'Fallender Trend' : 'Decreasing Trend') : 
+                            {(task.automationTrend || inferTrend(taskName)) === 'increasing' ? (currentLang === 'de' ? 'Steigender Trend' : 'Increasing Trend') :
+                             (task.automationTrend || inferTrend(taskName)) === 'decreasing' ? (currentLang === 'de' ? 'Fallender Trend' : 'Decreasing Trend') : 
                              (currentLang === 'de' ? 'Stabiler Trend' : 'Stable Trend')}
                           </span>
                         </div>
                       )}
                       
                       {/* Complexity tag */}
-                      {task.complexity && (
-                        <Badge className={`text-xs ${getComplexityColor(task.complexity)} pointer-events-none`}>
-                          {getComplexityText(task.complexity)}
-                        </Badge>
-                      )}
+                      <Badge className={`text-xs ${getComplexityColor(effectiveComplexity)} pointer-events-none`}>
+                        {getComplexityText(effectiveComplexity)}
+                      </Badge>
                       
 
                     </div>
                     
-                    {/* Category badge - REMOVED */}
+                    {/* Category badge removed per request */}
                     
                     {/* Expand/collapse icon */}
                     <div className="ml-2">

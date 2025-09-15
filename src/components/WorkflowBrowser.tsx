@@ -33,7 +33,7 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
   useEffect(() => {
     loadStats();
     loadWorkflows();
-  }, []);
+  }, [sourceFilter]);
 
   useEffect(() => {
     loadWorkflows();

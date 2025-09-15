@@ -54,23 +54,82 @@ export async function analyzeJobWithAI(
     throw new Error('AI konnte keine Aufgaben aus der Stellenbeschreibung extrahieren.');
   }
   
-  // Convert AI result to Task format
-  const tasks: Task[] = aiResult.tasks.map((task, index) => ({
-    id: `ai-task-${index}`,
-    text: task.text,
-    name: task.text,
-    score: task.automationPotential,
-    label: task.automationPotential >= 70 ? 'Automatisierbar' : 
-           task.automationPotential >= 30 ? 'Teilweise Automatisierbar' : 'Mensch',
-    category: task.category,
-    confidence: 90, // High confidence for AI analysis (90%)
-    automationRatio: task.automationPotential,
-    humanRatio: 100 - task.automationPotential,
-    complexity: task.automationPotential >= 70 ? 'low' : 
-                task.automationPotential >= 30 ? 'medium' : 'high',
-    automationTrend: 'increasing' as const,
-    signals: [task.reasoning],
-  }));
+  // Convert AI result to Task format with varied complexity and trends
+  const tasks: Task[] = aiResult.tasks.map((task, index) => {
+    // Generate varied complexity based on task content and automation potential
+    const taskText = task.text.toLowerCase();
+    let complexity: 'low' | 'medium' | 'high';
+    
+    // More nuanced complexity calculation
+    if (task.automationPotential >= 85) {
+      complexity = 'low'; // Highly automatable = low complexity
+    } else if (task.automationPotential >= 60) {
+      complexity = 'medium'; // Moderately automatable = medium complexity
+    } else {
+      complexity = 'high'; // Low automation = high complexity
+    }
+    
+    // Adjust complexity based on task content keywords
+    if (taskText.includes('debugging') || taskText.includes('fehlerbehebung') || 
+        taskText.includes('integration') || taskText.includes('optimierung')) {
+      complexity = 'high'; // Technical tasks are more complex
+    } else if (taskText.includes('dokumentation') || taskText.includes('testing') || 
+               taskText.includes('review') || taskText.includes('code-review')) {
+      complexity = 'medium'; // Documentation and review tasks
+    } else if (taskText.includes('entwicklung') || taskText.includes('programmierung')) {
+      complexity = 'high'; // Development tasks are complex
+    }
+    
+    // Generate varied trends based on task type
+    let automationTrend: 'increasing' | 'stable' | 'decreasing';
+    if (taskText.includes('ai') || taskText.includes('machine learning') || 
+        taskText.includes('automatisierung') || taskText.includes('workflow')) {
+      automationTrend = 'increasing'; // AI-related tasks trending up
+    } else if (taskText.includes('debugging') || taskText.includes('fehlerbehebung') ||
+               taskText.includes('support') || taskText.includes('wartung')) {
+      automationTrend = 'stable'; // Maintenance tasks stable
+    } else {
+      automationTrend = 'increasing'; // Most tasks trending toward automation
+    }
+    
+    // Generate proper category instead of "Ai Analyzed"
+    let category = task.category;
+    if (!category || category === 'Ai Analyzed') {
+      if (taskText.includes('entwicklung') || taskText.includes('programmierung') || taskText.includes('coding')) {
+        category = 'Software-Entwicklung';
+      } else if (taskText.includes('daten') || taskText.includes('database') || taskText.includes('datenbank')) {
+        category = 'Datenmanagement';
+      } else if (taskText.includes('api') || taskText.includes('integration')) {
+        category = 'Integration';
+      } else if (taskText.includes('testing') || taskText.includes('test')) {
+        category = 'Qualitätssicherung';
+      } else if (taskText.includes('dokumentation') || taskText.includes('documentation')) {
+        category = 'Dokumentation';
+      } else if (taskText.includes('debugging') || taskText.includes('fehlerbehebung')) {
+        category = 'Fehlerbehebung';
+      } else if (taskText.includes('team') || taskText.includes('zusammenarbeit')) {
+        category = 'Teamarbeit';
+      } else {
+        category = 'Allgemein';
+      }
+    }
+
+    return {
+      id: `ai-task-${index}`,
+      text: task.text,
+      name: task.text,
+      score: task.automationPotential,
+      label: task.automationPotential >= 70 ? 'Automatisierbar' : 
+             task.automationPotential >= 30 ? 'Teilweise Automatisierbar' : 'Mensch',
+      category: category,
+      confidence: 90, // High confidence for AI analysis (90%)
+      automationRatio: task.automationPotential,
+      humanRatio: 100 - task.automationPotential,
+      complexity: complexity,
+      automationTrend: automationTrend,
+      signals: [task.reasoning],
+    };
+  });
 
   return {
     tasks,

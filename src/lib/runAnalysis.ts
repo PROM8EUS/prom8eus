@@ -105,14 +105,14 @@ export async function runAnalysis(jobText: string, lang: 'de' | 'en' = 'de'): Pr
       text: result.text,
       score: result.automationPotential,
       label: result.label,
-      signals: [result.reasoning],
+      signals: [result.reasoning ?? ''],
       aiTools: getToolsByIndustry(result.category).map(tool => tool.id),
       industry: result.category,
-      category: result.pattern,
+      category: result.category, // Use the proper category instead of pattern
       confidence: result.confidence,
       automationRatio: result.automationPotential,
       humanRatio: 100 - result.automationPotential,
-      complexity: result.complexity,
+      complexity: result.complexity || 'medium', // Use the calculated complexity
       automationTrend: result.trend || 'stable' as const,
       subtasks: result.subtasks || [], // Include subtasks from complete analysis
       businessCase: result.businessCase, // Include complete business case data
@@ -897,17 +897,70 @@ async function analyzeJobWithCompleteAI(
         // Use the complete analysis method for each main task
         const completeAnalysis = await openaiClient.generateCompleteAnalysis(taskText, lang);
         
+        // Generate varied complexity and trend based on task content
+        const taskTextLower = taskText.toLowerCase();
+        let complexity: 'low' | 'medium' | 'high';
+        let automationTrend: 'increasing' | 'stable' | 'decreasing';
+        let category = 'Allgemein';
+        
+        // Determine complexity based on task content
+        if (taskTextLower.includes('debugging') || taskTextLower.includes('fehlerbehebung') || 
+            taskTextLower.includes('integration') || taskTextLower.includes('optimierung') ||
+            taskTextLower.includes('entwicklung') || taskTextLower.includes('programmierung')) {
+          complexity = 'high';
+        } else if (taskTextLower.includes('dokumentation') || taskTextLower.includes('testing') || 
+                   taskTextLower.includes('review') || taskTextLower.includes('code-review')) {
+          complexity = 'medium';
+        } else if (completeAnalysis.businessCase.automationPotential >= 85) {
+          complexity = 'low';
+        } else if (completeAnalysis.businessCase.automationPotential >= 60) {
+          complexity = 'medium';
+        } else {
+          complexity = 'high';
+        }
+        
+        // Determine trend based on task type
+        if (taskTextLower.includes('ai') || taskTextLower.includes('automatisierung') || 
+            taskTextLower.includes('workflow') || taskTextLower.includes('machine learning')) {
+          automationTrend = 'increasing';
+        } else if (taskTextLower.includes('debugging') || taskTextLower.includes('fehlerbehebung') ||
+                   taskTextLower.includes('support') || taskTextLower.includes('wartung') ||
+                   taskTextLower.includes('pflege')) {
+          automationTrend = 'stable';
+        } else {
+          automationTrend = 'increasing';
+        }
+        
+        // Determine proper category
+        if (taskTextLower.includes('entwicklung') || taskTextLower.includes('programmierung') || taskTextLower.includes('coding')) {
+          category = 'Software-Entwicklung';
+        } else if (taskTextLower.includes('daten') || taskTextLower.includes('database') || taskTextLower.includes('datenbank')) {
+          category = 'Datenmanagement';
+        } else if (taskTextLower.includes('api') || taskTextLower.includes('integration')) {
+          category = 'Integration';
+        } else if (taskTextLower.includes('testing') || taskTextLower.includes('test')) {
+          category = 'Qualitätssicherung';
+        } else if (taskTextLower.includes('dokumentation') || taskTextLower.includes('documentation')) {
+          category = 'Dokumentation';
+        } else if (taskTextLower.includes('debugging') || taskTextLower.includes('fehlerbehebung')) {
+          category = 'Fehlerbehebung';
+        } else if (taskTextLower.includes('team') || taskTextLower.includes('zusammenarbeit')) {
+          category = 'Teamarbeit';
+        }
+
         // Convert to FastAnalysisResult format
         const result: FastAnalysisResult = {
           text: taskText,
           automationPotential: completeAnalysis.businessCase.automationPotential,
           confidence: 90, // High confidence since it's AI-generated
-          category: 'general', // Could be enhanced to detect category
+          category: category,
           pattern: 'ai-analyzed',
-          reasoning: completeAnalysis.businessCase.reasoning,
+          reasoning: completeAnalysis.businessCase?.reasoning ?? '',
           subtasks: completeAnalysis.subtasks,
           solutions: completeAnalysis.solutions,
-          businessCase: completeAnalysis.businessCase // Include the complete business case data
+          businessCase: completeAnalysis.businessCase, // Include the complete business case data
+          complexity: complexity,
+          trend: automationTrend
         };
         
         results.push(result);
@@ -972,7 +1025,7 @@ async function analyzeTasksWithCompleteAI(
         confidence: 90, // High confidence since it's AI-generated
         category: 'general', // Could be enhanced to detect category
         pattern: 'ai-analyzed',
-        reasoning: completeAnalysis.businessCase.reasoning,
+        reasoning: completeAnalysis.businessCase?.reasoning ?? '',
         subtasks: completeAnalysis.subtasks,
         solutions: completeAnalysis.solutions
       };
