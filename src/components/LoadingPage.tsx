@@ -1,3 +1,4 @@
+import React from "react";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { resolveLang, t } from "@/lib/i18n/i18n";
@@ -21,14 +22,8 @@ const LoadingPage = () => {
           <h2 className="text-2xl font-semibold text-foreground">
             {t(lang, "analysis_creating")}
           </h2>
-          <div className="flex items-center justify-center space-x-1">
-            <span className="text-muted-foreground">{t(lang, "please_wait")}</span>
-            <div className="flex space-x-1">
-              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse-dot"></div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse-dot" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse-dot" style={{ animationDelay: '0.4s' }}></div>
-            </div>
-          </div>
+          {/* Dynamic step indicator */}
+          <AnalysisSteps lang={lang} />
         </div>
 
         {/* Subtle hint */}
@@ -41,3 +36,42 @@ const LoadingPage = () => {
 };
 
 export default LoadingPage;
+
+// shows current backend step instead of static "please wait"
+function AnalysisSteps({ lang }: { lang: 'de' | 'en' }) {
+  // These mirror the async pipeline in runAnalysis
+  const steps = lang === 'de'
+    ? [
+        'Extrahiere Text …',
+        'Erzeuge Teilaufgaben …',
+        'Bewerte Automatisierungspotenzial …',
+        'Suche passende Workflows …',
+        'Reranke und personalisiere …',
+      ]
+    : [
+        'Extracting text …',
+        'Generating subtasks …',
+        'Scoring automation potential …',
+        'Finding matching workflows …',
+        'Reranking and personalizing …',
+      ];
+
+  const [index, setIndex] = React.useState(0);
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % steps.length);
+    }, 1200);
+    return () => clearInterval(id);
+  }, [steps.length]);
+
+  return (
+    <div className="flex items-center justify-center space-x-2">
+      <span className="text-muted-foreground">{steps[index]}</span>
+      <div className="flex space-x-1">
+        <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse-dot"></div>
+        <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse-dot" style={{ animationDelay: '0.2s' }}></div>
+        <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse-dot" style={{ animationDelay: '0.4s' }}></div>
+      </div>
+    </div>
+  );
+}
