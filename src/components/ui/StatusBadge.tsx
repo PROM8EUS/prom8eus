@@ -12,7 +12,7 @@ export interface StatusBadgeProps {
 export function StatusBadge({ 
   status, 
   size = 'md', 
-  showIcon = true, 
+  showIcon = false, 
   className = '' 
 }: StatusBadgeProps) {
   const getStatusConfig = (status: string) => {
