@@ -115,75 +115,31 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
     setIsModalOpen(false);
   };
 
-  // Use AI-generated business case data or fallback to calculated metrics
+  // Use AI-generated business case data only (no fallback to prevent jumping numbers)
   const businessMetrics = useMemo(() => {
-    if (businessCaseData) {
-      // Scale AI-generated data for selected period
-      const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
-      
-      return {
-        automationRatio: businessCaseData.automationPotential,
-        manualHours: businessCaseData.manualHours * scale,
-        automatedHours: businessCaseData.automatedHours * scale,
-        savedHours: businessCaseData.savedHours * scale,
-        manualCost: businessCaseData.manualHours * scale * hourlyRate,
-        automatedCost: businessCaseData.automatedHours * scale * hourlyRate * 0.25, // 25% cost reduction
-        savedMoney: businessCaseData.savedHours * scale * hourlyRate,
-        automationSetupCost: businessCaseData.setupCostMoney,
-        periodAutomationCost: businessCaseData.setupCostMoney * scale,
-        totalSavingsMoney: (businessCaseData.savedHours * scale * hourlyRate) - (businessCaseData.setupCostMoney * scale),
-        roi: businessCaseData.roi,
-        paybackPeriod: businessCaseData.paybackPeriodYears,
-        reasoning: businessCaseData.reasoning,
-      };
+    if (!businessCaseData) {
+      return null; // Return null if no AI data to prevent showing fallback numbers
     }
 
-    // Fallback to calculated metrics if no AI data
-    const automationRatio = task.automationRatio ?? 0;
-    const baseHours = task.subtasks && task.subtasks.length > 0
-      ? task.subtasks.reduce((sum, s) => sum + (s.estimatedTime || 0), 0)
-      : 8;
-
-    const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['day'];
-    const manualHours = baseHours * scale;
-    const automatedHoursFromSubtasks = task.subtasks && task.subtasks.length > 0
-      ? task.subtasks.reduce((sum, s) => sum + (s.estimatedTime || 0) * (s.automationPotential || 0), 0) * scale
-      : manualHours * (automationRatio / 100);
-
-    const automatedHours = Math.min(manualHours, automatedHoursFromSubtasks);
-    const savedHours = Math.max(0, manualHours - automatedHours);
-
-    const manualCost = manualHours * hourlyRate;
-    const automatedCost = automatedHours * hourlyRate * 0.25;
-    const savedMoney = manualCost - automatedCost;
-
-    const setupBase = 500;
-    const setupVariable = savedHours * 0.5 * hourlyRate;
-    const automationSetupCost = Math.max(1000, setupBase + setupVariable);
-    const annualAutomationCost = automationSetupCost / 3;
-    const annualToPeriod = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
-    const periodAutomationCost = annualAutomationCost * annualToPeriod;
-
-    const totalSavingsMoney = savedMoney - periodAutomationCost;
-    const roi = totalSavingsMoney > 0 ? (totalSavingsMoney / periodAutomationCost) * 100 : 0;
-    const paybackPeriod = totalSavingsMoney > 0 ? (automationSetupCost / (totalSavingsMoney / annualToPeriod)) : 0;
-
+    // Scale AI-generated data for selected period
+    const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
+    
     return {
-      automationRatio,
-      manualHours,
-      automatedHours,
-      savedHours,
-      manualCost,
-      automatedCost,
-      savedMoney,
-      automationSetupCost,
-      periodAutomationCost,
-      totalSavingsMoney,
-      roi,
-      paybackPeriod,
-      reasoning: null,
+      automationRatio: businessCaseData.automationPotential,
+      manualHours: businessCaseData.manualHours * scale,
+      automatedHours: businessCaseData.automatedHours * scale,
+      savedHours: businessCaseData.savedHours * scale,
+      manualCost: businessCaseData.manualHours * scale * hourlyRate,
+      automatedCost: businessCaseData.automatedHours * scale * hourlyRate * 0.25, // 25% cost reduction
+      savedMoney: businessCaseData.savedHours * scale * hourlyRate,
+      automationSetupCost: businessCaseData.setupCostMoney,
+      periodAutomationCost: businessCaseData.setupCostMoney * scale,
+      totalSavingsMoney: (businessCaseData.savedHours * scale * hourlyRate) - (businessCaseData.setupCostMoney * scale),
+      roi: businessCaseData.roi,
+      paybackPeriod: businessCaseData.paybackPeriodYears,
+      reasoning: businessCaseData.reasoning,
     };
-  }, [businessCaseData, task, hourlyRate, period]);
+  }, [businessCaseData, hourlyRate, period]);
 
   const periodLabel = (p: Period) => ({
     year: lang === 'de' ? 'Jahr' : 'Year',
@@ -354,7 +310,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
         )}
 
         {/* Metrics Display */}
-        {!loading && !error && (businessCaseData || businessMetrics) && (
+        {!loading && !error && businessMetrics && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
