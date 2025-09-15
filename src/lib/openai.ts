@@ -476,66 +476,80 @@ JSON Format:
       reasoning: string;
     }>;
   }> {
-    // Erweiterte Workflow-Beispiele basierend auf verfügbaren Workflows
-    const workflowExamples = lang === 'de' 
-      ? `VERFÜGBARE WORKFLOWS:
-1. Code-Review-Automatisierung: GitHub Copilot + ChatGPT + CI/CD
-2. Datenanalyse-Pipeline: Excel AI + Power BI + Python Scripts
-3. Content-Erstellung: Jasper + Canva AI + Social Media Scheduler
-4. E-Mail-Marketing: Copy.ai + Mailchimp + Analytics Dashboard
-5. Bug-Tracking: GitHub Issues + Claude + Automated Testing
-6. Social Media Management: ChatGPT + Buffer + Analytics
-7. Dokumentation: Notion AI + GitHub + Automated Updates
-8. Lead-Generierung: Perplexity + CRM + Email Automation
-9. Performance-Monitoring: Power BI + Alerts + Automated Reports
-10. Customer Support: ChatGPT + Zendesk + Knowledge Base
+    // Allgemeine Workflow-Kategorien für OpenAI zur intelligenten Auswahl
+    const workflowCategories = lang === 'de' 
+      ? `VERFÜGBARE WORKFLOW-KATEGORIEN:
+1. Datenverarbeitung: ETL-Pipelines, Datenbereinigung, Transformation
+2. Automatisierung: Scripts, APIs, Workflow-Orchestrierung
+3. Analyse: Reporting, Dashboards, Business Intelligence
+4. Integration: Systemverbindungen, Datenbanken, APIs
+5. Qualitätssicherung: Validierung, Monitoring, Alerts
+6. Content-Erstellung: Dokumentation, Präsentationen, Reports
+7. Kommunikation: E-Mail, Notifications, Collaboration
+8. Projektmanagement: Task-Tracking, Scheduling, Coordination
+9. Entwicklung: Code-Generierung, Testing, Deployment
+10. Kundenbetreuung: Support, Onboarding, Feedback
 
-BEISPIELE FÜR SPEZIFISCHE AUFGABEN:
-- "Debug application issues" → Bug-Tracking Workflow
-- "Manage advertising campaigns" → E-Mail-Marketing Workflow  
-- "Analyze market research" → Datenanalyse-Pipeline
-- "Create content strategies" → Content-Erstellung Workflow
-- "Optimize database queries" → Performance-Monitoring Workflow`
-      : `AVAILABLE WORKFLOWS:
-1. Code Review Automation: GitHub Copilot + ChatGPT + CI/CD
-2. Data Analysis Pipeline: Excel AI + Power BI + Python Scripts
-3. Content Creation: Jasper + Canva AI + Social Media Scheduler
-4. Email Marketing: Copy.ai + Mailchimp + Analytics Dashboard
-5. Bug Tracking: GitHub Issues + Claude + Automated Testing
-6. Social Media Management: ChatGPT + Buffer + Analytics
-7. Documentation: Notion AI + GitHub + Automated Updates
-8. Lead Generation: Perplexity + CRM + Email Automation
-9. Performance Monitoring: Power BI + Alerts + Automated Reports
-10. Customer Support: ChatGPT + Zendesk + Knowledge Base
+WORKFLOW-TECHNOLOGIEN:
+- AI-Tools: ChatGPT, Claude, GitHub Copilot, Excel AI, Power BI AI
+- Automatisierung: Python, n8n, Zapier, Microsoft Power Automate
+- Datenbanken: SQL, PostgreSQL, MongoDB, Excel, CSV
+- APIs: REST, GraphQL, Webhooks, Integrations
+- Cloud: AWS, Azure, Google Cloud, Supabase
+- Monitoring: Alerts, Dashboards, Logs, Analytics`
+      : `AVAILABLE WORKFLOW CATEGORIES:
+1. Data Processing: ETL pipelines, data cleaning, transformation
+2. Automation: Scripts, APIs, workflow orchestration
+3. Analytics: Reporting, dashboards, business intelligence
+4. Integration: System connections, databases, APIs
+5. Quality Assurance: Validation, monitoring, alerts
+6. Content Creation: Documentation, presentations, reports
+7. Communication: Email, notifications, collaboration
+8. Project Management: Task tracking, scheduling, coordination
+9. Development: Code generation, testing, deployment
+10. Customer Support: Support, onboarding, feedback
 
-EXAMPLES FOR SPECIFIC TASKS:
-- "Debug application issues" → Bug Tracking Workflow
-- "Manage advertising campaigns" → Email Marketing Workflow
-- "Analyze market research" → Data Analysis Pipeline
-- "Create content strategies" → Content Creation Workflow
-- "Optimize database queries" → Performance Monitoring Workflow`;
+WORKFLOW TECHNOLOGIES:
+- AI Tools: ChatGPT, Claude, GitHub Copilot, Excel AI, Power BI AI
+- Automation: Python, n8n, Zapier, Microsoft Power Automate
+- Databases: SQL, PostgreSQL, MongoDB, Excel, CSV
+- APIs: REST, GraphQL, Webhooks, Integrations
+- Cloud: AWS, Azure, Google Cloud, Supabase
+- Monitoring: Alerts, Dashboards, Logs, Analytics`;
 
     const systemPrompt = lang === 'de' 
-      ? `Du bist ein Experte für AI-Workflow-Automatisierung. Empfehle spezifische Workflows basierend auf den Teilaufgaben.
+      ? `Du bist ein Experte für AI-Workflow-Automatisierung. Analysiere die Hauptaufgabe und Teilaufgaben, um passende Workflows zu empfehlen.
 
-${workflowExamples}
+${workflowCategories}
+
+AUFGABE: Erstelle spezifische, umsetzbare Workflows basierend auf:
+1. Der Hauptaufgabe und ihren Anforderungen
+2. Den konkreten Teilaufgaben und deren Automatisierungspotenzial
+3. Den verfügbaren Technologien und AI-Tools
+4. Realistischen Setup-Zeiten und Schwierigkeitsgraden
 
 WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
 
 JSON-Format:
-{"agents":[{"name":"GitHub Copilot","technology":"AI Code Assistant","implementation":"1. Install VS Code Extension 2. Configure API Key 3. Start coding with AI suggestions","difficulty":"Einfach","setupTime":"30min","matchScore":95,"reasoning":"Perfekt für Code-Review und Debugging"}],"workflows":[{"name":"Bug-Tracking Workflow","technology":"GitHub + Claude + Testing","steps":["1. Automatische Bug-Erkennung","2. AI-gestützte Analyse","3. Automatische Test-Generierung","4. Status-Updates"],"difficulty":"Mittel","setupTime":"2-4h","matchScore":90,"reasoning":"Automatisiert kompletten Bug-Lifecycle"}]}
+{"agents":[{"name":"Spezifischer AI-Agent","technology":"Konkrete Technologie-Stack","implementation":"Schritt-für-Schritt Anleitung","difficulty":"Einfach/Mittel/Schwer","setupTime":"Realistische Zeit","matchScore":0-100,"reasoning":"Warum dieser Agent perfekt für diese spezifische Aufgabe ist"}],"workflows":[{"name":"Spezifischer Workflow-Name","technology":"Konkrete Technologien","steps":["Spezifische Schritte für diese Aufgabe"],"difficulty":"Einfach/Mittel/Schwer","setupTime":"Realistische Zeit","matchScore":0-100,"reasoning":"Warum dieser Workflow optimal für diese Aufgabe ist"}]}
 
-Basiere Empfehlungen auf den konkreten Teilaufgaben, nicht auf generischen Lösungen!`
-      : `You are an expert in AI workflow automation. Recommend specific workflows based on subtasks.
+FOKUS: Erstelle Workflows, die direkt zur Aufgabe passen, nicht generische Lösungen!`
+      : `You are an expert in AI workflow automation. Analyze the main task and subtasks to recommend suitable workflows.
 
-${workflowExamples}
+${workflowCategories}
+
+TASK: Create specific, actionable workflows based on:
+1. The main task and its requirements
+2. The concrete subtasks and their automation potential
+3. Available technologies and AI tools
+4. Realistic setup times and difficulty levels
 
 IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
 
 JSON Format:
-{"agents":[{"name":"GitHub Copilot","technology":"AI Code Assistant","implementation":"1. Install VS Code Extension 2. Configure API Key 3. Start coding with AI suggestions","difficulty":"Easy","setupTime":"30min","matchScore":95,"reasoning":"Perfect for code review and debugging"}],"workflows":[{"name":"Bug Tracking Workflow","technology":"GitHub + Claude + Testing","steps":["1. Automatic bug detection","2. AI-powered analysis","3. Automated test generation","4. Status updates"],"difficulty":"Medium","setupTime":"2-4h","matchScore":90,"reasoning":"Automates complete bug lifecycle"}]}
+{"agents":[{"name":"Specific AI Agent","technology":"Concrete Technology Stack","implementation":"Step-by-step guide","difficulty":"Easy/Medium/Hard","setupTime":"Realistic time","matchScore":0-100,"reasoning":"Why this agent is perfect for this specific task"}],"workflows":[{"name":"Specific Workflow Name","technology":"Concrete Technologies","steps":["Specific steps for this task"],"difficulty":"Easy/Medium/Hard","setupTime":"Realistic time","matchScore":0-100,"reasoning":"Why this workflow is optimal for this task"}]}
 
-Base recommendations on concrete subtasks, not generic solutions!`;
+FOCUS: Create workflows that directly match the task, not generic solutions!`;
 
     // Detaillierter User-Prompt mit Teilaufgaben
     const subtasksText = subtasks.map((subtask, index) => 
@@ -566,12 +580,23 @@ Recommend specific AI agents and workflows that match these subtasks. Focus on c
     try {
       const result = JSON.parse(response.content);
       
-      // Post-Processing: Verbessere Workflows basierend auf Teilaufgaben
-      const enhancedResult = this.enhanceWorkflowRecommendations(result, subtasks, lang);
-      
-      return enhancedResult;
+      // Kein Post-Processing - OpenAI hat die volle Kontrolle
+      return result;
     } catch (error) {
       console.error('Failed to parse AI solutions response:', error);
+      console.log('Raw response:', response.content);
+      
+      // Versuche JSON aus der Antwort zu extrahieren
+      try {
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const result = JSON.parse(jsonMatch[0]);
+          return result;
+        }
+      } catch (extractError) {
+        console.error('Failed to extract JSON from response:', extractError);
+      }
+      
       // Fallback response
       return {
         agents: [],
@@ -580,114 +605,6 @@ Recommend specific AI agents and workflows that match these subtasks. Focus on c
     }
   }
 
-  /**
-   * Verbessert Workflow-Empfehlungen basierend auf konkreten Teilaufgaben
-   */
-  private enhanceWorkflowRecommendations(
-    result: any, 
-    subtasks: any[], 
-    lang: 'de' | 'en' = 'de'
-  ): any {
-    // Workflow-Mapping basierend auf Teilaufgaben-Keywords
-    const workflowMappings = {
-      'debug': {
-        name: lang === 'de' ? 'Bug-Tracking Workflow' : 'Bug Tracking Workflow',
-        technology: 'GitHub + Claude + Automated Testing',
-        steps: lang === 'de' 
-          ? ['1. Automatische Bug-Erkennung', '2. AI-gestützte Analyse', '3. Test-Generierung', '4. Status-Updates']
-          : ['1. Automatic bug detection', '2. AI-powered analysis', '3. Test generation', '4. Status updates'],
-        difficulty: lang === 'de' ? 'Mittel' : 'Medium',
-        setupTime: '2-4h',
-        matchScore: 95,
-        reasoning: lang === 'de' ? 'Automatisiert kompletten Bug-Lifecycle' : 'Automates complete bug lifecycle'
-      },
-      'analyze': {
-        name: lang === 'de' ? 'Datenanalyse-Pipeline' : 'Data Analysis Pipeline',
-        technology: 'Excel AI + Power BI + Python Scripts',
-        steps: lang === 'de'
-          ? ['1. Daten-Sammlung', '2. AI-gestützte Analyse', '3. Visualisierung', '4. Automatische Reports']
-          : ['1. Data collection', '2. AI-powered analysis', '3. Visualization', '4. Automated reports'],
-        difficulty: lang === 'de' ? 'Mittel' : 'Medium',
-        setupTime: '3-5h',
-        matchScore: 90,
-        reasoning: lang === 'de' ? 'Automatisiert komplette Datenanalyse' : 'Automates complete data analysis'
-      },
-      'create': {
-        name: lang === 'de' ? 'Content-Erstellung Workflow' : 'Content Creation Workflow',
-        technology: 'Jasper + Canva AI + Social Media Scheduler',
-        steps: lang === 'de'
-          ? ['1. Content-Ideen', '2. AI-gestützte Erstellung', '3. Design-Optimierung', '4. Automatische Veröffentlichung']
-          : ['1. Content ideas', '2. AI-powered creation', '3. Design optimization', '4. Automatic publishing'],
-        difficulty: lang === 'de' ? 'Einfach' : 'Easy',
-        setupTime: '1-2h',
-        matchScore: 85,
-        reasoning: lang === 'de' ? 'Automatisiert Content-Produktion' : 'Automates content production'
-      },
-      'manage': {
-        name: lang === 'de' ? 'Projekt-Management Workflow' : 'Project Management Workflow',
-        technology: 'Notion AI + GitHub + Automated Updates',
-        steps: lang === 'de'
-          ? ['1. Task-Erstellung', '2. Automatische Zuordnung', '3. Progress-Tracking', '4. Status-Updates']
-          : ['1. Task creation', '2. Automatic assignment', '3. Progress tracking', '4. Status updates'],
-        difficulty: lang === 'de' ? 'Mittel' : 'Medium',
-        setupTime: '2-3h',
-        matchScore: 80,
-        reasoning: lang === 'de' ? 'Automatisiert Projekt-Workflows' : 'Automates project workflows'
-      },
-      'optimize': {
-        name: lang === 'de' ? 'Performance-Monitoring Workflow' : 'Performance Monitoring Workflow',
-        technology: 'Power BI + Alerts + Automated Reports',
-        steps: lang === 'de'
-          ? ['1. Performance-Monitoring', '2. Automatische Alerts', '3. Optimierungs-Vorschläge', '4. Report-Generierung']
-          : ['1. Performance monitoring', '2. Automatic alerts', '3. Optimization suggestions', '4. Report generation'],
-        difficulty: lang === 'de' ? 'Schwer' : 'Hard',
-        setupTime: '4-6h',
-        matchScore: 85,
-        reasoning: lang === 'de' ? 'Automatisiert Performance-Optimierung' : 'Automates performance optimization'
-      }
-    };
-
-    // Analysiere Teilaufgaben und finde passende Workflows
-    const enhancedWorkflows = [];
-    const subtaskTexts = subtasks.map(s => (s.title || s.text).toLowerCase()).join(' ');
-
-    // Prüfe auf Keywords in Teilaufgaben
-    for (const [keyword, workflow] of Object.entries(workflowMappings)) {
-      if (subtaskTexts.includes(keyword)) {
-        enhancedWorkflows.push(workflow);
-      }
-    }
-
-    // Füge spezifische Workflows hinzu, falls noch keine vorhanden
-    if (enhancedWorkflows.length === 0) {
-      // Fallback: Generiere basierend auf Automatisierungspotenzial
-      const avgAutomation = subtasks.reduce((sum, s) => sum + (s.automationPotential || 50), 0) / subtasks.length;
-      
-      if (avgAutomation > 70) {
-        enhancedWorkflows.push(workflowMappings['analyze']);
-      } else if (avgAutomation > 50) {
-        enhancedWorkflows.push(workflowMappings['manage']);
-      } else {
-        enhancedWorkflows.push(workflowMappings['create']);
-      }
-    }
-
-    // Kombiniere AI-generierte und verbesserte Workflows
-    const finalWorkflows = [
-      ...(result.workflows || []),
-      ...enhancedWorkflows
-    ];
-
-    // Entferne Duplikate basierend auf Namen
-    const uniqueWorkflows = finalWorkflows.filter((workflow, index, self) => 
-      index === self.findIndex(w => w.name === workflow.name)
-    );
-
-    return {
-      ...result,
-      workflows: uniqueWorkflows.slice(0, 3) // Max 3 Workflows
-    };
-  }
 }
 
 // Export singleton instance
