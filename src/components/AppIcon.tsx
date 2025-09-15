@@ -84,6 +84,31 @@ const AppIcon: React.FC<AppIconProps> = ({
     }
   };
 
+  const fetchAndCacheClearbit = async (): Promise<string | null> => {
+    try {
+      const domain = logoDevDomains[tool.id];
+      if (!domain) return null;
+      const url = `https://logo.clearbit.com/${domain}`;
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      try {
+        localStorage.setItem(storageKey, dataUrl);
+      } catch (_) {
+        // ignore quota errors
+      }
+      return dataUrl;
+    } catch {
+      return null;
+    }
+  };
+
   React.useEffect(() => {
     // 1) Use cached data URL if present
     const cached = localStorage.getItem(storageKey);
@@ -99,8 +124,11 @@ const AppIcon: React.FC<AppIconProps> = ({
   }, [tool.id]);
 
   const handleImageError = async () => {
-    // If local asset failed, try fetching from logo.dev and cache
-    const dataUrl = await fetchAndCacheLogoDev();
+    // If local asset failed, try fetching from logo.dev, then clearbit
+    let dataUrl = await fetchAndCacheLogoDev();
+    if (!dataUrl) {
+      dataUrl = await fetchAndCacheClearbit();
+    }
     if (dataUrl) {
       setLogoUrl(dataUrl);
       setShowFallback(false);
