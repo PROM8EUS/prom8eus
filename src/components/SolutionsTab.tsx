@@ -489,12 +489,12 @@ export default function SolutionsTab({
               id="solutions-scroll"
               ref={scrollRef}
               onScroll={updateScrollState}
-              className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory"
+              className="grid grid-flow-col auto-cols-[340px] grid-rows-2 gap-6 overflow-x-auto pb-2 snap-x snap-mandatory"
             >
               {filteredSolutions.map((solution) => (
                 <div 
                   key={solution.id}
-                  className="min-w-[300px] max-w-[360px] snap-start cursor-pointer transition-shadow hover:shadow-md"
+                  className="w-[340px] snap-start cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => handleSolutionSelect(solution)}
                 >
                   <SolutionCard
