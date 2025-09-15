@@ -455,14 +455,26 @@ export default function SolutionsTab({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSolutions.map((solution) => (
-              <div 
-                key={solution.id}
-                className="cursor-pointer transition-shadow hover:shadow-md"
-                onClick={() => handleSolutionSelect(solution)}
-              >
-                <SolutionCard
+          <div className="relative">
+            {/* Horizontal scroller with chevrons */}
+            <button
+              type="button"
+              aria-label="scroll left"
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white"
+              onClick={() => {
+                document.getElementById('solutions-scroll')?.scrollBy({ left: -600, behavior: 'smooth' });
+              }}
+            >
+              ‹
+            </button>
+            <div id="solutions-scroll" className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory">
+              {filteredSolutions.map((solution) => (
+                <div 
+                  key={solution.id}
+                  className="min-w-[300px] max-w-[360px] snap-start cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => handleSolutionSelect(solution)}
+                >
+                  <SolutionCard
                   solution={{
                     id: solution.id,
                     name: solution.name,
@@ -487,9 +499,20 @@ export default function SolutionsTab({
                     pricing: solution.pricing,
                   }}
                   onView={() => handleSolutionSelect(solution)}
-                />
-              </div>
-            ))}
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              aria-label="scroll right"
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white"
+              onClick={() => {
+                document.getElementById('solutions-scroll')?.scrollBy({ left: 600, behavior: 'smooth' });
+              }}
+            >
+              ›
+            </button>
           </div>
         )}
       </div>
