@@ -79,11 +79,8 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_communication: "Kommunikation",
     task_category_technical: "Technisch",
     task_category_management: "Management",
-    task_category_documentation: "Dokumentation",
     task_category_systems: "Systeme",
-    task_category_accounting: "Buchhaltung",
     task_category_budgetingplanning: "Budgetplanung",
-    task_category_collaboration: "Zusammenarbeit",
     task_category_salesnegotiation: "Verkauf/Verhandlung",
     task_category_problemsolving: "Problemlösung",
     task_category_dataprocessing: "Datenverarbeitung",
@@ -126,13 +123,10 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_marketingcontent: "Marketing & Content",
     task_category_businessstrategy: "Business-Strategie",
     task_category_generalai: "Allzweck-AI",
-    task_category_softwaredevelopment: "Software-Entwicklung",
-    task_category_dataanalysis: "Datenanalyse",
     task_category_documentation: "Dokumentation",
     task_category_systemintegration: "Systemintegration",
     task_category_accounting: "Buchhaltung",
     task_category_collaboration: "Zusammenarbeit",
-    task_category_physicaltasks: "Physische Aufgaben",
     task_category_finance: "Finanzen",
     task_category_bookkeeping: "Buchführung",
     task_category_financial_reporting: "Finanzberichterstattung",
@@ -148,28 +142,16 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_patient_care: "Patientenversorgung",
     task_category_quality_assurance: "Qualitätssicherung",
     task_category_process_optimization: "Prozessoptimierung",
-    task_category_tax_accounting: "Steuerbuchhaltung",
-    task_category_budget_control: "Budgetkontrolle",
-    task_category_payment_processing: "Zahlungsabwicklung",
-    task_category_account_reconciliation: "Kontenabstimmung",
     task_category_marketing: "Marketing",
-    task_category_content_creation: "Content-Erstellung",
-    task_category_social_media: "Social Media",
-    task_category_campaign_management: "Kampagnenmanagement",
     task_category_seo: "SEO",
     task_category_analytics: "Analytics",
-    task_category_customer_service: "Kundenservice",
     task_category_sales: "Vertrieb",
     task_category_hr: "Personalwesen",
     task_category_recruitment: "Recruiting",
-    task_category_employee_management: "Mitarbeiterverwaltung",
     task_category_healthcare: "Gesundheitswesen",
     task_category_medical: "Medizin",
-    task_category_patient_care: "Patientenversorgung",
     task_category_production: "Produktion",
     task_category_manufacturing: "Fertigung",
-    task_category_quality_assurance: "Qualitätssicherung",
-    task_category_process_optimization: "Prozessoptimierung",
     
     // Analysis Labels
     label_automatisierbar: "Automatisierbar",
@@ -178,12 +160,9 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     // Analysis UI Text
     analysis_identified_tasks: "Identifizierte Aufgaben",
-    analysis_task_distribution: "Aufgabenverteilung",
     analysis_human_expertise_required: "Menschliche Expertise erforderlich",
     analysis_human_expertise_desc: "Diese Aufgabe erfordert menschliche Fähigkeiten wie Kreativität, emotionale Intelligenz oder komplexe Entscheidungsfindung.",
     analysis_automation_score: "Automatisierungsscore",
-    analysis_human_work: "Menschliche Arbeit",
-    analysis_automation: "Automatisierung",
     
     // Analysis Result Page
     analysis_result_for: "Analyse-Ergebnis für",
@@ -449,7 +428,6 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_interpersonal: "Zwischenmenschlich",
     task_category_reporting: "Berichterstattung",
     task_category_dataentry: "Datenerfassung",
-    task_category_systemintegration: "Systemintegration",
     task_category_routineprocessing: "Routineverarbeitung",
     task_category_monitoring: "Überwachung",
     task_category_aiml: "KI/Maschinelles Lernen",
@@ -586,11 +564,8 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_communication: "Communication",
     task_category_technical: "Technical",
     task_category_management: "Management",
-    task_category_documentation: "Documentation",
     task_category_systems: "Systems",
-    task_category_accounting: "Accounting",
-    task_category_budgetingplanning: "Budget Planning", 
-    task_category_collaboration: "Collaboration",
+    task_category_budgetingplanning: "Budget Planning",
     task_category_salesnegotiation: "Sales/Negotiation", 
     task_category_problemsolving: "Problem Solving",
     task_category_dataprocessing: "Data Processing",
@@ -644,13 +619,10 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_marketingcontent: "Marketing & Content",
     task_category_businessstrategy: "Business Strategy",
     task_category_generalai: "General AI",
-    task_category_softwaredevelopment: "Software Development",
-    task_category_dataanalysis: "Data Analysis",
     task_category_documentation: "Documentation",
     task_category_systemintegration: "System Integration",
     task_category_accounting: "Accounting",
     task_category_collaboration: "Collaboration",
-    task_category_physicaltasks: "Physical Tasks",
     task_category_finance: "Finance",
     task_category_bookkeeping: "Bookkeeping",
     task_category_financial_reporting: "Financial Reporting",
@@ -684,12 +656,9 @@ export const DICT: Record<Lang, Record<string, string>> = {
     
     // Analysis UI Text
     analysis_identified_tasks: "Identified Tasks",
-    analysis_task_distribution: "Task Distribution",
     analysis_human_expertise_required: "Human Expertise Required",
     analysis_human_expertise_desc: "This task requires human capabilities such as creativity, emotional intelligence, or complex decision-making.",
     analysis_automation_score: "Automation Score",
-    analysis_human_work: "Human Work",
-    analysis_automation: "Automation",
     
     // Analysis Result Page
     analysis_result_for: "Analysis Result for",
@@ -1083,15 +1052,7 @@ export const DICT: Record<Lang, Record<string, string>> = {
     no_tasks_found_title: "No Tasks Found",
     no_tasks_found_desc: "No specific tasks could be identified in the provided text. Please provide a more detailed job description or task list for analysis.",
     try_again: "Try Again",
-    learn_more: "Learn More",
-    
-    // Agents & Workflows Page
-    agents_workflows_title: "Mehr über Agenten & Workflows",
-    agents_workflows_subtitle: "Entdecken Sie die Welt der KI-Automatisierung",
-    agents_workflows_beginner: "Anfänger",
-    agents_workflows_advanced: "Fortgeschritten",
-    agents_workflows_ready_next_step: "Bereit für den nächsten Schritt?",
-    agents_workflows_analyze_now: "Jetzt analysieren"
+    learn_more: "Learn More"
   }
 };
 
