@@ -183,23 +183,20 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
 
           {/* Center: Zeitraum + Stundensatz (wraps on small screens) */}
           <div className="flex flex-wrap items-center gap-3 md:justify-center">
-            {/* Period selector */}
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium whitespace-nowrap">
-                {lang === 'de' ? 'Zeitraum' : 'Period'}
-              </Label>
-              <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
-                <SelectTrigger className="h-8 w-28">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="year">{periodLabel('year')}</SelectItem>
-                  <SelectItem value="month">{periodLabel('month')}</SelectItem>
-                  <SelectItem value="week">{periodLabel('week')}</SelectItem>
-                  <SelectItem value="day">{periodLabel('day')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                  {/* Period selector */}
+                  <div className="flex items-center gap-2">
+                    <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
+                      <SelectTrigger className="h-8 w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="year">{periodLabel('year')}</SelectItem>
+                        <SelectItem value="month">{periodLabel('month')}</SelectItem>
+                        <SelectItem value="week">{periodLabel('week')}</SelectItem>
+                        <SelectItem value="day">{periodLabel('day')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
             {/* Hourly Rate Input (money mode) */}
             {mode === 'money' && (
