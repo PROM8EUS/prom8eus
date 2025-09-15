@@ -46,7 +46,13 @@ export class OpenAIClient {
    * Generiert einen Cache-Key für einen Prompt
    */
   private getCacheKey(prompt: string): string {
-    return btoa(prompt).slice(0, 32);
+    // Verwende TextEncoder für Unicode-Unterstützung
+    const encoder = new TextEncoder();
+    const data = encoder.encode(prompt);
+    return Array.from(data)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+      .slice(0, 32);
   }
 
   /**
