@@ -221,16 +221,18 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
     dependencies: string[];
   }>> {
     const systemPrompt = lang === 'de'
-      ? `Du bist ein Experte für Aufgabenanalyse und Automatisierung. Zerlege komplexe Aufgaben in spezifische, automatisierbare Unteraufgaben.
+      ? `Du bist ein Experte für Aufgabenanalyse. Zerlege komplexe Aufgaben in spezifische Unteraufgaben.
 
 WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
 
 AUFGABE: Erstelle 3-5 spezifische Unteraufgaben, die:
 1. Konkret und umsetzbar sind
-2. Verschiedene Automatisierungsgrade haben (30-95%)
-3. Realistische Zeitschätzungen haben
-4. Relevante Systeme und Technologien nennen
-5. Praktische Risiken und Chancen identifizieren
+2. Realistische Zeitschätzungen haben
+3. Relevante Systeme und Technologien nennen (nur wenn anwendbar)
+4. Praktische Risiken und Chancen identifizieren
+5. Automatisierungspotenzial realistisch einschätzen (0-100%)
+
+HINWEIS: Nicht alle Aufgaben sind automatisierbar! Physische Tätigkeiten, kreative Arbeit oder persönliche Interaktionen haben niedrige Automatisierungswerte.
 
 JSON-Format:
 {
@@ -254,6 +256,7 @@ JSON-Format:
 Prioritäten: low, medium, high, critical
 Komplexität: low, medium, high
 Automatisierungspotenzial: 0-100 (0=nicht automatisierbar, 100=vollständig automatisierbar)
+Beispiele: Haus bauen = 10-30%, Datenanalyse = 80-95%, Kreative Arbeit = 5-20%
 Geschätzte Zeit in Minuten`
       : `You are an expert in task analysis and automation. Break down complex tasks into specific, automatable subtasks.
 
@@ -291,16 +294,16 @@ Automation potential: 0-100 (0=not automatable, 100=fully automatable)
 Estimated time in minutes`;
 
     const userPrompt = lang === 'de'
-      ? `Zerlege diese Aufgabe in spezifische, automatisierbare Unteraufgaben:
+      ? `Zerlege diese Aufgabe in spezifische Unteraufgaben:
 
 AUFGABE: ${taskText}
 
-FOKUS: Erstelle Unteraufgaben, die verschiedene Automatisierungsgrade haben und konkrete, umsetzbare Schritte darstellen.`
-      : `Break down this task into specific, automatable subtasks:
+FOKUS: Erstelle realistische Unteraufgaben mit korrekten Automatisierungswerten. Physische Tätigkeiten haben niedrige Werte (10-30%), Software-Aufgaben haben hohe Werte (70-95%).`
+      : `Break down this task into specific subtasks:
 
 TASK: ${taskText}
 
-FOCUS: Create subtasks with different automation levels that represent concrete, actionable steps.`;
+FOCUS: Create realistic subtasks with correct automation values. Physical tasks have low values (10-30%), software tasks have high values (70-95%).`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -562,6 +565,9 @@ WORKFLOW TECHNOLOGIES:
       ? `Du bist ein Experte für AI-Workflow-Automatisierung. Analysiere die Hauptaufgabe und Teilaufgaben, um passende Workflows zu empfehlen.
 
 ${workflowCategories}
+
+WICHTIG: Empfehle NUR Workflows für Aufgaben mit hohem Automatisierungspotenzial (70%+). 
+Für physische Tätigkeiten, kreative Arbeit oder persönliche Interaktionen empfehle KEINE Software-Workflows!
 
 AUFGABE: Erstelle spezifische, umsetzbare Workflows basierend auf:
 1. Der Hauptaufgabe und ihren Anforderungen
