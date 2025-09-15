@@ -72,7 +72,19 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
               verified={solution.authorVerified}
             />
             {solution.pricing && (
-              <span className="text-xs text-gray-600">· {solution.pricing}</span>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                  solution.pricing === 'Free'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : solution.pricing === 'Freemium'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : solution.pricing === 'Paid'
+                    ? 'bg-orange-50 text-orange-700 border-orange-200'
+                    : 'bg-purple-50 text-purple-700 border-purple-200'
+                }`}
+              >
+                {solution.pricing}
+              </span>
             )}
           </div>
 
