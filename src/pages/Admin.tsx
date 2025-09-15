@@ -4,6 +4,7 @@ import AdminLogin from '@/components/AdminLogin';
 import AdminLayout from '@/components/AdminLayout';
 import AdminDashboard from '@/components/AdminDashboard';
 import SourcesManagement from '@/components/SourcesManagement';
+import { WorkflowTest } from '@/components/WorkflowTest';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,6 +21,8 @@ export default function Admin() {
     ? 'users'
     : path.endsWith('/settings')
     ? 'settings'
+    : path.endsWith('/test')
+    ? 'test'
     : 'dashboard';
 
   useEffect(() => {
@@ -67,6 +70,9 @@ export default function Admin() {
       case 'settings':
         navigate('/admin/settings');
         break;
+      case 'test':
+        navigate('/admin/test');
+        break;
       default:
         navigate('/admin');
     }
@@ -94,6 +100,7 @@ export default function Admin() {
       <Routes>
         <Route index element={<AdminDashboard lang={lang} />} />
         <Route path="sources" element={<SourcesManagement lang={lang} />} />
+        <Route path="test" element={<WorkflowTest />} />
         <Route path="users" element={
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">

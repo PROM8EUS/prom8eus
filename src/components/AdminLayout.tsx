@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Settings, Users, BarChart3, Database, Shield, RefreshCw } from 'lucide-react';
+import { LogOut, Settings, Users, BarChart3, Database, Shield, RefreshCw, TestTube } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -32,6 +32,13 @@ export default function AdminLayout({ children, lang, onLogout, currentView = 'd
       description: lang === 'de' ? 'Workflow- und AI-Agent-Quellen' : 'Workflow and AI agent sources',
       icon: RefreshCw,
       href: '/admin/sources'
+    },
+    {
+      id: 'test',
+      title: lang === 'de' ? 'Workflow Test' : 'Workflow Test',
+      description: lang === 'de' ? 'Teste den Workflow-Chain' : 'Test the workflow chain',
+      icon: TestTube,
+      href: '/admin/test'
     },
     {
       id: 'users',

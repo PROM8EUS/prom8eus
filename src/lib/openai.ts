@@ -221,58 +221,86 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
     dependencies: string[];
   }>> {
     const systemPrompt = lang === 'de'
-      ? `Du bist ein Experte für Aufgabenanalyse. Zerlege komplexe Aufgaben in spezifische Unteraufgaben.
+      ? `Du bist ein Experte für Aufgabenanalyse und Automatisierung. Zerlege komplexe Aufgaben in spezifische, automatisierbare Unteraufgaben.
 
-Antworte im JSON-Format:
+WICHTIG: Antworte ausschließlich mit gültigem JSON, keine zusätzlichen Erklärungen!
+
+AUFGABE: Erstelle 3-5 spezifische Unteraufgaben, die:
+1. Konkret und umsetzbar sind
+2. Verschiedene Automatisierungsgrade haben (30-95%)
+3. Realistische Zeitschätzungen haben
+4. Relevante Systeme und Technologien nennen
+5. Praktische Risiken und Chancen identifizieren
+
+JSON-Format:
 {
   "subtasks": [
     {
-      "id": "unique-id",
-      "title": "Unteraufgabentitel",
-      "description": "Detaillierte Beschreibung",
+      "id": "task-1",
+      "title": "Spezifische Unteraufgabe",
+      "description": "Detaillierte Beschreibung der Aufgabe und ihrer Ziele",
       "automationPotential": 75,
       "estimatedTime": 30,
       "priority": "high",
       "complexity": "medium",
-      "systems": ["System1", "System2"],
-      "risks": ["Risiko1", "Risiko2"],
-      "opportunities": ["Chance1", "Chance2"],
-      "dependencies": ["Abhängigkeit1"]
+      "systems": ["Excel", "Python", "API"],
+      "risks": ["Datenqualität", "API-Limits"],
+      "opportunities": ["Automatisierung", "Zeitersparnis"],
+      "dependencies": ["Datenbankzugang", "API-Keys"]
     }
   ]
 }
 
 Prioritäten: low, medium, high, critical
 Komplexität: low, medium, high
+Automatisierungspotenzial: 0-100 (0=nicht automatisierbar, 100=vollständig automatisierbar)
 Geschätzte Zeit in Minuten`
-      : `You are an expert in task analysis. Break down complex tasks into specific subtasks.
+      : `You are an expert in task analysis and automation. Break down complex tasks into specific, automatable subtasks.
 
-Respond in JSON format:
+IMPORTANT: Respond exclusively with valid JSON, no additional explanations!
+
+TASK: Create 3-5 specific subtasks that are:
+1. Concrete and actionable
+2. Have different automation levels (30-95%)
+3. Have realistic time estimates
+4. Mention relevant systems and technologies
+5. Identify practical risks and opportunities
+
+JSON Format:
 {
   "subtasks": [
     {
-      "id": "unique-id",
-      "title": "Subtask title",
-      "description": "Detailed description",
+      "id": "task-1",
+      "title": "Specific subtask",
+      "description": "Detailed description of the task and its goals",
       "automationPotential": 75,
       "estimatedTime": 30,
       "priority": "high",
       "complexity": "medium",
-      "systems": ["System1", "System2"],
-      "risks": ["Risk1", "Risk2"],
-      "opportunities": ["Opportunity1", "Opportunity2"],
-      "dependencies": ["Dependency1"]
+      "systems": ["Excel", "Python", "API"],
+      "risks": ["Data quality", "API limits"],
+      "opportunities": ["Automation", "Time savings"],
+      "dependencies": ["Database access", "API keys"]
     }
   ]
 }
 
 Priorities: low, medium, high, critical
 Complexity: low, medium, high
+Automation potential: 0-100 (0=not automatable, 100=fully automatable)
 Estimated time in minutes`;
 
     const userPrompt = lang === 'de'
-      ? `Zerlege diese Aufgabe in spezifische Unteraufgaben:\n\n${taskText}`
-      : `Break down this task into specific subtasks:\n\n${taskText}`;
+      ? `Zerlege diese Aufgabe in spezifische, automatisierbare Unteraufgaben:
+
+AUFGABE: ${taskText}
+
+FOKUS: Erstelle Unteraufgaben, die verschiedene Automatisierungsgrade haben und konkrete, umsetzbare Schritte darstellen.`
+      : `Break down this task into specific, automatable subtasks:
+
+TASK: ${taskText}
+
+FOCUS: Create subtasks with different automation levels that represent concrete, actionable steps.`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -289,6 +317,19 @@ Estimated time in minutes`;
       return parsed.subtasks || [];
     } catch (error) {
       console.error('Failed to parse OpenAI response:', error);
+      console.log('Raw response:', response.content);
+      
+      // Versuche JSON aus der Antwort zu extrahieren
+      try {
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return parsed.subtasks || [];
+        }
+      } catch (extractError) {
+        console.error('Failed to extract JSON from response:', extractError);
+      }
+      
       throw new Error('Invalid response format from OpenAI');
     }
   }
@@ -553,22 +594,36 @@ FOCUS: Create workflows that directly match the task, not generic solutions!`;
 
     // Detaillierter User-Prompt mit Teilaufgaben
     const subtasksText = subtasks.map((subtask, index) => 
-      `${index + 1}. ${subtask.title || subtask.text} (${subtask.automationPotential || 50}% automatisierbar)`
+      `${index + 1}. ${subtask.title || subtask.text} (${subtask.automationPotential || 50}% automatisierbar, ${subtask.estimatedTime || 0}min, ${subtask.systems?.join(', ') || 'keine Systeme'})`
     ).join('\n');
 
     const userPrompt = lang === 'de'
       ? `HAUPTAUFGABE: ${taskText}
 
-TEILAUFGABEN:
+DETAILLIERTE TEILAUFGABEN:
 ${subtasksText}
 
-Empfehle spezifische AI-Agenten und Workflows, die zu diesen Teilaufgaben passen. Fokussiere auf konkrete, umsetzbare Lösungen.`
+AUFGABE: Erstelle spezifische Workflows und AI-Agenten, die:
+1. Direkt zu den Teilaufgaben passen
+2. Das Automatisierungspotenzial nutzen
+3. Die genannten Systeme integrieren
+4. Realistische Setup-Zeiten haben
+5. Hohe Match-Scores (80-95%) haben
+
+FOKUS: Workflows, die diese spezifische Aufgabe lösen, nicht generische Lösungen!`
       : `MAIN TASK: ${taskText}
 
-SUBTASKS:
+DETAILED SUBTASKS:
 ${subtasksText}
 
-Recommend specific AI agents and workflows that match these subtasks. Focus on concrete, actionable solutions.`;
+TASK: Create specific workflows and AI agents that:
+1. Directly match the subtasks
+2. Utilize the automation potential
+3. Integrate the mentioned systems
+4. Have realistic setup times
+5. Have high match scores (80-95%)
+
+FOCUS: Workflows that solve this specific task, not generic solutions!`;
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
