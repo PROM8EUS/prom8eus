@@ -6,6 +6,8 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { Skeleton } from './ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Button } from './ui/button';
 import { 
   Clock, 
   DollarSign, 
@@ -14,7 +16,8 @@ import {
   Calculator,
   Euro,
   Zap,
-  Loader2
+  Loader2,
+  Edit3
 } from 'lucide-react';
 import { t } from '../lib/i18n/i18n';
 import { openaiClient } from '../lib/openai';
@@ -54,6 +57,8 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
   const [businessCaseData, setBusinessCaseData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempHourlyRate, setTempHourlyRate] = useState(hourlyRate);
   const period = periodProp ?? periodState;
 
   useEffect(() => {
@@ -61,6 +66,11 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
       setPeriodState(periodProp);
     }
   }, [periodProp]);
+
+  // Update tempHourlyRate when hourlyRate changes
+  useEffect(() => {
+    setTempHourlyRate(hourlyRate);
+  }, [hourlyRate]);
 
   // Generate business case data when task or subtasks change
   useEffect(() => {
@@ -92,6 +102,16 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
   const handleChangePeriod = (p: Period) => {
     setPeriodState(p);
     onPeriodChange?.(p);
+  };
+
+  const handleSaveHourlyRate = () => {
+    setHourlyRate(tempHourlyRate);
+    setIsModalOpen(false);
+  };
+
+  const handleCancelHourlyRate = () => {
+    setTempHourlyRate(hourlyRate);
+    setIsModalOpen(false);
   };
 
   // Use AI-generated business case data or fallback to calculated metrics
@@ -198,30 +218,10 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                     </Select>
                   </div>
 
-            {/* Hourly Rate Input (money mode) */}
-            {mode === 'money' && (
-              <div className="flex items-center gap-2">
-                <Label htmlFor="hourly-rate" className="text-sm font-medium whitespace-nowrap">
-                  {lang === 'de' ? 'Stundensatz (€)' : 'Hourly Rate (€)'}
-                </Label>
-                <div className="flex items-center space-x-1">
-                  <Input
-                    id="hourly-rate"
-                    type="number"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(Number(e.target.value))}
-                    className="w-20 h-8 text-sm"
-                    min="0"
-                    step="0.50"
-                  />
-                  <span className="text-sm text-muted-foreground">€/h</span>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Right: Mode Dropdown */}
-          <div className="flex items-center justify-end">
+          {/* Right: Mode Dropdown + Edit Icon */}
+          <div className="flex items-center justify-end gap-2">
             <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
               <SelectTrigger className="w-32 h-8">
                 <div className="flex items-center gap-2">
@@ -248,6 +248,54 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                 </SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Edit Icon - only active for money mode */}
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${mode === 'money' ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50 cursor-not-allowed'}`}
+                  disabled={mode === 'time'}
+                >
+                  <Edit3 className="w-3 h-3" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {lang === 'de' ? 'Stundensatz anpassen' : 'Adjust Hourly Rate'}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-hourly-rate">
+                      {lang === 'de' ? 'Stundensatz (€)' : 'Hourly Rate (€)'}
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="modal-hourly-rate"
+                        type="number"
+                        value={tempHourlyRate}
+                        onChange={(e) => setTempHourlyRate(Number(e.target.value))}
+                        className="flex-1"
+                        min="0"
+                        step="0.50"
+                      />
+                      <span className="text-sm text-muted-foreground">€/h</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={handleCancelHourlyRate}>
+                      {lang === 'de' ? 'Abbrechen' : 'Cancel'}
+                    </Button>
+                    <Button onClick={handleSaveHourlyRate}>
+                      {lang === 'de' ? 'Speichern' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
