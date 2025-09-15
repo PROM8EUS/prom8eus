@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Solution, SolutionType } from '../types/solutions';
 import SolutionCard from './SolutionCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -40,6 +40,17 @@ export default function SolutionsTab({
   const [error, setError] = useState<string | null>(null);
 
   const [solutions, setSolutions] = useState<Solution[]>([]);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const epsilon = 4;
+    setAtStart(el.scrollLeft <= epsilon);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - epsilon);
+  };
 
   useEffect(() => {
     loadSolutions();
@@ -377,6 +388,11 @@ export default function SolutionsTab({
     return filtered;
   }, [solutions, activeTab]);
 
+  useEffect(() => {
+    // Update chevron visibility when data changes
+    setTimeout(updateScrollState, 0);
+  }, [filteredSolutions.length]);
+
   const handleSolutionSelect = (solution: Solution) => {
     setSelectedSolution(solution);
     setShowSolutionModal(true);
@@ -461,7 +477,7 @@ export default function SolutionsTab({
             <button
               type="button"
               aria-label="scroll left"
-              className="hidden md:flex absolute left-0 top-0 bottom-0 h-full w-12 items-center justify-center z-10 bg-gradient-to-r from-white/90 to-transparent hover:from-white"
+              className={`hidden md:flex absolute left-0 top-0 bottom-0 h-full w-12 items-center justify-center z-10 bg-gradient-to-r from-white/90 to-transparent hover:from-white ${atStart ? 'opacity-0 pointer-events-none' : ''}`}
               onClick={() => {
                 const el = document.getElementById('solutions-scroll');
                 if (el) el.scrollBy({ left: -el.clientWidth, behavior: 'smooth' });
@@ -469,7 +485,12 @@ export default function SolutionsTab({
             >
               <ChevronLeft className="w-6 h-6 text-gray-700" />
             </button>
-            <div id="solutions-scroll" className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory">
+            <div
+              id="solutions-scroll"
+              ref={scrollRef}
+              onScroll={updateScrollState}
+              className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory"
+            >
               {filteredSolutions.map((solution) => (
                 <div 
                   key={solution.id}
@@ -508,7 +529,7 @@ export default function SolutionsTab({
             <button
               type="button"
               aria-label="scroll right"
-              className="hidden md:flex absolute right-0 top-0 bottom-0 h-full w-12 items-center justify-center z-10 bg-gradient-to-l from-white/90 to-transparent hover:from-white"
+              className={`hidden md:flex absolute right-0 top-0 bottom-0 h-full w-12 items-center justify-center z-10 bg-gradient-to-l from-white/90 to-transparent hover:from-white ${atEnd ? 'opacity-0 pointer-events-none' : ''}`}
               onClick={() => {
                 const el = document.getElementById('solutions-scroll');
                 if (el) el.scrollBy({ left: el.clientWidth, behavior: 'smooth' });
