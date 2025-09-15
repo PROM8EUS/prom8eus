@@ -105,7 +105,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
 
   const checkGitHubTokenStatus = () => {
     const githubConfig = getGitHubConfig();
-    if (githubConfig.token && githubConfig.token.startsWith('ghp_')) {
+    if (githubConfig.token && (githubConfig.token.startsWith('ghp_') || githubConfig.token.startsWith('github_pat_'))) {
       setGithubTokenStatus('configured');
     } else if (githubConfig.token) {
       setGithubTokenStatus('invalid');

@@ -38,8 +38,9 @@ export class N8nApi {
   private availableCategoriesCacheExpiryHours = 24;
 
   constructor() {
-    // Only use an explicit user-provided token; never fallback to hardcoded
-    this.githubToken = localStorage.getItem('github_token');
+    // First try environment variable, then localStorage
+    const envToken = import.meta.env.VITE_GITHUB_TOKEN;
+    this.githubToken = envToken || localStorage.getItem('github_token');
   }
 
   private hasToken(): boolean {
