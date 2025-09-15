@@ -158,66 +158,64 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
             {t(lang, 'business_case')}
           </CardTitle>
 
-          {/* Center: Zeitraum + Stundensatz (wraps on small screens) */}
-          <div className="flex flex-wrap items-center gap-3 md:justify-center">
-                  {/* Period selector */}
-                  <div className="flex items-center gap-2">
-                    <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
-                      <SelectTrigger className="h-8 w-24">
-                        <SelectValue />
-                      </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="year">{periodLabel('year')}</SelectItem>
-                <SelectItem value="month">{periodLabel('month')}</SelectItem>
-                <SelectItem value="week">{periodLabel('week')}</SelectItem>
-                <SelectItem value="day">{periodLabel('day')}</SelectItem>
-              </SelectContent>
-                    </Select>
-                  </div>
+          {/* Right: Both Dropdowns + Edit Icon */}
+          <div className="flex items-center gap-3 justify-end flex-wrap">
+            {/* Period selector */}
+            <div className="flex items-center gap-2">
+              <Select value={period} onValueChange={(v) => handleChangePeriod(v as Period)}>
+                <SelectTrigger className="h-8 w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="year">{periodLabel('year')}</SelectItem>
+                  <SelectItem value="month">{periodLabel('month')}</SelectItem>
+                  <SelectItem value="week">{periodLabel('week')}</SelectItem>
+                  <SelectItem value="day">{periodLabel('day')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          </div>
-
-          {/* Right: Mode Dropdown + Edit Icon */}
-          <div className="flex items-center justify-end gap-2">
-            <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
-              <SelectTrigger className="w-28 h-8">
-                <div className="flex items-center gap-2">
-                  {mode === 'time' ? (
-                    <Clock className="w-3 h-3" />
-                  ) : (
-                    <DollarSign className="w-3 h-3" />
-                  )}
-                  <span className="text-sm">{t(lang, mode === 'time' ? 'business_case_time' : 'business_case_money')}</span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="time">
+            {/* Mode Dropdown + Edit Icon */}
+            <div className="flex items-center gap-2">
+              <Select value={mode} onValueChange={(value: 'time' | 'money') => setMode(value)}>
+                <SelectTrigger className="w-28 h-8">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3" />
-                    <span>{t(lang, 'business_case_time')}</span>
+                    {mode === 'time' ? (
+                      <Clock className="w-3 h-3" />
+                    ) : (
+                      <DollarSign className="w-3 h-3" />
+                    )}
+                    <span className="text-sm">{t(lang, mode === 'time' ? 'business_case_time' : 'business_case_money')}</span>
                   </div>
-                </SelectItem>
-                <SelectItem value="money">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-3 h-3" />
-                    <span>{t(lang, 'business_case_money')}</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            
-            {/* Edit Icon - only active for money mode */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 w-8 p-0 ${mode === 'money' ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50 cursor-not-allowed'}`}
-                  disabled={mode === 'time'}
-                >
-                  <Edit3 className="w-3 h-3" />
-                </Button>
-              </DialogTrigger>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="time">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3 h-3" />
+                      <span>{t(lang, 'business_case_time')}</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="money">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-3 h-3" />
+                      <span>{t(lang, 'business_case_money')}</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Edit Icon - only active for money mode */}
+              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-8 w-8 p-0 ${mode === 'money' ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50 cursor-not-allowed'}`}
+                    disabled={mode === 'time'}
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>
@@ -272,6 +270,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
       </div>
