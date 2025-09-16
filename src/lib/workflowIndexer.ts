@@ -299,7 +299,7 @@ export class WorkflowIndexer {
     this.initializeStats();
     // Load from server-side cache asynchronously (server-only)
     if (typeof window === 'undefined') {
-      this.loadFromServerCache();
+    this.loadFromServerCache();
     } else {
       console.warn('Skipping initial server cache load in browser');
     }
@@ -318,6 +318,7 @@ export class WorkflowIndexer {
     if (s.includes('n8n.io') || s.includes('official')) return 'n8n.io';
     if (s.includes('github') || s.includes('community') || s.includes('n8n community')) return 'github';
     if (s.includes('ai-enhanced') || s.includes('free templates')) return 'ai-enhanced';
+    if (s.includes('awesome-n8n-templates') || s.includes('awesome n8n')) return 'awesome-n8n-templates';
     return s.replace(/\s+/g, '-');
   }
 
@@ -718,7 +719,7 @@ export class WorkflowIndexer {
       const normalized = this.normalizeSourceKey(params.source) || 'all';
       if (this.currentSourceKey !== normalized) {
         if (typeof window === 'undefined') {
-          await this.loadFromServerCache(normalized);
+        await this.loadFromServerCache(normalized);
         } else {
           console.warn('Skipping server cache reload in browser');
         }
@@ -729,7 +730,7 @@ export class WorkflowIndexer {
       console.log('No workflows in memory, loading from server cache...');
       // Always try to load from server cache, even in browser
       try {
-        await this.loadFromServerCache(params.source);
+      await this.loadFromServerCache(params.source);
       } catch (error) {
         console.warn('Failed to load from server cache:', error);
       }
@@ -738,7 +739,7 @@ export class WorkflowIndexer {
       const normalized = this.normalizeSourceKey(params.source) || 'all';
       if ((normalized === 'all') && this.workflows.length === 0) {
         try {
-          await this.loadAllFromServerCacheUnion();
+        await this.loadAllFromServerCacheUnion();
         } catch (error) {
           console.warn('Failed to load union cache:', error);
         }
@@ -1145,8 +1146,8 @@ export class WorkflowIndexer {
               const ms = Date.now() - startTs;
               console.log(`[n8n.io] Bulk completed. Total: ${aggregated.length}. Saving to cache... (${ms} ms)`);
               if (typeof window === 'undefined') {
-                await this.saveToServerCache(aggregated, normalized);
-                console.log('[n8n.io] Saved to cache for source n8n.io');
+              await this.saveToServerCache(aggregated, normalized);
+              console.log('[n8n.io] Saved to cache for source n8n.io');
               }
               return aggregated;
             }
@@ -1229,8 +1230,8 @@ export class WorkflowIndexer {
           const ms = Date.now() - startTs;
           console.log(`[n8n.io] Completed fallback. Total: ${aggregated.length}. Saving to cache... (${ms} ms)`);
           if (typeof window === 'undefined') {
-            await this.saveToServerCache(aggregated, normalized);
-            console.log('[n8n.io] Saved to cache for source n8n.io');
+          await this.saveToServerCache(aggregated, normalized);
+          console.log('[n8n.io] Saved to cache for source n8n.io');
           }
           return aggregated;
         }
@@ -1582,7 +1583,7 @@ export class WorkflowIndexer {
       // Build union for 'all' from per-source caches
       if (!normalized || normalized === 'all') {
         // Fetch rows, including shards via LIKE
-        const sourcesAll = ['all', 'github', 'n8n.io', 'ai-enhanced'];
+        const sourcesAll = ['all', 'github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
         const fetched: any[] = [];
         for (const s of sourcesAll) {
           const { data, error } = await (supabase as any)
@@ -1639,12 +1640,12 @@ export class WorkflowIndexer {
           if (merged.length > allCount) {
             // Avoid writing to server cache in dev to prevent timeouts
             if (typeof window === 'undefined') {
-              await this.saveToServerCache(this.workflows, 'all');
-            }
+            await this.saveToServerCache(this.workflows, 'all');
           }
         }
-        return;
-      }
+        }
+          return;
+        }
 
       // Default: load a specific source cache using direct Supabase query
       try {
@@ -1811,7 +1812,7 @@ export class WorkflowIndexer {
    */
   private async loadAllFromServerCacheUnion(): Promise<void> {
     try {
-      const sources = ['github', 'n8n.io', 'ai-enhanced'];
+      const sources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
       const rows: any[] = [];
       for (const s of sources) {
         const { data, error } = await (supabase as any)
@@ -2194,7 +2195,7 @@ export class WorkflowIndexer {
    * Get ranked sources based on quality, freshness, and relevance
    */
   async getRankedSources(userQuery?: string): Promise<Array<{ source: string; metrics: SourceQualityMetrics; rank: number }>> {
-    const sources = ['github', 'n8n.io', 'ai-enhanced']; // Known sources
+    const sources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced']; // Known sources
     const rankedSources: Array<{ source: string; metrics: SourceQualityMetrics; rank: number }> = [];
 
     for (const source of sources) {
@@ -2271,7 +2272,7 @@ export class WorkflowIndexer {
       let error: string | undefined;
 
       // Only perform health checks for supported sources
-      const supportedSources = ['github', 'n8n.io', 'ai-enhanced'];
+      const supportedSources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
       const sourceKey = this.getSourceKey(source);
       
       if (!supportedSources.includes(sourceKey)) {
@@ -2312,7 +2313,29 @@ export class WorkflowIndexer {
               this.recordSourceError(source, error, { source: 'github' });
             }
             break;
-
+          case 'awesome-n8n-templates':
+            try {
+              const response = await fetch('https://api.github.com/repos/enescingoz/awesome-n8n-templates', {
+                headers: {
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'PROM8EUS-HealthCheck'
+                }
+              });
+              statusCode = response.status;
+              isHealthy = response.ok;
+              if (response.ok) {
+                const data = await response.json();
+                dataReceived = true;
+                dataSize = JSON.stringify(data).length;
+              } else {
+                error = `HTTP ${statusCode}: ${response.statusText}`;
+                this.recordSourceError(source, error, { statusCode, source: 'awesome-n8n-templates' });
+              }
+            } catch (err) {
+              error = err instanceof Error ? err.message : 'Unknown error';
+              this.recordSourceError(source, error, { source: 'awesome-n8n-templates' });
+            }
+            break;
           case 'n8n.io':
             try {
               // Use a more reliable endpoint for n8n.io
@@ -2328,7 +2351,6 @@ export class WorkflowIndexer {
               this.recordSourceError(source, error, { source: 'n8n.io' });
             }
             break;
-
           case 'ai-enhanced':
             try {
               const response = await fetch('https://api.github.com/repos/wassupjay/n8n-free-templates', {
@@ -2353,7 +2375,6 @@ export class WorkflowIndexer {
               this.recordSourceError(source, error, { source: 'ai-enhanced' });
             }
             break;
-
           default:
             // Generic health check - try to fetch workflows
             try {
@@ -2538,7 +2559,7 @@ export class WorkflowIndexer {
     }
     
     this.healthCheckInterval = setInterval(async () => {
-      const sources = ['github', 'n8n.io', 'ai-enhanced'];
+      const sources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
       for (const source of sources) {
         try {
           await this.getSourceHealthStatus(source);
@@ -2567,7 +2588,7 @@ export class WorkflowIndexer {
    */
   async getAllSourceHealthStatuses(): Promise<SourceHealthStatus[]> {
     // Only check health for supported sources
-    const sources = ['github', 'n8n.io', 'ai-enhanced'];
+    const sources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
     const statuses: SourceHealthStatus[] = [];
     
     for (const source of sources) {
@@ -3466,7 +3487,7 @@ export class WorkflowIndexer {
     if (!this.recoveryConfig.autoRecoveryEnabled) return;
 
     // Check all sources and schedule recovery for unhealthy ones
-    const sources = ['github', 'n8n.io', 'ai-enhanced'];
+    const sources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
     
     sources.forEach(async (source) => {
       try {
@@ -3863,7 +3884,7 @@ export class WorkflowIndexer {
    * Perform incremental updates for all sources
    */
   private async performIncrementalUpdates(): Promise<void> {
-    const sources = ['github', 'n8n.io', 'ai-enhanced'];
+    const sources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
     
     for (const source of sources) {
       if (this.updateInProgress.has(source)) {

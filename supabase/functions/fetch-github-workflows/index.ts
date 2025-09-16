@@ -42,6 +42,15 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Awesome n8n templates curated repo
+    if (normalized === 'awesome-n8n-templates') {
+      const workflows = await loadGithubWorkflows('https://api.github.com/repos/enescingoz/awesome-n8n-templates');
+      return new Response(JSON.stringify({ success: true, workflows, total: workflows.length }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
     const workflows = await loadGithubWorkflows('https://api.github.com/repos/Zie619/n8n-workflows');
     return new Response(JSON.stringify({ success: true, workflows, total: workflows.length }), {
       status: 200,

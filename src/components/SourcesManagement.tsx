@@ -368,6 +368,17 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
           status: 'active'
         },
         {
+          id: 'awesome-n8n-templates',
+          name: 'Awesome n8n Templates',
+          type: 'github',
+          url: 'https://github.com/enescingoz/awesome-n8n-templates',
+          description: 'Curated community n8n templates across many categories',
+          category: 'Community',
+          workflowCount: 0,
+          lastUpdated: new Date().toISOString().split('T')[0],
+          status: 'active'
+        },
+        {
           id: 'n8n.io',
           name: 'n8n.io Official Templates',
           type: 'api',
@@ -713,7 +724,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
-          sources: ['github', 'n8n.io', 'ai-enhanced'],
+          sources: ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'],
           batchSize: 800
         })
       });

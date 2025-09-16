@@ -137,7 +137,7 @@ async function handler(req: Request): Promise<Response> {
         "Access-Control-Allow-Origin": "*",
       },
     });
-    const { sources = ["github","n8n.io","ai-enhanced"], batchSize = 800 } = await req.json().catch(() => ({}));
+    const { sources = ["github","awesome-n8n-templates","n8n.io","ai-enhanced"], batchSize = 800 } = await req.json().catch(() => ({}));
     const supabase = getSupabase();
 
     // Load per-source cached workflows (support shards via LIKE)
