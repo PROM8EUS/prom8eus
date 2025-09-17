@@ -44,23 +44,12 @@ export class StepExtractionService {
     try {
       const prompt = this.buildExtractionPrompt(title, description, context);
       
-      const response = await openaiClient.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: this.getSystemPrompt()
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000
-      });
+      const response = await openaiClient.chatCompletion([
+        { role: 'system', content: this.getSystemPrompt() },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.3, max_tokens: 2000 });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.content;
       if (!content) {
         throw new Error('No content returned from LLM');
       }

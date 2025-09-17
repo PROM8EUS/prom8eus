@@ -172,13 +172,12 @@ export class StepExtractionDatabaseService {
     steps: ImplementationStep[]
   ): Promise<StoredImplementationStep[]> {
     try {
-      const stepsJson = JSON.stringify(steps);
-      
       const { data, error } = await supabase
         .rpc('store_implementation_steps', {
           p_solution_id: solutionId,
           p_solution_type: solutionType,
-          p_steps: stepsJson
+          // pass native array/object so supabase-js sends proper JSON
+          p_steps: steps
         });
 
       if (error) {
@@ -205,7 +204,7 @@ export class StepExtractionDatabaseService {
         .from('step_extraction_cache')
         .select('extracted_steps')
         .eq('content_hash', contentHash)
-        .single();
+        .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -216,6 +215,7 @@ export class StepExtractionDatabaseService {
         return null;
       }
 
+      if (!data) return null;
       return data.extracted_steps as ImplementationStep[];
     } catch (error) {
       console.error('Error getting cached steps:', error);
@@ -238,8 +238,8 @@ export class StepExtractionDatabaseService {
           p_content_hash: contentHash,
           p_solution_id: solutionId,
           p_solution_type: solutionType,
-          p_extracted_steps: JSON.stringify(extractionResult.steps),
-          p_extraction_metadata: JSON.stringify(extractionResult.extraction_metadata)
+          p_extracted_steps: extractionResult.steps,
+          p_extraction_metadata: extractionResult.extraction_metadata
         });
 
       if (error) {
@@ -373,6 +373,18 @@ export class StepExtractionDatabaseService {
       console.error('Error getting solutions pending validation:', error);
       return [];
     }
+  }
+
+  /**
+   * Backwards compatible alias used by AdminValidationQueue
+   */
+  static async getPendingStepValidations(): Promise<Array<{
+    solution_id: string;
+    solution_type: string;
+    step_count: number;
+    created_at: string;
+  }>> {
+    return this.getSolutionsPendingValidation();
   }
 
   /**

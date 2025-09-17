@@ -17,7 +17,11 @@
     "train:clean": "tsx scripts/intensive-training.ts 10 0.9 100 5 --delete-after --verbose",
     "cleanup": "tsx scripts/cleanup-training-files.ts",
     "cleanup:dry": "tsx scripts/cleanup-training-files.ts --dry-run --verbose",
-    "test-extraction": "tsx scripts/auto-training-system.ts"
+    "test-extraction": "tsx scripts/auto-training-system.ts",
+    "test:pilot-analytics": "tsx scripts/test-pilot-feedback-analytics.ts",
+    "test:select-sentinel": "tsx scripts/test-select-sentinel.ts",
+    "test:step-jsonb": "tsx scripts/test-step-extraction-jsonb.ts",
+    "test:error-boundary": "tsx scripts/test-error-boundary.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

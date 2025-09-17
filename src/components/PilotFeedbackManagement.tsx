@@ -67,7 +67,7 @@ export function PilotFeedbackManagement({ className }: PilotFeedbackManagementPr
   const [sessions, setSessions] = useState<PilotFeedbackSession[]>([]);
   const [analytics, setAnalytics] = useState<PilotFeedbackAnalytics[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedSolution, setSelectedSolution] = useState<string>('');
+  const [selectedSolution, setSelectedSolution] = useState<string>('__ALL__');
   const [filterType, setFilterType] = useState<'all' | 'workflow' | 'agent'>('all');
   const [filterFeedbackType, setFilterFeedbackType] = useState<string>('all');
   const [filterRating, setFilterRating] = useState<string>('all');
@@ -189,8 +189,10 @@ export function PilotFeedbackManagement({ className }: PilotFeedbackManagementPr
 
   // Load solution-specific data when solution is selected
   useEffect(() => {
-    if (selectedSolution) {
+    if (selectedSolution && selectedSolution !== '__ALL__') {
       loadSolutionFeedback(selectedSolution);
+    } else {
+      loadFeedback();
     }
   }, [selectedSolution]);
 
@@ -300,7 +302,7 @@ export function PilotFeedbackManagement({ className }: PilotFeedbackManagementPr
                 <SelectValue placeholder="All Solutions" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Solutions</SelectItem>
+                <SelectItem value="__ALL__">All Solutions</SelectItem>
                 {uniqueSolutions.map(solutionId => (
                   <SelectItem key={solutionId} value={solutionId}>
                     {solutionId}

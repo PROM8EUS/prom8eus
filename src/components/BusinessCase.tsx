@@ -60,6 +60,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [tempHourlyRate, setTempHourlyRate] = useState(hourlyRate);
   const [isEmployee, setIsEmployee] = useState(true);
   const period = periodProp ?? periodState;
@@ -173,16 +174,12 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
       manualCost: businessCaseData.manualHours * scale * effectiveHourlyRate,
       automatedCost: businessCaseData.automatedHours * scale * effectiveHourlyRate * 0.25, // 25% cost reduction
       savedMoney: businessCaseData.savedHours * scale * effectiveHourlyRate,
-      automationSetupCost: businessCaseData.setupCostMoney,
-      periodAutomationCost: businessCaseData.setupCostMoney * scale,
-      totalSavingsMoney: (businessCaseData.savedHours * scale * effectiveHourlyRate) - (businessCaseData.setupCostMoney * scale),
-      roi: businessCaseData.roi,
-      paybackPeriod: businessCaseData.paybackPeriodYears,
+      totalSavingsMoney: businessCaseData.savedHours * scale * effectiveHourlyRate,
       reasoning: businessCaseData.reasoning,
       employmentType: businessCaseData.employmentType,
       aiHourlyRate: aiHourlyRate,
       effectiveHourlyRate: effectiveHourlyRate,
-    };
+    } as const;
   }, [businessCaseData, hourlyRate, period]);
 
   const periodLabel = (p: Period) => ({
@@ -390,15 +387,15 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
         )}
 
 
-        {/* Metrics Display */}
+        {/* Metrics Display (simplified) */}
         {!loading && !error && businessMetrics && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Manuell</span>
                 <span className="font-semibold text-destructive">
                   {mode === 'money' 
-                    ? `${businessMetrics.manualCost.toLocaleString('de-DE')} €`
+                    ? `${Math.round(businessMetrics.manualCost).toLocaleString('de-DE')} €`
                     : `${businessMetrics.manualHours.toFixed(1)} h`}
                 </span>
               </div>
@@ -406,7 +403,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                 <span className="text-sm text-muted-foreground">Automatisiert</span>
                 <span className="font-semibold text-primary">
                   {mode === 'money'
-                    ? `${businessMetrics.automatedCost.toLocaleString('de-DE')} €`
+                    ? `${Math.round(businessMetrics.automatedCost).toLocaleString('de-DE')} €`
                     : `${businessMetrics.automatedHours.toFixed(1)} h`}
                 </span>
               </div>
@@ -419,48 +416,30 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
                   <span className="text-sm font-medium">Einsparung</span>
                   <span className="font-bold text-green-600">
                     {mode === 'money'
-                      ? `${businessMetrics.totalSavingsMoney.toLocaleString('de-DE')} €`
+                      ? `${Math.round(businessMetrics.totalSavingsMoney).toLocaleString('de-DE')} €`
                       : `${businessMetrics.savedHours.toFixed(1)} h`}
                   </span>
                 </div>
               </div>
             </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">ROI</span>
-                <span className={`font-semibold ${businessMetrics.roi > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {businessMetrics.roi > 0 ? '+' : ''}{businessMetrics.roi.toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Amortisationszeit</span>
-                <span className="font-semibold">
-                  {businessMetrics.paybackPeriod === 0 ? 'Sofort' : 
-                   businessMetrics.paybackPeriod > 0 ? `${businessMetrics.paybackPeriod.toFixed(1)} Jahre` : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Setup-Kosten</span>
-                <span className="font-semibold">
-                  {mode === 'money' 
-                    ? `${businessMetrics.automationSetupCost.toLocaleString('de-DE')} €`
-                    : `${Math.round(businessMetrics.automationSetupCost / hourlyRate)} h`}
-                </span>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* AI Reasoning (if available) - Inside the main business case block */}
+        {/* AI Reasoning (collapsible) */}
         {!loading && !error && businessMetrics && (businessMetrics.reasoning ?? '').length > 0 && (
-          <div className="mt-6 p-4 bg-primary/10 rounded-lg">
-            <div className="text-sm font-medium mb-2 text-primary">
-              {lang === 'de' ? 'AI-Begründung:' : 'AI Reasoning:'}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {businessMetrics.reasoning}
-            </div>
+          <div className="mt-4">
+            <button
+              type="button"
+              className="text-xs text-primary hover:underline"
+              onClick={() => setShowDetails(v => !v)}
+            >
+              {showDetails ? (lang === 'de' ? 'Details ausblenden' : 'Hide details') : (lang === 'de' ? 'Details anzeigen' : 'Show details')}
+            </button>
+            {showDetails && (
+              <div className="mt-2 p-3 bg-primary/10 rounded-lg text-sm text-muted-foreground">
+                {businessMetrics.reasoning}
+              </div>
+            )}
           </div>
         )}
 

@@ -1781,7 +1781,12 @@ export class WorkflowIndexer {
       }
 
       if (!data || (Array.isArray(data) && data.length === 0)) {
-        console.log(`No cache found for source: ${normalized || source}`);
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('INDEXER_DEBUG') === '1') {
+          console.log(`No cache found for source: ${normalized || source}`);
+        }
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('INDEXER_DEBUG') === '1') {
+          console.log(`No cache found for source: ${normalized || source}`);
+        }
         return { hasCache: false, lastFetch: null, workflowCount: 0 };
       }
 

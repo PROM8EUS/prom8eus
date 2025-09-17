@@ -53,6 +53,22 @@ export default function SolutionsTab({
   };
 
   useEffect(() => {
+    // Restore last selected tab
+    try {
+      const saved = localStorage.getItem('solutions_tab_selection');
+      if (saved === 'all' || saved === 'workflows' || saved === 'agents') {
+        setActiveTab(saved);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Persist current tab selection
+    try { localStorage.setItem('solutions_tab_selection', activeTab); } catch {}
+  }, [activeTab]);
+
+  useEffect(() => {
     loadSolutions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskText, JSON.stringify(selectedApplications), JSON.stringify(subtasks)]);
@@ -428,38 +444,41 @@ export default function SolutionsTab({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('all')}
-            className={`text-sm font-medium transition-colors ${
+            className={`text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
               activeTab === 'all' 
-                ? 'text-primary border-b-2 border-primary pb-1' 
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-primary/10 text-primary hover:bg-primary/20'
             }`}
           >
-            {lang === 'de' ? 'Alle' : 'All'} {solutions.length}
+            {lang === 'de' ? 'Alle' : 'All'}
+            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-white/20' : 'bg-primary/10'}`}>{solutions.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('workflows')}
-            className={`text-sm font-medium transition-colors flex items-center gap-2 ${
+            className={`text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
               activeTab === 'workflows' 
-                ? 'text-primary border-b-2 border-primary pb-1' 
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-primary/10 text-primary hover:bg-primary/20'
             }`}
           >
             <SolutionIcon type="workflow" className="h-4 w-4" />
-            {lang === 'de' ? 'Workflows' : 'Workflows'} {solutions.filter(s => s.type === 'workflow').length}
+            {lang === 'de' ? 'Workflows' : 'Workflows'}
+            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'workflows' ? 'bg-white/20' : 'bg-primary/10'}`}>{solutions.filter(s => s.type === 'workflow').length}</span>
           </button>
           <button
             onClick={() => setActiveTab('agents')}
-            className={`text-sm font-medium transition-colors flex items-center gap-2 ${
+            className={`text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
               activeTab === 'agents' 
-                ? 'text-primary border-b-2 border-primary pb-1' 
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-primary/10 text-primary hover:bg-primary/20'
             }`}
           >
             <SolutionIcon type="agent" className="h-4 w-4" />
-            {lang === 'de' ? 'KI-Agenten' : 'AI Agents'} {solutions.filter(s => s.type === 'agent').length}
+            {lang === 'de' ? 'KI-Agenten' : 'AI Agents'}
+            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'agents' ? 'bg-white/20' : 'bg-primary/10'}`}>{solutions.filter(s => s.type === 'agent').length}</span>
           </button>
         </div>
       </div>

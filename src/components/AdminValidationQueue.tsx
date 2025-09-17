@@ -29,6 +29,7 @@ import {
   Monitor,
   Wrench,
   Tag,
+  ListTodo,
   Database,
   Bot,
   Workflow,
@@ -60,6 +61,7 @@ import {
 import { ImplementationStep } from '../lib/solutions/stepExtraction';
 import { WorkflowIndexer } from '../lib/workflowIndexer';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../hooks/use-toast';
 
 interface ValidationQueueItem {
   id: string;
@@ -117,6 +119,7 @@ export function AdminValidationQueue({ className }: AdminValidationQueueProps) {
     domain_confidences: [],
     admin_notes: ''
   });
+  const { toast } = useToast();
 
   // Load validation queue items
   const loadValidationQueue = async () => {
@@ -265,6 +268,57 @@ export function AdminValidationQueue({ className }: AdminValidationQueueProps) {
     }
   };
 
+  // Force-generate steps for selected item
+  const forceGenerateSelected = async () => {
+    if (!selectedItem || selectedItem.type !== 'step') return;
+    try {
+      setIsProcessing(true);
+      toast({ title: 'Generating steps…', description: `Solution ${selectedItem.solution_id}` });
+      await StepExtractionDatabaseService.extractAndStoreSteps(
+        selectedItem.solution_id,
+        selectedItem.solution_type,
+        selectedItem.solution_title || selectedItem.solution_id,
+        ''
+      );
+      await loadValidationQueue();
+      toast({ title: 'Steps generated', description: `Solution ${selectedItem.solution_id}` });
+    } catch (error) {
+      console.error('Force-generate failed:', error);
+      toast({ title: 'Generation failed', description: 'See console for details' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Force-generate steps for all pending step items
+  const forceGenerateAllPending = async () => {
+    try {
+      setIsProcessing(true);
+      const stepItems = validationItems.filter(i => i.type === 'step');
+      if (stepItems.length === 0) return;
+      toast({ title: 'Generating steps for all pending…', description: `${stepItems.length} solutions` });
+      for (const item of stepItems) {
+        try {
+          await StepExtractionDatabaseService.extractAndStoreSteps(
+            item.solution_id,
+            item.solution_type,
+            item.solution_title || item.solution_id,
+            ''
+          );
+        } catch (e) {
+          console.warn('Generation failed for', item.solution_id, e);
+        }
+      }
+      await loadValidationQueue();
+      toast({ title: 'Generation complete', description: `${stepItems.length} solutions processed` });
+    } catch (error) {
+      console.error('Force-generate all failed:', error);
+      toast({ title: 'Generation failed', description: 'See console for details' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Edit step
   const editStep = (step: StoredImplementationStep) => {
     setEditingStep(step.id);
@@ -388,6 +442,22 @@ export function AdminValidationQueue({ className }: AdminValidationQueueProps) {
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
+          </Button>
+          <Button
+            onClick={forceGenerateSelected}
+            disabled={isProcessing || !selectedItem || selectedItem.type !== 'step'}
+            variant="outline"
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Force generate (selected)
+          </Button>
+          <Button
+            onClick={forceGenerateAllPending}
+            disabled={isProcessing || validationItems.filter(i => i.type === 'step').length === 0}
+            variant="outline"
+          >
+            <Rocket className="h-4 w-4 mr-2" />
+            Force generate all pending
           </Button>
         </div>
       </div>

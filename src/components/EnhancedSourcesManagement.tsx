@@ -26,11 +26,11 @@ import {
 } from './ui/select';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import {
-  RefreshCw,
-  Database,
-  Bot,
-  Workflow,
+import { 
+  RefreshCw, 
+  Database, 
+  Bot, 
+  Workflow, 
   AlertTriangle,
   Loader2,
   Pencil,
@@ -161,9 +161,9 @@ const DEFAULT_WORKFLOW_SOURCES: WorkflowSource[] = [
 ];
 
 const DEFAULT_AGENT_SOURCES: AgentSource[] = [
-  {
-    id: 'crewai',
-    name: 'CrewAI Examples',
+        {
+          id: 'crewai',
+          name: 'CrewAI Examples',
     type: 'catalog',
     url: 'https://github.com/joaomdmoura/crewAI',
     description: 'CrewAI - Framework for orchestrating role-playing, autonomous AI agents.',
@@ -171,10 +171,10 @@ const DEFAULT_AGENT_SOURCES: AgentSource[] = [
     agentCount: 0,
     lastUpdated: new Date().toISOString().split('T')[0],
     status: 'active'
-  },
-  {
-    id: 'huggingface',
-    name: 'HuggingFace Spaces',
+        },
+        {
+          id: 'huggingface',
+          name: 'HuggingFace Spaces',
     type: 'catalog',
     url: 'https://huggingface.co/spaces',
     description: 'Community-driven AI agents and applications hosted on HuggingFace Spaces.',
@@ -182,10 +182,10 @@ const DEFAULT_AGENT_SOURCES: AgentSource[] = [
     agentCount: 0,
     lastUpdated: new Date().toISOString().split('T')[0],
     status: 'active'
-  },
-  {
-    id: 'custom-agents',
-    name: 'Custom Agents',
+        },
+        {
+          id: 'custom-agents',
+          name: 'Custom Agents',
     type: 'manual',
     description: 'Internal or experimental agents managed directly inside the platform.',
     category: 'Internal',
@@ -646,10 +646,11 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
               entryCount: stats.total,
               lastUpdated: new Date().toISOString()
             };
+            // Respect persisted status overrides; do not auto-flip based on counts
             return {
               ...source,
               workflowCount: stats.total,
-              status: stats.total === 0 ? 'inactive' : 'active'
+              status: source.status
             };
           } catch (error) {
             console.warn(`Failed to load stats for ${source.id}:`, error);
@@ -692,10 +693,11 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
           lastUpdated: new Date().toISOString()
         };
         workflowMetrics[source.id] = metrics;
+        // Respect persisted status overrides for agent sources as well
         return {
           ...source,
           agentCount: count,
-          status: count > 0 ? 'active' : source.status
+          status: source.status
         };
       });
 
@@ -1150,14 +1152,14 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
             {lang === 'de' ? 'Quellenverwaltung' : 'Sources Management'}
           </h2>
           <p className="text-muted-foreground">
-            {lang === 'de'
+            {lang === 'de' 
               ? 'Verwalte Workflow- und Agentenquellen, aktualisiere und analysiere Inhalte.'
               : 'Manage workflow and agent sources, refresh data, and review analytics.'}
           </p>
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="secondary">{totalWorkflows} {lang === 'de' ? 'Workflows' : 'Workflows'}</Badge>
             <Badge variant="secondary">{totalAgents} {lang === 'de' ? 'KI-Agenten' : 'AI Agents'}</Badge>
-          </div>
+        </div>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
           <Button variant="outline" onClick={() => openCreateSourceForm('agent')}>
@@ -1175,6 +1177,21 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
             {lang === 'de' ? 'Alle aktualisieren' : 'Refresh All'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const current = (typeof localStorage !== 'undefined' && localStorage.getItem('INDEXER_DEBUG') === '1');
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('INDEXER_DEBUG', current ? '0' : '1');
+              }
+              toast({
+                title: current ? (lang === 'de' ? 'Debug aus' : 'Debug off') : (lang === 'de' ? 'Debug an' : 'Debug on'),
+                description: 'INDEXER_DEBUG=' + (current ? '0' : '1')
+              });
+            }}
+          >
+            {lang === 'de' ? 'Debug' : 'Debug'}
           </Button>
         </div>
       </div>
@@ -1194,46 +1211,46 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
 
       {cacheStats && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
               <Database className="h-5 w-5" />
               {lang === 'de' ? 'Cache-Analysen' : 'Cache Analytics'}
-            </CardTitle>
-            <CardDescription>
-              {lang === 'de'
+              </CardTitle>
+              <CardDescription>
+                {lang === 'de' 
                 ? 'Cache-Performance und Speicher-Statistiken'
                 : 'Cache performance and storage statistics'}
-            </CardDescription>
-          </CardHeader>
+              </CardDescription>
+            </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
+                <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
                   {(cacheStats.totalEntries ?? cacheStats.entryCount ?? cacheStats.size ?? 0).toLocaleString()}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground">
                   {lang === 'de' ? 'Cache-Einträge' : 'Cache Entries'}
+                  </div>
                 </div>
-              </div>
-              <div className="text-center">
+                <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
                   {(cacheStats.hitRate ?? 0).toFixed(1)}%
                 </div>
-                <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground">
                   {lang === 'de' ? 'Hit-Rate' : 'Hit Rate'}
+                  </div>
                 </div>
-              </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
                   {(((cacheStats.totalSize ?? 0) / 1024 / 1024)).toFixed(1)} MB
-                </div>
+              </div>
                 <div className="text-sm text-muted-foreground">
                   {lang === 'de' ? 'Cache-Größe' : 'Cache Size'}
                 </div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1244,18 +1261,18 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
               {lang === 'de' ? 'Workflow-Quellen' : 'Workflow Sources'}
             </CardTitle>
             <CardDescription>
-              {lang === 'de'
+              {lang === 'de' 
                 ? 'Verwalte alle Workflow-Datenquellen.'
                 : 'Manage all workflow data sources.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {workflowSourceRows.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                 {lang === 'de'
                   ? 'Keine Workflow-Quellen definiert.'
                   : 'No workflow sources defined.'}
-              </div>
+                </div>
             ) : (
               workflowSourceRows.map((row) => (
                 <div key={row.id} className="border rounded-lg p-4 flex flex-col gap-3">
@@ -1275,8 +1292,8 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                             {lang === 'de' ? 'Quelle öffnen' : 'Open source'}
                           </a>
                         )}
-                      </div>
-                    </div>
+              </div>
+                </div>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={row.status === 'active'}
@@ -1290,8 +1307,8 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                             ? (lang === 'de' ? 'Inaktiv' : 'Inactive')
                             : (lang === 'de' ? 'Fehler' : 'Error')}
                       </span>
-                    </div>
-                  </div>
+                </div>
+              </div>
                   <div className="flex items-center justify-between text-sm">
                     <span>
                       {lang === 'de' ? 'Workflows' : 'Workflows'}: {row.count}
@@ -1306,26 +1323,26 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                       <Button size="sm" variant="outline" onClick={() => handleDeleteSource('workflow', row.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </div>
                 </div>
+                </div>
+              </div>
               ))
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-purple-500" />
               {lang === 'de' ? 'Agenten-Quellen' : 'Agent Sources'}
-            </CardTitle>
-            <CardDescription>
-              {lang === 'de'
+          </CardTitle>
+          <CardDescription>
+            {lang === 'de' 
                 ? 'Verwalte KI-Agentenquellen.'
                 : 'Manage AI agent sources.'}
-            </CardDescription>
-          </CardHeader>
+          </CardDescription>
+        </CardHeader>
           <CardContent className="space-y-4">
             {agentSourceRows.length === 0 ? (
               <div className="text-sm text-muted-foreground">
@@ -1354,7 +1371,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                       <Switch
                         checked={row.status === 'active'}
                         onCheckedChange={(checked) => handleToggleSourceStatus('agent', row.id, checked)}
@@ -1410,10 +1427,10 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 {managedSource.kind === 'workflow' ? (
-                  <Workflow className="h-5 w-5 text-blue-500" />
-                ) : (
-                  <Bot className="h-5 w-5 text-purple-500" />
-                )}
+                      <Workflow className="h-5 w-5 text-blue-500" />
+                    ) : (
+                      <Bot className="h-5 w-5 text-purple-500" />
+                    )}
                 {source.name}
               </h2>
               <p className="text-muted-foreground">
@@ -1474,10 +1491,10 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+                    <div>
                 <Label className="text-xs text-muted-foreground">{lang === 'de' ? 'Kategorie' : 'Category'}</Label>
                 <div className="font-medium">{source.category}</div>
-              </div>
+                      </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{lang === 'de' ? 'Status' : 'Status'}</Label>
                 <div className="font-medium">
@@ -1492,8 +1509,8 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                       : source.status === 'inactive'
                         ? 'Inactive'
                         : 'Error'}
-                </div>
-              </div>
+                    </div>
+                  </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{lang === 'de' ? 'Zuletzt aktualisiert' : 'Last updated'}</Label>
                 <div className="font-medium">{source.lastUpdated}</div>
@@ -1511,7 +1528,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                   </a>
                 </div>
               )}
-            </div>
+                </div>
 
             <div>
               <Label className="text-xs text-muted-foreground">{lang === 'de' ? 'Beschreibung' : 'Description'}</Label>
@@ -1524,37 +1541,37 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
               <div>
                 <div className="text-2xl font-bold">
                   {metrics ? metrics.entryCount : managedSource.kind === 'workflow' ? source.workflowCount : source.agentCount}
-                </div>
-                <div className="text-xs text-muted-foreground">
+                    </div>
+                    <div className="text-xs text-muted-foreground">
                   {managedSource.kind === 'workflow'
                     ? lang === 'de' ? 'Workflows' : 'Workflows'
                     : lang === 'de' ? 'Agenten' : 'Agents'}
-                </div>
-              </div>
+                    </div>
+                  </div>
               <div>
                 <div className="text-2xl font-bold">
                   {metrics ? `${metrics.successRate.toFixed(1)}%` : managedSource.kind === 'workflow' ? '—' : '95%'}
-                </div>
-                <div className="text-xs text-muted-foreground">
+                      </div>
+                      <div className="text-xs text-muted-foreground">
                   {lang === 'de' ? 'Erfolgsrate' : 'Success rate'}
-                </div>
-              </div>
+                      </div>
+                    </div>
               <div>
                 <div className="text-2xl font-bold">
                   {metrics ? metrics.errorCount : 0}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {lang === 'de' ? 'Fehler' : 'Errors'}
-                </div>
-              </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {lang === 'de' ? 'Fehler' : 'Errors'}
+                    </div>
+                  </div>
               <div>
                 <div className="text-2xl font-bold">
                   {metrics ? new Date(metrics.lastUpdated).toLocaleTimeString() : '—'}
-                </div>
-                <div className="text-xs text-muted-foreground">
+                    </div>
+                    <div className="text-xs text-muted-foreground">
                   {lang === 'de' ? 'Letzte Aktualisierung' : 'Last refresh'}
-                </div>
-              </div>
+                    </div>
+                  </div>
             </div>
           </CardContent>
         </Card>
@@ -1619,30 +1636,30 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
                       : `Entries ${(entriesState.page * entriesState.pageSize) + 1} – ${Math.min((entriesState.page + 1) * entriesState.pageSize, entriesState.total)} of ${entriesState.total}`}
                   </div>
                   <div className="flex gap-2">
-                    <Button
+                  <Button
                       variant="outline"
-                      size="sm"
+                    size="sm"
                       onClick={() => handlePageChange('prev')}
                       disabled={entriesState.page === 0 || entriesState.isLoading}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="outline"
+                    variant="outline"
                       size="sm"
                       onClick={() => handlePageChange('next')}
                       disabled={(entriesState.page + 1) * entriesState.pageSize >= entriesState.total || entriesState.isLoading}
-                    >
+                  >
                       <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </Button>
                 </div>
               </div>
+          </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
-    );
+        </CardContent>
+      </Card>
+    </div>
+  );
   };
 
   return (

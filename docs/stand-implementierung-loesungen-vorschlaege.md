@@ -293,6 +293,8 @@ interface SolutionIndex {
 - **Admin System Tables**:
   - **`ontology_domains`**: Business-Domain-Ontologie mit 20 vordefinierten Domains
   - **`implementation_requests`**: User-Request-Funnel mit E-Mail-Integration
+  - **`pilot_feedback`**: User-Feedback zu Implementierungsschritten (RLS aktiviert)
+  - **`pilot_feedback_sessions`**: Session-Tracking (RLS aktiviert)
   - **`pilot_feedback`**: Umfassendes User-Feedback-System
   - **`pilot_feedback_sessions`**: Session-Management für Feedback-Kontinuität
 

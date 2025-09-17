@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import AdminLogin from '@/components/AdminLogin';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import AdminLayout from '@/components/AdminLayout';
 import AdminDashboard from '@/components/AdminDashboard';
 import { WorkflowTest } from '@/components/WorkflowTest';
@@ -127,6 +128,7 @@ export default function Admin() {
   }
 
   return (
+    <ErrorBoundary>
     <AdminLayout 
       lang={lang} 
       onLogout={handleLogout}
@@ -165,5 +167,6 @@ export default function Admin() {
         } />
       </Routes>
     </AdminLayout>
+    </ErrorBoundary>
   );
 }

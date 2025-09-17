@@ -57,10 +57,10 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
   
   // For workflows: show integrations, for agents: show capabilities
   const techs = isAgent 
-    ? (solution.capabilities || []).slice(0, 6)
+    ? (solution.capabilities || []).slice(0, 4)
     : (solution.integrations && solution.integrations.length > 0
         ? solution.integrations
-        : (solution.tags || [])).slice(0, 6);
+        : (solution.tags || [])).slice(0, 4);
 
   return (
     <Card className={`transition-shadow h-full hover:shadow-md ${className}`} onClick={handleClick} role="button">
@@ -200,6 +200,9 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
               email={(solution.authorEmail && solution.authorEmail.includes('@')) ? solution.authorEmail : undefined}
               verified={solution.authorVerified}
             />
+            {!solution.authorVerified && (!solution.authorName || (solution.authorName || '').toLowerCase() === 'community') && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full border bg-primary/10 text-primary-700 border-primary/30">Community</span>
+            )}
             {solution.pricing && (
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full border ${

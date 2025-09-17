@@ -88,7 +88,22 @@ export default function SolutionDetailModal({
     
     try {
       setLoadingSteps(true);
-      const steps = await StepExtractionDatabaseService.getImplementationSteps(solution.id);
+      let steps = await StepExtractionDatabaseService.getImplementationSteps(solution.id);
+      // If no steps exist yet, trigger extraction and store as pending (admin_validated=false)
+      if (!steps || steps.length === 0) {
+        try {
+          await StepExtractionDatabaseService.extractAndStoreSteps(
+            solution.id,
+            solution.type,
+            solution.name,
+            solution.description || ''
+          );
+          steps = await StepExtractionDatabaseService.getImplementationSteps(solution.id);
+        } catch (e) {
+          // Extraction is best-effort; fall back to empty and show fallback blocks
+          console.warn('Step extraction failed, showing fallback info.', e);
+        }
+      }
       const status = await StepExtractionDatabaseService.getFallbackStatus(solution.id);
       
       setImplementationSteps(steps);
@@ -995,13 +1010,12 @@ export default function SolutionDetailModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="prerequisites">Prerequisites</TabsTrigger>
-            <TabsTrigger value="requirements">Requirements</TabsTrigger>
-            <TabsTrigger value="use-cases">Use Cases</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="implementation">Implementation</TabsTrigger>
+            <TabsTrigger value="requirements">Requirements</TabsTrigger>
             <TabsTrigger value="metadata">Details</TabsTrigger>
           </TabsList>
 
