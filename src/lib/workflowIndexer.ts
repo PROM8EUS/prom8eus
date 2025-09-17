@@ -10,26 +10,892 @@
 
 import { getGitHubConfig } from './config';
 import { supabase } from '@/integrations/supabase/client';
+import { openaiClient } from './openai';
 
 export interface WorkflowIndex {
-  id: number;
-  filename: string;
-  name: string;
-  active: boolean;
-  triggerType: 'Complex' | 'Webhook' | 'Manual' | 'Scheduled';
-  complexity: 'Low' | 'Medium' | 'High';
-  nodeCount: number;
-  integrations: string[];
-  description: string;
+  // Mandatory core fields (PRD requirement)
+  id: string; // Changed from number to string for consistency
+  source: string; // Added: source identifier (github, n8n.io, etc.)
+  title: string; // Added: renamed from 'name' for consistency
+  summary: string; // Added: renamed from 'description' for consistency  
+  link: string; // Added: URL to the workflow source
+  
+  // Workflow-specific mandatory fields
   category: string;
-  tags: string[];
-  fileHash: string;
-  analyzedAt: string;
+  integrations: string[];
+  complexity: 'Low' | 'Medium' | 'High';
+  
+  // Optional fields with fallbacks
+  filename?: string;
+  active?: boolean;
+  triggerType?: 'Complex' | 'Webhook' | 'Manual' | 'Scheduled';
+  nodeCount?: number;
+  tags?: string[];
+  fileHash?: string;
+  analyzedAt?: string;
+  license?: string; // Added: license information with fallback 'Unknown'
+  
   // Author metadata (optional, populated for n8n.io)
   authorName?: string;
   authorUsername?: string;
   authorAvatar?: string;
   authorVerified?: boolean;
+
+  // Domain classification (LLM-based)
+  domains?: string[];
+  domain_confidences?: number[];
+  domain_origin?: 'llm' | 'admin' | 'mixed';
+}
+
+export interface AgentIndex {
+  // Mandatory core fields (PRD requirement)
+  id: string;
+  source: string; // source identifier (crewai, hf-spaces, etc.)
+  title: string;
+  summary: string;
+  link: string;
+  
+  // Agent-specific mandatory fields
+  model: string; // model/provider (e.g., "GPT-4", "Claude", "OpenAI")
+  provider: string; // API provider (e.g., "OpenAI", "Anthropic", "HuggingFace")
+  capabilities: string[]; // standardized capability tags
+  
+  // Optional fields with fallbacks
+  category?: string;
+  tags?: string[];
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+  setupTime?: 'Quick' | 'Medium' | 'Long';
+  deployment?: 'Local' | 'Cloud' | 'Hybrid';
+  license?: string; // license information with fallback 'Unknown'
+  pricing?: 'Free' | 'Freemium' | 'Paid' | 'Enterprise';
+  requirements?: string[];
+  useCases?: string[];
+  automationPotential?: number; // 0-100 percentage
+  
+  // Author metadata (optional)
+  authorName?: string;
+  authorUsername?: string;
+  authorAvatar?: string;
+  authorVerified?: boolean;
+  authorEmail?: string;
+  
+  // Source-specific metadata
+  likes?: number;
+  downloads?: number;
+  lastModified?: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  documentationUrl?: string;
+
+  // Domain classification (LLM-based)
+  domains?: string[];
+  domain_confidences?: number[];
+  domain_origin?: 'llm' | 'admin' | 'mixed';
+}
+
+// Unified solution type for both workflows and agents
+export type SolutionIndex = WorkflowIndex | AgentIndex;
+
+// Type guards to distinguish between workflow and agent solutions
+export function isWorkflowIndex(solution: SolutionIndex): solution is WorkflowIndex {
+  return 'integrations' in solution && 'complexity' in solution;
+}
+
+export function isAgentIndex(solution: SolutionIndex): solution is AgentIndex {
+  return 'model' in solution && 'provider' in solution && 'capabilities' in solution;
+}
+
+/**
+ * Enhanced schema validation and normalization utilities
+ */
+export class SchemaValidator {
+  /**
+   * Validate and normalize a WorkflowIndex object
+   */
+  static validateWorkflowIndex(input: any): WorkflowIndex | null {
+    try {
+      // Check mandatory core fields
+      if (!input?.id || !input?.source || !input?.title || !input?.summary || !input?.link) {
+        console.warn('WorkflowIndex missing mandatory core fields:', input);
+        return null;
+      }
+
+      // Check workflow-specific mandatory fields
+      if (!input?.category || !input?.integrations || !input?.complexity) {
+        console.warn('WorkflowIndex missing mandatory workflow fields:', input);
+        return null;
+      }
+
+      // Validate field types and normalize
+      const normalized: WorkflowIndex = {
+        // Core fields
+        id: String(input.id),
+        source: String(input.source),
+        title: String(input.title),
+        summary: String(input.summary),
+        link: String(input.link),
+        license: this.normalizeLicense(String(input.license || 'Unknown')),
+
+        // Workflow-specific fields
+        category: this.normalizeCategory(String(input.category)),
+        integrations: this.normalizeStringArray(input.integrations),
+        complexity: this.normalizeComplexity(String(input.complexity)),
+
+        // Optional fields with fallbacks
+        filename: input.filename ? String(input.filename) : undefined,
+        active: typeof input.active === 'boolean' ? input.active : true,
+        triggerType: input.triggerType ? this.normalizeTriggerType(String(input.triggerType)) : undefined,
+        nodeCount: typeof input.nodeCount === 'number' ? input.nodeCount : undefined,
+        tags: this.normalizeStringArray(input.tags),
+        fileHash: input.fileHash ? String(input.fileHash) : undefined,
+        analyzedAt: input.analyzedAt ? String(input.analyzedAt) : undefined,
+
+        // Author metadata
+        authorName: input.authorName ? String(input.authorName) : undefined,
+        authorUsername: input.authorUsername ? String(input.authorUsername) : undefined,
+        authorAvatar: input.authorAvatar ? String(input.authorAvatar) : undefined,
+        authorVerified: typeof input.authorVerified === 'boolean' ? input.authorVerified : undefined,
+
+        // Domain classification
+        domains: this.normalizeStringArray(input.domains),
+        domain_confidences: Array.isArray(input.domain_confidences) ? 
+          input.domain_confidences.map(c => Math.max(0, Math.min(1, Number(c)))) : undefined,
+        domain_origin: input.domain_origin && ['llm', 'admin', 'mixed'].includes(input.domain_origin) ? 
+          input.domain_origin : undefined
+      };
+
+      return normalized;
+    } catch (error) {
+      console.error('Failed to validate WorkflowIndex:', error, input);
+      return null;
+    }
+  }
+
+  /**
+   * Validate and normalize an AgentIndex object
+   */
+  static validateAgentIndex(input: any): AgentIndex | null {
+    try {
+      // Check mandatory core fields
+      if (!input?.id || !input?.source || !input?.title || !input?.summary || !input?.link) {
+        console.warn('AgentIndex missing mandatory core fields:', input);
+        return null;
+      }
+
+      // Check agent-specific mandatory fields
+      if (!input?.model || !input?.provider || !input?.capabilities) {
+        console.warn('AgentIndex missing mandatory agent fields:', input);
+        return null;
+      }
+
+      // Validate field types and normalize
+      const normalized: AgentIndex = {
+        // Core fields
+        id: String(input.id),
+        source: String(input.source),
+        title: String(input.title),
+        summary: String(input.summary),
+        link: String(input.link),
+        license: this.normalizeLicense(String(input.license || 'Unknown')),
+
+        // Agent-specific fields
+        model: this.normalizeModel(String(input.model)),
+        provider: this.normalizeProvider(String(input.provider)),
+        capabilities: this.normalizeCapabilities(input.capabilities),
+
+        // Optional fields with fallbacks
+        category: input.category ? this.normalizeCategory(String(input.category)) : undefined,
+        tags: this.normalizeStringArray(input.tags),
+        difficulty: input.difficulty ? this.normalizeDifficulty(String(input.difficulty)) : undefined,
+        setupTime: input.setupTime ? this.normalizeSetupTime(String(input.setupTime)) : undefined,
+        deployment: input.deployment ? this.normalizeDeployment(String(input.deployment)) : undefined,
+        pricing: input.pricing ? this.normalizePricing(String(input.pricing)) : undefined,
+        requirements: this.normalizeStringArray(input.requirements),
+        useCases: this.normalizeStringArray(input.useCases),
+        automationPotential: typeof input.automationPotential === 'number' ? 
+          Math.max(0, Math.min(100, input.automationPotential)) : undefined,
+
+        // Author metadata
+        authorName: input.authorName ? String(input.authorName) : undefined,
+        authorUsername: input.authorUsername ? String(input.authorUsername) : undefined,
+        authorEmail: input.authorEmail ? String(input.authorEmail) : undefined,
+        authorAvatar: input.authorAvatar ? String(input.authorAvatar) : undefined,
+        authorVerified: typeof input.authorVerified === 'boolean' ? input.authorVerified : undefined,
+
+        // Source-specific metadata
+        likes: typeof input.likes === 'number' ? Math.max(0, input.likes) : undefined,
+        downloads: typeof input.downloads === 'number' ? Math.max(0, input.downloads) : undefined,
+        lastModified: input.lastModified ? String(input.lastModified) : undefined,
+        githubUrl: input.githubUrl ? String(input.githubUrl) : undefined,
+        demoUrl: input.demoUrl ? String(input.demoUrl) : undefined,
+        documentationUrl: input.documentationUrl ? String(input.documentationUrl) : undefined,
+
+        // Domain classification
+        domains: this.normalizeStringArray(input.domains),
+        domain_confidences: Array.isArray(input.domain_confidences) ? 
+          input.domain_confidences.map(c => Math.max(0, Math.min(1, Number(c)))) : undefined,
+        domain_origin: input.domain_origin && ['llm', 'admin', 'mixed'].includes(input.domain_origin) ? 
+          input.domain_origin : undefined
+      };
+
+      return normalized;
+    } catch (error) {
+      console.error('Failed to validate AgentIndex:', error, input);
+      return null;
+    }
+  }
+
+  /**
+   * Normalize license names to standard format
+   */
+  private static normalizeLicense(license: string): string {
+    const normalized = license.trim();
+    const licenseMap: Record<string, string> = {
+      'mit': 'MIT',
+      'apache-2.0': 'Apache-2.0',
+      'apache 2.0': 'Apache-2.0',
+      'apache license': 'Apache-2.0',
+      'gpl-3.0': 'GPL-3.0',
+      'gpl 3.0': 'GPL-3.0',
+      'gpl v3': 'GPL-3.0',
+      'gpl-2.0': 'GPL-2.0',
+      'gpl 2.0': 'GPL-2.0',
+      'gpl v2': 'GPL-2.0',
+      'bsd-3-clause': 'BSD-3-Clause',
+      'bsd 3-clause': 'BSD-3-Clause',
+      'bsd-2-clause': 'BSD-2-Clause',
+      'bsd 2-clause': 'BSD-2-Clause',
+      'mpl-2.0': 'MPL-2.0',
+      'mpl 2.0': 'MPL-2.0',
+      'epl-1.0': 'EPL-1.0',
+      'epl 1.0': 'EPL-1.0',
+      'cc-by': 'CC-BY',
+      'cc by': 'CC-BY',
+      'unlicense': 'Unlicense',
+      'public domain': 'Unlicense',
+      'unknown': 'Unknown'
+    };
+
+    return licenseMap[normalized.toLowerCase()] || normalized;
+  }
+
+  /**
+   * Normalize category names
+   */
+  private static normalizeCategory(category: string): string {
+    const normalized = category.trim();
+    const categoryMap: Record<string, string> = {
+      'general': 'General',
+      'business': 'Business',
+      'hr': 'HR & Recruitment',
+      'finance': 'Finance & Accounting',
+      'marketing': 'Marketing & Sales',
+      'customer support': 'Customer Support',
+      'data analysis': 'Data Analysis',
+      'content creation': 'Content Creation',
+      'automation': 'Automation',
+      'integration': 'Integration',
+      'ai analyzed': 'AI Analyzed'
+    };
+
+    return categoryMap[normalized.toLowerCase()] || normalized;
+  }
+
+  /**
+   * Normalize complexity levels
+   */
+  private static normalizeComplexity(complexity: string): 'Low' | 'Medium' | 'High' {
+    const normalized = complexity.trim().toLowerCase();
+    if (normalized.includes('low') || normalized.includes('simple') || normalized.includes('basic')) {
+      return 'Low';
+    } else if (normalized.includes('high') || normalized.includes('complex') || normalized.includes('advanced')) {
+      return 'High';
+    } else {
+      return 'Medium';
+    }
+  }
+
+  /**
+   * Normalize trigger types
+   */
+  private static normalizeTriggerType(triggerType: string): 'Complex' | 'Webhook' | 'Manual' | 'Scheduled' {
+    const normalized = triggerType.trim().toLowerCase();
+    if (normalized.includes('webhook') || normalized.includes('http')) {
+      return 'Webhook';
+    } else if (normalized.includes('scheduled') || normalized.includes('cron') || normalized.includes('timer')) {
+      return 'Scheduled';
+    } else if (normalized.includes('manual') || normalized.includes('button')) {
+      return 'Manual';
+    } else {
+      return 'Complex';
+    }
+  }
+
+  /**
+   * Normalize model names
+   */
+  private static normalizeModel(model: string): string {
+    const normalized = model.trim();
+    const modelMap: Record<string, string> = {
+      'gpt-4': 'GPT-4',
+      'gpt-3.5': 'GPT-3.5',
+      'gpt-3.5-turbo': 'GPT-3.5-Turbo',
+      'claude-3': 'Claude-3',
+      'claude-3-opus': 'Claude-3-Opus',
+      'claude-3-sonnet': 'Claude-3-Sonnet',
+      'claude-3-haiku': 'Claude-3-Haiku',
+      'gemini-pro': 'Gemini-Pro',
+      'gemini-1.5': 'Gemini-1.5',
+      'llama-2': 'Llama-2',
+      'llama-3': 'Llama-3',
+      'mistral-7b': 'Mistral-7B',
+      'mistral-8x7b': 'Mistral-8x7B'
+    };
+
+    return modelMap[normalized.toLowerCase()] || normalized;
+  }
+
+  /**
+   * Normalize provider names
+   */
+  private static normalizeProvider(provider: string): string {
+    const normalized = provider.trim();
+    const providerMap: Record<string, string> = {
+      'openai': 'OpenAI',
+      'anthropic': 'Anthropic',
+      'google': 'Google',
+      'meta': 'Meta',
+      'mistral ai': 'Mistral AI',
+      'mistral': 'Mistral AI',
+      'hugging face': 'Hugging Face',
+      'huggingface': 'Hugging Face',
+      'cohere': 'Cohere',
+      'perplexity': 'Perplexity'
+    };
+
+    return providerMap[normalized.toLowerCase()] || normalized;
+  }
+
+  /**
+   * Normalize capability tags
+   */
+  private static normalizeCapabilities(capabilities: any): string[] {
+    if (!Array.isArray(capabilities)) {
+      return [];
+    }
+
+    const validCapabilities = [
+      'web_search', 'data_analysis', 'file_io', 'email_send', 'api_integration',
+      'text_generation', 'image_processing', 'code_generation', 'document_processing',
+      'database_query', 'workflow_automation', 'scheduling', 'monitoring', 'reporting'
+    ];
+
+    return capabilities
+      .map(cap => String(cap).trim().toLowerCase())
+      .filter(cap => validCapabilities.includes(cap))
+      .map(cap => validCapabilities.find(valid => valid === cap)!)
+      .filter((cap, index, arr) => arr.indexOf(cap) === index); // Remove duplicates
+  }
+
+  /**
+   * Normalize difficulty levels
+   */
+  private static normalizeDifficulty(difficulty: string): 'Beginner' | 'Intermediate' | 'Advanced' {
+    const normalized = difficulty.trim().toLowerCase();
+    if (normalized.includes('beginner') || normalized.includes('easy') || normalized.includes('basic')) {
+      return 'Beginner';
+    } else if (normalized.includes('advanced') || normalized.includes('expert') || normalized.includes('complex')) {
+      return 'Advanced';
+    } else {
+      return 'Intermediate';
+    }
+  }
+
+  /**
+   * Normalize setup time
+   */
+  private static normalizeSetupTime(setupTime: string): 'Quick' | 'Medium' | 'Long' {
+    const normalized = setupTime.trim().toLowerCase();
+    if (normalized.includes('quick') || normalized.includes('fast') || normalized.includes('5 min')) {
+      return 'Quick';
+    } else if (normalized.includes('long') || normalized.includes('slow') || normalized.includes('30 min')) {
+      return 'Long';
+    } else {
+      return 'Medium';
+    }
+  }
+
+  /**
+   * Normalize deployment types
+   */
+  private static normalizeDeployment(deployment: string): 'Local' | 'Cloud' | 'Hybrid' {
+    const normalized = deployment.trim().toLowerCase();
+    if (normalized.includes('local') || normalized.includes('on-premise')) {
+      return 'Local';
+    } else if (normalized.includes('hybrid') || normalized.includes('mixed')) {
+      return 'Hybrid';
+    } else {
+      return 'Cloud';
+    }
+  }
+
+  /**
+   * Normalize pricing models
+   */
+  private static normalizePricing(pricing: string): 'Free' | 'Freemium' | 'Paid' | 'Enterprise' {
+    const normalized = pricing.trim().toLowerCase();
+    if (normalized.includes('free') && !normalized.includes('freemium')) {
+      return 'Free';
+    } else if (normalized.includes('freemium') || normalized.includes('free tier')) {
+      return 'Freemium';
+    } else if (normalized.includes('enterprise') || normalized.includes('custom')) {
+      return 'Enterprise';
+    } else {
+      return 'Paid';
+    }
+  }
+
+  /**
+   * Normalize string arrays
+   */
+  private static normalizeStringArray(input: any): string[] {
+    if (!Array.isArray(input)) {
+      return [];
+    }
+
+    return input
+      .map(item => String(item).trim())
+      .filter(item => item.length > 0)
+      .filter((item, index, arr) => arr.indexOf(item) === index); // Remove duplicates
+  }
+
+  /**
+   * Classify solution into ontology domains using LLM with caching
+   */
+  static async classifySolutionDomains(
+    title: string,
+    summary: string,
+    source: string,
+    additionalContext?: string
+  ): Promise<{
+    domains: string[];
+    domain_confidences: number[];
+    domain_origin: 'llm' | 'admin' | 'mixed';
+  }> {
+    try {
+      // First, check cache for existing classification
+      const cachedResult = await this.getCachedDomainClassification(title, summary, source);
+      if (cachedResult) {
+        return {
+          domains: cachedResult.domains,
+          domain_confidences: cachedResult.domain_confidences,
+          domain_origin: cachedResult.domain_origin
+        };
+      }
+
+      // Get available domains from database using direct SQL
+      const { data: domains, error } = await supabase.rpc('get_ontology_domains');
+
+      if (error || !domains) {
+        console.warn('Failed to fetch ontology domains:', error);
+        const fallbackResult = {
+          domains: ['Other'],
+          domain_confidences: [1.0],
+          domain_origin: 'llm' as const
+        };
+        await this.cacheDomainClassification(title, summary, source, fallbackResult);
+        return fallbackResult;
+      }
+
+      const domainLabels = domains.map((d: any) => d.label);
+      const domainList = domainLabels.join(', ');
+
+      // Create LLM prompt for domain classification
+      const systemPrompt = `You are an expert in business domain classification. Classify the given solution into the most appropriate business domains from the provided ontology.
+
+IMPORTANT: 
+- You MUST choose ONLY from the provided domain list
+- Return up to 3 domains maximum
+- Each domain must have a confidence score between 0.0 and 1.0
+- The sum of all confidence scores should not exceed 1.0
+- Use the exact domain labels as provided
+- If uncertain, use "Other" as fallback
+
+AVAILABLE DOMAINS: ${domainList}
+
+Respond with valid JSON only:
+{
+  "domains": ["Domain1", "Domain2", "Domain3"],
+  "confidences": [0.6, 0.3, 0.1]
+}`;
+
+      const userPrompt = `Classify this solution into business domains:
+
+TITLE: ${title}
+SUMMARY: ${summary}
+SOURCE: ${source}
+${additionalContext ? `ADDITIONAL CONTEXT: ${additionalContext}` : ''}
+
+Choose up to 3 most relevant domains from the available list with confidence scores.`;
+
+      const messages = [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt }
+      ];
+
+      const response = await openaiClient.chatCompletion(messages, {
+        temperature: 0.3,
+        max_tokens: 200
+      });
+
+      try {
+        const result = JSON.parse(response.content);
+        
+        // Validate the response
+        if (!result.domains || !Array.isArray(result.domains) || 
+            !result.confidences || !Array.isArray(result.confidences)) {
+          throw new Error('Invalid response format');
+        }
+
+        // Ensure domains are from the valid list
+        const validDomains = result.domains.filter((domain: string) => 
+          domainLabels.includes(domain)
+        );
+
+        // If no valid domains, use fallback
+        if (validDomains.length === 0) {
+          const fallbackResult = {
+            domains: ['Other'],
+            domain_confidences: [1.0],
+            domain_origin: 'llm' as const
+          };
+          await this.cacheDomainClassification(title, summary, source, fallbackResult);
+          return fallbackResult;
+        }
+
+        // Normalize confidences to sum to 1.0
+        const totalConfidence = result.confidences.reduce((sum: number, conf: number) => sum + conf, 0);
+        const normalizedConfidences = result.confidences.map((conf: number) => 
+          totalConfidence > 0 ? conf / totalConfidence : 1.0 / result.confidences.length
+        );
+
+        const classificationResult = {
+          domains: validDomains,
+          domain_confidences: normalizedConfidences,
+          domain_origin: 'llm' as const
+        };
+
+        // Cache the result
+        await this.cacheDomainClassification(title, summary, source, classificationResult);
+
+        return classificationResult;
+
+      } catch (parseError) {
+        console.warn('Failed to parse LLM domain classification response:', parseError);
+        console.log('Raw response:', response.content);
+        
+        // Try to extract JSON from response
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const result = JSON.parse(jsonMatch[0]);
+            if (result.domains && Array.isArray(result.domains)) {
+              const validDomains = result.domains.filter((domain: string) => 
+                domainLabels.includes(domain)
+              );
+              
+              if (validDomains.length > 0) {
+                const classificationResult = {
+                  domains: validDomains,
+                  domain_confidences: result.confidences || [1.0],
+                  domain_origin: 'llm' as const
+                };
+                await this.cacheDomainClassification(title, summary, source, classificationResult);
+                return classificationResult;
+              }
+            }
+          } catch (extractError) {
+            console.warn('Failed to extract JSON from response:', extractError);
+          }
+        }
+        
+        // Fallback to "Other"
+        const fallbackResult = {
+          domains: ['Other'],
+          domain_confidences: [1.0],
+          domain_origin: 'llm' as const
+        };
+        await this.cacheDomainClassification(title, summary, source, fallbackResult);
+        return fallbackResult;
+      }
+
+    } catch (error) {
+      console.error('Domain classification failed:', error);
+      const fallbackResult = {
+        domains: ['Other'],
+        domain_confidences: [1.0],
+        domain_origin: 'llm' as const
+      };
+      await this.cacheDomainClassification(title, summary, source, fallbackResult);
+      return fallbackResult;
+    }
+  }
+
+  /**
+   * Get cached domain classification
+   */
+  static async getCachedDomainClassification(
+    title: string,
+    summary: string,
+    source: string
+  ): Promise<{
+    domains: string[];
+    domain_confidences: number[];
+    domain_origin: 'llm' | 'admin' | 'mixed';
+  } | null> {
+    try {
+      const { data, error } = await supabase.rpc('get_or_create_domain_classification', {
+        title_text: title,
+        summary_text: summary,
+        source_id_text: source
+      });
+
+      if (error || !data || data.length === 0) {
+        return null;
+      }
+
+      const record = data[0];
+      return {
+        domains: record.domains,
+        domain_confidences: record.domain_confidences,
+        domain_origin: record.domain_origin
+      };
+    } catch (error) {
+      console.error('Failed to get cached domain classification:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Cache domain classification result
+   */
+  static async cacheDomainClassification(
+    title: string,
+    summary: string,
+    source: string,
+    classification: {
+      domains: string[];
+      domain_confidences: number[];
+      domain_origin: 'llm' | 'admin' | 'mixed';
+    }
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('get_or_create_domain_classification', {
+        title_text: title,
+        summary_text: summary,
+        source_id_text: source,
+        default_domains: classification.domains,
+        default_confidences: classification.domain_confidences,
+        default_origin: classification.domain_origin
+      });
+
+      if (error) {
+        console.error('Failed to cache domain classification:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error caching domain classification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Sanitize and normalize unknown/malformed data
+   */
+  static sanitizeUnknownData(input: any): any {
+    if (input === null || input === undefined) {
+      return {};
+    }
+
+    if (typeof input !== 'object') {
+      return {};
+    }
+
+    const sanitized: any = {};
+
+    // Sanitize string fields
+    const stringFields = ['id', 'source', 'title', 'summary', 'link', 'filename', 'category', 'model', 'provider'];
+    for (const field of stringFields) {
+      if (input[field] !== undefined && input[field] !== null) {
+        const value = String(input[field]).trim();
+        if (value.length > 0) {
+          sanitized[field] = value;
+        }
+      }
+    }
+
+    // Sanitize array fields
+    const arrayFields = ['integrations', 'capabilities', 'tags', 'requirements', 'useCases'];
+    for (const field of arrayFields) {
+      if (input[field] !== undefined && input[field] !== null) {
+        if (Array.isArray(input[field])) {
+          const sanitizedArray = input[field]
+            .map(item => String(item).trim())
+            .filter(item => item.length > 0);
+          if (sanitizedArray.length > 0) {
+            sanitized[field] = sanitizedArray;
+          }
+        }
+      }
+    }
+
+    // Sanitize boolean fields
+    const booleanFields = ['active', 'authorVerified'];
+    for (const field of booleanFields) {
+      if (input[field] !== undefined && input[field] !== null) {
+        sanitized[field] = Boolean(input[field]);
+      }
+    }
+
+    // Sanitize number fields
+    const numberFields = ['nodeCount', 'likes', 'downloads', 'automationPotential'];
+    for (const field of numberFields) {
+      if (input[field] !== undefined && input[field] !== null) {
+        const num = Number(input[field]);
+        if (!isNaN(num) && isFinite(num)) {
+          sanitized[field] = num;
+        }
+      }
+    }
+
+    // Sanitize enum fields with validation
+    if (input.complexity) {
+      const complexity = this.normalizeComplexity(String(input.complexity));
+      sanitized.complexity = complexity;
+    }
+
+    if (input.triggerType) {
+      const triggerType = this.normalizeTriggerType(String(input.triggerType));
+      sanitized.triggerType = triggerType;
+    }
+
+    if (input.difficulty) {
+      const difficulty = this.normalizeDifficulty(String(input.difficulty));
+      sanitized.difficulty = difficulty;
+    }
+
+    if (input.setupTime) {
+      const setupTime = this.normalizeSetupTime(String(input.setupTime));
+      sanitized.setupTime = setupTime;
+    }
+
+    if (input.deployment) {
+      const deployment = this.normalizeDeployment(String(input.deployment));
+      sanitized.deployment = deployment;
+    }
+
+    if (input.pricing) {
+      const pricing = this.normalizePricing(String(input.pricing));
+      sanitized.pricing = pricing;
+    }
+
+    if (input.license) {
+      const license = this.normalizeLicense(String(input.license));
+      sanitized.license = license;
+    }
+
+    // Sanitize date fields
+    const dateFields = ['analyzedAt', 'lastModified'];
+    for (const field of dateFields) {
+      if (input[field] !== undefined && input[field] !== null) {
+        const date = new Date(input[field]);
+        if (!isNaN(date.getTime())) {
+          sanitized[field] = date.toISOString();
+        }
+      }
+    }
+
+    // Sanitize URL fields
+    const urlFields = ['link', 'authorAvatar', 'githubUrl', 'demoUrl', 'documentationUrl'];
+    for (const field of urlFields) {
+      if (input[field] !== undefined && input[field] !== null) {
+        const url = String(input[field]).trim();
+        if (url.length > 0 && (url.startsWith('http') || url.startsWith('#'))) {
+          sanitized[field] = url;
+        }
+      }
+    }
+
+    // Sanitize email fields
+    if (input.authorEmail) {
+      const email = String(input.authorEmail).trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(email)) {
+        sanitized.authorEmail = email;
+      }
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Validate and fix common data issues
+   */
+  static validateAndFixData(input: any): any {
+    const sanitized = this.sanitizeUnknownData(input);
+
+    // Fix common issues
+    if (sanitized.id && typeof sanitized.id === 'string') {
+      // Ensure ID is not empty and doesn't contain invalid characters
+      sanitized.id = sanitized.id.replace(/[^a-zA-Z0-9\-_]/g, '-');
+      if (sanitized.id.length === 0) {
+        sanitized.id = `unknown-${Date.now()}`;
+      }
+    }
+
+    if (sanitized.title && typeof sanitized.title === 'string') {
+      // Clean up title
+      sanitized.title = sanitized.title.replace(/\s+/g, ' ').trim();
+      if (sanitized.title.length === 0) {
+        sanitized.title = 'Untitled';
+      }
+    }
+
+    if (sanitized.summary && typeof sanitized.summary === 'string') {
+      // Clean up summary
+      sanitized.summary = sanitized.summary.replace(/\s+/g, ' ').trim();
+      if (sanitized.summary.length === 0) {
+        sanitized.summary = 'No description available';
+      }
+    }
+
+    // Ensure arrays are properly formatted
+    const arrayFields = ['integrations', 'capabilities', 'tags', 'requirements', 'useCases'];
+    for (const field of arrayFields) {
+      if (sanitized[field] && Array.isArray(sanitized[field])) {
+        sanitized[field] = sanitized[field]
+          .map(item => String(item).trim())
+          .filter(item => item.length > 0)
+          .filter((item, index, arr) => arr.indexOf(item) === index); // Remove duplicates
+      }
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Normalize agent capabilities during ingestion (SchemaValidator method)
+   */
+  static async normalizeAgentCapabilities(
+    rawCapabilities: string[],
+    title: string,
+    summary: string,
+    source: string
+  ): Promise<string[]> {
+    return WorkflowIndexer.normalizeAgentCapabilities(rawCapabilities, title, summary, source);
+  }
 }
 
 export interface WorkflowStats {
@@ -200,6 +1066,10 @@ export interface CacheStats {
   averageAccessTime: number;
   compressionRatio: number;
   evictions: number;
+  entryCount: number;
+  totalEntries: number;
+  totalSize: number;
+  lastUpdated: string | null;
 }
 
 export interface IncrementalUpdateConfig {
@@ -224,6 +1094,7 @@ export interface UpdateDelta {
 export class WorkflowIndexer {
   private baseUrl = 'https://api.github.com/repos/Zie619/n8n-workflows';
   private workflows: WorkflowIndex[] = [];
+  private agents: AgentIndex[] = [];
   private stats: WorkflowStats | null = null;
   private githubConfig = getGitHubConfig();
   private lastFetchTime: number | null = null;
@@ -277,7 +1148,11 @@ export class WorkflowIndexer {
     hitRate: 0,
     averageAccessTime: 0,
     compressionRatio: 0,
-    evictions: 0
+    evictions: 0,
+    entryCount: 0,
+    totalEntries: 0,
+    totalSize: 0,
+    lastUpdated: null
   };
   private cacheCleanupInterval: NodeJS.Timeout | null = null;
   private incrementalUpdateConfig: IncrementalUpdateConfig = {
@@ -294,6 +1169,10 @@ export class WorkflowIndexer {
   private updateInProgress = new Set<string>();
   private cacheVersion = '1.0.0';
   private schemaVersions = new Map<string, string>();
+  private textEncoder: TextEncoder | null =
+    typeof globalThis !== 'undefined' && typeof (globalThis as any).TextEncoder !== 'undefined'
+      ? new (globalThis as any).TextEncoder()
+      : null;
 
   constructor() {
     this.initializeStats();
@@ -307,6 +1186,146 @@ export class WorkflowIndexer {
     this.startCacheCleanup();
     // Start incremental updates
     this.startIncrementalUpdates();
+  }
+
+  // Helper methods for unified solution handling
+  getAllSolutions(): SolutionIndex[] {
+    return [...this.workflows, ...this.agents];
+  }
+
+  getSolutionsByType(type: 'workflow' | 'agent'): SolutionIndex[] {
+    if (type === 'workflow') {
+      return this.workflows;
+    } else {
+      return this.agents;
+    }
+  }
+
+  // Add agent to the index
+  async addAgent(agent: Partial<AgentIndex>): Promise<void> {
+    const normalizedAgent = await this.ensureMandatoryFields(agent) as AgentIndex;
+    if (isAgentIndex(normalizedAgent)) {
+      this.agents.push(normalizedAgent);
+    }
+  }
+
+  // Add workflow to the index
+  async addWorkflow(workflow: Partial<WorkflowIndex>): Promise<void> {
+    const normalizedWorkflow = await this.ensureMandatoryFields(workflow) as WorkflowIndex;
+    if (isWorkflowIndex(normalizedWorkflow)) {
+      this.workflows.push(normalizedWorkflow);
+    }
+  }
+
+  // Ensure mandatory fields are present with fallbacks using SchemaValidator
+  private async ensureMandatoryFields(solution: Partial<SolutionIndex>): Promise<SolutionIndex> {
+    // First sanitize and normalize the input data
+    const sanitizedSolution = SchemaValidator.validateAndFixData(solution);
+
+    // Extract license if not already provided
+    const extractedLicense = sanitizedSolution.license || await this.extractLicense(sanitizedSolution.source || 'unknown', sanitizedSolution);
+
+    // Add extracted license to solution
+    const solutionWithLicense = {
+      ...sanitizedSolution,
+      license: extractedLicense
+    };
+
+    // Determine solution type based on source or explicit type indicators
+    const isWorkflow = sanitizedSolution.source?.includes('github') || 
+                      sanitizedSolution.source?.includes('n8n.io') || 
+                      sanitizedSolution.source?.includes('awesome-n8n') ||
+                      'integrations' in sanitizedSolution ||
+                      'complexity' in sanitizedSolution;
+    
+    const isAgent = sanitizedSolution.source?.includes('crewai') || 
+                   sanitizedSolution.source?.includes('hf-spaces') ||
+                   'model' in sanitizedSolution ||
+                   'provider' in sanitizedSolution ||
+                   'capabilities' in sanitizedSolution;
+
+    if (isWorkflow) {
+      // Ensure workflow has required fields with fallbacks
+      const workflowData = {
+        id: sanitizedSolution.id || `workflow-${Date.now()}`,
+        source: sanitizedSolution.source || 'unknown',
+        title: sanitizedSolution.title || 'Untitled Workflow',
+        summary: sanitizedSolution.summary || 'No description available',
+        link: sanitizedSolution.link || '#',
+        category: (sanitizedSolution as Partial<WorkflowIndex>).category || 'General',
+        integrations: (sanitizedSolution as Partial<WorkflowIndex>).integrations || [],
+        complexity: (sanitizedSolution as Partial<WorkflowIndex>).complexity || 'Medium',
+        license: extractedLicense,
+        ...solutionWithLicense
+      };
+
+      const validated = SchemaValidator.validateWorkflowIndex(workflowData);
+      if (validated) {
+        return validated;
+      } else {
+        console.warn('Schema validation failed for workflow, using fallback');
+        return workflowData as WorkflowIndex;
+      }
+    } else if (isAgent) {
+      // Normalize capabilities for agents
+      let normalizedCapabilities = (sanitizedSolution as Partial<AgentIndex>).capabilities || [];
+      if (Array.isArray(normalizedCapabilities) && normalizedCapabilities.length > 0) {
+        normalizedCapabilities = await SchemaValidator.normalizeAgentCapabilities(
+          normalizedCapabilities,
+          sanitizedSolution.title || '',
+          sanitizedSolution.summary || '',
+          sanitizedSolution.source || ''
+        );
+      } else {
+        // If no capabilities provided, use heuristics to infer from title/summary/source
+        normalizedCapabilities = await SchemaValidator.normalizeAgentCapabilities(
+          [],
+          sanitizedSolution.title || '',
+          sanitizedSolution.summary || '',
+          sanitizedSolution.source || ''
+        );
+      }
+
+      // Ensure agent has required fields with fallbacks
+      const agentData = {
+        id: sanitizedSolution.id || `agent-${Date.now()}`,
+        source: sanitizedSolution.source || 'unknown',
+        title: sanitizedSolution.title || 'Untitled Agent',
+        summary: sanitizedSolution.summary || 'No description available',
+        link: sanitizedSolution.link || '#',
+        model: (sanitizedSolution as Partial<AgentIndex>).model || 'Unknown',
+        provider: (sanitizedSolution as Partial<AgentIndex>).provider || 'Unknown',
+        capabilities: normalizedCapabilities,
+        license: extractedLicense,
+        ...solutionWithLicense
+      };
+
+      const validated = SchemaValidator.validateAgentIndex(agentData);
+      if (validated) {
+        return validated;
+      } else {
+        console.warn('Schema validation failed for agent, using fallback');
+        return agentData as AgentIndex;
+      }
+    }
+
+    // Default to workflow if type cannot be determined
+    console.warn(`Could not determine solution type for ${sanitizedSolution.id}, defaulting to workflow`);
+    const workflowData = {
+      id: sanitizedSolution.id || `workflow-${Date.now()}`,
+      source: sanitizedSolution.source || 'unknown',
+      title: sanitizedSolution.title || 'Untitled Workflow',
+      summary: sanitizedSolution.summary || 'No description available',
+      link: sanitizedSolution.link || '#',
+      category: 'General',
+      integrations: [],
+      complexity: 'Medium' as const,
+      license: extractedLicense,
+      ...solutionWithLicense
+    };
+
+    const validated = SchemaValidator.validateWorkflowIndex(workflowData);
+    return validated || (workflowData as WorkflowIndex);
   }
 
   /**
@@ -362,19 +1381,27 @@ export class WorkflowIndexer {
       const active = Math.random() > 0.1; // 90% active rate
 
       workflows.push({
-        id: i,
+        // Mandatory core fields
+        id: `workflow-${i}`,
+        source: 'github',
+        title: `${category.charAt(0).toUpperCase() + category.slice(1)} ${triggerType} ${complexity}`,
+        summary: `Automated ${category} workflow with ${triggerType.toLowerCase()} trigger and ${complexity.toLowerCase()} complexity`,
+        link: `https://github.com/Zie619/n8n-workflows/blob/main/workflows/${String(i).padStart(4, '0')}_${category}_${triggerType}_${complexity}.json`,
+        
+        // Workflow-specific mandatory fields
+        category,
+        integrations: selectedIntegrations,
+        complexity: complexity as any,
+        
+        // Optional fields
         filename: `${String(i).padStart(4, '0')}_${category}_${triggerType}_${complexity}.json`,
-        name: `${category.charAt(0).toUpperCase() + category.slice(1)} ${triggerType} ${complexity}`,
         active,
         triggerType: triggerType as any,
-        complexity: complexity as any,
         nodeCount,
-        integrations: selectedIntegrations,
-        description: `Automated ${category} workflow with ${triggerType.toLowerCase()} trigger and ${complexity.toLowerCase()} complexity`,
-        category,
         tags: [category, triggerType.toLowerCase(), complexity.toLowerCase(), ...selectedIntegrations.slice(0, 2)],
         fileHash: Math.random().toString(36).substring(2, 8),
-        analyzedAt: new Date().toISOString()
+        analyzedAt: new Date().toISOString(),
+        license: 'MIT'
       });
     }
 
@@ -402,23 +1429,96 @@ export class WorkflowIndexer {
       const active = Math.random() > 0.05; // 95% active rate
 
       workflows.push({
-        id: i + 10000, // Use different ID range for AI-enhanced workflows
+        // Mandatory core fields
+        id: `ai-workflow-${i}`,
+        source: 'ai-enhanced',
+        title: `AI-Enhanced ${category.charAt(0).toUpperCase() + category.slice(1)} ${triggerType}`,
+        summary: `AI-powered ${category} workflow with ${triggerType.toLowerCase()} trigger and ${complexity.toLowerCase()} complexity`,
+        link: `https://github.com/ai-enhanced/workflows/blob/main/ai_${String(i).padStart(3, '0')}_${category}_${triggerType}.json`,
+        
+        // Workflow-specific mandatory fields
+        category,
+        integrations: selectedIntegrations,
+        complexity: complexity as any,
+        
+        // Optional fields
         filename: `ai_${String(i).padStart(3, '0')}_${category}_${triggerType}.json`,
-        name: `AI-Enhanced ${category.charAt(0).toUpperCase() + category.slice(1)} ${triggerType}`,
         active,
         triggerType: triggerType as any,
-        complexity: complexity as any,
         nodeCount,
-        integrations: selectedIntegrations,
-        description: `AI-powered ${category} workflow with ${triggerType.toLowerCase()} trigger and ${complexity.toLowerCase()} complexity`,
-        category,
         tags: ['ai-enhanced', category, triggerType.toLowerCase(), complexity.toLowerCase(), ...selectedIntegrations.slice(0, 2)],
         fileHash: Math.random().toString(36).substring(2, 8),
-        analyzedAt: new Date().toISOString()
+        analyzedAt: new Date().toISOString(),
+        license: 'MIT'
       });
     }
 
     return workflows;
+  }
+
+  /**
+   * Generate mock agents for testing
+   */
+  private generateMockAgents(): AgentIndex[] {
+    const agents: AgentIndex[] = [];
+    const models = ['GPT-4', 'Claude-3', 'Gemini-Pro', 'Llama-2', 'Mistral-7B'];
+    const providers = ['OpenAI', 'Anthropic', 'Google', 'Meta', 'Mistral AI'];
+    const capabilities = ['web_search', 'data_analysis', 'file_io', 'email_send', 'api_integration', 'text_generation', 'image_processing', 'code_generation'];
+    const categories = ['HR & Recruitment', 'Finance & Accounting', 'Marketing & Sales', 'Customer Support', 'Data Analysis', 'Content Creation'];
+
+    // Generate 100 mock agents
+    for (let i = 1; i <= 100; i++) {
+      const model = models[Math.floor(Math.random() * models.length)];
+      const provider = providers[Math.floor(Math.random() * providers.length)];
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const numCapabilities = Math.floor(Math.random() * 4) + 2; // 2-5 capabilities
+      const selectedCapabilities = capabilities.sort(() => 0.5 - Math.random()).slice(0, numCapabilities);
+      const difficulty = ['Beginner', 'Intermediate', 'Advanced'][Math.floor(Math.random() * 3)] as any;
+      const setupTime = ['Quick', 'Medium', 'Long'][Math.floor(Math.random() * 3)] as any;
+
+      agents.push({
+        // Mandatory core fields
+        id: `agent-${i}`,
+        source: i % 2 === 0 ? 'crewai' : 'hf-spaces',
+        title: `${category} AI Agent ${i}`,
+        summary: `AI agent specialized in ${category.toLowerCase()} tasks with ${model} model`,
+        link: i % 2 === 0 
+          ? `https://github.com/crewai/crewai-examples/tree/main/agents/${category.toLowerCase().replace(/\s+/g, '-')}-agent`
+          : `https://huggingface.co/spaces/agent-${i}`,
+        
+        // Agent-specific mandatory fields
+        model,
+        provider,
+        capabilities: selectedCapabilities,
+        
+        // Optional fields
+        category,
+        tags: [category.toLowerCase(), model.toLowerCase(), ...selectedCapabilities],
+        difficulty,
+        setupTime,
+        deployment: 'Cloud',
+        license: 'MIT',
+        pricing: ['Free', 'Freemium', 'Paid'][Math.floor(Math.random() * 3)] as any,
+        requirements: [`${model} API key`, 'Python 3.8+'],
+        useCases: [`${category} automation`, 'Data processing', 'Content generation'],
+        automationPotential: Math.floor(Math.random() * 40) + 60, // 60-100%
+        
+        // Author metadata
+        authorName: `Agent Creator ${i}`,
+        authorUsername: `creator${i}`,
+        authorEmail: `creator${i}@example.com`,
+        
+        // Source-specific metadata
+        likes: Math.floor(Math.random() * 100),
+        downloads: Math.floor(Math.random() * 1000),
+        lastModified: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+        githubUrl: i % 2 === 0 ? `https://github.com/crewai/crewai-examples/tree/main/agents/${category.toLowerCase().replace(/\s+/g, '-')}-agent` : undefined,
+        demoUrl: `https://demo.agent-${i}.com`,
+        documentationUrl: `https://docs.agent-${i}.com`
+      });
+    }
+
+    return agents;
   }
 
   /**
@@ -502,7 +1602,7 @@ export class WorkflowIndexer {
                 return w.category === 'ai_ml' || (w.integrations || []).some(i => i.toLowerCase().includes('ai') || i.toLowerCase().includes('openai') || i.toLowerCase().includes('llm'));
               }
               const lower = s;
-              return w.filename.includes(lower) || w.name.toLowerCase().includes(lower);
+              return w.filename?.includes(lower) || w.title.toLowerCase().includes(lower);
             });
           }
           return this.calculateStatsFromWorkflows(filtered);
@@ -584,7 +1684,6 @@ export class WorkflowIndexer {
    */
   async forceRefreshWorkflows(source?: string): Promise<{ success: boolean; count: number; error?: string }> {
     try {
-      console.log(`Manually triggering workflow refresh for source: ${source || 'all'}...`);
       this.workflows = [];
       this.lastFetchTime = null;
 
@@ -600,7 +1699,7 @@ export class WorkflowIndexer {
         const seen = new Set<string>();
         [gh, n8n, ai].forEach(arr => {
           (arr || []).forEach(w => {
-            const key = String(w.id || w.filename || w.name);
+            const key = String(w.id || w.filename || w.title);
             if (seen.has(key)) return;
             seen.add(key);
             merged.push(w);
@@ -609,7 +1708,6 @@ export class WorkflowIndexer {
         if (merged.length > 0) {
           this.updateStatsFromWorkflows(merged);
           await this.saveToServerCache(merged, 'all');
-          console.log(`Successfully refreshed ${merged.length} workflows for source: all`);
           return { success: true, count: merged.length };
         }
         return { success: false, count: 0, error: 'No workflows loaded' };
@@ -620,7 +1718,6 @@ export class WorkflowIndexer {
       if (workflows.length > 0) {
         this.updateStatsFromWorkflows(workflows);
         await this.saveToServerCache(workflows, source);
-        console.log(`Successfully refreshed ${workflows.length} workflows for source: ${source || 'all'}`);
         return { success: true, count: workflows.length };
       } else {
         return { success: false, count: 0, error: 'No workflows loaded' };
@@ -696,8 +1793,6 @@ export class WorkflowIndexer {
       }, null);
       const lastFetch = lastFetchTs ? new Date(lastFetchTs) : null;
 
-      console.log(`Cache status for ${normalized || source}: ${totalCount} workflows, last fetch: ${lastFetch}`);
-
       return { hasCache: totalCount > 0, lastFetch, workflowCount: totalCount };
     } catch (error) {
       console.error('Error getting cache status:', error);
@@ -727,7 +1822,6 @@ export class WorkflowIndexer {
     }
 
     if (this.workflows.length === 0) {
-      console.log('No workflows in memory, loading from server cache...');
       // Always try to load from server cache, even in browser
       try {
       await this.loadFromServerCache(params.source);
@@ -747,7 +1841,6 @@ export class WorkflowIndexer {
     }
 
     if (this.workflows.length > 0) {
-      console.log(`Using ${this.workflows.length} cached workflows`);
       this.updateStatsFromWorkflows(this.workflows);
       const filteredWorkflows = this.filterWorkflows(this.workflows, params);
 
@@ -755,17 +1848,12 @@ export class WorkflowIndexer {
       const limit = params.limit || 20;
       const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit);
 
-      console.log(`Filtered ${filteredWorkflows.length} workflows from ${this.workflows.length} total workflows`);
-      console.log(`Returning ${paginatedWorkflows.length} workflows (offset: ${offset}, limit: ${limit})`);
-
       return { workflows: paginatedWorkflows, total: filteredWorkflows.length, hasMore: offset + limit < filteredWorkflows.length };
     }
 
     try {
-      console.log('Attempting to load real workflows from GitHub API...');
       const realWorkflows = await this.loadRealWorkflows(params);
       if (realWorkflows.length > 0) {
-        console.log(`Successfully loaded ${realWorkflows.length} real workflows from GitHub API`);
         this.updateStatsFromWorkflows(realWorkflows);
 
         let filteredWorkflows = realWorkflows;
@@ -773,8 +1861,8 @@ export class WorkflowIndexer {
     if (params.q) {
       const query = params.q.toLowerCase();
       filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.name.toLowerCase().includes(query) ||
-        workflow.description.toLowerCase().includes(query) ||
+        workflow.title.toLowerCase().includes(query) ||
+        workflow.summary.toLowerCase().includes(query) ||
             workflow.integrations.some(integration => integration.toLowerCase().includes(query))
       );
     }
@@ -822,7 +1910,7 @@ export class WorkflowIndexer {
                        );
               }
               return workflow.filename.includes(sourceLower) ||
-                     workflow.name.toLowerCase().includes(sourceLower);
+                     workflow.title.toLowerCase().includes(sourceLower);
             });
           }
         }
@@ -832,54 +1920,23 @@ export class WorkflowIndexer {
         const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit);
 
         return { workflows: paginatedWorkflows, total: filteredWorkflows.length, hasMore: offset + limit < filteredWorkflows.length };
-      } else {
-        console.log('No real workflows loaded, falling back to mock data');
       }
     } catch (error) {
       console.error('Failed to load real workflows from GitHub API:', error);
-      console.log('Falling back to mock workflow data');
     }
 
-    // Generate appropriate mock workflows based on source
+    // Generate fallback mock workflows only if everything else failed
     let mockWorkflows: WorkflowIndex[];
     if (params.source && params.source.toLowerCase().includes('ai-enhanced')) {
       mockWorkflows = this.generateAIEnhancedMockWorkflows();
     } else {
       mockWorkflows = this.generateMockWorkflows();
     }
-    let filteredWorkflows = mockWorkflows;
-    if (params.q) {
-      const query = params.q.toLowerCase();
-      filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.name.toLowerCase().includes(query) ||
-        workflow.description.toLowerCase().includes(query) ||
-        workflow.integrations.some(integration => integration.toLowerCase().includes(query)) ||
-        workflow.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-    if (params.trigger) {
-      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.triggerType === params.trigger);
-    }
-    if (params.complexity) {
-      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.complexity === params.complexity);
-    }
-    if (params.category) {
-      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.category === params.category);
-    }
-    if (params.active !== undefined) {
-      filteredWorkflows = filteredWorkflows.filter(workflow => workflow.active === params.active);
-    }
-    if (params.source) {
-      filteredWorkflows = filteredWorkflows.filter(workflow =>
-        workflow.filename.includes(params.source!.toLowerCase()) ||
-        workflow.name.toLowerCase().includes(params.source!.toLowerCase())
-      );
-    }
 
+    let filteredWorkflows = this.filterWorkflows(mockWorkflows, params);
     const offset = params.offset || 0;
     const limit = params.limit || 20;
     const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit);
-    this.updateStatsFromWorkflows(filteredWorkflows);
     return { workflows: paginatedWorkflows, total: filteredWorkflows.length, hasMore: offset + limit < filteredWorkflows.length };
   }
 
@@ -945,13 +2002,208 @@ export class WorkflowIndexer {
   }
 
   /**
+   * Extract license information from various sources
+   */
+  private async extractLicense(source: string, input: any): Promise<string> {
+    // If license is already provided, use it
+    if (input?.license && typeof input.license === 'string') {
+      return this.normalizeLicenseName(input.license);
+    }
+
+    // Try to extract from different sources based on the source type
+    switch (source) {
+      case 'github':
+        return await this.extractLicenseFromGitHub(input);
+      case 'n8n.io':
+        return this.extractLicenseFromN8n(input);
+      case 'crewai':
+        return this.extractLicenseFromCrewAI(input);
+      case 'hf-spaces':
+        return this.extractLicenseFromHuggingFace(input);
+      default:
+        return 'Unknown';
+    }
+  }
+
+  /**
+   * Extract license from GitHub repository
+   */
+  private async extractLicenseFromGitHub(input: any): Promise<string> {
+    try {
+      // Try to get license from GitHub API if we have repository info
+      if (input?.repository?.full_name) {
+        const repoUrl = `https://api.github.com/repos/${input.repository.full_name}`;
+        const response = await fetch(repoUrl, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'Authorization': this.githubConfig.token ? `Bearer ${this.githubConfig.token}` : ''
+          }
+        });
+        
+        if (response.ok) {
+          const repoData = await response.json();
+          if (repoData.license?.name) {
+            return this.normalizeLicenseName(repoData.license.name);
+          }
+        }
+      }
+
+      // Fallback: try to extract from README or package.json content
+      if (input?.readme) {
+        const licenseFromReadme = this.extractLicenseFromText(input.readme);
+        if (licenseFromReadme !== 'Unknown') {
+          return licenseFromReadme;
+        }
+      }
+
+      return 'Unknown';
+    } catch (error) {
+      console.warn('Failed to extract license from GitHub:', error);
+      return 'Unknown';
+    }
+  }
+
+  /**
+   * Extract license from n8n.io workflow
+   */
+  private extractLicenseFromN8n(input: any): string {
+    // n8n.io workflows are typically MIT licensed
+    // Check if there's any license information in the workflow metadata
+    if (input?.license) {
+      return this.normalizeLicenseName(input.license);
+    }
+    
+    // Default for n8n.io workflows
+    return 'MIT';
+  }
+
+  /**
+   * Extract license from CrewAI examples
+   */
+  private extractLicenseFromCrewAI(input: any): string {
+    // CrewAI examples are typically MIT licensed
+    if (input?.license) {
+      return this.normalizeLicenseName(input.license);
+    }
+    
+    // Check README content if available
+    if (input?.readme) {
+      const licenseFromReadme = this.extractLicenseFromText(input.readme);
+      if (licenseFromReadme !== 'Unknown') {
+        return licenseFromReadme;
+      }
+    }
+    
+    return 'MIT';
+  }
+
+  /**
+   * Extract license from HuggingFace Spaces
+   */
+  private extractLicenseFromHuggingFace(input: any): string {
+    // HuggingFace Spaces often have license information
+    if (input?.license) {
+      return this.normalizeLicenseName(input.license);
+    }
+    
+    // Check cardData for license info
+    if (input?.cardData?.license) {
+      return this.normalizeLicenseName(input.cardData.license);
+    }
+    
+    // Check README content if available
+    if (input?.readme) {
+      const licenseFromReadme = this.extractLicenseFromText(input.readme);
+      if (licenseFromReadme !== 'Unknown') {
+        return licenseFromReadme;
+      }
+    }
+    
+    return 'Apache-2.0'; // Common default for HF Spaces
+  }
+
+  /**
+   * Extract license from text content (README, etc.)
+   */
+  private extractLicenseFromText(text: string): string {
+    if (!text || typeof text !== 'string') {
+      return 'Unknown';
+    }
+
+    const lowerText = text.toLowerCase();
+    
+    // Common license patterns
+    const licensePatterns = [
+      { pattern: /mit license|mit-licensed|license: mit/i, name: 'MIT' },
+      { pattern: /apache license|apache-2\.0|apache 2\.0/i, name: 'Apache-2.0' },
+      { pattern: /gpl v?3|gpl-3\.0|gpl 3\.0/i, name: 'GPL-3.0' },
+      { pattern: /gpl v?2|gpl-2\.0|gpl 2\.0/i, name: 'GPL-2.0' },
+      { pattern: /bsd license|bsd-3-clause|bsd 3-clause/i, name: 'BSD-3-Clause' },
+      { pattern: /bsd-2-clause|bsd 2-clause/i, name: 'BSD-2-Clause' },
+      { pattern: /mozilla public license|mpl-2\.0|mpl 2\.0/i, name: 'MPL-2.0' },
+      { pattern: /eclipse public license|epl-1\.0|epl 1\.0/i, name: 'EPL-1.0' },
+      { pattern: /creative commons|cc-by|cc by/i, name: 'CC-BY' },
+      { pattern: /unlicense|public domain/i, name: 'Unlicense' },
+      { pattern: /proprietary|commercial|private/i, name: 'Proprietary' }
+    ];
+
+    for (const { pattern, name } of licensePatterns) {
+      if (pattern.test(lowerText)) {
+        return name;
+      }
+    }
+
+    return 'Unknown';
+  }
+
+  /**
+   * Normalize license names to standard format
+   */
+  private normalizeLicenseName(license: string): string {
+    if (!license || typeof license !== 'string') {
+      return 'Unknown';
+    }
+
+    const normalized = license.trim();
+    
+    // Common variations
+    const licenseMap: Record<string, string> = {
+      'mit': 'MIT',
+      'apache-2.0': 'Apache-2.0',
+      'apache 2.0': 'Apache-2.0',
+      'apache license': 'Apache-2.0',
+      'gpl-3.0': 'GPL-3.0',
+      'gpl 3.0': 'GPL-3.0',
+      'gpl v3': 'GPL-3.0',
+      'gpl-2.0': 'GPL-2.0',
+      'gpl 2.0': 'GPL-2.0',
+      'gpl v2': 'GPL-2.0',
+      'bsd-3-clause': 'BSD-3-Clause',
+      'bsd 3-clause': 'BSD-3-Clause',
+      'bsd-2-clause': 'BSD-2-Clause',
+      'bsd 2-clause': 'BSD-2-Clause',
+      'mpl-2.0': 'MPL-2.0',
+      'mpl 2.0': 'MPL-2.0',
+      'epl-1.0': 'EPL-1.0',
+      'epl 1.0': 'EPL-1.0',
+      'cc-by': 'CC-BY',
+      'cc by': 'CC-BY',
+      'unlicense': 'Unlicense',
+      'public domain': 'Unlicense'
+    };
+
+    return licenseMap[normalized.toLowerCase()] || normalized;
+  }
+
+  /**
    * Normalize any incoming workflow-like object into our WorkflowIndex shape
    */
-  private normalizeWorkflowShape(input: any): WorkflowIndex {
-    const id = Number(input?.id) || Math.floor(Math.random() * 10_000_000);
+  private normalizeWorkflowShape(input: any, extractedLicense?: string): WorkflowIndex {
+    const id = String(input?.id || `workflow-${Math.floor(Math.random() * 10_000_000)}`);
     const filenameRaw: string = (input?.filename || input?.name || `workflow-${id}`).toString();
     const filename = filenameRaw.endsWith('.json') ? filenameRaw : `${filenameRaw}.json`;
-    const name: string = (input?.name || this.generateWorkflowName(filename)).toString();
+    const rawTitle: string = (input?.title || input?.name || this.generateWorkflowName(filename)).toString();
+    const title: string = this.humanizeTitle(rawTitle);
     const active: boolean = typeof input?.active === 'boolean' ? input.active : true;
     // Author fields
     const authorName: string | undefined = input?.authorName || input?.author || input?.user?.name || input?.user?.username;
@@ -963,7 +2215,19 @@ export class WorkflowIndexer {
       if (url.startsWith('/')) return `https://api.n8n.io${url}`;
       return url;
     };
-    let authorAvatar: string | undefined = toAbsoluteAvatar(input?.authorAvatar || input?.user?.avatar);
+    const avatarCandidates = [
+      input?.authorAvatar,
+      input?.avatar,
+      input?.user?.avatar,
+      input?.user?.avatar_url,
+      input?.user?.avatarUrl,
+      input?.user?.image,
+      input?.user?.profile_image,
+      input?.owner?.avatar,
+      input?.owner?.avatar_url,
+      input?.owner?.avatarUrl
+    ];
+    let authorAvatar: string | undefined = toAbsoluteAvatar(avatarCandidates.filter(Boolean)[0]);
 
     // If no avatar from source, try building a Gravatar URL when an email is present
     if (!authorAvatar) {
@@ -1063,25 +2327,678 @@ export class WorkflowIndexer {
     const analyzedAt: string = (input?.analyzedAt || new Date().toISOString()).toString();
 
     return {
+      // Mandatory core fields
       id,
+      source: input?.source || 'github',
+      title,
+      summary: description,
+      link: input?.link || `https://github.com/Zie619/n8n-workflows/blob/main/workflows/${filename}`,
+      
+      // Workflow-specific mandatory fields
+      category,
+      integrations,
+      complexity,
+      
+      // Optional fields
       filename,
-      name,
       active,
       triggerType,
-      complexity,
       nodeCount,
-      integrations,
-      description,
-      category,
       tags,
       fileHash,
       analyzedAt,
+      license: extractedLicense || input?.license || 'Unknown',
       authorName,
       authorUsername,
       authorAvatar,
       authorVerified,
     };
   }
+
+  /**
+   * Normalize any incoming agent-like object into our AgentIndex shape
+   */
+  private normalizeAgentShape(input: any, extractedLicense?: string): AgentIndex {
+    const id = String(input?.id || `agent-${Math.floor(Math.random() * 10_000_000)}`);
+    const title = (input?.title || input?.name || `Agent ${id}`).toString();
+    const summary = (input?.summary || input?.description || 'AI agent for automation tasks').toString();
+    const source = input?.source || 'unknown';
+    const link = input?.link || '#';
+    
+    // Agent-specific mandatory fields
+    const model = input?.model || 'Unknown';
+    const provider = input?.provider || 'Unknown';
+    const capabilities = Array.isArray(input?.capabilities) ? input.capabilities : [];
+    
+    // Optional fields
+    const category = input?.category || 'General Business';
+    const tags = Array.isArray(input?.tags) ? input.tags : [];
+    const difficulty = input?.difficulty || 'Beginner';
+    const setupTime = input?.setupTime || 'Quick';
+    const deployment = input?.deployment || 'Cloud';
+    const pricing = input?.pricing || 'Free';
+    const requirements = Array.isArray(input?.requirements) ? input.requirements : [];
+    const useCases = Array.isArray(input?.useCases) ? input.useCases : [];
+    const automationPotential = typeof input?.automationPotential === 'number' ? input.automationPotential : 70;
+    
+    // Author metadata
+    const authorName = input?.authorName || input?.author?.name;
+    const authorUsername = input?.authorUsername || input?.author?.username;
+    const authorEmail = input?.authorEmail || input?.author?.email;
+    const authorAvatar = input?.authorAvatar || input?.author?.avatar;
+    const authorVerified = input?.authorVerified || false;
+    
+    // Source-specific metadata
+    const likes = typeof input?.likes === 'number' ? input.likes : 0;
+    const downloads = typeof input?.downloads === 'number' ? input.downloads : 0;
+    const lastModified = input?.lastModified || input?.updatedAt || new Date().toISOString();
+    const githubUrl = input?.githubUrl;
+    const demoUrl = input?.demoUrl;
+    const documentationUrl = input?.documentationUrl;
+
+    return {
+      // Mandatory core fields
+      id,
+      source,
+      title,
+      summary,
+      link,
+      
+      // Agent-specific mandatory fields
+      model,
+      provider,
+      capabilities,
+      
+      // Optional fields
+      category,
+      tags,
+      difficulty,
+      setupTime,
+      deployment,
+      license: extractedLicense || input?.license || 'Unknown',
+      pricing,
+      requirements,
+      useCases,
+      automationPotential,
+      
+      // Author metadata
+      authorName,
+      authorUsername,
+      authorEmail,
+      authorAvatar,
+      authorVerified,
+      
+      // Source-specific metadata
+      likes,
+      downloads,
+      lastModified,
+      githubUrl,
+      demoUrl,
+      documentationUrl
+    };
+  }
+
+  /**
+   * Enrich solution with domain classification using LLM
+   */
+  async enrichSolutionWithDomains(solution: SolutionIndex): Promise<SolutionIndex> {
+    try {
+      // Skip if domains are already classified and not from LLM
+      if (solution.domains && solution.domains.length > 0 && solution.domain_origin !== 'llm') {
+        return solution;
+      }
+
+      // Perform domain classification
+      const domainResult = await SchemaValidator.classifySolutionDomains(
+        solution.title,
+        solution.summary,
+        solution.source,
+        solution.tags?.join(', ')
+      );
+
+      // Update solution with domain classification
+      const enrichedSolution = {
+        ...solution,
+        domains: domainResult.domains,
+        domain_confidences: domainResult.domain_confidences,
+        domain_origin: domainResult.domain_origin
+      };
+
+      return enrichedSolution;
+
+    } catch (error) {
+      console.error('Failed to enrich solution with domains:', error);
+      // Return solution with fallback domain
+      return {
+        ...solution,
+        domains: ['Other'],
+        domain_confidences: [1.0],
+        domain_origin: 'llm'
+      };
+    }
+  }
+
+  /**
+   * Batch enrich multiple solutions with domain classification
+   */
+  async enrichSolutionsWithDomains(solutions: SolutionIndex[]): Promise<SolutionIndex[]> {
+    const enrichedSolutions: SolutionIndex[] = [];
+    
+    for (const solution of solutions) {
+      try {
+        const enriched = await this.enrichSolutionWithDomains(solution);
+        enrichedSolutions.push(enriched);
+        
+        // Add small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`Failed to enrich solution ${solution.id}:`, error);
+        // Add fallback domain classification
+        enrichedSolutions.push({
+          ...solution,
+          domains: ['Other'],
+          domain_confidences: [1.0],
+          domain_origin: 'llm'
+        });
+      }
+    }
+
+    return enrichedSolutions;
+  }
+
+  /**
+   * Store domain classification data in the database
+   */
+  async storeDomainClassification(
+    cacheId: number,
+    solutionId: string,
+    domains: string[],
+    confidences: number[],
+    origin: 'llm' | 'admin' | 'mixed'
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('update_workflow_domain_classification', {
+        cache_id: cacheId,
+        solution_id: solutionId,
+        new_domains: domains,
+        new_confidences: confidences,
+        new_origin: origin
+      });
+
+      if (error) {
+        console.error('Failed to store domain classification:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error storing domain classification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get solutions by domain classification
+   */
+  async getSolutionsByDomain(domainName: string): Promise<Array<{
+    cache_id: number;
+    solution_id: string;
+    title: string;
+    summary: string;
+    source: string;
+    domains: string[];
+    domain_confidences: number[];
+    domain_origin: string;
+  }>> {
+    try {
+      const { data, error } = await supabase.rpc('get_solutions_by_domain', {
+        domain_name: domainName
+      });
+
+      if (error) {
+        console.error('Failed to get solutions by domain:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting solutions by domain:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get domain classification statistics
+   */
+  async getDomainStatistics(): Promise<Array<{
+    domain_name: string;
+    solution_count: number;
+    avg_confidence: number;
+    sources: string[];
+  }>> {
+    try {
+      const { data, error } = await supabase.rpc('get_domain_statistics');
+
+      if (error) {
+        console.error('Failed to get domain statistics:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting domain statistics:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Extract domain classification from cached workflows
+   */
+  async extractDomainClassificationFromCache(cacheId: number): Promise<Array<{
+    solution_id: string;
+    domains: string[];
+    domain_confidences: number[];
+    domain_origin: string;
+  }>> {
+    try {
+      // Get the workflows from cache
+      const { data: cacheData, error: cacheError } = await supabase
+        .from('workflow_cache')
+        .select('workflows')
+        .eq('id', cacheId)
+        .single();
+
+      if (cacheError || !cacheData) {
+        console.error('Failed to get cache data:', cacheError);
+        return [];
+      }
+
+      // Extract domain classification using the database function
+      const { data, error } = await supabase.rpc('extract_domain_classification', {
+        workflows_jsonb: cacheData.workflows
+      });
+
+      if (error) {
+        console.error('Failed to extract domain classification:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error extracting domain classification:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Update cache with enriched domain classification data
+   */
+  async updateCacheWithDomainClassification(
+    source: string,
+    enrichedSolutions: SolutionIndex[]
+  ): Promise<boolean> {
+    try {
+      // Get the current cache record for this source
+      const { data: cacheData, error: cacheError } = await supabase
+        .from('workflow_cache')
+        .select('id, workflows')
+        .eq('source', source)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (cacheError || !cacheData) {
+        console.error('Failed to get cache data for source:', source, cacheError);
+        return false;
+      }
+
+      // Update the workflows with domain classification data
+      const updatedWorkflows = enrichedSolutions.map(solution => ({
+        ...solution,
+        domains: solution.domains || ['Other'],
+        domain_confidences: solution.domain_confidences || [1.0],
+        domain_origin: solution.domain_origin || 'llm'
+      }));
+
+      // Update the cache record
+      const { error: updateError } = await supabase
+        .from('workflow_cache')
+        .update({
+          workflows: updatedWorkflows,
+          domains: enrichedSolutions[0]?.domains || ['Other'],
+          domain_confidences: enrichedSolutions[0]?.domain_confidences || [1.0],
+          domain_origin: enrichedSolutions[0]?.domain_origin || 'llm',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', cacheData.id);
+
+      if (updateError) {
+        console.error('Failed to update cache with domain classification:', updateError);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating cache with domain classification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Admin override: Update domain classification
+   */
+  async adminOverrideDomainClassification(
+    title: string,
+    summary: string,
+    source: string,
+    newDomains: string[],
+    newConfidences: number[],
+    adminNotes?: string
+  ): Promise<boolean> {
+    try {
+      // Generate content hash
+      const { data: hashData, error: hashError } = await supabase.rpc('generate_content_hash', {
+        title_text: title,
+        summary_text: summary,
+        source_id_text: source
+      });
+
+      if (hashError || !hashData) {
+        console.error('Failed to generate content hash:', hashError);
+        return false;
+      }
+
+      const contentHash = hashData;
+
+      // Update domain classification with admin override
+      const { data, error } = await supabase.rpc('update_domain_classification', {
+        content_hash_text: contentHash,
+        new_domains: newDomains,
+        new_confidences: newConfidences,
+        new_origin: 'admin',
+        admin_notes_text: adminNotes
+      });
+
+      if (error) {
+        console.error('Failed to update domain classification:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error applying admin override:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get admin overrides
+   */
+  async getAdminOverrides(): Promise<Array<{
+    id: number;
+    content_hash: string;
+    title: string;
+    summary: string;
+    source_id: string;
+    domains: string[];
+    domain_confidences: number[];
+    domain_origin: string;
+    admin_notes: string;
+    created_at: string;
+    updated_at: string;
+  }>> {
+    try {
+      const { data, error } = await supabase.rpc('get_admin_overrides');
+
+      if (error) {
+        console.error('Failed to get admin overrides:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting admin overrides:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get domain classification statistics
+   */
+  async getDomainClassificationStats(): Promise<{
+    total_classifications: number;
+    llm_classifications: number;
+    admin_overrides: number;
+    mixed_classifications: number;
+    unique_domains: number;
+    avg_confidence: number;
+  } | null> {
+    try {
+      const { data, error } = await supabase.rpc('get_domain_classification_stats');
+
+      if (error) {
+        console.error('Failed to get domain classification stats:', error);
+        return null;
+      }
+
+      return data && data.length > 0 ? data[0] : null;
+    } catch (error) {
+      console.error('Error getting domain classification stats:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all agent capability tags
+   */
+  static async getAgentCapabilityTags(): Promise<Array<{
+    id: number;
+    tag: string;
+    display_name: string;
+    description: string;
+    category: string;
+    display_order: number;
+    is_core: boolean;
+  }>> {
+    try {
+      const { data, error } = await supabase.rpc('get_agent_capability_tags');
+
+      if (error) {
+        console.error('Failed to get agent capability tags:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting agent capability tags:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get core capability tags only
+   */
+  static async getCoreCapabilityTags(): Promise<Array<{
+    id: number;
+    tag: string;
+    display_name: string;
+    description: string;
+    category: string;
+    display_order: number;
+    is_core: boolean;
+  }>> {
+    try {
+      const { data, error } = await supabase.rpc('get_core_capability_tags');
+
+      if (error) {
+        console.error('Failed to get core capability tags:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting core capability tags:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Validate capability tags against the allowed set
+   */
+  static async validateCapabilityTags(tags: string[]): Promise<{
+    valid_tags: string[];
+    invalid_tags: string[];
+    all_valid: boolean;
+  } | null> {
+    try {
+      const { data, error } = await supabase.rpc('validate_capability_tags', {
+        tags: tags
+      });
+
+      if (error) {
+        console.error('Failed to validate capability tags:', error);
+        return null;
+      }
+
+      return data && data.length > 0 ? data[0] : null;
+    } catch (error) {
+      console.error('Error validating capability tags:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Map agent capabilities to standardized tags using heuristics
+   */
+  static mapCapabilitiesToStandardTags(
+    rawCapabilities: string[],
+    title: string,
+    summary: string,
+    source: string
+  ): string[] {
+    const standardizedTags: string[] = [];
+    const lowerCapabilities = rawCapabilities.map(cap => cap.toLowerCase().trim());
+    const lowerTitle = title.toLowerCase();
+    const lowerSummary = summary.toLowerCase();
+    const lowerSource = source.toLowerCase();
+
+    // Define mapping heuristics
+    const capabilityMappings: Record<string, string[]> = {
+      // Core capabilities
+      'web_search': ['search', 'web', 'internet', 'google', 'bing', 'browser', 'scraping', 'crawling'],
+      'data_analysis': ['analysis', 'analytics', 'data', 'statistics', 'metrics', 'insights', 'reporting'],
+      'file_io': ['file', 'document', 'upload', 'download', 'storage', 'filesystem', 'csv', 'json', 'pdf'],
+      'email_send': ['email', 'mail', 'notification', 'alert', 'message', 'smtp', 'sendgrid'],
+
+      // Data access and processing
+      'api_integration': ['api', 'rest', 'graphql', 'integration', 'connect', 'endpoint', 'service'],
+      'database_query': ['database', 'sql', 'query', 'db', 'postgres', 'mysql', 'mongodb', 'redis'],
+      'data_visualization': ['chart', 'graph', 'visualization', 'plot', 'dashboard', 'visual'],
+      'data_extraction': ['extract', 'scrape', 'parse', 'harvest', 'collect', 'gather'],
+      'data_transformation': ['transform', 'convert', 'process', 'clean', 'normalize', 'format'],
+
+      // Communication and collaboration
+      'chat_interaction': ['chat', 'conversation', 'messaging', 'discord', 'slack', 'telegram'],
+      'document_generation': ['generate', 'create', 'document', 'report', 'pdf', 'word', 'template'],
+      'notification_sending': ['notification', 'alert', 'push', 'sms', 'webhook', 'reminder'],
+      'calendar_management': ['calendar', 'schedule', 'event', 'meeting', 'appointment', 'booking'],
+
+      // Content creation and processing
+      'text_processing': ['text', 'nlp', 'language', 'sentiment', 'translation', 'summarize'],
+      'image_processing': ['image', 'photo', 'picture', 'vision', 'ocr', 'resize', 'filter'],
+      'code_generation': ['code', 'programming', 'generate', 'script', 'function', 'class'],
+      'content_summarization': ['summarize', 'summary', 'abstract', 'condense', 'brief'],
+
+      // Automation and workflow
+      'workflow_automation': ['workflow', 'automation', 'process', 'pipeline', 'orchestration'],
+      'task_scheduling': ['schedule', 'cron', 'task', 'job', 'timer', 'periodic'],
+      'monitoring': ['monitor', 'watch', 'track', 'observe', 'health', 'status'],
+      'alerting': ['alert', 'warning', 'alarm', 'threshold', 'critical', 'error'],
+
+      // Development and technical
+      'code_review': ['review', 'code review', 'pull request', 'pr', 'merge', 'diff'],
+      'testing': ['test', 'testing', 'unit test', 'integration', 'qa', 'quality'],
+      'deployment': ['deploy', 'deployment', 'release', 'ci/cd', 'pipeline', 'build'],
+      'security_analysis': ['security', 'vulnerability', 'scan', 'audit', 'penetration', 'threat'],
+
+      // Business and analytics
+      'reporting': ['report', 'reporting', 'dashboard', 'kpi', 'metrics', 'analytics'],
+      'forecasting': ['forecast', 'prediction', 'predict', 'trend', 'future', 'projection'],
+      'optimization': ['optimize', 'optimization', 'improve', 'enhance', 'performance'],
+      'compliance_checking': ['compliance', 'regulation', 'audit', 'policy', 'governance'],
+
+      // Specialized capabilities
+      'language_translation': ['translate', 'translation', 'language', 'multilingual', 'localization'],
+      'voice_processing': ['voice', 'speech', 'audio', 'recognition', 'tts', 'stt'],
+      'blockchain_interaction': ['blockchain', 'crypto', 'ethereum', 'bitcoin', 'smart contract'],
+      'iot_management': ['iot', 'device', 'sensor', 'hardware', 'embedded', 'arduino']
+    };
+
+    // Apply mapping heuristics
+    for (const [standardTag, keywords] of Object.entries(capabilityMappings)) {
+      // Check if any keyword matches the capabilities, title, summary, or source
+      const hasMatch = keywords.some(keyword => 
+        lowerCapabilities.some(cap => cap.includes(keyword)) ||
+        lowerTitle.includes(keyword) ||
+        lowerSummary.includes(keyword) ||
+        lowerSource.includes(keyword)
+      );
+
+      if (hasMatch) {
+        standardizedTags.push(standardTag);
+      }
+    }
+
+    // Remove duplicates and ensure we have at least one core capability
+    const uniqueTags = [...new Set(standardizedTags)];
+    
+    // If no capabilities were mapped, add a default based on source
+    if (uniqueTags.length === 0) {
+      if (lowerSource.includes('crew') || lowerSource.includes('agent')) {
+        uniqueTags.push('workflow_automation');
+      } else if (lowerSource.includes('huggingface') || lowerSource.includes('hf')) {
+        uniqueTags.push('data_analysis');
+      } else {
+        uniqueTags.push('data_analysis'); // Default fallback
+      }
+    }
+
+    return uniqueTags;
+  }
+
+  /**
+   * Normalize agent capabilities during ingestion
+   */
+  static async normalizeAgentCapabilities(
+    rawCapabilities: string[],
+    title: string,
+    summary: string,
+    source: string
+  ): Promise<string[]> {
+    try {
+      // Map to standardized tags
+      const mappedTags = this.mapCapabilitiesToStandardTags(rawCapabilities, title, summary, source);
+      
+      // Validate against allowed tags
+      const validation = await this.validateCapabilityTags(mappedTags);
+      
+      if (validation && validation.all_valid) {
+        return validation.valid_tags;
+      } else if (validation) {
+        console.warn('Some capability tags were invalid:', validation.invalid_tags);
+        return validation.valid_tags;
+      } else {
+        // Fallback to core capabilities if validation fails
+        const coreTags = await this.getCoreCapabilityTags();
+        return coreTags.slice(0, 2).map(tag => tag.tag);
+      }
+    } catch (error) {
+      console.error('Error normalizing agent capabilities:', error);
+      // Return default core capabilities
+      return ['data_analysis', 'web_search'];
+    }
+  }
+
 
   /**
    * Load real workflows from GitHub API via Supabase Edge Function
@@ -1239,157 +3156,6 @@ export class WorkflowIndexer {
         return [];
       }
 
-      // Client fetch for GitHub repository (disabled to use Edge-only path)
-      if (normalized === 'github' && false) {
-        try {
-          let headers: Record<string, string> = {
-            'Accept': 'application/vnd.github+json',
-            'User-Agent': 'PROM8EUS-Client'
-          };
-          const token = this.githubConfig?.token;
-          if (token) headers['Authorization'] = `Bearer ${token}`;
-
-          // Resolve owner/repo from configured source URL (editable in Admin UI)
-          let owner = 'Zie619';
-          let repo = 'n8n-workflows';
-          try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-              const raw = window.localStorage.getItem('workflow_source_overrides');
-              if (raw) {
-                const overrides = JSON.parse(raw || '{}');
-                const gh = overrides?.['github'];
-                const url = gh?.url || gh?.repoUrl || gh?.repository || '';
-                if (url && url.includes('github.com')) {
-                  const m = url.match(/github\.com\/(.+?)\/(.+?)(?:$|\.|\/|\#)/);
-                  if (m && m[1] && m[2]) {
-                    owner = m[1];
-                    repo = m[2].replace(/\.git$/, '');
-                  }
-                }
-              }
-            }
-          } catch {}
-
-          // 1) Fetch repository tree to list workflow files
-          const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`;
-          let resp = await fetch(treeUrl, { headers });
-          // If unauthorized/rate-limited with Bearer, retry with classic 'token' prefix
-          if (resp.status === 401 || resp.status === 403) {
-            if (token) {
-              headers = { ...headers, Authorization: `token ${token}` };
-              resp = await fetch(treeUrl, { headers });
-            }
-          }
-          if (!resp.ok) {
-            console.warn('GitHub tree fetch failed:', resp.status);
-            // Fallback: use contents API to list workflows directory (paged)
-            try {
-              const files: any[] = [];
-              let page = 1;
-              while (page <= 10) { // safety cap
-                const contentsUrl = `https://api.github.com/repos/${owner}/${repo}/contents/workflows?per_page=100&page=${page}`;
-                let r = await fetch(contentsUrl, { headers });
-                if (r.status === 401 || r.status === 403) {
-                  if (token) {
-                    const hdr = { ...headers, Authorization: `token ${token}` };
-                    r = await fetch(contentsUrl, { headers: hdr });
-                  }
-                }
-                if (!r.ok) break;
-                const arr: any[] = await r.json();
-                const pageFiles = (arr || []).filter(it => it && it.type === 'file' && typeof it.name === 'string' && it.name.endsWith('.json'));
-                files.push(...pageFiles.map(f => ({ path: `workflows/${f.name}`, type: 'blob' })));
-                if (arr.length < 100) break;
-                page++;
-              }
-              if (files.length === 0) return [];
-              const aggregated: WorkflowIndex[] = files.map((file: any, idx: number) => {
-                const filename = String(file.path.split('/').pop() || `github-${idx}.json`);
-                const idMatch = filename.match(/^\d+/);
-                const id = idMatch ? Number(idMatch[0]) : idx + 1;
-                const name = this.generateWorkflowName(filename);
-                const description = name;
-                const triggerType = this.determineTriggerType(filename);
-                const nodeCount = 0;
-                const integrations: string[] = this.extractIntegrations(filename);
-                const category = this.mapCategory(integrations[0] || 'development');
-                return this.normalizeWorkflowShape({
-                  id,
-                  filename,
-                  name,
-                  active: true,
-                  triggerType,
-                  complexity: 'Low',
-                  nodeCount,
-                  integrations,
-                  description,
-                  category,
-                  tags: this.generateTags(filename),
-                  fileHash: `${Date.now()}-${idx}`,
-                  analyzedAt: new Date().toISOString()
-                } as any);
-              });
-              this.workflows = aggregated;
-              this.currentSourceKey = 'github';
-              this.updateStatsFromWorkflows(aggregated);
-              return aggregated;
-            } catch (e) {
-              console.warn('GitHub contents fallback failed', e);
-              return [];
-            }
-          }
-          const json: any = await resp.json();
-          const tree: any[] = Array.isArray(json.tree) ? json.tree : [];
-          const files = tree.filter(t => t.type === 'blob' && typeof t.path === 'string' && t.path.startsWith('workflows/') && t.path.endsWith('.json'));
-
-          const aggregated: WorkflowIndex[] = files.map((file: any, idx: number) => {
-            const filename = String(file.path.split('/').pop() || `github-${idx}.json`);
-            const idMatch = filename.match(/^\d+/);
-            const id = idMatch ? Number(idMatch[0]) : idx + 1;
-            const name = this.generateWorkflowName(filename);
-            const description = name;
-            const triggerType = this.determineTriggerType(filename);
-            const nodeCount = 0;
-            const integrations: string[] = this.extractIntegrations(filename);
-            const category = this.mapCategory(integrations[0] || 'development');
-            return this.normalizeWorkflowShape({
-              id,
-              filename,
-              name,
-              active: true,
-              triggerType,
-              complexity: 'Low',
-              nodeCount,
-              integrations,
-              description,
-              category,
-              tags: this.generateTags(filename),
-              fileHash: `${Date.now()}-${idx}`,
-              analyzedAt: new Date().toISOString()
-            } as any);
-          });
-
-          // 2) Optionally fetch README for additional context (not displayed yet, but cached)
-          try {
-            const readmeUrl = 'https://raw.githubusercontent.com/Zie619/n8n-workflows/main/README.md';
-            const r = await fetch(readmeUrl, { headers: { 'Accept': 'text/plain' } });
-            if (r.ok) {
-              const readmeText = await r.text();
-              // cache summary in smart cache for potential UI usage
-              this.setToSmartCache('github:readme', readmeText, 'text/plain');
-            }
-          } catch {}
-
-          // Keep in-memory for browser stats/UI
-          this.workflows = aggregated;
-          this.currentSourceKey = 'github';
-          this.updateStatsFromWorkflows(aggregated);
-          return aggregated;
-        } catch (err) {
-          console.warn('GitHub client fetch failed', err);
-          return [];
-        }
-      }
 
       // Default single-call path for other sources (Edge function; allowed in browser)
       const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
@@ -1435,13 +3201,27 @@ export class WorkflowIndexer {
    * Generate workflow name from filename
    */
   private generateWorkflowName(filename: string): string {
-    return filename
-      .replace('.json', '')
-      .replace(/_/g, ' ')
-      .replace(/\d+/g, '')
-      .trim()
+    return this.humanizeTitle(filename.replace('.json', ''));
+  }
+
+  private humanizeTitle(raw: string): string {
+    if (!raw) return 'Untitled Workflow';
+    const cleaned = raw
+      .replace(/\.json$/i, '')
+      .replace(/[_]+/g, ' ')
+      .replace(/-+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!cleaned) return 'Untitled Workflow';
+    const specialUpper = new Set(['ai', 'llm', 'api', 'http', 'https', 'sql', 'crm', 'erp', 'saas', 'n8n', 'gpt']);
+    return cleaned
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => {
+        const lower = word.toLowerCase();
+        if (lower === 'nn') return 'n8n';
+        if (specialUpper.has(lower)) return lower.toUpperCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
       .join(' ');
   }
 
@@ -1747,8 +3527,8 @@ export class WorkflowIndexer {
     if (params.q) {
       const query = normalize(params.q);
       filtered = filtered.filter(workflow =>
-        workflow.name.toLowerCase().includes(query) ||
-        workflow.description.toLowerCase().includes(query) ||
+        workflow.title.toLowerCase().includes(query) ||
+        workflow.summary.toLowerCase().includes(query) ||
         workflow.integrations.some(integration => 
           integration.toLowerCase().includes(query)
         ) ||
@@ -1790,18 +3570,53 @@ export class WorkflowIndexer {
     }
 
     if (params.source) {
+      const normalizedTarget = this.normalizeSourceKey(params.source);
       const sourceLower = params.source.toLowerCase();
-      const normalized = this.normalizeSourceKey(params.source);
 
-      // Only apply source filtering if we're not already filtered by source
-      if (this.currentSourceKey !== normalized) {
-        filtered = filtered.filter(workflow => {
-          // For now, be permissive and show all workflows when source is specified
-          // This ensures workflows are visible while we debug the filtering logic
-          console.log(`Filtering workflow: ${workflow.name} for source: ${sourceLower}`);
-          return true;
-        });
-      }
+      filtered = filtered.filter(workflow => {
+        const workflowSourceNormalized = this.normalizeSourceKey(workflow.source);
+
+        if (normalizedTarget && workflowSourceNormalized) {
+          if (workflowSourceNormalized === normalizedTarget) {
+            return true;
+          }
+        }
+
+        const filename = (workflow.filename || '').toLowerCase();
+        const title = workflow.title.toLowerCase();
+
+        if (normalizedTarget === 'n8n.io') {
+          return filename.startsWith('n8n-') ||
+            filename.includes('n8n_official') ||
+            workflow.source?.toLowerCase().includes('n8n') ||
+            title.includes('n8n official');
+        }
+
+        if (normalizedTarget === 'github') {
+          return workflowSourceNormalized === 'github' ||
+            (!filename.startsWith('n8n-') && filename.includes('workflow')) ||
+            workflow.source?.toLowerCase().includes('github');
+        }
+
+        if (normalizedTarget === 'awesome-n8n-templates') {
+          return workflowSourceNormalized === 'awesome-n8n-templates' ||
+            workflow.source?.toLowerCase().includes('awesome-n8n') ||
+            filename.includes('community_') ||
+            title.includes('community');
+        }
+
+        if (normalizedTarget === 'ai-enhanced') {
+          return workflowSourceNormalized === 'ai-enhanced' ||
+            workflow.category === 'ai_ml' ||
+            (workflow.integrations || []).some(integration => {
+              const lower = integration.toLowerCase();
+              return lower.includes('openai') || lower.includes('ai') || lower.includes('llm');
+            });
+        }
+
+        // Fallback: fuzzy match on filename or title containing requested source label
+        return filename.includes(sourceLower) || title.includes(sourceLower);
+      });
     }
 
     return filtered;
@@ -1935,15 +3750,15 @@ export class WorkflowIndexer {
       let workflowScore = 100;
       
       // Check for data quality issues
-      if (!workflow.name || workflow.name.length < 3) workflowScore -= 20;
-      if (!workflow.description || workflow.description.length < 10) workflowScore -= 15;
+      if (!workflow.title || workflow.title.length < 3) workflowScore -= 20;
+      if (!workflow.summary || workflow.summary.length < 10) workflowScore -= 15;
       if (!workflow.integrations || workflow.integrations.length === 0) workflowScore -= 15;
       if (workflow.nodeCount < 1) workflowScore -= 10;
       if (!workflow.category || workflow.category === 'general') workflowScore -= 10;
       
       // Check for suspicious patterns
-      if (workflow.name === workflow.filename) workflowScore -= 5;
-      if (workflow.description === workflow.name) workflowScore -= 10;
+      if (workflow.title === workflow.filename) workflowScore -= 5;
+      if (workflow.summary === workflow.title) workflowScore -= 10;
       
       totalScore += Math.max(0, workflowScore);
     }
@@ -2052,8 +3867,8 @@ export class WorkflowIndexer {
       let relevanceScore = 0;
       
       // Check name relevance
-      if (workflow.name) {
-        const nameWords = workflow.name.toLowerCase().split(/\s+/);
+      if (workflow.title) {
+        const nameWords = workflow.title.toLowerCase().split(/\s+/);
         const nameMatches = queryWords.filter(qWord => 
           nameWords.some(nWord => nWord.includes(qWord) || qWord.includes(nWord))
         );
@@ -2061,8 +3876,8 @@ export class WorkflowIndexer {
       }
       
       // Check description relevance
-      if (workflow.description) {
-        const descWords = workflow.description.toLowerCase().split(/\s+/);
+      if (workflow.summary) {
+        const descWords = workflow.summary.toLowerCase().split(/\s+/);
         const descMatches = queryWords.filter(qWord => 
           descWords.some(dWord => dWord.includes(qWord) || qWord.includes(dWord))
         );
@@ -2114,8 +3929,8 @@ export class WorkflowIndexer {
     
     // Check for consistent data structure
     const hasConsistentStructure = workflows.every(w => 
-      typeof w.name === 'string' &&
-      typeof w.description === 'string' &&
+      typeof w.title === 'string' &&
+      typeof w.summary === 'string' &&
       Array.isArray(w.integrations) &&
       typeof w.nodeCount === 'number' &&
       typeof w.active === 'boolean'
@@ -2124,7 +3939,7 @@ export class WorkflowIndexer {
     if (hasConsistentStructure) totalScore += 30;
     
     // Check for consistent naming patterns
-    const namePatterns = workflows.map(w => w.name.length);
+    const namePatterns = workflows.map(w => w.title.length);
     const avgNameLength = namePatterns.reduce((a, b) => a + b, 0) / namePatterns.length;
     const nameConsistency = namePatterns.filter(len => Math.abs(len - avgNameLength) < 10).length / workflows.length;
     totalScore += nameConsistency * 20;
@@ -2272,7 +4087,7 @@ export class WorkflowIndexer {
       let error: string | undefined;
 
       // Only perform health checks for supported sources
-      const supportedSources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced'];
+      const supportedSources = ['github', 'awesome-n8n-templates', 'n8n.io', 'ai-enhanced', 'hf-spaces'];
       const sourceKey = this.getSourceKey(source);
       
       if (!supportedSources.includes(sourceKey)) {
@@ -2373,6 +4188,29 @@ export class WorkflowIndexer {
             } catch (err) {
               error = err instanceof Error ? err.message : 'Unknown error';
               this.recordSourceError(source, error, { source: 'ai-enhanced' });
+            }
+            break;
+          case 'hf-spaces':
+            try {
+              const response = await fetch('https://huggingface.co/api/spaces?limit=1', {
+                headers: {
+                  'Accept': 'application/json',
+                  'User-Agent': 'PROM8EUS-HealthCheck'
+                }
+              });
+              statusCode = response.status;
+              isHealthy = response.ok;
+              if (response.ok) {
+                const data = await response.json();
+                dataReceived = Array.isArray(data) ? data.length >= 0 : true;
+                dataSize = JSON.stringify(data).length;
+              } else {
+                error = `HTTP ${statusCode}: ${response.statusText}`;
+                this.recordSourceError(source, error, { statusCode, source: 'hf-spaces' });
+              }
+            } catch (err) {
+              error = err instanceof Error ? err.message : 'Unknown error';
+              this.recordSourceError(source, error, { source: 'hf-spaces' });
             }
             break;
           default:
@@ -3741,6 +5579,51 @@ export class WorkflowIndexer {
     const total = this.cacheStats.hits + this.cacheStats.misses;
     this.cacheStats.hitRate = total > 0 ? (this.cacheStats.hits / total) * 100 : 0;
     this.cacheStats.size = this.smartCache.size;
+    this.cacheStats.entryCount = this.smartCache.size;
+    this.cacheStats.totalEntries = this.smartCache.size;
+    this.cacheStats.totalSize = this.calculateCacheTotalSize();
+    this.cacheStats.lastUpdated = new Date().toISOString();
+  }
+
+  private calculateCacheTotalSize(): number {
+    let totalSize = 0;
+
+    for (const entry of this.smartCache.values()) {
+      totalSize += this.estimateEntrySize(entry);
+    }
+
+    return totalSize;
+  }
+
+  private estimateEntrySize(entry: CacheEntry<any>): number {
+    const encoder = this.textEncoder;
+    const { data } = entry;
+
+    try {
+      if (typeof data === 'string') {
+        return encoder ? encoder.encode(data).length : data.length;
+      }
+
+      if (typeof ArrayBuffer !== 'undefined') {
+        if (data instanceof ArrayBuffer) {
+          return data.byteLength;
+        }
+
+        if (ArrayBuffer.isView(data)) {
+          return data.byteLength;
+        }
+      }
+
+      if (typeof Blob !== 'undefined' && data instanceof Blob) {
+        return data.size;
+      }
+
+      const serialized = JSON.stringify(data);
+      return encoder ? encoder.encode(serialized).length : serialized.length;
+    } catch (error) {
+      console.warn('Failed to estimate cache entry size:', error);
+      return 0;
+    }
   }
 
   /**
@@ -3812,7 +5695,7 @@ export class WorkflowIndexer {
   clearAllCache(): void {
     const size = this.smartCache.size;
     this.smartCache.clear();
-    this.cacheStats.size = 0;
+    this.updateCacheStats();
     console.log(`Cleared all ${size} cache entries`);
   }
 

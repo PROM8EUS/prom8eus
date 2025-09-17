@@ -1,6 +1,6 @@
-# LLM-Analyse für Task-Analyse
+# LLM-Analyse für Dual-Type Solution Matching (Workflows & AI Agents)
 
-## 🎯 Empfehlungen nach Use Case
+## 🎯 Empfehlungen nach Use Case für Workflow- und Agent-Analyse
 
 ### 1. **Produktion - Hohe Qualität** 
 **Empfohlen: Claude 3 Sonnet (Anthropic)**

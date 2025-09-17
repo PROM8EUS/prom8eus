@@ -152,41 +152,33 @@ async function loadN8nOfficialTemplates() {
     } as Record<string, string>;
 
     // 1) Bulk attempt
-    console.log('n8n.io: bulk fetch start');
     let res = await fetch(`${base}?page=1&perPage=6000`, { headers });
-    console.log('n8n.io: bulk status', res.status);
     let items: any[] = [];
     if (res.ok) {
       const data = await res.json();
       items = Array.isArray(data.workflows) ? data.workflows : [];
-      console.log('n8n.io: bulk items', items.length);
     }
 
     // 2) Fallback to pagination if bulk failed or yielded 0
     if (!items || items.length === 0) {
-      console.log('n8n.io: fallback pagination start');
       const all: any[] = [];
       let page = 1;
       const perPage = 500;
       for (; page <= 15; page++) {
         const url = `${base}?page=${page}&perPage=${perPage}`;
         const r = await fetch(url, { headers });
-        console.log('n8n.io: page', page, 'status', r.status);
         if (!r.ok) break;
         const j = await r.json();
         const batch = Array.isArray(j.workflows) ? j.workflows : [];
-        console.log('n8n.io: page', page, 'batch', batch.length);
         if (batch.length === 0) break;
         all.push(...batch);
         if (batch.length < perPage) break;
       }
       items = all;
-      console.log('n8n.io: paginated total', items.length);
     }
 
     // 3) Final fallback: empty -> mock
     if (!items || items.length === 0) {
-      console.log('n8n.io: fell back to mock');
       return { workflows: generateMockN8nTemplates() };
     }
 
@@ -224,10 +216,9 @@ async function loadN8nOfficialTemplates() {
       };
     });
 
-    console.log('n8n.io: returning workflows', workflows.length);
     return { workflows };
   } catch (e) {
-    console.log('n8n.io: error', e);
+    console.error('n8n.io: error', e);
     return { workflows: generateMockN8nTemplates() };
   }
 }

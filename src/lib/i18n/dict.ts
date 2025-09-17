@@ -620,7 +620,6 @@ export const DICT: Record<Lang, Record<string, string>> = {
     task_category_businessstrategy: "Business Strategy",
     task_category_generalai: "General AI",
     task_category_documentation: "Documentation",
-    task_category_systemintegration: "System Integration",
     task_category_accounting: "Accounting",
     task_category_collaboration: "Collaboration",
     task_category_finance: "Finance",

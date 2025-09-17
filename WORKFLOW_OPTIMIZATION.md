@@ -1,10 +1,10 @@
-# 🔄 Workflow-Empfehlungs-Optimierung
+# 🔄 Dual-Type Solution Optimization (Workflows & AI Agents)
 
 ## Problem
-Die ursprünglichen Workflow-Empfehlungen waren zu generisch und basierten nicht auf den tatsächlich generierten Teilaufgaben. OpenAI hatte keine Kenntnis über verfügbare Workflows und konnte keine spezifischen Empfehlungen geben.
+Die ursprünglichen Workflow-Empfehlungen waren zu generisch und basierten nicht auf den tatsächlich generierten Teilaufgaben. OpenAI hatte keine Kenntnis über verfügbare Workflows und AI Agents und konnte keine spezifischen Empfehlungen geben.
 
 ## Lösung
-Implementierung eines mehrstufigen Systems für bessere Workflow-Empfehlungen:
+Implementierung eines mehrstufigen Systems für bessere Workflow- und AI Agent-Empfehlungen:
 
 ### 1. **Erweiterte Prompt-Engineering**
 

@@ -341,6 +341,6 @@ export const createAgentsApiClient = (baseUrl: string, apiKey: string): AgentsAp
 
 // Default client for local development
 export const defaultAgentsClient = createAgentsApiClient(
-  process.env.VITE_AGENTS_API_URL || 'http://localhost:3001',
-  process.env.VITE_AGENTS_API_KEY || 'dev-key'
+  import.meta.env.VITE_AGENTS_API_URL || 'http://localhost:3001',
+  import.meta.env.VITE_AGENTS_API_KEY || 'dev-key'
 );

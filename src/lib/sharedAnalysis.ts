@@ -1,5 +1,5 @@
 // Shared Analysis Service for cross-user sharing
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from './supabase';
 
 export interface SharedAnalysisData {
   originalText: string;

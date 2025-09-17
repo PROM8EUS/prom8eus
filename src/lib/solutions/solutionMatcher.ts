@@ -3,6 +3,9 @@ import { AIAgent } from './aiAgentsCatalog';
 import { N8nWorkflow } from '../n8nApi';
 import { mapSubtaskToAgents } from './agentCategorization';
 import { getAgentRecommendationsForSubtask } from './agentSubtaskMapping';
+import { WorkflowIndex, AgentIndex } from '../workflowIndexer';
+import { WorkflowScoring, WorkflowScoringContext } from './workflowScoring';
+import { AgentScoring, AgentScoringContext } from './agentScoring';
 
 export interface SubtaskMatch {
   subtaskId: string;
@@ -69,10 +72,15 @@ export class SolutionMatcher {
     businessDomainWeight: 0.10
   };
 
+  private workflowScoring: WorkflowScoring;
+  private agentScoring: AgentScoring;
+
   constructor(private customCriteria?: Partial<MatchingCriteria>) {
     if (customCriteria) {
       this.defaultCriteria = { ...this.defaultCriteria, ...customCriteria };
     }
+    this.workflowScoring = new WorkflowScoring();
+    this.agentScoring = new AgentScoring();
   }
 
   /**
@@ -491,6 +499,42 @@ export class SolutionMatcher {
       criticalPath,
       dependencies
     };
+  }
+
+  /**
+   * Score workflows using the new numeric scoring system
+   */
+  scoreWorkflows(
+    workflows: WorkflowIndex[],
+    context: WorkflowScoringContext = {}
+  ): Array<{ workflow: WorkflowIndex; score: number; reasoning: string[] }> {
+    return workflows.map(workflow => {
+      const workflowScore = this.workflowScoring.calculateWorkflowScore(workflow, context);
+      return {
+        workflow,
+        score: workflowScore.overallScore,
+        reasoning: workflowScore.reasoning
+      };
+    }).sort((a, b) => b.score - a.score);
+  }
+
+  /**
+   * Score agents using the tier-based scoring system
+   */
+  scoreAgents(
+    agents: AgentIndex[],
+    context: AgentScoringContext = {}
+  ): Array<{ agent: AgentIndex; tier: string; score: number; reasoning: string[]; disclaimer: string }> {
+    return agents.map(agent => {
+      const agentScore = this.agentScoring.calculateAgentScore(agent, context);
+      return {
+        agent,
+        tier: agentScore.tier,
+        score: agentScore.overallScore,
+        reasoning: agentScore.reasoning,
+        disclaimer: agentScore.disclaimer
+      };
+    }).sort((a, b) => b.score - a.score);
   }
 
   /**

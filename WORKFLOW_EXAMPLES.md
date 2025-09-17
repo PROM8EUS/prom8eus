@@ -1,8 +1,8 @@
-# AI Workflow Templates - Beispiele & ROI-Analyse
+# Dual-Type Solution Templates - Workflows & AI Agents (Beispiele & ROI-Analyse)
 
 ## 🎯 Übersicht
 
-Wir haben **9 detaillierte Workflow-Templates** für die Top-3-Branchen erstellt:
+Wir haben **9 detaillierte Workflow-Templates** und **AI Agent-Integrationen** für die Top-3-Branchen erstellt:
 
 ### 📊 Branchen-Ranking nach Erfolgspotenzial:
 

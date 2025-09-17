@@ -1,6 +1,6 @@
-# 🎯 OpenAI Token-Optimierung für Prom8eus
+# 🎯 OpenAI Token-Optimierung für Prom8eus (Dual-Type Model)
 
-## Übersicht der implementierten Optimierungen
+## Übersicht der implementierten Optimierungen für Workflows & AI Agents
 
 ### 1. **Prompt-Optimierung** (60-70% Token-Einsparung)
 

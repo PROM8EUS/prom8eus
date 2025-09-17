@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from './supabase';
 import { getCachedUrlData, setCachedUrlData, cachedDataToJobText } from './urlCache';
 import { composeJobText as composeJobTextUtil, ExtractedJob } from './composeJobText';
 

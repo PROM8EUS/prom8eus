@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Settings, Users, BarChart3, Database, Shield, RefreshCw, TestTube } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  LogOut,
+  Settings,
+  Users,
+  Shield,
+  RefreshCw,
+  TestTube,
+  Tag,
+  Zap,
+  ListTodo,
+  Mail,
+  CheckSquare,
+  MessageSquare,
+  LayoutDashboard
+} from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,43 +32,138 @@ export default function AdminLayout({ children, lang, onLogout, currentView = 'd
     onLogout();
   };
 
-  const adminMenuItems = [
-    {
-      id: 'dashboard',
-      title: lang === 'de' ? 'Dashboard' : 'Dashboard',
-      description: lang === 'de' ? 'Übersicht und Statistiken' : 'Overview and statistics',
-      icon: BarChart3,
-      href: '/admin'
-    },
-    {
-      id: 'sources',
-      title: lang === 'de' ? 'Quellen' : 'Sources',
-      description: lang === 'de' ? 'Workflow- und AI-Agent-Quellen' : 'Workflow and AI agent sources',
-      icon: RefreshCw,
-      href: '/admin/sources'
-    },
-    {
-      id: 'test',
-      title: lang === 'de' ? 'Workflow Test' : 'Workflow Test',
-      description: lang === 'de' ? 'Teste den Workflow-Chain' : 'Test the workflow chain',
-      icon: TestTube,
-      href: '/admin/test'
-    },
-    {
-      id: 'users',
-      title: lang === 'de' ? 'Benutzer' : 'Users',
-      description: lang === 'de' ? 'Benutzerverwaltung' : 'User management',
-      icon: Users,
-      href: '/admin/users'
-    },
-    {
-      id: 'settings',
-      title: lang === 'de' ? 'Einstellungen' : 'Settings',
-      description: lang === 'de' ? 'Systemkonfiguration' : 'System configuration',
-      icon: Settings,
-      href: '/admin/settings'
-    }
-  ];
+  const adminMenuItems = {
+    core: [
+      {
+        id: 'dashboard',
+        title: lang === 'de' ? 'Dashboard' : 'Dashboard',
+        description: lang === 'de' ? 'Übersicht und Statistiken' : 'Overview & metrics',
+        icon: LayoutDashboard,
+        href: '/admin'
+      },
+      {
+        id: 'sources',
+        title: lang === 'de' ? 'Quellen' : 'Sources',
+        description: lang === 'de' ? 'Workflows & Agenten verwalten' : 'Manage workflows & agents',
+        icon: RefreshCw,
+        href: '/admin/sources'
+      },
+      {
+        id: 'validation-queue',
+        title: lang === 'de' ? 'Validierung' : 'Validation',
+        description: lang === 'de' ? 'LLM-Ausgaben prüfen' : 'Review LLM output',
+        icon: CheckSquare,
+        href: '/admin/validation-queue'
+      },
+      {
+        id: 'pilot-feedback',
+        title: lang === 'de' ? 'Pilot-Feedback' : 'Pilot Feedback',
+        description: lang === 'de' ? 'Erkenntnisse aus Tests' : 'Insights from pilots',
+        icon: MessageSquare,
+        href: '/admin/pilot-feedback'
+      }
+    ],
+    catalog: [
+      {
+        id: 'domains',
+        title: lang === 'de' ? 'Domänen' : 'Domains',
+        description: lang === 'de' ? 'Ontologien & Zuordnung' : 'Ontologies & mapping',
+        icon: Tag,
+        href: '/admin/domains'
+      },
+      {
+        id: 'capabilities',
+        title: lang === 'de' ? 'Fähigkeiten' : 'Capabilities',
+        description: lang === 'de' ? 'Agent-Fähigkeiten pflegen' : 'Maintain agent capabilities',
+        icon: Zap,
+        href: '/admin/capabilities'
+      },
+      {
+        id: 'implementation-steps',
+        title: lang === 'de' ? 'Implementierungsschritte' : 'Implementation Steps',
+        description: lang === 'de' ? 'Step-Extraktionen verwalten' : 'Manage extracted steps',
+        icon: ListTodo,
+        href: '/admin/implementation-steps'
+      },
+      {
+        id: 'implementation-requests',
+        title: lang === 'de' ? 'Implementierungsanfragen' : 'Implementation Requests',
+        description: lang === 'de' ? 'Eingehende Wünsche' : 'Incoming requests',
+        icon: Mail,
+        href: '/admin/implementation-requests'
+      }
+    ],
+    tools: [
+      {
+        id: 'test',
+        title: lang === 'de' ? 'Workflow Test' : 'Workflow Test',
+        description: lang === 'de' ? 'Playground & Simulation' : 'Playground & simulation',
+        icon: TestTube,
+        href: '/admin/test'
+      },
+      {
+        id: 'users',
+        title: lang === 'de' ? 'Benutzer' : 'Users',
+        description: lang === 'de' ? 'Zugriff & Rollen' : 'Access & roles',
+        icon: Users,
+        href: '/admin/users'
+      },
+      {
+        id: 'settings',
+        title: lang === 'de' ? 'Einstellungen' : 'Settings',
+        description: lang === 'de' ? 'Systemkonfiguration' : 'System configuration',
+        icon: Settings,
+        href: '/admin/settings'
+      }
+    ]
+  } as const;
+
+  const renderNavGroup = (
+    title: string,
+    description: string,
+    items: typeof adminMenuItems.core
+  ) => (
+    <div className="space-y-2">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{title}</p>
+        <p className="text-[11px] text-gray-400">{description}</p>
+      </div>
+      <div className="space-y-1">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = currentView === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onViewChange?.(item.id)}
+              className={cn(
+                'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors flex items-center gap-3',
+                isActive
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-md',
+                  isActive ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="flex-1">
+                <div className="font-medium leading-tight">{item.title}</div>
+                <p className={cn('text-[11px] leading-tight', isActive ? 'text-white/80' : 'text-gray-400')}>
+                  {item.description}
+                </p>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -87,40 +196,32 @@ export default function AdminLayout({ children, lang, onLogout, currentView = 'd
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-          {adminMenuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-              <Card 
-                key={item.id} 
-                className={`hover:shadow-md transition-shadow cursor-pointer h-24 flex items-center ${
-                  isActive ? 'ring-2 ring-primary bg-primary/5' : ''
-                }`}
-                onClick={() => onViewChange?.(item.id)}
-              >
-                <CardHeader className="w-full py-0">
-                  <div className="flex items-center h-24">
-                    <div className={`p-2 rounded-lg mr-3 ${
-                      isActive ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
-                    }`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center">
-                      <CardTitle className="text-base">{item.title}</CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            );
-          })}
-        </div>
+        <div className="flex gap-6">
+          <aside className="w-64 shrink-0 space-y-6">
+            {renderNavGroup(
+              lang === 'de' ? 'Kernbereiche' : 'Core Areas',
+              lang === 'de' ? 'Monitoring & tägliche Arbeit' : 'Monitoring & daily work',
+              adminMenuItems.core
+            )}
+            {renderNavGroup(
+              lang === 'de' ? 'Katalog-Verwaltung' : 'Catalog Management',
+              lang === 'de' ? 'Struktur & Inhalte pflegen' : 'Maintain structure & content',
+              adminMenuItems.catalog
+            )}
+            {renderNavGroup(
+              lang === 'de' ? 'Tools & Einstellungen' : 'Tools & Settings',
+              lang === 'de' ? 'Konfiguration & Utilities' : 'Configuration & utilities',
+              adminMenuItems.tools
+            )}
+          </aside>
 
-        {/* Admin Content */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-5">
-            {children}
-          </div>
+          <main className="flex-1">
+            <div className="bg-white rounded-2xl shadow-sm border">
+              <div className="p-5">
+                {children}
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

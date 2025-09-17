@@ -107,7 +107,6 @@ export class N8nApi {
       expiry.setHours(expiry.getHours() + this.cacheExpiryHours);
       localStorage.setItem(this.cacheExpiryKey, expiry.toISOString());
       
-      console.log(`Cached ${workflows.length} workflows until ${expiry.toISOString()}`);
     } catch (error) {
       console.warn('Error saving workflows to cache:', error);
     }
@@ -118,7 +117,6 @@ export class N8nApi {
     try {
       localStorage.removeItem(this.cacheKey);
       localStorage.removeItem(this.cacheExpiryKey);
-      console.log('Workflow cache cleared');
     } catch (error) {
       console.warn('Error clearing cache:', error);
     }
@@ -193,13 +191,11 @@ export class N8nApi {
         const now = new Date().getTime();
         
         if (now < expiryTime) {
-          console.log('Using cached available categories');
           return JSON.parse(cached);
         }
       }
       
       // Cache expired or missing, fetch from GitHub
-      console.log('Fetching available categories from GitHub API...');
       const categories = await this.getAvailableCategories();
       
       // Cache the results
@@ -210,7 +206,6 @@ export class N8nApi {
         expiry.setHours(expiry.getHours() + this.availableCategoriesCacheExpiryHours);
         localStorage.setItem(this.availableCategoriesExpiryKey, expiry.toISOString());
         
-        console.log(`Cached available categories until ${expiry.toISOString()}`);
       } catch (e) {
         console.warn('Failed to cache available categories:', e);
       }
@@ -224,33 +219,19 @@ export class N8nApi {
 
   // Public method to force refresh cache
   async refreshCache(): Promise<void> {
-    console.log('Forcing cache refresh...');
     this.clearCache();
     await this.fetchWorkflows();
   }
 
   // Public method to clear cache immediately
   clearCacheNow(): void {
-    console.log('Clearing cache immediately...');
     this.clearCache();
   }
 
   // Force complete refresh of all workflows
   async forceCompleteRefresh(): Promise<void> {
-    console.log('=== FORCING COMPLETE WORKFLOW REFRESH ===');
-    console.log('This will load all 2,053+ workflows from Zie619/n8n-workflows repository');
-    
-    // Clear cache immediately
     this.clearCacheNow();
-    
-    // Fetch all workflows without limits
     const allWorkflows = await this.fetchWorkflows({ limit: undefined });
-    
-    console.log(`=== REFRESH COMPLETE ===`);
-    console.log(`Total workflows loaded: ${allWorkflows.length}`);
-    console.log(`Expected: ~2,053 workflows from repository`);
-    
-    // Save to cache
     this.saveWorkflowsToCache(allWorkflows);
   }
 
@@ -280,7 +261,6 @@ export class N8nApi {
     // First, try to get workflows from cache
     const cachedWorkflows = this.getCachedWorkflows();
     if (cachedWorkflows.length > 0) {
-      console.log(`Using ${cachedWorkflows.length} cached workflows`);
       return options.limit ? cachedWorkflows.slice(0, options.limit) : cachedWorkflows;
     }
 
@@ -291,7 +271,6 @@ export class N8nApi {
     }
 
     try {
-      console.log('Cache empty or expired, fetching workflows from Zie619/n8n-workflows repository...');
       
       // Get all workflow categories from the repository
       const categoriesResponse = await fetch(
@@ -316,24 +295,20 @@ export class N8nApi {
     
       // Process each category to find workflow files (load all categories for complete coverage)
       const categoriesToProcess = categories; // Load all 186 categories
-      console.log(`Processing ${categoriesToProcess.length} categories for complete workflow coverage...`);
       
       let processedCategories = 0;
       for (const category of categoriesToProcess) {
         if (category.type === 'dir') {
           try {
             processedCategories++;
-            console.log(`Processing category ${processedCategories}/${categoriesToProcess.length}: ${category.name}`);
             const categoryWorkflows = await this.fetchWorkflowsFromCategory(category.name, options.limit || 50); // Load more workflows per category
             workflows.push(...categoryWorkflows);
-            console.log(`Added ${categoryWorkflows.length} workflows from ${category.name} (Total: ${workflows.length})`);
           } catch (error) {
             console.warn(`Failed to fetch workflows from category ${category.name}:`, error);
           }
         }
       }
       
-      console.log(`Successfully fetched ${workflows.length} workflows from Zie619/n8n-workflows`);
       
       // Save to cache for future use
       this.saveWorkflowsToCache(workflows);
@@ -1125,29 +1100,21 @@ export class N8nApi {
 
   async searchWorkflowsByTask(taskText: string, selectedApplications: string[] = []): Promise<N8nWorkflow[]> {
     try {
-      console.log('=== SMART WORKFLOW SEARCH ===');
-      console.log('Task text:', taskText);
-      console.log('Selected applications:', selectedApplications);
       
       // Get cached workflows first (fast)
       const cachedWorkflows = this.getCachedWorkflows();
       
       if (cachedWorkflows.length > 0) {
-        console.log(`Using ${cachedWorkflows.length} cached workflows for smart search`);
         return this.searchInWorkflows(cachedWorkflows, taskText, selectedApplications);
       }
       
       // If no cache, fetch only relevant categories
       const relevantCategories = this.getRelevantCategories(taskText, selectedApplications);
-      console.log('Relevant categories for search:', relevantCategories);
       
       // Fetch only relevant workflows
       const fetchedWorkflows = await this.fetchRelevantWorkflows(relevantCategories, taskText, selectedApplications);
       
-      console.log(`Found ${fetchedWorkflows.length} relevant workflows`);
-      
       if (fetchedWorkflows.length === 0) {
-        console.log('No relevant workflows found, using fallback');
         return this.getFallbackWorkflows(10);
       }
       
@@ -1183,26 +1150,18 @@ export class N8nApi {
         }
       }
 
-      console.log('=== FAST WORKFLOW SEARCH ===');
-      console.log('Task text:', taskText);
-      console.log('Selected applications:', selectedApplications);
       
       // Get relevant categories based on task and applications
       const relevantCategories = this.getRelevantCategories(taskText, selectedApplications);
-      console.log('Relevant categories:', relevantCategories);
-      
       const validCategories = await this.validateCategories(relevantCategories);
-      console.log('Valid categories:', validCategories);
 
       const workflows: N8nWorkflow[] = [];
       if (validCategories.length > 0) {
         const limitedCategories = validCategories.slice(0, 5);
         for (const category of limitedCategories) {
           try {
-            console.log(`Fetching from category: ${category}`);
             const categoryWorkflows = await this.fetchWorkflowsFromCategory(category, 10);
             workflows.push(...categoryWorkflows);
-            console.log(`Added ${categoryWorkflows.length} workflows from ${category}`);
           } catch (error) {
             console.warn(`Failed to fetch from ${category}:`, error);
           }
@@ -1212,13 +1171,11 @@ export class N8nApi {
       }
 
       if (workflows.length === 0) {
-        console.log('No workflows from GitHub; returning fallback for fast search.');
         return this.getFallbackWorkflows(10);
       }
       
       // Search in fetched workflows
       const results = this.searchInWorkflows(workflows, taskText, selectedApplications);
-      console.log(`Found ${results.length} relevant workflows from ${workflows.length} total`);
       
       // Cache the results
       try {
@@ -1248,28 +1205,12 @@ export class N8nApi {
 
   // Test method to debug workflow fetching
   async testWorkflowFetching(): Promise<void> {
-    console.log('=== TESTING WORKFLOW FETCHING ===');
-    
     try {
-      // Test cache status
       const cacheStatus = this.getCacheStatus();
-      console.log('Cache status:', cacheStatus);
-      
-      // Clear cache and fetch fresh
       this.clearCacheNow();
-      
-      // Fetch workflows
       const workflows = await this.fetchWorkflows();
-      console.log('Fetched workflows:', workflows.length);
-      
-      // Test search
       const searchResults = await this.searchWorkflowsByTask('buchhaltung', []);
-      console.log('Search results for "buchhaltung":', searchResults.length);
-      
-      // Test with applications
       const searchResultsWithApps = await this.searchWorkflowsByTask('buchhaltung', ['excel', 'quickbooks']);
-      console.log('Search results with apps:', searchResultsWithApps.length);
-      
     } catch (error) {
       console.error('Test failed:', error);
     }

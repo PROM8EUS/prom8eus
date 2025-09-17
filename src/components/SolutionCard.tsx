@@ -3,6 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 import IntegrationIcon from '@/components/IntegrationIcon';
 import CreatorBadge from './CreatorBadge';
+import { CapabilityChips } from './CapabilityChip';
+import { WorkflowScoreChip } from './WorkflowScoreDisplay';
+import { AgentTierChip, AgentDisclaimerChip } from './AgentTierDisplay';
+import { ReasoningChip, convertWorkflowReasoning, convertAgentReasoning } from './ReasoningChip';
+import { TypeBadge, ReliabilityBadge, getSolutionType } from './TypeBadge';
+import { DomainBadge, convertToDomainData } from './DomainBadge';
 
 export interface SolutionData {
   id: string;
@@ -18,6 +24,17 @@ export interface SolutionData {
   complexity?: 'Low' | 'Medium' | 'High';
   integrations?: string[];
   tags?: string[];
+  capabilities?: string[]; // Agent capabilities
+  model?: string; // Agent model
+  provider?: string; // Agent provider
+  matchScore?: number; // Workflow match score (0-100)
+  agentTier?: 'Generalist' | 'Specialist' | 'Experimental'; // Agent tier
+  agentDisclaimer?: string; // Agent disclaimer
+  reasoning?: string[]; // Reasoning for the match
+  confidence?: number; // Confidence in the match
+  domains?: string[]; // Business domains
+  domain_confidences?: number[]; // Domain confidence scores
+  domain_origin?: string; // Domain classification origin
   active?: boolean;
   lastUpdated?: string;
   authorName?: string;
@@ -36,24 +53,136 @@ interface SolutionCardProps {
 
 function SolutionCard({ solution, onView, className }: SolutionCardProps) {
   const handleClick = () => onView?.(solution);
-  const techs = (solution.integrations && solution.integrations.length > 0
-    ? solution.integrations
-    : (solution.tags || [])).slice(0, 6);
+  const isAgent = solution.type === 'ai-agent';
+  
+  // For workflows: show integrations, for agents: show capabilities
+  const techs = isAgent 
+    ? (solution.capabilities || []).slice(0, 6)
+    : (solution.integrations && solution.integrations.length > 0
+        ? solution.integrations
+        : (solution.tags || [])).slice(0, 6);
 
   return (
     <Card className={`transition-shadow h-full hover:shadow-md ${className}`} onClick={handleClick} role="button">
       <CardContent className="p-4 h-full flex flex-col">
-        {/* Title */}
-        <h3 className="font-semibold text-gray-900 text-base leading-snug mb-2" title={solution.filename || solution.name}>
-          {solution.name}
-        </h3>
+        {/* Title with type badge and score */}
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-semibold text-gray-900 text-base leading-snug flex-1" title={solution.filename || solution.name}>
+            {solution.name}
+          </h3>
+          <div className="flex items-center gap-2 ml-2">
+            {/* Workflow Score */}
+            {!isAgent && solution.matchScore !== undefined && (
+              <WorkflowScoreChip 
+                score={solution.matchScore} 
+                size="sm" 
+                showLabel={false}
+              />
+            )}
+            {/* Agent Tier */}
+            {isAgent && solution.agentTier && (
+              <AgentTierChip 
+                tier={solution.agentTier} 
+                size="sm" 
+                showIcon={true}
+              />
+            )}
+            {/* Type and Reliability Badges */}
+            <div className="flex items-center gap-1">
+              <TypeBadge 
+                type={isAgent ? 'agent' : 'workflow'} 
+                size="sm" 
+                showLabel={true}
+                showIcon={true}
+                variant="outline"
+              />
+              <ReliabilityBadge 
+                type={isAgent ? 'agent' : 'workflow'} 
+                size="sm" 
+                showLabel={true}
+                showIcon={true}
+                variant="outline"
+              />
+            </div>
+          </div>
+        </div>
 
-        {/* Integrations as icons with tooltip */}
+        {/* Agent model/provider info */}
+        {isAgent && (solution.model || solution.provider) && (
+          <div className="text-xs text-gray-600 mb-2">
+            {solution.model && solution.provider ? `${solution.model} (${solution.provider})` : solution.model || solution.provider}
+          </div>
+        )}
+
+        {/* Integrations/Capabilities display */}
         {techs && techs.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {techs.map((t, i) => (
-              <IntegrationIcon key={i} name={t} size="sm" />
-            ))}
+          <div className="mb-4">
+            {isAgent ? (
+              <CapabilityChips 
+                capabilities={techs} 
+                maxDisplay={4} 
+                size="sm"
+                className="justify-start"
+              />
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {techs.map((t, i) => (
+                  <IntegrationIcon key={i} name={t} size="sm" />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Agent Disclaimer */}
+        {isAgent && solution.agentDisclaimer && (
+          <div className="mb-4">
+            <AgentDisclaimerChip 
+              disclaimer={solution.agentDisclaimer} 
+              size="sm"
+            />
+          </div>
+        )}
+
+        {/* Reasoning Chip */}
+        {solution.reasoning && solution.reasoning.length > 0 && (
+          <div className="mb-4">
+            <ReasoningChip 
+              reasoning={isAgent 
+                ? convertAgentReasoning(
+                    solution.reasoning, 
+                    solution.matchScore || 0, 
+                    solution.agentTier || 'Experimental',
+                    solution.confidence || 50
+                  )
+                : convertWorkflowReasoning(
+                    solution.reasoning, 
+                    solution.matchScore || 0, 
+                    solution.confidence || 50
+                  )
+              }
+              size="sm"
+              maxItems={2}
+              showScore={true}
+            />
+          </div>
+        )}
+
+        {/* Domain Badge */}
+        {solution.domains && solution.domains.length > 0 && (
+          <div className="mb-4">
+            <DomainBadge 
+              domains={convertToDomainData(
+                solution.domains, 
+                solution.domain_confidences || [], 
+                solution.domain_origin || 'default'
+              )}
+              size="sm"
+              showConfidence={false}
+              showOrigin={false}
+              maxDisplay={1}
+              variant="outline"
+            />
           </div>
         )}
 

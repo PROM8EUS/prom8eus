@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from './supabase';
 
 interface CachedUrlData {
   extractedData: any;
