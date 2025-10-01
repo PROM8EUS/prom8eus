@@ -1,6 +1,6 @@
 // Deno Deploy / Supabase Edge Function: index-workflows
 // - Normalizes workflow features
-// - Generates embeddings (if VITE_OPENAI_API_KEY is set)
+// - Generates embeddings (if OPENAI_API_KEY is set)
 // - Upserts into workflow_features and workflow_embeddings with safe batching
 
 // deno-lint-ignore-file no-explicit-any
@@ -201,7 +201,7 @@ async function handler(req: Request): Promise<Response> {
     });
 
     // Generate embeddings if API key available
-    const OPENAI_API_KEY = Deno.env.get("VITE_OPENAI_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     let embedded = 0;
     if (OPENAI_API_KEY) {
       // Prepare texts

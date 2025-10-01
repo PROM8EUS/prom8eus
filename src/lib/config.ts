@@ -1,14 +1,10 @@
 /**
  * Application Configuration
  * Centralized configuration management for API keys and environment variables
+ * NOTE: OpenAI API key is now stored securely on the backend only
  */
 
 export interface AppConfig {
-  openai: {
-    apiKey: string;
-    baseUrl?: string;
-    model?: string;
-  };
   supabase: {
     url?: string;
     anonKey?: string;
@@ -41,18 +37,12 @@ export interface AppConfig {
 
 /**
  * Get configuration from environment variables with fallbacks
+ * NOTE: OpenAI API key is now handled securely on the backend only
  */
 export const getConfig = (): AppConfig => {
-  // Get API key from environment variables
-  const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
   const githubToken = import.meta.env.VITE_GITHUB_TOKEN;
 
   return {
-    openai: {
-      apiKey: openaiApiKey,
-      baseUrl: import.meta.env.VITE_OPENAI_BASE_URL || 'https://api.openai.com/v1',
-      model: import.meta.env.VITE_OPENAI_MODEL || 'gpt-3.5-turbo',
-    },
     supabase: {
       url: import.meta.env.VITE_SUPABASE_URL,
       anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -90,12 +80,7 @@ export const getConfig = (): AppConfig => {
 export const validateConfig = (config: AppConfig): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
-  // OpenAI API Key validation
-  if (!config.openai.apiKey) {
-    errors.push('OpenAI API key is required (VITE_OPENAI_API_KEY)');
-  } else if (!config.openai.apiKey.startsWith('sk-')) {
-    errors.push('OpenAI API key format appears invalid (should start with "sk-")');
-  }
+  // OpenAI is now handled securely on the backend - no client-side validation needed
 
   // Supabase configuration validation
   if (!config.supabase.url) {
@@ -127,14 +112,6 @@ export const validateConfig = (config: AppConfig): { isValid: boolean; errors: s
 };
 
 /**
- * Get OpenAI configuration specifically
- */
-export const getOpenAIConfig = () => {
-  const config = getConfig();
-  return config.openai;
-};
-
-/**
  * Get GitHub configuration specifically
  */
 export const getGitHubConfig = () => {
@@ -144,10 +121,11 @@ export const getGitHubConfig = () => {
 
 /**
  * Check if AI features are enabled
+ * AI is always available through secure backend
  */
 export const isAIEnabled = (): boolean => {
   const config = getConfig();
-  return config.features.enableAiAnalysis && !!config.openai.apiKey;
+  return config.features.enableAiAnalysis;
 };
 
 /**
@@ -157,7 +135,6 @@ export const getRecommendationsConfig = () => {
   const config = getConfig();
   return config.recommendations;
 };
-
 
 // Export the configuration instance
 export const config = getConfig();

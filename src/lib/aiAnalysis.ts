@@ -297,18 +297,16 @@ export async function testAIConnectivity(): Promise<{
   try {
     // Test 1: Check if models endpoint works
     try {
-      const response = await fetch('https://api.openai.com/v1/models', {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Test OpenAI connection through secure backend
+      const response = await openaiClient.chatCompletion([
+        { role: 'user', content: 'Test' }
+      ], { max_tokens: 1 });
       
-      if (response.ok) {
+      if (response.content) {
         diagnostics.modelsAvailable = true;
-        console.log('✅ Models endpoint accessible');
+        console.log('✅ OpenAI connection successful');
       } else {
-        console.log('❌ Models endpoint failed:', response.status);
+        console.log('❌ OpenAI connection failed');
       }
     } catch (error) {
       console.log('❌ Models endpoint error:', error);

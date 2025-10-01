@@ -24,6 +24,9 @@ dist-ssr
 *.sw?
 
 # Environment variables
-.envsupabase-mcp/
 .env
+.env.local
+.env.*.local
+
+# Supabase MCP
 supabase-mcp/

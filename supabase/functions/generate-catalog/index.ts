@@ -257,9 +257,9 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('VITE_OPENAI_API_KEY');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      throw new Error('VITE_OPENAI_API_KEY not found in environment variables');
+      throw new Error('OPENAI_API_KEY not found in environment variables');
     }
 
     const { role: singleRole, roles: customRoles } = await req.json().catch(() => ({}));
