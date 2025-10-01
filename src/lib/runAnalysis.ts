@@ -874,10 +874,25 @@ async function analyzeJobWithCompleteAI(
     throw new Error('OpenAI API nicht verfügbar. Bitte API-Key konfigurieren.');
   }
 
-  try {
-    // ULTRA FAST: Simple task extraction only (no subtasks/business case for speed)
-    console.log('🚀 FAST task extraction (no subtasks/business case)...');
-    const completeAnalysis = await openaiClient.analyzeJobDescription(jobText, lang);
+        try {
+          // ULTRA FAST: Simple task extraction only (no subtasks/business case for speed)
+          console.log('🚀 FAST task extraction (no subtasks/business case)...');
+          const completeAnalysis = await openaiClient.analyzeJobDescription(jobText, lang);
+          
+          // DEBUG: Log the complete AI response
+          console.log('🔍 [DEBUG] Complete AI analysis response:', JSON.stringify(completeAnalysis, null, 2));
+          
+          // DEBUG: Check if tasks have subtasks
+          if (completeAnalysis.tasks) {
+            completeAnalysis.tasks.forEach((task: any, index: number) => {
+              console.log(`🔍 [DEBUG] Task ${index + 1}:`, {
+                text: task.text,
+                hasSubtasks: !!(task.subtasks),
+                subtasksLength: task.subtasks?.length || 0,
+                subtasks: task.subtasks
+              });
+            });
+          }
       
       if (!completeAnalysis.tasks || completeAnalysis.tasks.length === 0) {
         throw new Error('AI-Analyse fehlgeschlagen - keine Aufgaben extrahiert');
@@ -928,21 +943,62 @@ async function analyzeJobWithCompleteAI(
           automationTrend = 'increasing';
         }
         
-        // Determine proper category
-        if (taskTextLower.includes('entwicklung') || taskTextLower.includes('programmierung') || taskTextLower.includes('coding')) {
-          category = 'Software-Entwicklung';
-        } else if (taskTextLower.includes('daten') || taskTextLower.includes('database') || taskTextLower.includes('datenbank')) {
-          category = 'Datenmanagement';
-        } else if (taskTextLower.includes('api') || taskTextLower.includes('integration')) {
-          category = 'Integration';
-        } else if (taskTextLower.includes('testing') || taskTextLower.includes('test')) {
-          category = 'Qualitätssicherung';
-        } else if (taskTextLower.includes('dokumentation') || taskTextLower.includes('documentation')) {
-          category = 'Dokumentation';
-        } else if (taskTextLower.includes('debugging') || taskTextLower.includes('fehlerbehebung')) {
-          category = 'Fehlerbehebung';
-        } else if (taskTextLower.includes('team') || taskTextLower.includes('zusammenarbeit')) {
-          category = 'Teamarbeit';
+        // Determine proper category based on job context and task content
+        const jobTextLower = jobText.toLowerCase();
+        
+        // HR/Management tasks
+        if (jobTextLower.includes('hr') || jobTextLower.includes('personal') || jobTextLower.includes('manager')) {
+          if (taskTextLower.includes('personal') || taskTextLower.includes('recruiting') || taskTextLower.includes('mitarbeiter')) {
+            category = 'Personalwesen';
+          } else if (taskTextLower.includes('gehalt') || taskTextLower.includes('abrechnung') || taskTextLower.includes('benefits')) {
+            category = 'Verwaltung';
+          } else if (taskTextLower.includes('führung') || taskTextLower.includes('gespräch') || taskTextLower.includes('führung')) {
+            category = 'Führung';
+          } else if (taskTextLower.includes('schulung') || taskTextLower.includes('weiterbildung') || taskTextLower.includes('training')) {
+            category = 'Weiterbildung';
+          } else if (taskTextLower.includes('vertrag') || taskTextLower.includes('compliance') || taskTextLower.includes('recht')) {
+            category = 'Recht & Compliance';
+          } else {
+            category = 'Personalwesen';
+          }
+        }
+        // Accounting/Finance tasks  
+        else if (jobTextLower.includes('buchhalter') || jobTextLower.includes('finanz') || jobTextLower.includes('accounting')) {
+          if (taskTextLower.includes('buchhaltung') || taskTextLower.includes('beleg') || taskTextLower.includes('kontierung')) {
+            category = 'Buchhaltung';
+          } else if (taskTextLower.includes('abschluss') || taskTextLower.includes('monats') || taskTextLower.includes('jahres')) {
+            category = 'Reporting';
+          } else if (taskTextLower.includes('steuer') || taskTextLower.includes('umsatzsteuer') || taskTextLower.includes('voranmeldung')) {
+            category = 'Steuerwesen';
+          } else if (taskTextLower.includes('mahn') || taskTextLower.includes('zahlung') || taskTextLower.includes('verkehr')) {
+            category = 'Zahlungsverkehr';
+          } else if (taskTextLower.includes('budget') || taskTextLower.includes('controlling') || taskTextLower.includes('planung')) {
+            category = 'Controlling';
+          } else {
+            category = 'Finanzwesen';
+          }
+        }
+        // Software Development tasks
+        else if (jobTextLower.includes('entwickler') || jobTextLower.includes('programmierer') || jobTextLower.includes('software')) {
+          if (taskTextLower.includes('entwicklung') || taskTextLower.includes('programmierung') || taskTextLower.includes('coding')) {
+            category = 'Software-Entwicklung';
+          } else if (taskTextLower.includes('daten') || taskTextLower.includes('database') || taskTextLower.includes('datenbank')) {
+            category = 'Datenmanagement';
+          } else if (taskTextLower.includes('api') || taskTextLower.includes('integration')) {
+            category = 'Integration';
+          } else if (taskTextLower.includes('testing') || taskTextLower.includes('test')) {
+            category = 'Qualitätssicherung';
+          } else if (taskTextLower.includes('dokumentation') || taskTextLower.includes('documentation')) {
+            category = 'Dokumentation';
+          } else if (taskTextLower.includes('debugging') || taskTextLower.includes('fehlerbehebung')) {
+            category = 'Fehlerbehebung';
+          } else {
+            category = 'Software-Entwicklung';
+          }
+        }
+        // Default fallback
+        else {
+          category = 'Allgemein';
         }
 
         // Convert to FastAnalysisResult format with PRE-GENERATED data

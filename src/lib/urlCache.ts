@@ -53,7 +53,7 @@ export async function getCachedUrlData(url: string): Promise<CachedUrlData | nul
       const cachedData = data[0];
       console.log(`Cache hit! Found data from ${new Date(cachedData.created_at).toLocaleString()}`);
       return {
-        extractedData: cachedData.extracted_data,
+        extractedData: JSON.parse(cachedData.html_content || '{}'),
         textLength: cachedData.text_length,
         wasRendered: cachedData.was_rendered,
         createdAt: cachedData.created_at
@@ -90,14 +90,17 @@ export async function setCachedUrlData(
       composedText: jobText.composeJobText()
     };
     
+    // Use upsert to handle duplicate key conflicts
     const { error } = await supabase
-      .from('url_cache')
-      .insert({
+      .from('cached_urls')
+      .upsert({
         url_hash: urlHash,
-        original_url: url,
-        extracted_data: extractedData,
+        html_content: JSON.stringify(extractedData),
         text_length: textLength,
-        was_rendered: wasRendered
+        was_rendered: wasRendered,
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'url_hash'
       });
     
     if (error) {

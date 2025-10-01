@@ -427,14 +427,21 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   
   // Use real subtasks from task prop or generated subtasks
   const realSubtasks = useMemo(() => {
+    console.log('🔍 [TaskPanel] Debug subtasks check:', {
+      hasTask: !!task,
+      hasSubtasks: !!(task?.subtasks),
+      subtasksLength: task?.subtasks?.length || 0,
+      subtasksData: task?.subtasks
+    });
+    
     if (task?.subtasks && task.subtasks.length > 0) {
       console.log('✅ [TaskPanel] Using real subtasks from task prop:', task.subtasks.length);
       const mapped = task.subtasks.map(subtask => ({
-        id: subtask.id,
-        title: subtask.title,
+        id: subtask.id || `subtask-${Math.random().toString(36).substr(2, 9)}`,
+        title: subtask.title || subtask.text || 'Unbekannte Teilaufgabe',
         systems: subtask.systems || [],
-        manualHoursShare: (100 - subtask.automationPotential) / 100,
-        automationPotential: subtask.automationPotential / 100,
+        manualHoursShare: subtask.automationPotential ? (100 - subtask.automationPotential) / 100 : 0.3,
+        automationPotential: subtask.automationPotential ? subtask.automationPotential / 100 : 0.7,
         risks: subtask.risks || [],
         assumptions: [],
         kpis: [],

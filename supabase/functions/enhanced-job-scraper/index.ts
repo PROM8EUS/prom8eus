@@ -91,7 +91,12 @@ serve(async (req) => {
             '--no-zygote',
             '--disable-gpu',
             '--disable-blink-features=AutomationControlled',
-            '--disable-features=VizDisplayCompositor'
+            '--disable-features=VizDisplayCompositor',
+            '--single-process', // Important for Supabase
+            '--no-zygote',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
           ]
         });
 
@@ -154,7 +159,30 @@ serve(async (req) => {
       } catch (error) {
         console.error('Playwright scraping failed:', error.message);
         
-        // Fallback to original HTML if we had some
+        // For Google Jobs, try a simpler approach
+        if (isGoogleJobs && !html) {
+          console.log('Attempting fallback for Google Jobs...');
+          try {
+            const response = await fetch(url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+              },
+              signal: AbortSignal.timeout(10000)
+            });
+            
+            if (response.ok) {
+              html = await response.text();
+              textLength = extractTextLength(html);
+              console.log(`Fallback fetch result: ${textLength} characters`);
+            }
+          } catch (fallbackError) {
+            console.error('Fallback fetch also failed:', fallbackError.message);
+          }
+        }
+        
+        // If still no content, return error
         if (!html) {
           return new Response(
             JSON.stringify({ 

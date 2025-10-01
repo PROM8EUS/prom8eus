@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { t } from '../lib/i18n/i18n';
 import { openaiClient } from '../lib/openai';
+import { businessCaseCache } from '../lib/businessCaseCache';
 
 interface BusinessCaseProps {
   task: {
@@ -99,25 +100,23 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
     } else if (task?.text && task?.subtasks && task.subtasks.length > 0) {
       // Fallback: generate business case if not available - WITH DEBOUNCING
       const generateBusinessCase = async () => {
-        // DEBOUNCE: Only generate if not already generating for this task
-        const taskId = task.id || task.text;
-        if (window.businessCaseGenerationInProgress?.has(taskId)) {
-          console.log('⏳ [BusinessCase] Generation already in progress for:', task.text);
+        // Additional check: if we already have business case data, don't regenerate
+        if (businessCaseData) {
+          console.log('✅ [BusinessCase] Already have business case data, skipping generation');
           return;
         }
-        
-        // Mark as in progress
-        if (!window.businessCaseGenerationInProgress) {
-          window.businessCaseGenerationInProgress = new Set();
-        }
-        window.businessCaseGenerationInProgress.add(taskId);
         
         setLoading(true);
         setError(null);
 
         try {
           console.log('🤖 Generating business case for:', task.text);
-          const data = await openaiClient.generateBusinessCase(task.text, task.subtasks, lang);
+          const data = await businessCaseCache.getOrGenerate(
+            task.text,
+            task.subtasks,
+            lang,
+            openaiClient.generateBusinessCase.bind(openaiClient)
+          );
           console.log('✅ Business case generated:', data);
           setBusinessCaseData(data);
           
@@ -137,7 +136,6 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           setError(err instanceof Error ? err.message : 'Failed to generate business case');
         } finally {
           setLoading(false);
-          window.businessCaseGenerationInProgress.delete(taskId);
         }
       };
 

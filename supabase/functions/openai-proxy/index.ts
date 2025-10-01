@@ -82,7 +82,7 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
           throw new Error('jobText required for analyze-job-complete action');
         }
         systemPrompt = lang === 'de' 
-          ? `Extrahiere schnell Hauptaufgaben aus Stellenbeschreibungen. Nur JSON zurückgeben, keine Markdown.
+          ? `Extrahiere Hauptaufgaben aus Stellenbeschreibungen MIT Teilaufgaben. Nur JSON zurückgeben, keine Markdown.
 
 Format:
 {
@@ -90,15 +90,29 @@ Format:
     {
       "text": "Hauptaufgabe",
       "automationPotential": 85,
-      "category": "admin",
-      "reasoning": "Kurze Begründung"
+      "category": "tech",
+      "reasoning": "Kurze Begründung",
+      "subtasks": [
+        {"id": "sub1", "title": "Teilaufgabe 1", "automationPotential": 80, "estimatedTime": 2},
+        {"id": "sub2", "title": "Teilaufgabe 2", "automationPotential": 70, "estimatedTime": 3}
+      ]
     }
   ],
   "summary": "Kurze Zusammenfassung"
 }
 
-Kategorien: admin, tech, analytical, creative, mgmt, comm, routine, physical`
-          : `Extract main tasks from job descriptions quickly. Return only JSON, no markdown.
+WICHTIGE KATEGORIEN (wähle die passendste):
+- admin: Verwaltung, Büroarbeit, Dokumentation, Buchhaltung
+- mgmt: Führung, Management, Personal, Strategie
+- tech: Programmierung, IT, Software-Entwicklung, Systeme
+- analytical: Analyse, Daten, Reporting, KPIs
+- creative: Design, Marketing, Content, Kreative Arbeit
+- comm: Kommunikation, Kundenbetreuung, Verkauf
+- routine: Wiederkehrende, einfache Tätigkeiten
+- physical: Körperliche Arbeit, Handwerk, Produktion
+
+Analysiere den Job-Kontext: HR-Manager = mgmt, Buchhalter = admin, Entwickler = tech`
+          : `Extract main tasks from job descriptions WITH subtasks. Return only JSON, no markdown.
 
 Format:
 {
@@ -106,23 +120,37 @@ Format:
     {
       "text": "Main task",
       "automationPotential": 85,
-      "category": "admin",
-      "reasoning": "Brief reasoning"
+      "category": "tech",
+      "reasoning": "Brief reasoning",
+      "subtasks": [
+        {"id": "sub1", "title": "Subtask 1", "automationPotential": 80, "estimatedTime": 2},
+        {"id": "sub2", "title": "Subtask 2", "automationPotential": 70, "estimatedTime": 3}
+      ]
     }
   ],
   "summary": "Brief summary"
 }
 
-Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
+IMPORTANT CATEGORIES (choose the most fitting):
+- admin: Administration, office work, documentation, accounting
+- mgmt: Leadership, management, HR, strategy
+- tech: Programming, IT, software development, systems
+- analytical: Analysis, data, reporting, KPIs
+- creative: Design, marketing, content, creative work
+- comm: Communication, customer service, sales
+- routine: Repetitive, simple tasks
+- physical: Physical work, crafts, production
+
+Analyze job context: HR Manager = mgmt, Accountant = admin, Developer = tech`;
         
         userPrompt = lang === 'de'
-          ? `Extrahiere 5-8 Hauptaufgaben aus dieser Stellenbeschreibung:
+          ? `Extrahiere 5-8 Hauptaufgaben aus dieser Stellenbeschreibung. Für jede Aufgabe erstelle 2-3 spezifische Teilaufgaben:
 
 ${jobText.slice(0, 1000)}`
-          : `Extract 5-8 main tasks from this job description:
+          : `Extract 5-8 main tasks from this job description. For each task create 2-3 specific subtasks:
 
 ${jobText.slice(0, 1000)}`;
-        maxTokens = 1500; // Reduced tokens for speed
+        maxTokens = 2500; // Increased tokens for subtasks
         break;
 
       case 'generate-subtasks':

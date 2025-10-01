@@ -5,5 +5,6 @@ declare global {
   interface Window {
     subtaskGenerationInProgress?: Set<string>;
     businessCaseGenerationInProgress?: Set<string>;
+    sharedAnalysisInProgress?: Set<string>;
   }
 }

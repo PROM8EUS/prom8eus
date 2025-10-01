@@ -193,6 +193,19 @@ const Results = () => {
 
   // Generate unique share URL for this analysis
   const generateShareUrl = async (data: AnalysisResult): Promise<string> => {
+    // DEBOUNCE: Prevent multiple simultaneous store calls
+    const dataKey = data.originalText?.slice(0, 100) || 'unknown';
+    if (window.sharedAnalysisInProgress?.has(dataKey)) {
+      console.log('⏳ [Results] Shared analysis already in progress for:', dataKey);
+      return generateLocalShareUrl(data); // Return fallback URL
+    }
+    
+    // Mark as in progress
+    if (!window.sharedAnalysisInProgress) {
+      window.sharedAnalysisInProgress = new Set();
+    }
+    window.sharedAnalysisInProgress.add(dataKey);
+    
     const shareId = SharedAnalysisService.generateShareId();
     
     try {
@@ -225,6 +238,8 @@ const Results = () => {
       console.warn('Error storing analysis on server, using localStorage fallback:', error);
       // Fallback to localStorage
       return generateLocalShareUrl(data);
+    } finally {
+      window.sharedAnalysisInProgress.delete(dataKey);
     }
   };
 

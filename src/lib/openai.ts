@@ -162,13 +162,13 @@ export class OpenAIClient {
     try {
       const parsed = JSON.parse(response.content);
       
-      // Use simple response format (no subtasks/business case for speed)
+      // Use response format with subtasks
       const enhancedTasks = parsed.tasks?.map((task: any) => ({
         text: task.text,
         automationPotential: task.automationPotential || 50,
         category: task.category || 'Allgemein',
         reasoning: task.reasoning || 'AI analysis completed',
-        subtasks: [], // Empty for speed - will be generated later
+        subtasks: task.subtasks || [], // Use AI-generated subtasks
         businessCase: null // Empty for speed - will be generated later
       })) || [];
       

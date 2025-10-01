@@ -159,6 +159,15 @@ const MainContent = ({ buttonText, headline, subtitle, lang }: MainContentProps)
           setIsLoading(false);
           return;
         }
+      } else {
+        // For manual text input, check if it's sufficient
+        if (analysisInput.length < 100) {
+          setAnalysisError(
+            `Bitte geben Sie mindestens 100 Zeichen Job-Beschreibung ein. Aktuell: ${analysisInput.length} Zeichen.`
+          );
+          setIsLoading(false);
+          return;
+        }
       }
       
       const result = await callAnalyzeInput(
