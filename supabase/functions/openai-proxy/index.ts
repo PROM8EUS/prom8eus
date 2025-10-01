@@ -77,6 +77,54 @@ Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
         maxTokens = 1200;
         break;
 
+      case 'analyze-job-complete':
+        if (!jobText) {
+          throw new Error('jobText required for analyze-job-complete action');
+        }
+        systemPrompt = lang === 'de' 
+          ? `Extrahiere schnell Hauptaufgaben aus Stellenbeschreibungen. Nur JSON zurückgeben, keine Markdown.
+
+Format:
+{
+  "tasks": [
+    {
+      "text": "Hauptaufgabe",
+      "automationPotential": 85,
+      "category": "admin",
+      "reasoning": "Kurze Begründung"
+    }
+  ],
+  "summary": "Kurze Zusammenfassung"
+}
+
+Kategorien: admin, tech, analytical, creative, mgmt, comm, routine, physical`
+          : `Extract main tasks from job descriptions quickly. Return only JSON, no markdown.
+
+Format:
+{
+  "tasks": [
+    {
+      "text": "Main task",
+      "automationPotential": 85,
+      "category": "admin",
+      "reasoning": "Brief reasoning"
+    }
+  ],
+  "summary": "Brief summary"
+}
+
+Categories: admin, tech, analytical, creative, mgmt, comm, routine, physical`;
+        
+        userPrompt = lang === 'de'
+          ? `Extrahiere 5-8 Hauptaufgaben aus dieser Stellenbeschreibung:
+
+${jobText.slice(0, 1000)}`
+          : `Extract 5-8 main tasks from this job description:
+
+${jobText.slice(0, 1000)}`;
+        maxTokens = 1500; // Reduced tokens for speed
+        break;
+
       case 'generate-subtasks':
         if (!taskText) {
           throw new Error('taskText required for generate-subtasks action');
@@ -176,8 +224,21 @@ async function makeOpenAIRequest(apiKey: string, messages: OpenAIMessage[], opti
 
   const data = await response.json();
   
+  // Extract JSON from markdown code blocks if present
+  let content = data.choices[0]?.message?.content || '';
+  
+  // Check if response is wrapped in markdown code blocks
+  const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+  if (jsonMatch) {
+    content = jsonMatch[1].trim();
+  } else if (content.startsWith('```') && content.endsWith('```')) {
+    // Handle generic code blocks
+    const lines = content.split('\n');
+    content = lines.slice(1, -1).join('\n').trim();
+  }
+
   return {
-    content: data.choices[0]?.message?.content || '',
+    content: content,
     usage: data.usage,
     model: data.model,
   };

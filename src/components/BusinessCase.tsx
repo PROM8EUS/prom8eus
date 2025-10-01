@@ -97,8 +97,21 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
       setLoading(false);
       setError(null);
     } else if (task?.text && task?.subtasks && task.subtasks.length > 0) {
-      // Fallback: generate business case if not available
+      // Fallback: generate business case if not available - WITH DEBOUNCING
       const generateBusinessCase = async () => {
+        // DEBOUNCE: Only generate if not already generating for this task
+        const taskId = task.id || task.text;
+        if (window.businessCaseGenerationInProgress?.has(taskId)) {
+          console.log('⏳ [BusinessCase] Generation already in progress for:', task.text);
+          return;
+        }
+        
+        // Mark as in progress
+        if (!window.businessCaseGenerationInProgress) {
+          window.businessCaseGenerationInProgress = new Set();
+        }
+        window.businessCaseGenerationInProgress.add(taskId);
+        
         setLoading(true);
         setError(null);
 
@@ -124,6 +137,7 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
           setError(err instanceof Error ? err.message : 'Failed to generate business case');
         } finally {
           setLoading(false);
+          window.businessCaseGenerationInProgress.delete(taskId);
         }
       };
 

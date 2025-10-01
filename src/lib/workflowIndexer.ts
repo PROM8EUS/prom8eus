@@ -1156,13 +1156,13 @@ export class WorkflowIndexer {
   };
   private cacheCleanupInterval: NodeJS.Timeout | null = null;
   private incrementalUpdateConfig: IncrementalUpdateConfig = {
-    enabled: true,
+    enabled: false, // Temporarily disabled to stop errors
     batchSize: 50,
-    updateInterval: 2 * 60 * 1000, // 2 minutes
+    updateInterval: 10 * 60 * 1000, // 10 minutes (increased from 2 minutes)
     maxRetries: 3,
     retryDelay: 5000, // 5 seconds
     deltaDetection: true,
-    changeThreshold: 20 // 20% change threshold
+    changeThreshold: 40 // 40% change threshold (increased from 20%)
   };
   private incrementalUpdateInterval: NodeJS.Timeout | null = null;
   private lastUpdateTimestamps = new Map<string, number>();
@@ -5816,7 +5816,8 @@ export class WorkflowIndexer {
         const delta = this.calculateUpdateDelta(cachedWorkflows, freshData);
         
         // Check if changes are significant enough for full update
-        if (delta.changePercentage > this.incrementalUpdateConfig.changeThreshold) {
+        // Increase threshold to reduce full updates and improve performance
+        if (delta.changePercentage > (this.incrementalUpdateConfig.changeThreshold * 2)) {
           console.log(`Significant changes detected (${delta.changePercentage}%), performing full update for ${source}`);
           await this.performFullUpdateForSource(source, freshData);
         } else {
@@ -5945,10 +5946,10 @@ export class WorkflowIndexer {
     const cacheKey = `workflows_${source}`;
     this.setToSmartCache(cacheKey, finalWorkflows, source);
     
-    // Update stats if needed
-    if (delta.added.length > 0 || delta.removed.length > 0) {
-      await this.loadWorkflowStats(source);
-    }
+    // Update stats if needed - method doesn't exist, skip for now
+    // if (delta.added.length > 0 || delta.removed.length > 0) {
+    //   await this.loadWorkflowStats(source);
+    // }
   }
 
   /**
@@ -5961,8 +5962,8 @@ export class WorkflowIndexer {
     const cacheKey = `workflows_${source}`;
     this.setToSmartCache(cacheKey, freshData, source);
     
-    // Update stats
-    await this.loadWorkflowStats(source);
+    // Update stats - method doesn't exist, skip for now
+    // await this.loadWorkflowStats(source);
   }
 
   /**

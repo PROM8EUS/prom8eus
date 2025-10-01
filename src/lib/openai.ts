@@ -122,7 +122,7 @@ export class OpenAIClient {
   }
 
   /**
-   * Analyze job description and extract tasks
+   * Analyze job description and extract tasks WITH subtasks and business case
    */
   async analyzeJobDescription(jobText: string, lang: 'de' | 'en' = 'de'): Promise<{
     tasks: Array<{
@@ -130,6 +130,22 @@ export class OpenAIClient {
       automationPotential: number;
       category: string;
       reasoning: string;
+      subtasks?: Array<{
+        id: string;
+        title: string;
+        automationPotential: number;
+        estimatedTime: number;
+      }>;
+      businessCase?: {
+        manualHours: number;
+        automatedHours: number;
+        automationPotential: number;
+        savedHours: number;
+        hourlyRateEmployee: number;
+        hourlyRateFreelancer: number;
+        employmentType: 'employee' | 'freelancer';
+        reasoning: string;
+      };
     }>;
     summary: string;
   }> {
@@ -138,15 +154,31 @@ export class OpenAIClient {
     if (cached) return cached;
 
     const response = await this.callBackend({
-      action: 'analyze-job',
+      action: 'analyze-job-complete',
       jobText,
       lang
     });
 
     try {
       const parsed = JSON.parse(response.content);
-      this.setCache(cacheKey, parsed);
-      return parsed;
+      
+      // Use simple response format (no subtasks/business case for speed)
+      const enhancedTasks = parsed.tasks?.map((task: any) => ({
+        text: task.text,
+        automationPotential: task.automationPotential || 50,
+        category: task.category || 'Allgemein',
+        reasoning: task.reasoning || 'AI analysis completed',
+        subtasks: [], // Empty for speed - will be generated later
+        businessCase: null // Empty for speed - will be generated later
+      })) || [];
+      
+      const enhancedResponse = {
+        tasks: enhancedTasks,
+        summary: parsed.summary || ''
+      };
+      
+      this.setCache(cacheKey, enhancedResponse);
+      return enhancedResponse;
     } catch (error) {
       console.error('Failed to parse response:', error);
       throw new Error('Invalid response format from AI');

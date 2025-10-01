@@ -16,11 +16,20 @@ export interface StoreAnalysisRequest {
 
 export class SharedAnalysisService {
   private static readonly FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL || 'https://gasqdnyyrxmmojivlxon.supabase.co'}/functions/v1/shared-analysis`;
+  private static readonly storeInProgress = new Set<string>();
 
   /**
    * Store an analysis for sharing
    */
   static async storeAnalysis(request: StoreAnalysisRequest): Promise<{ success: boolean; shareId?: string; error?: string }> {
+    // DEBOUNCE: Prevent multiple simultaneous store calls for same analysis
+    if (this.storeInProgress.has(request.shareId)) {
+      console.log('⏳ [SharedAnalysis] Store already in progress for:', request.shareId);
+      return { success: false, error: 'Store already in progress' };
+    }
+    
+    this.storeInProgress.add(request.shareId);
+    
     try {
       console.log('🔄 Storing analysis:', { shareId: request.shareId, originalTextLength: request.originalText?.length, jobTitle: request.jobTitle });
       console.log('📡 Function URL:', this.FUNCTION_URL);
@@ -60,6 +69,8 @@ export class SharedAnalysisService {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
+    } finally {
+      this.storeInProgress.delete(request.shareId);
     }
   }
 

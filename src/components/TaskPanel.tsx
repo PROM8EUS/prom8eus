@@ -348,13 +348,26 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   
 
 
-  // Generate subtasks when task becomes visible
+  // Generate subtasks when task becomes visible - WITH DEBOUNCING
   useEffect(() => {
     if (isVisible && task) {
       const taskText = task.title || task.name || task.description || '';
       if (taskText && !task.subtasks) {
         console.log('🔄 [TaskPanel] Generating subtasks for:', taskText);
         setIsGenerating(true);
+        
+        // DEBOUNCE: Only generate if not already generating for this task
+        const taskId = task.id || taskText;
+        if (window.subtaskGenerationInProgress?.has(taskId)) {
+          console.log('⏳ [TaskPanel] Subtask generation already in progress for:', taskText);
+          return;
+        }
+        
+        // Mark as in progress
+        if (!window.subtaskGenerationInProgress) {
+          window.subtaskGenerationInProgress = new Set();
+        }
+        window.subtaskGenerationInProgress.add(taskId);
         
         const generateSubtasks = async () => {
           try {
@@ -363,6 +376,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
             if (cached && cached.length > 0) {
               console.log('✅ [TaskPanel] Using cached subtasks:', cached.length);
               setGeneratedSubtasks(cached);
+              window.subtaskGenerationInProgress.delete(taskId);
               return;
             }
             
@@ -388,6 +402,7 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
                 }));
                 setGeneratedSubtasks(mappedSubtasks);
                 await setCachedSubtasksForText(taskText, mappedSubtasks);
+                window.subtaskGenerationInProgress.delete(taskId);
                 return;
               }
             }
@@ -395,8 +410,10 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
             // No fallback - AI is required
             console.log('❌ [TaskPanel] AI subtask generation failed - no fallback available');
             setGeneratedSubtasks([]);
+            window.subtaskGenerationInProgress.delete(taskId);
           } catch (error) {
             console.error('❌ [TaskPanel] Error generating subtasks:', error);
+            window.subtaskGenerationInProgress.delete(taskId);
             setGeneratedSubtasks([]);
           } finally {
             setIsGenerating(false);
