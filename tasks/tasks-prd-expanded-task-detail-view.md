@@ -55,11 +55,11 @@
 **Deliverable**: Core infrastructure ready for UI development
 
 - [ ] 1.0 Update Shared Types and Interfaces (Foundation)
-  - [ ] 1.1 Extend existing DynamicSubtask type in types.ts (currently 69 lines)
-  - [ ] 1.2 Add focused types for Workflow, Agent, and LLM data structures
-  - [ ] 1.3 Add types for status badges and generation metadata
-  - [ ] 1.4 Enhance existing BlueprintData interface in BlueprintCard.tsx
-  - [ ] 1.5 Create shared interfaces in dedicated folder structure
+  - [x] 1.1 Extend existing DynamicSubtask type in types.ts (currently 69 lines)
+  - [x] 1.2 Add focused types for Workflow, Agent, and LLM data structures
+  - [x] 1.3 Add types for status badges and generation metadata
+  - [x] 1.4 Enhance existing BlueprintData interface in BlueprintCard.tsx
+  - [x] 1.5 Create shared interfaces in dedicated folder structure
 
 - [ ] 2.0 Enhance Existing Business Logic Services (Core functionality)
   - [ ] 2.1 Enhance existing workflowMatcher.ts for new matching logic (currently 416 lines)

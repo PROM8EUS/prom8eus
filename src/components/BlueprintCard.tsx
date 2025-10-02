@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Download, Eye, Clock, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SolutionStatus, GenerationMetadata } from '@/lib/types';
 
 export interface BlueprintData {
   id: string;
@@ -15,6 +16,12 @@ export interface BlueprintData {
   integrations?: string[];
   category?: string;
   isAIGenerated?: boolean; // Flag for AI-generated blueprints
+  // Enhanced properties for expanded task detail view
+  status?: SolutionStatus;
+  generationMetadata?: GenerationMetadata;
+  setupCost?: number;
+  downloadUrl?: string;
+  validationStatus?: 'valid' | 'invalid';
 }
 
 interface BlueprintCardProps {
