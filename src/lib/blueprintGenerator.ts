@@ -3,13 +3,20 @@
  * Generates n8n workflow blueprints for subtasks when no matches are found
  */
 
-import { DynamicSubtask } from './types';
+import { DynamicSubtask, SolutionStatus, GenerationMetadata } from './types';
 import { openaiClient } from './openai';
 import { BlueprintData } from '@/components/BlueprintCard';
+import { WorkflowSolutionInterface } from './interfaces';
 
 export interface GeneratedBlueprint extends BlueprintData {
   isAIGenerated: true;
   generatedAt: string;
+  // Enhanced properties for expanded task detail view
+  status: SolutionStatus;
+  generationMetadata: GenerationMetadata;
+  setupCost: number;
+  downloadUrl?: string;
+  validationStatus: 'valid' | 'invalid';
   n8nWorkflow: {
     name: string;
     nodes: any[];
@@ -146,6 +153,24 @@ Respond only with a JSON object in this format:
       versionId: '1'
     };
 
+    // Create generation metadata
+    const generationMetadata: GenerationMetadata = {
+      timestamp: Date.now(),
+      model: 'gpt-4o-mini',
+      language: lang,
+      cacheKey: `blueprint_${subtask.id}_${Date.now()}`
+    };
+
+    // Calculate setup cost based on complexity
+    const complexity = aiBlueprint.complexity || 'Medium';
+    const setupCost = calculateSetupCost(complexity);
+
+    // Generate download URL
+    const downloadUrl = generateDownloadUrl(`ai-generated-${subtask.id}-${Date.now()}`);
+
+    // Validate the generated blueprint
+    const validationStatus = validateBlueprint(aiBlueprint);
+
     const blueprint: GeneratedBlueprint = {
       id: `ai-generated-${subtask.id}-${Date.now()}`,
       name: aiBlueprint.name,
@@ -156,6 +181,11 @@ Respond only with a JSON object in this format:
       category: 'AI Generated',
       isAIGenerated: true,
       generatedAt: new Date().toISOString(),
+      status: 'generated',
+      generationMetadata,
+      setupCost,
+      downloadUrl,
+      validationStatus,
       n8nWorkflow,
       workflowData: n8nWorkflow
     };
@@ -196,8 +226,196 @@ export async function generateBlueprintsForSubtasks(
   return blueprintMap;
 }
 
+/**
+ * Calculate setup cost based on complexity
+ */
+function calculateSetupCost(complexity: string): number {
+  const normalizedComplexity = complexity.toLowerCase();
+  
+  switch (normalizedComplexity) {
+    case 'low': return 200;
+    case 'medium': return 500;
+    case 'high': return 1000;
+    default: return 500;
+  }
+}
+
+/**
+ * Generate download URL for blueprint
+ */
+function generateDownloadUrl(blueprintId: string): string {
+  return `/api/blueprints/${blueprintId}/download`;
+}
+
+/**
+ * Validate generated blueprint structure
+ */
+function validateBlueprint(blueprint: any): 'valid' | 'invalid' {
+  // Check for required properties
+  if (!blueprint.name || !blueprint.description) {
+    return 'invalid';
+  }
+  
+  // Check for valid nodes array
+  if (!Array.isArray(blueprint.nodes) || blueprint.nodes.length === 0) {
+    return 'invalid';
+  }
+  
+  // Check for valid integrations array
+  if (!Array.isArray(blueprint.integrations)) {
+    return 'invalid';
+  }
+  
+  // Check for valid complexity
+  const validComplexities = ['low', 'medium', 'high'];
+  if (!validComplexities.includes(blueprint.complexity?.toLowerCase())) {
+    return 'invalid';
+  }
+  
+  // Check for valid time savings
+  if (typeof blueprint.timeSavings !== 'number' || blueprint.timeSavings <= 0) {
+    return 'invalid';
+  }
+  
+  return 'valid';
+}
+
+/**
+ * Generate fallback blueprint when AI generation fails
+ */
+export function generateFallbackBlueprint(
+  subtask: DynamicSubtask,
+  lang: 'de' | 'en' = 'en'
+): GeneratedBlueprint {
+  const fallbackName = lang === 'de' 
+    ? `Fallback Workflow für: ${subtask.title}`
+    : `Fallback Workflow for: ${subtask.title}`;
+    
+  const fallbackDescription = lang === 'de'
+    ? `Basis-Workflow für die Automatisierung von: ${subtask.description || subtask.title}`
+    : `Basic workflow for automating: ${subtask.description || subtask.title}`;
+
+  const fallbackNodes = [
+    {
+      id: 'node_0',
+      name: lang === 'de' ? 'Trigger' : 'Trigger',
+      type: 'n8n-nodes-base.manualTrigger',
+      typeVersion: 1,
+      position: [250, 300],
+      parameters: {},
+      description: lang === 'de' ? 'Manueller Start des Workflows' : 'Manual workflow trigger'
+    },
+    {
+      id: 'node_1',
+      name: lang === 'de' ? 'Verarbeitung' : 'Processing',
+      type: 'n8n-nodes-base.function',
+      typeVersion: 1,
+      position: [450, 300],
+      parameters: {},
+      description: lang === 'de' ? 'Hauptverarbeitungslogik' : 'Main processing logic'
+    },
+    {
+      id: 'node_2',
+      name: lang === 'de' ? 'Ausgabe' : 'Output',
+      type: 'n8n-nodes-base.function',
+      typeVersion: 1,
+      position: [650, 300],
+      parameters: {},
+      description: lang === 'de' ? 'Ergebnisausgabe' : 'Result output'
+    }
+  ];
+
+  const n8nWorkflow = {
+    name: fallbackName,
+    nodes: fallbackNodes,
+    connections: {},
+    active: false,
+    settings: {
+      executionOrder: 'v1'
+    },
+    versionId: '1'
+  };
+
+  const generationMetadata: GenerationMetadata = {
+    timestamp: Date.now(),
+    model: 'fallback',
+    language: lang,
+    cacheKey: `fallback_${subtask.id}_${Date.now()}`
+  };
+
+  return {
+    id: `fallback-${subtask.id}-${Date.now()}`,
+    name: fallbackName,
+    description: fallbackDescription,
+    timeSavings: subtask.estimatedTime * 0.3, // Conservative estimate
+    complexity: 'Medium',
+    integrations: subtask.systems.slice(0, 3),
+    category: 'Fallback',
+    isAIGenerated: true,
+    generatedAt: new Date().toISOString(),
+    status: 'fallback',
+    generationMetadata,
+    setupCost: 500, // Medium complexity
+    downloadUrl: generateDownloadUrl(`fallback-${subtask.id}-${Date.now()}`),
+    validationStatus: 'valid',
+    n8nWorkflow,
+    workflowData: n8nWorkflow
+  };
+}
+
+/**
+ * Enhanced blueprint generation with fallback support
+ */
+export async function generateBlueprintWithFallback(
+  subtask: DynamicSubtask,
+  lang: 'de' | 'en' = 'en',
+  timeoutMs: number = 3000
+): Promise<GeneratedBlueprint> {
+  try {
+    const blueprint = await generateBlueprintForSubtask(subtask, lang, timeoutMs);
+    if (blueprint) {
+      return blueprint;
+    }
+  } catch (error) {
+    console.warn('⚠️ [BlueprintGenerator] AI generation failed, using fallback:', error);
+  }
+  
+  // Return fallback blueprint
+  return generateFallbackBlueprint(subtask, lang);
+}
+
+/**
+ * Batch generate blueprints with fallback support
+ */
+export async function generateBlueprintsWithFallback(
+  subtasks: DynamicSubtask[],
+  lang: 'de' | 'en' = 'en'
+): Promise<Map<string, GeneratedBlueprint>> {
+  const blueprintMap = new Map<string, GeneratedBlueprint>();
+
+  // Generate in parallel with fallback support
+  const promises = subtasks.map(async (subtask) => {
+    const blueprint = await generateBlueprintWithFallback(subtask, lang);
+    return { subtaskId: subtask.id, blueprint };
+  });
+
+  const results = await Promise.allSettled(promises);
+
+  results.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      blueprintMap.set(result.value.subtaskId, result.value.blueprint);
+    }
+  });
+
+  console.log(`✨ [BlueprintGenerator] Generated ${blueprintMap.size}/${subtasks.length} blueprints (with fallbacks)`);
+  return blueprintMap;
+}
+
 export default {
   generateBlueprintForSubtask,
-  generateBlueprintsForSubtasks
+  generateBlueprintsForSubtasks,
+  generateFallbackBlueprint,
+  generateBlueprintWithFallback,
+  generateBlueprintsWithFallback
 };
 

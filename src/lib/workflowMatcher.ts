@@ -3,9 +3,10 @@
  * Matches workflows/blueprints to subtasks based on various criteria
  */
 
-import { DynamicSubtask } from './types';
+import { DynamicSubtask, SolutionStatus, GenerationMetadata } from './types';
 import { WorkflowIndex } from './workflowIndexer';
 import { N8nWorkflow } from './n8nApi';
+import { WorkflowSolutionInterface } from './interfaces';
 
 export interface WorkflowMatch {
   workflow: WorkflowIndex | N8nWorkflow;
@@ -13,6 +14,13 @@ export interface WorkflowMatch {
   matchReasons: string[];
   relevantIntegrations: string[];
   estimatedTimeSavings?: number;
+  // Enhanced properties for expanded task detail view
+  status: SolutionStatus;
+  isAIGenerated: boolean;
+  generationMetadata?: GenerationMetadata;
+  setupCost?: number;
+  downloadUrl?: string;
+  validationStatus?: 'valid' | 'invalid';
 }
 
 export interface MatchingOptions {
@@ -20,6 +28,11 @@ export interface MatchingOptions {
   minScore?: number;
   preferredComplexity?: 'Low' | 'Medium' | 'High';
   requireIntegrationMatch?: boolean;
+  // Enhanced options for expanded task detail view
+  includeAIGenerated?: boolean;
+  preferredStatus?: SolutionStatus[];
+  language?: 'de' | 'en';
+  autoGenerateFallback?: boolean;
 }
 
 /**
@@ -34,7 +47,11 @@ export function matchWorkflowsToSubtask(
     maxResults = 5,
     minScore = 30,
     preferredComplexity,
-    requireIntegrationMatch = false
+    requireIntegrationMatch = false,
+    includeAIGenerated = true,
+    preferredStatus = ['verified', 'generated', 'fallback'],
+    language = 'en',
+    autoGenerateFallback = true
   } = options;
 
   const matches: WorkflowMatch[] = [];
@@ -141,12 +158,26 @@ function calculateWorkflowMatch(
   // Estimate time savings (hours per month)
   const estimatedTimeSavings = estimateTimeSavings(subtask, workflow);
 
+  // Determine status and generation metadata
+  const status = determineWorkflowStatus(workflow);
+  const isAIGenerated = determineIfAIGenerated(workflow);
+  const generationMetadata = isAIGenerated ? createGenerationMetadata(workflow) : undefined;
+  const setupCost = calculateSetupCost(workflow);
+  const downloadUrl = generateDownloadUrl(workflow);
+  const validationStatus = validateWorkflow(workflow);
+
   return {
     workflow,
     matchScore: Math.min(100, Math.round(score)),
     matchReasons,
     relevantIntegrations,
-    estimatedTimeSavings
+    estimatedTimeSavings,
+    status,
+    isAIGenerated,
+    generationMetadata,
+    setupCost,
+    downloadUrl,
+    validationStatus
   };
 }
 
@@ -407,9 +438,167 @@ export function findBestOverallWorkflow(
   return allMatches[0];
 }
 
+/**
+ * Determine workflow status based on source and properties
+ */
+function determineWorkflowStatus(workflow: WorkflowIndex | N8nWorkflow): SolutionStatus {
+  // Check if it's from a verified source
+  if ('source' in workflow && workflow.source === 'library') {
+    return 'verified';
+  }
+  
+  // Check if it's AI-generated
+  if ('isAIGenerated' in workflow && workflow.isAIGenerated) {
+    return 'generated';
+  }
+  
+  // Default to fallback for unknown sources
+  return 'fallback';
+}
+
+/**
+ * Determine if workflow is AI-generated
+ */
+function determineIfAIGenerated(workflow: WorkflowIndex | N8nWorkflow): boolean {
+  if ('isAIGenerated' in workflow) {
+    return workflow.isAIGenerated;
+  }
+  
+  // Check for AI generation indicators
+  if ('source' in workflow && workflow.source === 'ai') {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Create generation metadata for AI-generated workflows
+ */
+function createGenerationMetadata(workflow: WorkflowIndex | N8nWorkflow): GenerationMetadata {
+  return {
+    timestamp: Date.now(),
+    model: 'gpt-4o-mini', // Default model
+    language: 'en',
+    cacheKey: `workflow_${workflow.id || 'unknown'}_${Date.now()}`
+  };
+}
+
+/**
+ * Calculate setup cost based on workflow complexity
+ */
+function calculateSetupCost(workflow: WorkflowIndex | N8nWorkflow): number {
+  const complexity = normalizeComplexity(getWorkflowComplexity(workflow));
+  
+  switch (complexity) {
+    case 'Low': return 200;
+    case 'Medium': return 500;
+    case 'High': return 1000;
+    default: return 500;
+  }
+}
+
+/**
+ * Generate download URL for workflow
+ */
+function generateDownloadUrl(workflow: WorkflowIndex | N8nWorkflow): string | undefined {
+  if ('downloadUrl' in workflow && workflow.downloadUrl) {
+    return workflow.downloadUrl;
+  }
+  
+  if ('jsonUrl' in workflow && workflow.jsonUrl) {
+    return workflow.jsonUrl;
+  }
+  
+  // Generate URL for n8n workflows
+  if ('id' in workflow && workflow.id) {
+    return `/api/workflows/${workflow.id}/download`;
+  }
+  
+  return undefined;
+}
+
+/**
+ * Validate workflow structure
+ */
+function validateWorkflow(workflow: WorkflowIndex | N8nWorkflow): 'valid' | 'invalid' {
+  // Basic validation checks
+  if (!workflow) return 'invalid';
+  
+  // Check for required properties
+  const hasName = getWorkflowName(workflow).length > 0;
+  const hasDescription = getWorkflowDescription(workflow).length > 0;
+  
+  if (!hasName || !hasDescription) return 'invalid';
+  
+  // Check for valid integrations array
+  const integrations = getWorkflowIntegrations(workflow);
+  if (!Array.isArray(integrations)) return 'invalid';
+  
+  return 'valid';
+}
+
+/**
+ * Enhanced matching with fallback generation support
+ */
+export async function matchWorkflowsWithFallback(
+  subtask: DynamicSubtask,
+  workflows: (WorkflowIndex | N8nWorkflow)[],
+  options: MatchingOptions = {}
+): Promise<WorkflowMatch[]> {
+  // First, try normal matching
+  const matches = matchWorkflowsToSubtask(subtask, workflows, options);
+  
+  // If no good matches found and fallback is enabled, generate one
+  if (matches.length === 0 && options.autoGenerateFallback !== false) {
+    const fallbackMatch = await generateFallbackWorkflow(subtask, options);
+    if (fallbackMatch) {
+      return [fallbackMatch];
+    }
+  }
+  
+  return matches;
+}
+
+/**
+ * Generate fallback workflow when no matches found
+ */
+async function generateFallbackWorkflow(
+  subtask: DynamicSubtask,
+  options: MatchingOptions = {}
+): Promise<WorkflowMatch | null> {
+  // This would integrate with the blueprintGenerator service
+  // For now, return a basic fallback structure
+  const fallbackWorkflow: N8nWorkflow = {
+    id: `fallback_${subtask.id}_${Date.now()}`,
+    name: `Generated workflow for: ${subtask.title}`,
+    description: `AI-generated workflow for automating: ${subtask.description || subtask.title}`,
+    category: 'Generated',
+    complexity: 'Medium',
+    integrations: subtask.systems || [],
+    isAIGenerated: true,
+    source: 'ai'
+  };
+  
+  return {
+    workflow: fallbackWorkflow,
+    matchScore: 50, // Medium score for fallback
+    matchReasons: ['AI-generated fallback workflow'],
+    relevantIntegrations: subtask.systems || [],
+    estimatedTimeSavings: subtask.estimatedTime || 8,
+    status: 'generated',
+    isAIGenerated: true,
+    generationMetadata: createGenerationMetadata(fallbackWorkflow),
+    setupCost: calculateSetupCost(fallbackWorkflow),
+    downloadUrl: generateDownloadUrl(fallbackWorkflow),
+    validationStatus: 'valid'
+  };
+}
+
 export default {
   matchWorkflowsToSubtask,
   matchWorkflowsToSubtasks,
-  findBestOverallWorkflow
+  findBestOverallWorkflow,
+  matchWorkflowsWithFallback
 };
 

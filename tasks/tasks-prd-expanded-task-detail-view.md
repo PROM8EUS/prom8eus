@@ -54,7 +54,7 @@
 **Goal**: Working types, services, and refactored components  
 **Deliverable**: Core infrastructure ready for UI development
 
-- [ ] 1.0 Update Shared Types and Interfaces (Foundation)
+- [x] 1.0 Update Shared Types and Interfaces (Foundation)
   - [x] 1.1 Extend existing DynamicSubtask type in types.ts (currently 69 lines)
   - [x] 1.2 Add focused types for Workflow, Agent, and LLM data structures
   - [x] 1.3 Add types for status badges and generation metadata
@@ -62,11 +62,11 @@
   - [x] 1.5 Create shared interfaces in dedicated folder structure
 
 - [ ] 2.0 Enhance Existing Business Logic Services (Core functionality)
-  - [ ] 2.1 Enhance existing workflowMatcher.ts for new matching logic (currently 416 lines)
-  - [ ] 2.2 Enhance existing blueprintGenerator.ts for fallback generation (currently 204 lines)
-  - [ ] 2.3 Create agentGenerator service for AI agent generation (new)
-  - [ ] 2.4 Create promptGenerator service for AI prompt generation (new)
-  - [ ] 2.5 Create cacheManager service with TTL-based caching (new)
+  - [x] 2.1 Enhance existing workflowMatcher.ts for new matching logic (currently 416 lines)
+  - [x] 2.2 Enhance existing blueprintGenerator.ts for fallback generation (currently 204 lines)
+  - [x] 2.3 Create agentGenerator service for AI agent generation (new)
+  - [x] 2.4 Create promptGenerator service for AI prompt generation (new)
+  - [x] 2.5 Create cacheManager service with TTL-based caching (new)
 
 - [ ] 3.0 Refactor TaskPanel.tsx (File size compliance)
   - [ ] 3.1 Extract SubtaskSidebar component from TaskPanel (675 → <300 lines)
