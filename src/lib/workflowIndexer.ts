@@ -1167,7 +1167,7 @@ export class WorkflowIndexer {
   private incrementalUpdateInterval: NodeJS.Timeout | null = null;
   private lastUpdateTimestamps = new Map<string, number>();
   private updateInProgress = new Set<string>();
-  private cacheVersion = '1.0.0';
+  private cacheVersion = '1.0.0'; // Use 1.0.0 to match existing cached workflows
   private schemaVersions = new Map<string, string>();
   private textEncoder: TextEncoder | null =
     typeof globalThis !== 'undefined' && typeof (globalThis as any).TextEncoder !== 'undefined'

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppIcon } from './AppIcon';
@@ -13,11 +12,16 @@ import {
   HelpCircle,
   Loader2
 } from 'lucide-react';
-import SolutionsTab from './SolutionsTab';
-import BusinessCase from './BusinessCase';
+import { EffortSection } from './EffortSection';
+import { TopSubtasksSection } from './TopSubtasksSection';
+import { InsightsTrendsSection } from './InsightsTrendsSection';
+import { ImplementationRequestCTA } from './ImplementationRequestCTA';
+import { analyzeTrends } from '@/lib/trendAnalysis';
+import { matchWorkflowsToSubtasks } from '@/lib/workflowMatcher';
 import { DynamicSubtask } from '@/lib/types';
 import { generateSubtasksWithAI } from '@/lib/aiAnalysis';
 import { isOpenAIAvailable } from '@/lib/openai';
+import { workflowIndexer } from '@/lib/workflowIndexer';
 
 // Simple string->SHA256 helper for stable cache keys
 async function sha256(input: string): Promise<string> {
@@ -542,111 +546,129 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
     }))
   }), [task.name, task.title, task.description, realSubtasks, basePerTaskHours]);
 
+  // Convert realSubtasks to DynamicSubtask format for new components
+  const dynamicSubtasks: DynamicSubtask[] = useMemo(() => {
+    return realSubtasks.map(s => ({
+      id: s.id,
+      title: s.title,
+      description: '', // Not available in current format
+      automationPotential: s.automationPotential,
+      estimatedTime: s.manualHoursShare * basePerTaskHours,
+      priority: 'medium' as const,
+      complexity: 'medium' as const,
+      systems: s.systems || [],
+      dependencies: [],
+      risks: s.risks || [],
+      opportunities: [],
+      aiTools: s.aiTools
+    }));
+  }, [realSubtasks, basePerTaskHours]);
+
+  // Load workflows for matching
+  const [workflows, setWorkflows] = useState<any[]>([]);
+  const [trendInsights, setTrendInsights] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isVisible && dynamicSubtasks.length > 0) {
+      // Load workflows from indexer
+      const loadWorkflows = async () => {
+        try {
+          const taskQuery = task.title || task.name || '';
+          console.log('🔍 [TaskPanel] Loading workflows for query:', taskQuery);
+          
+          const results = await workflowIndexer.searchWorkflows({
+            query: taskQuery,
+            limit: 50 // Increase limit for better matching
+          });
+          
+          console.log('✅ [TaskPanel] Loaded workflows:', results.workflows.length);
+          setWorkflows(results.workflows); // FIX: Use results.workflows instead of results
+
+          // Analyze trends
+          const trends = analyzeTrends(results.workflows, dynamicSubtasks, {
+            includeCategory: task.category
+          });
+          console.log('📊 [TaskPanel] Trend insights:', trends.length);
+          setTrendInsights(trends);
+        } catch (error) {
+          console.error('❌ [TaskPanel] Error loading workflows:', error);
+        }
+      };
+      loadWorkflows();
+    }
+  }, [isVisible, dynamicSubtasks, task.title, task.name, task.category]);
+
   if (!isVisible) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Business Case */}
-      <BusinessCase 
-        task={businessCaseTask}
-        lang={lang}
+    <div className="space-y-5">
+      {/* Effort/ROI Section */}
+      <EffortSection
+        manualHours={manualHoursTotal}
+        automatedHours={residualHoursTotal}
+        hourlyRate={60} // Default rate
         period={period}
-        onPeriodChange={(p) => setPeriod(p)}
+        lang={lang}
+        onHourlyRateChange={(newRate) => {
+          console.log('Hourly rate changed:', newRate);
+          // Could store in state if needed
+        }}
       />
 
-      {/* Subtasks and Solutions */}
-      <Tabs defaultValue="subtasks" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="subtasks" className="flex items-center gap-2">
-            <Workflow className="w-4 h-4" />
-            {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
-          </TabsTrigger>
-          <TabsTrigger value="solutions" className="flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            {lang === 'de' ? 'Lösungen' : 'Solutions'}
-            <AnimatedCounterBadge count={solutionsCount} isLoading={isGenerating || isLoadingSolutions} />
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="subtasks" className="space-y-4">
-          {isGenerating ? (
-            <div className="text-center py-8 text-gray-500">
+      {/* Top Subtasks Section with Workflows */}
+      {isGenerating ? (
+        <Card className="shadow-sm">
+          <CardContent className="p-8">
+            <div className="text-center text-gray-500">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-sm">
                 {lang === 'de' ? 'Generiere spezifische Teilaufgaben...' : 'Generating specific subtasks...'}
               </p>
             </div>
-          ) : (
-            <div className="space-y-0">
-              {realSubtasks.map((subtask, index) => {
-              const hoursBefore = subtask.manualHoursShare * basePerTaskHours * scale;
-              const hoursAfter = subtask.manualHoursShare * basePerTaskHours * (1 - subtask.automationPotential) * scale;
-              
-              return (
-                <div key={subtask.id} className={`py-2 px-4 ${index < realSubtasks.length - 1 ? 'border-b' : ''}`}>
-                  <div className="flex items-center gap-4">
-                    {/* Circular Progress Chart for each subtask */}
-                    <div className="flex-shrink-0 flex items-center">
-                      <ScoreCircleWrapper 
-                        automationRatio={Math.round(subtask.automationPotential * 100)} 
-                        size={32}
-                        lang={lang}
-                        animateKey={subtask.id}
-                      />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0 flex items-center">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="font-medium text-sm text-gray-900">{subtask.title}</div>
-                        
-                        {/* Zeitersparnis */}
-                        <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                          <span className="text-gray-400">{hoursBefore.toFixed(1)}h</span>
-                          <span className="text-primary">→</span>
-                          <span className="text-green-600 font-semibold">{hoursAfter.toFixed(1)}h</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="solutions" className="space-y-4">
-          {isGenerating ? (
-            <div className="text-center py-8 text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm">
-                {lang === 'de' ? 'Generiere Lösungen...' : 'Generating solutions...'}
-              </p>
-            </div>
-          ) : (
-            <div className="min-h-[200px]">
-              <SolutionsTab
-                taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
-                lang={lang}
-                selectedApplications={Object.values(selectedTools).flat()}
-                onSolutionsLoaded={handleSolutionsLoaded}
-              />
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Hidden TaskSpecificWorkflows to load solutions in background */}
-      {isVisible && !isGenerating && (
-        <div className="hidden">
-          <SolutionsTab
-            taskText={realSubtasks?.map(subtask => subtask.title).join(' ') || (task.title || task.name || '')}
-            lang={lang}
-            selectedApplications={Object.values(selectedTools).flat()}
-            onSolutionsLoaded={handleSolutionsLoaded}
-          />
-        </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-0">
+            <TopSubtasksSection
+              subtasks={dynamicSubtasks}
+              workflows={workflows}
+              lang={lang}
+              topCount={3}
+              sortBy="automationPotential"
+              period={period}
+            />
+          </CardContent>
+        </Card>
       )}
+
+      {/* Insights & Trends Section */}
+      {trendInsights.length > 0 && (
+        <InsightsTrendsSection
+          insights={trendInsights}
+          lang={lang}
+        />
+      )}
+
+      {/* CTA Button - Implementation Request */}
+      <div className="flex justify-center pt-4 pb-2">
+        <ImplementationRequestCTA
+          taskTitle={task.title || task.name}
+          taskDescription={task.description}
+          subtasks={dynamicSubtasks}
+          automationScore={Math.round(businessCaseTask.automationRatio)}
+          estimatedSavings={{
+            hours: manualHoursTotal - residualHoursTotal,
+            cost: (manualHoursTotal - residualHoursTotal) * 60,
+            period: period === 'year' ? (lang === 'de' ? 'Jahr' : 'year') :
+                   period === 'month' ? (lang === 'de' ? 'Monat' : 'month') :
+                   period === 'week' ? (lang === 'de' ? 'Woche' : 'week') :
+                   (lang === 'de' ? 'Tag' : 'day')
+          }}
+          lang={lang}
+          size="lg"
+        />
+      </div>
     </div>
   );
 };

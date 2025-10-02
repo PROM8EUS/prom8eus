@@ -79,19 +79,89 @@ export class OpenAIClient {
   }
 
   /**
-   * Call OpenAI API through secure backend
+   * Call OpenAI API through secure backend (with direct fallback for dev)
    */
   private async callBackend(payload: any): Promise<any> {
-    const { data, error } = await supabase.functions.invoke('openai-proxy', {
-      body: payload
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('openai-proxy', {
+        body: payload
+      });
 
-    if (error) {
-      console.error('Backend OpenAI call failed:', error);
-      throw new Error(`OpenAI API Error: ${error.message}`);
+      if (error) {
+        console.warn('Backend OpenAI call failed, trying direct fallback:', error);
+        // Fallback to direct API call in development
+        if (import.meta.env.DEV && import.meta.env.VITE_OPENAI_API_KEY) {
+          return await this.callOpenAIDirectly(payload);
+        }
+        throw new Error(`OpenAI API Error: ${error.message}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.warn('Supabase function invoke failed, trying direct fallback:', error);
+      // Fallback to direct API call in development
+      if (import.meta.env.DEV && import.meta.env.VITE_OPENAI_API_KEY) {
+        return await this.callOpenAIDirectly(payload);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Direct OpenAI API call (only for development fallback)
+   */
+  private async callOpenAIDirectly(payload: any): Promise<any> {
+    console.log('⚠️ [DEV] Using direct OpenAI API call (fallback)');
+    
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured');
     }
 
-    return data;
+    // Extract messages from payload
+    let messages: OpenAIMessage[] = [];
+    if (payload.messages) {
+      messages = payload.messages;
+    } else if (payload.action === 'chat') {
+      messages = payload.messages || [];
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: payload.options?.model || 'gpt-4o-mini',
+        messages,
+        temperature: payload.options?.temperature || 0.7,
+        max_tokens: payload.options?.max_tokens || 1000
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API Error: ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Extract JSON from markdown code blocks if present
+    let content = data.choices[0]?.message?.content || '';
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      content = jsonMatch[1].trim();
+    } else if (content.startsWith('```') && content.endsWith('```')) {
+      const lines = content.split('\n');
+      content = lines.slice(1, -1).join('\n').trim();
+    }
+
+    return {
+      content,
+      usage: data.usage,
+      model: data.model
+    };
   }
 
   /**
@@ -379,7 +449,13 @@ export class OpenAIClient {
 export const openaiClient = new OpenAIClient();
 
 // Export compatibility functions
-export const isOpenAIAvailable = (): boolean => true; // Always available through backend
+export const isOpenAIAvailable = (): boolean => {
+  // Check if we have the API key available
+  const hasKey = import.meta.env.DEV && !!import.meta.env.VITE_OPENAI_API_KEY;
+  console.log('🔍 [OpenAI] Availability check:', { hasKey, isDev: import.meta.env.DEV });
+  return hasKey || true; // Always return true to attempt backend call
+};
+
 export const testOpenAIConnection = async (): Promise<boolean> => {
   try {
     await openaiClient.chatCompletion([
