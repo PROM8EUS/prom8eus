@@ -19,14 +19,7 @@ import {
   Users,
   Clock,
   Target,
-  Search,
-  Filter,
-  SortAsc,
-  SortDesc,
-  MoreHorizontal,
-  Star,
-  Bookmark,
-  TrendingUp
+  MoreHorizontal
 } from 'lucide-react';
 import { DynamicSubtask } from '@/lib/types';
 
@@ -200,8 +193,7 @@ type SubtaskSidebarProps = {
   selectedSubtaskId?: string;
 };
 
-type SortOption = 'automation' | 'time' | 'priority' | 'alphabetical';
-type FilterOption = 'all' | 'high-automation' | 'medium-automation' | 'low-automation';
+// Removed unused types: SortOption, FilterOption
 
 export default function SubtaskSidebar({ 
   task, 
@@ -214,12 +206,7 @@ export default function SubtaskSidebar({
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
   
-  // Modern navigation state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('automation');
-  const [filterBy, setFilterBy] = useState<FilterOption>('all');
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  // Simplified state - no search, filter, or favorites
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Handle tool selection
@@ -237,30 +224,7 @@ export default function SubtaskSidebar({
     });
   };
 
-  // Modern navigation handlers
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const handleSort = (option: SortOption) => {
-    setSortBy(option);
-  };
-
-  const handleFilter = (option: FilterOption) => {
-    setFilterBy(option);
-  };
-
-  const toggleFavorite = (subtaskId: string) => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(subtaskId)) {
-        newFavorites.delete(subtaskId);
-      } else {
-        newFavorites.add(subtaskId);
-      }
-      return newFavorites;
-    });
-  };
+  // Simplified handlers - no search, filter, or favorites
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
@@ -327,7 +291,7 @@ export default function SubtaskSidebar({
     return applications.slice(0, 6);
   };
 
-  // Use real subtasks from task prop or generated subtasks with modern filtering and sorting
+  // Get all subtasks - no filtering, always show all
   const realSubtasks = useMemo(() => {
     console.log('🔍 [SubtaskSidebar] Debug subtasks check:', {
       hasTask: !!task,
@@ -388,57 +352,9 @@ export default function SubtaskSidebar({
       ];
     }
 
-    // Apply modern filtering and sorting
-    let filteredSubtasks = baseSubtasks;
-
-    // Search filter
-    if (searchQuery) {
-      filteredSubtasks = filteredSubtasks.filter(subtask =>
-        subtask.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        subtask.systems?.some(system => system.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    // Automation level filter
-    if (filterBy !== 'all') {
-      filteredSubtasks = filteredSubtasks.filter(subtask => {
-        const automationLevel = subtask.automationPotential;
-        switch (filterBy) {
-          case 'high-automation':
-            return automationLevel >= 0.8;
-          case 'medium-automation':
-            return automationLevel >= 0.5 && automationLevel < 0.8;
-          case 'low-automation':
-            return automationLevel < 0.5;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Favorites filter
-    if (showFavorites) {
-      filteredSubtasks = filteredSubtasks.filter(subtask => favorites.has(subtask.id));
-    }
-
-    // Sorting
-    filteredSubtasks.sort((a, b) => {
-      switch (sortBy) {
-        case 'automation':
-          return b.automationPotential - a.automationPotential;
-        case 'time':
-          return b.manualHoursShare - a.manualHoursShare;
-        case 'priority':
-          return (b.manualHoursShare * b.automationPotential) - (a.manualHoursShare * a.automationPotential);
-        case 'alphabetical':
-          return a.title.localeCompare(b.title);
-        default:
-          return 0;
-      }
-    });
-
-    return filteredSubtasks;
-  }, [task?.subtasks, generatedSubtasks, searchQuery, filterBy, showFavorites, favorites, sortBy]);
+    // Always show all subtasks, sorted by automation potential (highest first)
+    return baseSubtasks.sort((a, b) => b.automationPotential - a.automationPotential);
+  }, [task?.subtasks, generatedSubtasks]);
 
   if (!isVisible) return null;
 
@@ -465,63 +381,10 @@ export default function SubtaskSidebar({
               </div>
             </div>
 
-            {/* Modern Navigation Controls */}
+            {/* Simplified Header - Always show "Alle Teilaufgaben" */}
             {!isCollapsed && (
-              <div className="space-y-3">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder={lang === 'de' ? 'Teilaufgaben durchsuchen...' : 'Search subtasks...'}
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
-
-                {/* Filters and Sort */}
-                <div className="flex gap-2">
-                  <select
-                    value={filterBy}
-                    onChange={(e) => handleFilter(e.target.value as FilterOption)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="all">{lang === 'de' ? 'Alle' : 'All'}</option>
-                    <option value="high-automation">{lang === 'de' ? 'Hoch automatisiert' : 'High Automation'}</option>
-                    <option value="medium-automation">{lang === 'de' ? 'Mittel automatisiert' : 'Medium Automation'}</option>
-                    <option value="low-automation">{lang === 'de' ? 'Niedrig automatisiert' : 'Low Automation'}</option>
-                  </select>
-                  
-                  <select
-                    value={sortBy}
-                    onChange={(e) => handleSort(e.target.value as SortOption)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="automation">{lang === 'de' ? 'Automatisierung' : 'Automation'}</option>
-                    <option value="time">{lang === 'de' ? 'Zeit' : 'Time'}</option>
-                    <option value="priority">{lang === 'de' ? 'Priorität' : 'Priority'}</option>
-                    <option value="alphabetical">{lang === 'de' ? 'A-Z' : 'A-Z'}</option>
-                  </select>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant={showFavorites ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowFavorites(!showFavorites)}
-                    className="flex items-center gap-2"
-                  >
-                    <Star className={`h-4 w-4 ${showFavorites ? 'fill-current' : ''}`} />
-                    {lang === 'de' ? 'Favoriten' : 'Favorites'}
-                  </Button>
-                  
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <TrendingUp className="h-3 w-3" />
-                    {realSubtasks.length} {lang === 'de' ? 'Ergebnisse' : 'Results'}
-                  </div>
-                </div>
+              <div className="text-sm text-gray-600 font-medium">
+                {lang === 'de' ? 'Alle Teilaufgaben' : 'All Subtasks'}
               </div>
             )}
 
@@ -544,17 +407,7 @@ export default function SubtaskSidebar({
                         <span className="text-sm font-medium text-gray-900 truncate">
                           {subtask.title}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(subtask.id);
-                          }}
-                          className="h-6 w-6 p-0 ml-auto"
-                        >
-                          <Star className={`h-3 w-3 ${favorites.has(subtask.id) ? 'fill-current text-yellow-500' : 'text-gray-400'}`} />
-                        </Button>
+                        {/* Removed favorite button */}
                         <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
                       </div>
                       
