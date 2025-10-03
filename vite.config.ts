@@ -16,4 +16,70 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@radix-ui/react-tooltip', '@radix-ui/react-dialog', '@radix-ui/react-tabs', '@radix-ui/react-collapsible'],
+          'utils-vendor': ['lucide-react', 'clsx', 'tailwind-merge'],
+          
+          // Feature chunks
+          'workflow-features': [
+            './src/components/tabs/WorkflowTab.tsx',
+            './src/components/ui/EnhancedBlueprintCard.tsx',
+            './src/components/ui/WorkflowTabSkeleton.tsx',
+            './src/lib/workflowMatcher.ts',
+            './src/lib/blueprintGenerator.ts'
+          ],
+          'agent-features': [
+            './src/components/tabs/AgentTab.tsx',
+            './src/components/ui/EnhancedAgentCard.tsx',
+            './src/components/ui/AgentTabSkeleton.tsx',
+            './src/lib/services/agentGenerator.ts'
+          ],
+          'llm-features': [
+            './src/components/tabs/LLMTab.tsx',
+            './src/components/ui/EnhancedPromptCard.tsx',
+            './src/components/ui/LLMTabSkeleton.tsx',
+            './src/lib/services/promptGenerator.ts'
+          ],
+          'ui-components': [
+            './src/components/ui/ModernActionButton.tsx',
+            './src/components/ui/ActionButtonGroup.tsx',
+            './src/components/ui/SmartSearch.tsx',
+            './src/components/ui/SmartFilter.tsx',
+            './src/components/ui/StatusBadge.tsx',
+            './src/components/ui/CollapsibleSection.tsx'
+          ],
+          'services': [
+            './src/lib/services/cacheManager.ts',
+            './src/lib/workflowIndexer.ts',
+            './src/lib/trendAnalysis.ts'
+          ]
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'lucide-react',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-collapsible'
+    ],
+  },
 });

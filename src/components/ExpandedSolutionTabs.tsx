@@ -4,7 +4,7 @@
  * with animated transitions, smart defaults, and modern design patterns
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -24,9 +24,11 @@ import {
   Info
 } from 'lucide-react';
 import { DynamicSubtask } from '@/lib/types';
-import WorkflowTab from './tabs/WorkflowTab';
-import AgentTab from './tabs/AgentTab';
-import LLMTab from './tabs/LLMTab';
+
+// Lazy load tab components for better performance
+const WorkflowTab = lazy(() => import('./tabs/WorkflowTab'));
+const AgentTab = lazy(() => import('./tabs/AgentTab'));
+const LLMTab = lazy(() => import('./tabs/LLMTab'));
 
 interface ExpandedSolutionTabsProps {
   subtask: DynamicSubtask | null;
@@ -255,32 +257,48 @@ export function ExpandedSolutionTabs({
       }
     };
 
+    // Loading fallback component
+    const LoadingFallback = () => (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">
+          {lang === 'de' ? 'Lade Komponente...' : 'Loading component...'}
+        </span>
+      </div>
+    );
+
     switch (tabId) {
       case 'workflows':
         return (
-          <WorkflowTab
-            {...commonProps}
-            onWorkflowSelect={onWorkflowSelect}
-            onDownloadRequest={onWorkflowDownload}
-            onSetupRequest={onWorkflowSetup}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <WorkflowTab
+              {...commonProps}
+              onWorkflowSelect={onWorkflowSelect}
+              onDownloadRequest={onWorkflowDownload}
+              onSetupRequest={onWorkflowSetup}
+            />
+          </Suspense>
         );
       case 'agents':
         return (
-          <AgentTab
-            {...commonProps}
-            onAgentSelect={onAgentSelect}
-            onSetupRequest={onAgentSetup}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <AgentTab
+              {...commonProps}
+              onAgentSelect={onAgentSelect}
+              onSetupRequest={onAgentSetup}
+            />
+          </Suspense>
         );
       case 'llms':
         return (
-          <LLMTab
-            {...commonProps}
-            onPromptSelect={onPromptSelect}
-            onCopyPrompt={onPromptCopy}
-            onOpenInService={onPromptOpenInService}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <LLMTab
+              {...commonProps}
+              onPromptSelect={onPromptSelect}
+              onCopyPrompt={onPromptCopy}
+              onOpenInService={onPromptOpenInService}
+            />
+          </Suspense>
         );
       default:
         return null;
