@@ -178,7 +178,7 @@ export default function WorkflowTab({
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Check cache first
-      const cacheKey = `workflows_${subtask.id}`;
+      const cacheKey = `workflows_${subtask?.id || 'all'}`;
       const cached = cacheManager.get<WorkflowMatch[]>(cacheKey);
       
       if (cached && cached.length > 0) {
@@ -220,6 +220,11 @@ export default function WorkflowTab({
     if (subtask) {
       // Clear cache and reload
       const cacheKey = `workflows_${subtask.id}`;
+      cacheManager.delete(cacheKey);
+      loadWorkflows();
+    } else {
+      // Clear cache for 'all' and reload
+      const cacheKey = `workflows_all`;
       cacheManager.delete(cacheKey);
       loadWorkflows();
     }
@@ -337,8 +342,8 @@ export default function WorkflowTab({
           </h2>
           <p className="text-sm text-gray-600 mt-1">
             {lang === 'de' 
-              ? `Für: ${subtask.title}`
-              : `For: ${subtask.title}`
+              ? `Für: ${subtask?.title || 'Alle Teilaufgaben'}`
+              : `For: ${subtask?.title || 'All Subtasks'}`
             }
           </p>
         </div>

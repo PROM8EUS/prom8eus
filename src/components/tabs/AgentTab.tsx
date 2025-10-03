@@ -81,7 +81,7 @@ export default function AgentTab({
       await new Promise(resolve => setTimeout(resolve, 600));
       
       // Check cache first
-      const cacheKey = `agents_${subtask.id}`;
+      const cacheKey = `agents_${subtask?.id || 'all'}`;
       const cached = cacheManager.get<GeneratedAgent[]>(cacheKey);
       
       if (cached && cached.length > 0) {
@@ -118,6 +118,11 @@ export default function AgentTab({
     if (subtask) {
       // Clear cache and reload
       const cacheKey = `agents_${subtask.id}`;
+      cacheManager.delete(cacheKey);
+      loadAgents();
+    } else {
+      // Clear cache for 'all' and reload
+      const cacheKey = `agents_all`;
       cacheManager.delete(cacheKey);
       loadAgents();
     }
@@ -252,8 +257,8 @@ export default function AgentTab({
           </h2>
           <p className="text-sm text-gray-600 mt-1">
             {lang === 'de' 
-              ? `Für: ${subtask.title}`
-              : `For: ${subtask.title}`
+              ? `Für: ${subtask?.title || 'Alle Teilaufgaben'}`
+              : `For: ${subtask?.title || 'All Subtasks'}`
             }
           </p>
         </div>
