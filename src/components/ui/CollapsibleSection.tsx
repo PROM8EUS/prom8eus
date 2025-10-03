@@ -217,12 +217,13 @@ export function CollapsibleSection({
         <div
           id={`collapsible-content-${typeof title === 'string' ? title.replace(/\s+/g, '-').toLowerCase() : 'section'}`}
           className={cn(
-            'overflow-hidden transition-all duration-300 ease-in-out',
-            isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0',
+            'transition-all duration-300 ease-in-out',
+            isExpanded ? 'opacity-100' : 'opacity-0',
             contentClassName
           )}
           style={{
-            maxHeight: isExpanded ? `${Math.max(contentHeight, smartDefaults.minContentHeight || 50)}px` : '0px'
+            maxHeight: isExpanded ? 'none' : '0px',
+            overflow: isExpanded ? 'visible' : 'hidden'
           }}
         >
           <div className="p-4 pt-0">
