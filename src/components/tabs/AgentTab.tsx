@@ -93,15 +93,25 @@ export default function AgentTab({
         return;
       }
 
-      // Generate agents with fallback
-      const agent = await generateAgentWithFallback(subtask, lang, 3000);
+      // Generate agents with fallback or show example agents
+      let agents: GeneratedAgent[] = [];
       
-      console.log('✅ [AgentTab] Generated agent:', agent.name);
-      setAgents([agent]);
-      onUpdateCount?.(1);
+      if (subtask) {
+        // Try to generate agent for specific subtask
+        const agent = await generateAgentWithFallback(subtask, lang, 3000);
+        agents = [agent];
+        console.log('✅ [AgentTab] Generated agent:', agent.name);
+      } else {
+        // Show example agents when no subtask is selected
+        agents = generateExampleAgents(lang);
+        console.log('✅ [AgentTab] Loaded example agents:', agents.length);
+      }
+      
+      setAgents(agents);
+      onUpdateCount?.(agents.length);
 
       // Cache the results
-      cacheManager.set(cacheKey, [agent], 60 * 60 * 1000); // 1 hour cache
+      cacheManager.set(cacheKey, agents, 60 * 60 * 1000); // 1 hour cache
 
     } catch (error) {
       console.error('❌ [AgentTab] Error loading agents:', error);
@@ -357,4 +367,62 @@ export default function AgentTab({
       )}
     </div>
   );
+}
+
+// Generate example agents when no real data is available
+function generateExampleAgents(lang: 'de' | 'en'): GeneratedAgent[] {
+  const agents: GeneratedAgent[] = [
+    {
+      id: 'example-agent-1',
+      name: lang === 'de' ? 'Social Media Manager Agent' : 'Social Media Manager Agent',
+      description: lang === 'de' 
+        ? 'Automatisiert Social Media Posts, überwacht Engagement und optimiert Content-Strategien'
+        : 'Automates social media posts, monitors engagement and optimizes content strategies',
+      capabilities: [
+        lang === 'de' ? 'Content-Erstellung' : 'Content Creation',
+        lang === 'de' ? 'Engagement-Monitoring' : 'Engagement Monitoring',
+        lang === 'de' ? 'Hashtag-Optimierung' : 'Hashtag Optimization'
+      ],
+      tools: ['Twitter API', 'LinkedIn API', 'Content Generator'],
+      technologyStack: ['Python', 'OpenAI API', 'Social Media APIs'],
+      estimatedSetupTime: 2,
+      complexity: 'medium',
+      automationLevel: 85,
+      useCases: [
+        lang === 'de' ? 'Tägliche Social Media Posts' : 'Daily social media posts',
+        lang === 'de' ? 'Engagement-Analyse' : 'Engagement analysis'
+      ],
+      benefits: [
+        lang === 'de' ? 'Zeitersparnis: 5h/Woche' : 'Time savings: 5h/week',
+        lang === 'de' ? 'Konsistente Posting-Strategie' : 'Consistent posting strategy'
+      ]
+    },
+    {
+      id: 'example-agent-2',
+      name: lang === 'de' ? 'E-Mail Marketing Agent' : 'Email Marketing Agent',
+      description: lang === 'de'
+        ? 'Erstellt und versendet personalisierte E-Mail Kampagnen basierend auf Nutzerverhalten'
+        : 'Creates and sends personalized email campaigns based on user behavior',
+      capabilities: [
+        lang === 'de' ? 'Kampagnen-Erstellung' : 'Campaign Creation',
+        lang === 'de' ? 'Segmentierung' : 'Segmentation',
+        lang === 'de' ? 'A/B-Testing' : 'A/B Testing'
+      ],
+      tools: ['Mailchimp API', 'HubSpot', 'Analytics'],
+      technologyStack: ['JavaScript', 'Node.js', 'Email APIs'],
+      estimatedSetupTime: 3,
+      complexity: 'high',
+      automationLevel: 90,
+      useCases: [
+        lang === 'de' ? 'Newsletter-Versand' : 'Newsletter distribution',
+        lang === 'de' ? 'Lead-Nurturing' : 'Lead nurturing'
+      ],
+      benefits: [
+        lang === 'de' ? 'Zeitersparnis: 8h/Woche' : 'Time savings: 8h/week',
+        lang === 'de' ? 'Höhere Öffnungsraten' : 'Higher open rates'
+      ]
+    }
+  ];
+
+  return agents;
 }

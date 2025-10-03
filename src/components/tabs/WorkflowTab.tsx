@@ -190,13 +190,23 @@ export default function WorkflowTab({
         return;
       }
 
-      // Generate workflows with fallback
-      const matches = await matchWorkflowsWithFallback(subtask, [], {
-        maxResults: 10,
-        minScore: 20,
-        autoGenerateFallback: true,
-        language: lang
-      });
+      // Generate workflows with fallback or show example workflows
+      let matches: WorkflowMatch[] = [];
+      
+      if (subtask) {
+        // Try to match workflows for specific subtask
+        matches = await matchWorkflowsWithFallback(subtask, [], {
+          maxResults: 10,
+          minScore: 20,
+          autoGenerateFallback: true,
+          language: lang
+        });
+      }
+      
+      // If no matches or no subtask, show example workflows
+      if (matches.length === 0) {
+        matches = generateExampleWorkflows(lang);
+      }
 
       console.log('✅ [WorkflowTab] Loaded workflows:', matches.length);
       setWorkflows(matches);
@@ -451,4 +461,72 @@ export default function WorkflowTab({
       )}
     </div>
   );
+}
+
+// Generate example workflows when no real data is available
+function generateExampleWorkflows(lang: 'de' | 'en'): WorkflowMatch[] {
+  const workflows: WorkflowMatch[] = [
+    {
+      workflow: {
+        id: 'example-1',
+        title: lang === 'de' ? 'Social Media Automatisierung' : 'Social Media Automation',
+        description: lang === 'de' 
+          ? 'Automatisiertes Posting und Monitoring für Social Media Plattformen'
+          : 'Automated posting and monitoring for social media platforms',
+        category: 'marketing',
+        complexity: 'medium',
+        integrations: ['Twitter', 'LinkedIn', 'Facebook'],
+        estimatedTime: 2.5,
+        automationLevel: 85
+      },
+      score: 92,
+      reasons: [
+        lang === 'de' ? 'Hohe Automatisierungsrate' : 'High automation rate',
+        lang === 'de' ? 'Beliebte Integrationen' : 'Popular integrations'
+      ],
+      source: 'example'
+    },
+    {
+      workflow: {
+        id: 'example-2',
+        title: lang === 'de' ? 'E-Mail Marketing Workflow' : 'Email Marketing Workflow',
+        description: lang === 'de'
+          ? 'Automatisierte E-Mail Kampagnen und Lead-Nurturing'
+          : 'Automated email campaigns and lead nurturing',
+        category: 'marketing',
+        complexity: 'high',
+        integrations: ['Mailchimp', 'HubSpot', 'Salesforce'],
+        estimatedTime: 4.0,
+        automationLevel: 90
+      },
+      score: 88,
+      reasons: [
+        lang === 'de' ? 'Umfassende Automatisierung' : 'Comprehensive automation',
+        lang === 'de' ? 'Professionelle Tools' : 'Professional tools'
+      ],
+      source: 'example'
+    },
+    {
+      workflow: {
+        id: 'example-3',
+        title: lang === 'de' ? 'Datenanalyse Pipeline' : 'Data Analysis Pipeline',
+        description: lang === 'de'
+          ? 'Automatisierte Datensammlung und Berichterstellung'
+          : 'Automated data collection and reporting',
+        category: 'analytics',
+        complexity: 'high',
+        integrations: ['Google Analytics', 'Tableau', 'Power BI'],
+        estimatedTime: 3.5,
+        automationLevel: 75
+      },
+      score: 85,
+      reasons: [
+        lang === 'de' ? 'Zeitsparende Automatisierung' : 'Time-saving automation',
+        lang === 'de' ? 'Umfassende Berichte' : 'Comprehensive reports'
+      ],
+      source: 'example'
+    }
+  ];
+
+  return workflows;
 }

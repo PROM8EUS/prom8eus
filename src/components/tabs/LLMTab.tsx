@@ -94,11 +94,20 @@ export default function LLMTab({
         return;
       }
 
-      // Generate prompt variations
-      const promptMap = await generatePromptVariations(subtask, ['ChatGPT', 'Claude'], ['formal', 'technical'], lang);
-      const promptList = Array.from(promptMap.values());
+      // Generate prompt variations or show example prompts
+      let promptList: GeneratedPrompt[] = [];
       
-      console.log('✅ [LLMTab] Generated prompts:', promptList.length);
+      if (subtask) {
+        // Try to generate prompts for specific subtask
+        const promptMap = await generatePromptVariations(subtask, ['ChatGPT', 'Claude'], ['formal', 'technical'], lang);
+        promptList = Array.from(promptMap.values());
+        console.log('✅ [LLMTab] Generated prompts:', promptList.length);
+      } else {
+        // Show example prompts when no subtask is selected
+        promptList = generateExamplePrompts(lang);
+        console.log('✅ [LLMTab] Loaded example prompts:', promptList.length);
+      }
+      
       setPrompts(promptList);
       onUpdateCount?.(promptList.length);
 
@@ -383,4 +392,60 @@ export default function LLMTab({
       )}
     </div>
   );
+}
+
+// Generate example prompts when no real data is available
+function generateExamplePrompts(lang: 'de' | 'en'): GeneratedPrompt[] {
+  const prompts: GeneratedPrompt[] = [
+    {
+      id: 'example-prompt-1',
+      service: 'ChatGPT',
+      style: 'formal',
+      title: lang === 'de' ? 'Social Media Content Generator' : 'Social Media Content Generator',
+      prompt: lang === 'de' 
+        ? 'Erstelle 5 ansprechende Social Media Posts für [Thema]. Jeder Post sollte:\n- Eine klare Botschaft haben\n- Emojis enthalten\n- Hashtags verwenden\n- Die Zielgruppe [Zielgruppe] ansprechen\n- Zwischen 50-100 Wörtern lang sein'
+        : 'Create 5 engaging social media posts about [topic]. Each post should:\n- Have a clear message\n- Include emojis\n- Use hashtags\n- Target [audience]\n- Be 50-100 words long',
+      description: lang === 'de' 
+        ? 'Generiert ansprechende Social Media Inhalte mit optimaler Länge und Formatierung'
+        : 'Generates engaging social media content with optimal length and formatting',
+      useCase: lang === 'de' ? 'Content-Erstellung' : 'Content Creation',
+      complexity: 'medium',
+      estimatedTokens: 150,
+      category: 'marketing'
+    },
+    {
+      id: 'example-prompt-2',
+      service: 'Claude',
+      style: 'technical',
+      title: lang === 'de' ? 'E-Mail Marketing Kampagne' : 'Email Marketing Campaign',
+      prompt: lang === 'de'
+        ? 'Entwickle eine E-Mail Marketing Kampagne für [Produkt/Dienstleistung]. Erstelle:\n1. Betreffzeile (max. 50 Zeichen)\n2. E-Mail Text (200-300 Wörter)\n3. Call-to-Action\n4. Follow-up Strategie\n\nZielgruppe: [Zielgruppe]\nZiel: [Ziel]'
+        : 'Develop an email marketing campaign for [product/service]. Create:\n1. Subject line (max. 50 characters)\n2. Email text (200-300 words)\n3. Call-to-action\n4. Follow-up strategy\n\nTarget audience: [audience]\nGoal: [goal]',
+      description: lang === 'de'
+        ? 'Erstellt vollständige E-Mail Marketing Kampagnen mit strategischem Ansatz'
+        : 'Creates complete email marketing campaigns with strategic approach',
+      useCase: lang === 'de' ? 'Marketing-Automatisierung' : 'Marketing Automation',
+      complexity: 'high',
+      estimatedTokens: 300,
+      category: 'marketing'
+    },
+    {
+      id: 'example-prompt-3',
+      service: 'ChatGPT',
+      style: 'formal',
+      title: lang === 'de' ? 'Datenanalyse Bericht' : 'Data Analysis Report',
+      prompt: lang === 'de'
+        ? 'Analysiere die folgenden Daten und erstelle einen strukturierten Bericht:\n\n[Daten einfügen]\n\nDer Bericht sollte enthalten:\n- Executive Summary\n- Wichtigste Erkenntnisse\n- Trends und Muster\n- Empfehlungen\n- Grafische Darstellungen (beschreiben)\n\nFormat: Professionell, datenbasiert, handlungsorientiert'
+        : 'Analyze the following data and create a structured report:\n\n[Insert data]\n\nThe report should include:\n- Executive Summary\n- Key findings\n- Trends and patterns\n- Recommendations\n- Visual representations (describe)\n\nFormat: Professional, data-driven, action-oriented',
+      description: lang === 'de'
+        ? 'Wandelt Rohdaten in aussagekräftige, handlungsorientierte Berichte um'
+        : 'Transforms raw data into meaningful, action-oriented reports',
+      useCase: lang === 'de' ? 'Datenanalyse' : 'Data Analysis',
+      complexity: 'high',
+      estimatedTokens: 400,
+      category: 'analytics'
+    }
+  ];
+
+  return prompts;
 }
