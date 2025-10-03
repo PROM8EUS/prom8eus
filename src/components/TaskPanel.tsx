@@ -438,67 +438,42 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
         {/* Main Content Area - Solution Tabs (Responsive) */}
         <div className="xl:col-span-9 lg:col-span-8 md:col-span-6">
           <div className="space-y-6">
-            {/* Enhanced Solution Tabs with Progressive Disclosure */}
-            <CollapsibleSection
-              title={
-                <div className="flex items-center gap-2">
-                  {lang === 'de' ? 'Automatisierungs-Lösungen' : 'Automation Solutions'}
-                  <SectionHelp section="solutions-overview" lang={lang} />
-                </div>
-              }
-              description={lang === 'de' 
-                ? 'Workflows, KI-Agenten und LLM-Prompts für Ihre Aufgabe'
-                : 'Workflows, AI agents, and LLM prompts for your task'
-              }
-              priority="high"
-              badge={{
-                text: lang === 'de' ? 'Lösungen' : 'Solutions',
-                count: solutionsCount
+            {/* Direct Solution Tabs Display - No Container */}
+            <ExpandedSolutionTabs
+              subtask={selectedSubtask}
+              lang={lang}
+              onWorkflowSelect={(workflow) => {
+                const name = 'title' in workflow.workflow ? workflow.workflow.title : 
+                             'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+                console.log('🔍 [TaskPanel] Workflow selected:', name);
               }}
-              icon={Sparkles}
-              {...getSectionDefaults('solutions', 'high')}
-              onToggle={(expanded) => {
-                setExpanded('solutions', expanded);
-                trackUserAction(expanded ? 'section-expanded' : 'section-collapsed', 'solutions');
+              onWorkflowDownload={(workflow) => {
+                const name = 'title' in workflow.workflow ? workflow.workflow.title : 
+                             'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+                console.log('📥 [TaskPanel] Download requested:', name);
               }}
-              className="bg-white/80 backdrop-blur-sm border-white/20"
-            >
-              <ExpandedSolutionTabs
-                subtask={selectedSubtask}
-                lang={lang}
-                onWorkflowSelect={(workflow) => {
-                  const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                               'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
-                  console.log('🔍 [TaskPanel] Workflow selected:', name);
-                }}
-                onWorkflowDownload={(workflow) => {
-                  const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                               'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
-                  console.log('📥 [TaskPanel] Download requested:', name);
-                }}
-                onWorkflowSetup={(workflow) => {
-                  const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                               'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
-                  console.log('⚙️ [TaskPanel] Setup requested:', name);
-                }}
-                onAgentSelect={(agent) => {
-                  console.log('🔍 [TaskPanel] Agent selected:', agent.name);
-                }}
-                onAgentSetup={(agent) => {
-                  console.log('⚙️ [TaskPanel] Agent setup requested:', agent.name);
-                }}
-                onPromptSelect={(prompt) => {
-                  console.log('🔍 [TaskPanel] Prompt selected:', prompt.id);
-                }}
-                onPromptCopy={(prompt) => {
-                  console.log('📋 [TaskPanel] Prompt copied:', prompt.id);
-                }}
-                onPromptOpenInService={(prompt, service) => {
-                  console.log('🔗 [TaskPanel] Open in service:', service, prompt.id);
-                }}
-                className="bg-transparent border-0 shadow-none"
-              />
-            </CollapsibleSection>
+              onWorkflowSetup={(workflow) => {
+                const name = 'title' in workflow.workflow ? workflow.workflow.title : 
+                             'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+                console.log('⚙️ [TaskPanel] Setup requested:', name);
+              }}
+              onAgentSelect={(agent) => {
+                console.log('🔍 [TaskPanel] Agent selected:', agent.name);
+              }}
+              onAgentSetup={(agent) => {
+                console.log('⚙️ [TaskPanel] Agent setup requested:', agent.name);
+              }}
+              onPromptSelect={(prompt) => {
+                console.log('🔍 [TaskPanel] Prompt selected:', prompt.id);
+              }}
+              onPromptCopy={(prompt) => {
+                console.log('📋 [TaskPanel] Prompt copied:', prompt.id);
+              }}
+              onPromptOpenInService={(prompt, service) => {
+                console.log('🔗 [TaskPanel] Open in service:', service, prompt.id);
+              }}
+              className="bg-transparent border-0 shadow-none"
+            />
 
             {/* Top Subtasks Section with Progressive Disclosure */}
             <CollapsibleSection
