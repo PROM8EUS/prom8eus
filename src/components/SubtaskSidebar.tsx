@@ -386,7 +386,7 @@ export default function SubtaskSidebar({
             <div className="space-y-3">
               {/* "Alle" as first item in the list */}
               <div
-                className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
                   selectedSubtaskId === 'all'
                     ? 'border-primary bg-primary/5 shadow-sm'
                     : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
@@ -394,7 +394,7 @@ export default function SubtaskSidebar({
                 onClick={() => onSubtaskSelect?.('all')}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium text-gray-900">
                         {lang === 'de' ? 'Alle' : 'All'}
@@ -416,7 +416,7 @@ export default function SubtaskSidebar({
               {realSubtasks.map((subtask, index) => (
                 <div
                   key={subtask.id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
                     selectedSubtaskId === subtask.id
                       ? 'border-primary bg-primary/5 shadow-sm'
                       : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
@@ -424,7 +424,7 @@ export default function SubtaskSidebar({
                   onClick={() => onSubtaskSelect?.(subtask.id)}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-sm font-medium text-gray-900">
                           {subtask.title}

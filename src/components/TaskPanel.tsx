@@ -419,9 +419,9 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
         />
 
         {/* Two Column Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Left Sidebar - Subtask Navigation */}
-          <div className="lg:w-1/3">
+          <div className="lg:w-1/3 w-full">
             <SubtaskSidebar
               task={task}
               lang={lang}
@@ -432,7 +432,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
           </div>
 
           {/* Main Content Area - Solution Tabs */}
-          <div className="lg:w-2/3 space-y-6">
+          <div className="lg:w-2/3 w-full space-y-6">
             {/* Direct Solution Tabs Display - No Container */}
             <ExpandedSolutionTabs
               subtask={selectedSubtask}
