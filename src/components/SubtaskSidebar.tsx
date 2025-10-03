@@ -381,14 +381,38 @@ export default function SubtaskSidebar({
               </div>
             </div>
 
-            {/* Always show "Alle Teilaufgaben" at the top */}
-            <div className="text-sm text-gray-600 font-medium">
-              {lang === 'de' ? 'Alle Teilaufgaben' : 'All Subtasks'}
-            </div>
-
             {/* Subtasks List */}
             {!isCollapsed && (
             <div className="space-y-3">
+              {/* "Alle" as first item in the list */}
+              <div
+                className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                  selectedSubtaskId === 'all'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                }`}
+                onClick={() => onSubtaskSelect?.('all')}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-medium text-gray-900">
+                        {lang === 'de' ? 'Alle' : 'All'}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-3 w-3 text-blue-500" />
+                      <span className="text-xs text-gray-600">
+                        {realSubtasks.length} {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Individual subtasks */}
               {realSubtasks.map((subtask, index) => (
                 <div
                   key={subtask.id}
