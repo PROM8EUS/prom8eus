@@ -402,42 +402,40 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
-      {/* Modern CSS Grid Layout with Responsive Breakpoints */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto">
+      {/* Simplified Layout without Grid */}
+      <div className="max-w-7xl mx-auto space-y-6 p-6">
         
-        {/* Header Section - Full Width */}
-        <div className="xl:col-span-12">
-          {/* Effort/ROI Section - Direct Display */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 p-6 mb-6">
-            <EffortSection
-              manualHours={manualHoursTotal}
-              automatedHours={residualHoursTotal}
-              hourlyRate={60}
-              period={period}
-              lang={lang}
-              onHourlyRateChange={(newRate) => {
-                console.log('Hourly rate changed:', newRate);
-              }}
-            />
-          </div>
+        {/* Effort/ROI Section - Direct Display */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 p-6">
+          <EffortSection
+            manualHours={manualHoursTotal}
+            automatedHours={residualHoursTotal}
+            hourlyRate={60}
+            period={period}
+            lang={lang}
+            onHourlyRateChange={(newRate) => {
+              console.log('Hourly rate changed:', newRate);
+            }}
+          />
         </div>
 
-        {/* Left Sidebar - Subtask Navigation (Responsive) */}
-        <div className="xl:col-span-3 lg:col-span-4 md:col-span-6">
-          <div className="sticky top-6">
-            <SubtaskSidebar
-              task={task}
-              lang={lang}
-              isVisible={isVisible}
-              onSubtaskSelect={handleSubtaskSelect}
-              selectedSubtaskId={selectedSubtaskId}
-            />
+        {/* Two Column Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar - Subtask Navigation */}
+          <div className="lg:w-1/3">
+            <div className="sticky top-6">
+              <SubtaskSidebar
+                task={task}
+                lang={lang}
+                isVisible={isVisible}
+                onSubtaskSelect={handleSubtaskSelect}
+                selectedSubtaskId={selectedSubtaskId}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Main Content Area - Solution Tabs (Responsive) */}
-        <div className="xl:col-span-9 lg:col-span-8 md:col-span-6">
-          <div className="space-y-6">
+          {/* Main Content Area - Solution Tabs */}
+          <div className="lg:w-2/3 space-y-6">
             {/* Direct Solution Tabs Display - No Container */}
             <ExpandedSolutionTabs
               subtask={selectedSubtask}
@@ -539,7 +537,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
         </div>
 
         {/* Bottom Section - Full Width CTA */}
-        <div className="xl:col-span-12">
+        <div>
           <div className="mt-8 pt-6 border-t border-gray-200/50">
             <div className="flex justify-center">
               <ImplementationRequestCTA
