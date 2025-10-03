@@ -412,6 +412,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
           hourlyRate={60}
           period={period}
           lang={lang}
+          showROIBlock={false}
           onHourlyRateChange={(newRate) => {
             console.log('Hourly rate changed:', newRate);
           }}
