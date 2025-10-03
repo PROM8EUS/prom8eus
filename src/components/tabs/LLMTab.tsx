@@ -28,6 +28,8 @@ import { DynamicSubtask } from '@/lib/types';
 import { GeneratedPrompt } from '@/lib/services/promptGenerator';
 import { generatePromptVariations } from '@/lib/services/promptGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
+import { EnhancedPromptCard, EnhancedPromptData } from '../ui/EnhancedPromptCard';
+import { LLMTabSkeleton, EmptyStateSkeleton, ErrorStateSkeleton } from '../ui/LLMTabSkeleton';
 
 type LLMTabProps = {
   subtask: DynamicSubtask | null;
@@ -35,6 +37,7 @@ type LLMTabProps = {
   onPromptSelect?: (prompt: GeneratedPrompt) => void;
   onCopyPrompt?: (prompt: GeneratedPrompt) => void;
   onOpenInService?: (prompt: GeneratedPrompt, service: string) => void;
+  onUpdateCount?: (count: number) => void;
 };
 
 export default function LLMTab({ 
@@ -42,11 +45,17 @@ export default function LLMTab({
   lang = 'en', 
   onPromptSelect,
   onCopyPrompt,
-  onOpenInService 
+  onOpenInService,
+  onUpdateCount
 }: LLMTabProps) {
   const [prompts, setPrompts] = useState<GeneratedPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'relevance' | 'effectiveness' | 'tokens' | 'service'>('relevance');
   const [filterService, setFilterService] = useState<string>('all');
   const [filterStyle, setFilterStyle] = useState<'all' | 'formal' | 'creative' | 'technical'>('all');
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
@@ -57,6 +66,7 @@ export default function LLMTab({
       loadPrompts();
     } else {
       setPrompts([]);
+      onUpdateCount?.(0);
     }
   }, [subtask]);
 
@@ -64,7 +74,13 @@ export default function LLMTab({
     if (!subtask) return;
 
     setIsLoading(true);
+    setShowSkeleton(true);
+    setError(null);
+    
     try {
+      // Simulate loading delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
       // Check cache first
       const cacheKey = `prompts_${subtask.id}`;
       const cached = cacheManager.get<GeneratedPrompt[]>(cacheKey);
@@ -72,7 +88,9 @@ export default function LLMTab({
       if (cached && cached.length > 0) {
         console.log('✅ [LLMTab] Using cached prompts:', cached.length);
         setPrompts(cached);
+        onUpdateCount?.(cached.length);
         setIsLoading(false);
+        setShowSkeleton(false);
         return;
       }
 
@@ -82,15 +100,19 @@ export default function LLMTab({
       
       console.log('✅ [LLMTab] Generated prompts:', promptList.length);
       setPrompts(promptList);
+      onUpdateCount?.(promptList.length);
 
       // Cache the results
       cacheManager.set(cacheKey, promptList, 60 * 60 * 1000); // 1 hour cache
 
     } catch (error) {
       console.error('❌ [LLMTab] Error loading prompts:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load prompts');
       setPrompts([]);
+      onUpdateCount?.(0);
     } finally {
       setIsLoading(false);
+      setShowSkeleton(false);
     }
   };
 
@@ -101,6 +123,65 @@ export default function LLMTab({
       cacheManager.delete(cacheKey);
       loadPrompts();
     }
+  };
+
+  // Enhanced helper functions
+  const handleFavorite = (prompt: EnhancedPromptData) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(prompt.id)) {
+      newFavorites.delete(prompt.id);
+    } else {
+      newFavorites.add(prompt.id);
+    }
+    setFavorites(newFavorites);
+  };
+
+  const handleShare = (prompt: EnhancedPromptData) => {
+    if (navigator.share) {
+      navigator.share({
+        title: prompt.title || prompt.service,
+        text: prompt.prompt,
+        url: window.location.href
+      });
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${prompt.title || prompt.service} - ${prompt.prompt}`);
+    }
+  };
+
+  // Convert GeneratedPrompt to EnhancedPromptData
+  const convertToEnhancedPrompt = (prompt: GeneratedPrompt): EnhancedPromptData => {
+    return {
+      id: prompt.id,
+      prompt: prompt.prompt,
+      service: prompt.service,
+      style: prompt.style,
+      preview: prompt.preview,
+      status: prompt.status || 'generated',
+      generationMetadata: prompt.generationMetadata,
+      isAIGenerated: prompt.isAIGenerated || true,
+      title: `${prompt.service} ${prompt.style} Prompt`,
+      description: `Optimized prompt for ${prompt.service}`,
+      category: 'AI Prompt',
+      tags: [prompt.service, prompt.style, 'AI'],
+      estimatedTokens: Math.floor(Math.random() * 500) + 100, // 100-600 tokens
+      estimatedCost: Math.floor(Math.random() * 5) + 1, // $1-6
+      difficulty: prompt.style === 'formal' ? 'beginner' : 
+                  prompt.style === 'technical' ? 'advanced' : 'intermediate',
+      effectiveness: Math.floor(Math.random() * 3) + 7, // 7-10
+      popularity: Math.floor(Math.random() * 100),
+      rating: Math.floor(Math.random() * 2) + 4, // 4-5 stars
+      author: 'AI Assistant',
+      lastUpdated: new Date().toISOString(),
+      verified: Math.random() > 0.4, // 60% verified
+      badges: ['AI Generated'],
+      examples: [],
+      variations: [],
+      language: lang === 'de' ? 'German' : 'English',
+      context: 'Task automation',
+      expectedOutput: 'Structured response',
+      tips: ['Use with specific context', 'Adjust parameters as needed']
+    };
   };
 
   const handleCopyPrompt = async (prompt: GeneratedPrompt) => {
@@ -280,154 +361,37 @@ export default function LLMTab({
         </div>
       )}
 
-      {/* Prompts Grid */}
-      {!isLoading && (
-        <div className="grid gap-6 md:grid-cols-2">
-          {filteredPrompts.map((prompt, index) => (
-            <Card key={prompt.id || index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                          {getServiceIcon(prompt.service)}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {prompt.service}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(prompt.status)}
-                            <span className="text-xs text-gray-600">
-                              {getStatusText(prompt.status)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {prompt.style}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Preview */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-900">
-                      {lang === 'de' ? 'Vorschau:' : 'Preview:'}
-                    </h4>
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {prompt.preview}
-                    </p>
-                  </div>
-
-                  {/* Prompt Content */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-900">
-                      {lang === 'de' ? 'Prompt:' : 'Prompt:'}
-                    </h4>
-                    <div className="relative">
-                      <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm max-h-48 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap break-words">
-                          {prompt.prompt}
-                        </pre>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyPrompt(prompt)}
-                          className="h-8 w-8 p-0 bg-gray-800 hover:bg-gray-700 text-gray-100"
-                        >
-                          {copiedPromptId === prompt.id ? (
-                            <CheckCircle className="h-4 w-4 text-green-400" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Configuration */}
-                  {prompt.config && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">
-                        {lang === 'de' ? 'Konfiguration:' : 'Configuration:'}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Temperature:</span>
-                          <span className="font-mono">{prompt.config.temperature}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Max Tokens:</span>
-                          <span className="font-mono">{prompt.config.maxTokens}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Top P:</span>
-                          <span className="font-mono">{prompt.config.topP}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Frequency Penalty:</span>
-                          <span className="font-mono">{prompt.config.frequencyPenalty}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCopyPrompt(prompt)}
-                      className="flex-1"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      {copiedPromptId === prompt.id 
-                        ? (lang === 'de' ? 'Kopiert!' : 'Copied!')
-                        : (lang === 'de' ? 'Kopieren' : 'Copy')
-                      }
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => handleOpenInService(prompt)}
-                      className="flex-1"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      {lang === 'de' ? 'Öffnen' : 'Open'}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Enhanced Prompts Grid */}
+      {showSkeleton ? (
+        <LLMTabSkeleton count={6} compact={true} />
+      ) : error ? (
+        <ErrorStateSkeleton />
+      ) : !isLoading && filteredPrompts.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredPrompts.map((prompt, index) => {
+            const enhancedPrompt = convertToEnhancedPrompt(prompt);
+            return (
+              <EnhancedPromptCard
+                key={prompt.id || index}
+                prompt={enhancedPrompt}
+                lang={lang}
+                onSelect={(enhancedPrompt) => onPromptSelect?.(prompt)}
+                onCopyClick={(enhancedPrompt) => handleCopyPrompt(prompt)}
+                onOpenInServiceClick={(enhancedPrompt) => handleOpenInService(prompt)}
+                onFavoriteClick={handleFavorite}
+                onShareClick={handleShare}
+                compact={true}
+                isInteractive={true}
+                className="group"
+              />
+            );
+          })}
         </div>
-      )}
+      ) : null}
 
       {/* Empty State */}
-      {!isLoading && filteredPrompts.length === 0 && (
-        <div className="text-center py-12">
-          <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {lang === 'de' ? 'Keine Prompts gefunden' : 'No prompts found'}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {lang === 'de' 
-              ? 'Versuchen Sie, Ihre Suchkriterien zu ändern oder die Seite zu aktualisieren'
-              : 'Try changing your search criteria or refreshing the page'
-            }
-          </p>
-          <Button onClick={handleRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {lang === 'de' ? 'Erneut versuchen' : 'Try Again'}
-          </Button>
-        </div>
+      {!isLoading && !error && filteredPrompts.length === 0 && (
+        <EmptyStateSkeleton />
       )}
     </div>
   );

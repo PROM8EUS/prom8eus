@@ -8,25 +8,26 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Workflow, 
-  Bot, 
-  MessageSquare,
   Loader2,
   ChevronRight,
   Users,
   Clock,
-  Target
+  Target,
+  TrendingUp,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { EffortSection } from './EffortSection';
 import { TopSubtasksSection } from './TopSubtasksSection';
 import { InsightsTrendsSection } from './InsightsTrendsSection';
 import { ImplementationRequestCTA } from './ImplementationRequestCTA';
 import SubtaskSidebar from './SubtaskSidebar';
-import WorkflowTab from './tabs/WorkflowTab';
-import AgentTab from './tabs/AgentTab';
-import LLMTab from './tabs/LLMTab';
+import { ExpandedSolutionTabs } from './ExpandedSolutionTabs';
+import { CollapsibleSection } from './ui/CollapsibleSection';
+import { SmartDefaultsProvider, useSmartDefaults } from './SmartDefaultsManager';
+import { ContextualHelpProvider, useContextualHelp } from './ContextualHelpSystem';
+import { HelpTrigger, SectionHelp } from './HelpTrigger';
 import { analyzeTrends } from '@/lib/trendAnalysis';
 import { matchWorkflowsToSubtasks } from '@/lib/workflowMatcher';
 import { DynamicSubtask } from '@/lib/types';
@@ -126,11 +127,12 @@ type TaskPanelProps = {
   isVisible?: boolean;
 };
 
-export default function TaskPanel({ task, lang = 'de', isVisible = false }: TaskPanelProps) {
+function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelProps) {
+  const { getSectionDefaults, setExpanded } = useSmartDefaults();
+  const { trackUserAction } = useContextualHelp();
   const [generatedSubtasks, setGeneratedSubtasks] = useState<Subtask[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedSubtaskId, setSelectedSubtaskId] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'workflows' | 'agents' | 'llms'>('workflows');
   const [solutionsCount, setSolutionsCount] = useState(0);
   const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
   const hasLoadedSolutions = useRef(false);
@@ -387,11 +389,6 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
     console.log('🔍 [TaskPanel] Selected subtask:', subtaskId);
   };
 
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as 'workflows' | 'agents' | 'llms');
-    console.log('🔄 [TaskPanel] Active tab changed to:', value);
-  };
 
   // Get selected subtask for display
   const selectedSubtask = useMemo(() => {
@@ -404,170 +401,222 @@ export default function TaskPanel({ task, lang = 'de', isVisible = false }: Task
   if (!isVisible) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Effort/ROI Section */}
-      <EffortSection
-        manualHours={manualHoursTotal}
-        automatedHours={residualHoursTotal}
-        hourlyRate={60} // Default rate
-        period={period}
-        lang={lang}
-        onHourlyRateChange={(newRate) => {
-          console.log('Hourly rate changed:', newRate);
-          // Could store in state if needed
-        }}
-      />
-
-      {/* Two-Column Layout: Sidebar + Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Sidebar - Subtask Navigation */}
-        <div className="lg:col-span-1">
-          <SubtaskSidebar
-            task={task}
-            lang={lang}
-            isVisible={isVisible}
-            onSubtaskSelect={handleSubtaskSelect}
-            selectedSubtaskId={selectedSubtaskId}
-          />
-        </div>
-
-        {/* Right Content - Solution Tabs */}
-        <div className="lg:col-span-2">
-          <Card className="shadow-sm">
-            <CardContent className="p-0">
-              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                <div className="border-b border-gray-200 px-6 pt-6">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="workflows" className="flex items-center gap-2">
-                      <Workflow className="h-4 w-4" />
-                      {lang === 'de' ? 'Workflows' : 'Workflows'}
-                    </TabsTrigger>
-                    <TabsTrigger value="agents" className="flex items-center gap-2">
-                      <Bot className="h-4 w-4" />
-                      {lang === 'de' ? 'Agenten' : 'Agents'}
-                    </TabsTrigger>
-                    <TabsTrigger value="llms" className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      {lang === 'de' ? 'LLMs' : 'LLMs'}
-                    </TabsTrigger>
-                  </TabsList>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      {/* Modern CSS Grid Layout with Responsive Breakpoints */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto">
+        
+        {/* Header Section - Full Width */}
+        <div className="xl:col-span-12">
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Target className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {task.title || task.name || 'Task Analysis'}
+                  </h1>
+                  <SectionHelp section="solutions-overview" lang={lang} />
                 </div>
-
-                <div className="p-6">
-                  <TabsContent value="workflows" className="mt-0">
-                    <WorkflowTab
-                      subtask={selectedSubtask}
-                      lang={lang}
-                      onWorkflowSelect={(workflow) => {
-                        const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                                     'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
-                        console.log('🔍 [TaskPanel] Workflow selected:', name);
-                      }}
-                      onDownloadRequest={(workflow) => {
-                        const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                                     'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
-                        console.log('📥 [TaskPanel] Download requested:', name);
-                      }}
-                      onSetupRequest={(workflow) => {
-                        const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                                     'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
-                        console.log('⚙️ [TaskPanel] Setup requested:', name);
-                      }}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="agents" className="mt-0">
-                    <AgentTab
-                      subtask={selectedSubtask}
-                      lang={lang}
-                      onAgentSelect={(agent) => {
-                        console.log('🔍 [TaskPanel] Agent selected:', agent.name);
-                      }}
-                      onSetupRequest={(agent) => {
-                        console.log('⚙️ [TaskPanel] Agent setup requested:', agent.name);
-                      }}
-                      onConfigView={(agent) => {
-                        console.log('⚙️ [TaskPanel] Agent config view requested:', agent.name);
-                      }}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="llms" className="mt-0">
-                    <LLMTab
-                      subtask={selectedSubtask}
-                      lang={lang}
-                      onPromptSelect={(prompt) => {
-                        console.log('🔍 [TaskPanel] Prompt selected:', prompt.id);
-                      }}
-                      onCopyPrompt={(prompt) => {
-                        console.log('📋 [TaskPanel] Prompt copied:', prompt.id);
-                      }}
-                      onOpenInService={(prompt, service) => {
-                        console.log('🔗 [TaskPanel] Open in service:', service, prompt.id);
-                      }}
-                    />
-                  </TabsContent>
-                </div>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Top Subtasks Section with Workflows */}
-      {isGenerating ? (
-        <Card className="shadow-sm">
-          <CardContent className="p-8">
-            <div className="text-center text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm">
-                {lang === 'de' ? 'Generiere spezifische Teilaufgaben...' : 'Generating specific subtasks...'}
-              </p>
+                <p className="text-gray-600 mt-1">
+                  {lang === 'de' ? 'Automatisierungsanalyse und Lösungsvorschläge' : 'Automation analysis and solution recommendations'}
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-0">
-            <TopSubtasksSection
-              subtasks={dynamicSubtasks}
-              workflows={workflows}
+            
+            {/* Effort/ROI Section with Enhanced Styling */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 p-6">
+              <EffortSection
+                manualHours={manualHoursTotal}
+                automatedHours={residualHoursTotal}
+                hourlyRate={60}
+                period={period}
+                lang={lang}
+                onHourlyRateChange={(newRate) => {
+                  console.log('Hourly rate changed:', newRate);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Left Sidebar - Subtask Navigation (Responsive) */}
+        <div className="xl:col-span-3 lg:col-span-4 md:col-span-6">
+          <div className="sticky top-6">
+            <SubtaskSidebar
+              task={task}
               lang={lang}
-              topCount={3}
-              sortBy="automationPotential"
-              period={period}
+              isVisible={isVisible}
+              onSubtaskSelect={handleSubtaskSelect}
+              selectedSubtaskId={selectedSubtaskId}
             />
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </div>
 
-      {/* Insights & Trends Section */}
-      {trendInsights.length > 0 && (
-        <InsightsTrendsSection
-          insights={trendInsights}
-          lang={lang}
-        />
-      )}
+        {/* Main Content Area - Solution Tabs (Responsive) */}
+        <div className="xl:col-span-9 lg:col-span-8 md:col-span-6">
+          <div className="space-y-6">
+            {/* Enhanced Solution Tabs with Progressive Disclosure */}
+            <CollapsibleSection
+              title={
+                <div className="flex items-center gap-2">
+                  {lang === 'de' ? 'Automatisierungs-Lösungen' : 'Automation Solutions'}
+                  <SectionHelp section="solutions-overview" lang={lang} />
+                </div>
+              }
+              description={lang === 'de' 
+                ? 'Workflows, KI-Agenten und LLM-Prompts für Ihre Aufgabe'
+                : 'Workflows, AI agents, and LLM prompts for your task'
+              }
+              priority="high"
+              badge={{
+                text: lang === 'de' ? 'Lösungen' : 'Solutions',
+                count: solutionsCount
+              }}
+              icon={Sparkles}
+              {...getSectionDefaults('solutions', 'high')}
+              onToggle={(expanded) => {
+                setExpanded('solutions', expanded);
+                trackUserAction(expanded ? 'section-expanded' : 'section-collapsed', 'solutions');
+              }}
+              className="bg-white/80 backdrop-blur-sm border-white/20"
+            >
+              <ExpandedSolutionTabs
+                subtask={selectedSubtask}
+                lang={lang}
+                onWorkflowSelect={(workflow) => {
+                  const name = 'title' in workflow.workflow ? workflow.workflow.title : 
+                               'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+                  console.log('🔍 [TaskPanel] Workflow selected:', name);
+                }}
+                onWorkflowDownload={(workflow) => {
+                  const name = 'title' in workflow.workflow ? workflow.workflow.title : 
+                               'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+                  console.log('📥 [TaskPanel] Download requested:', name);
+                }}
+                onWorkflowSetup={(workflow) => {
+                  const name = 'title' in workflow.workflow ? workflow.workflow.title : 
+                               'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+                  console.log('⚙️ [TaskPanel] Setup requested:', name);
+                }}
+                onAgentSelect={(agent) => {
+                  console.log('🔍 [TaskPanel] Agent selected:', agent.name);
+                }}
+                onAgentSetup={(agent) => {
+                  console.log('⚙️ [TaskPanel] Agent setup requested:', agent.name);
+                }}
+                onPromptSelect={(prompt) => {
+                  console.log('🔍 [TaskPanel] Prompt selected:', prompt.id);
+                }}
+                onPromptCopy={(prompt) => {
+                  console.log('📋 [TaskPanel] Prompt copied:', prompt.id);
+                }}
+                onPromptOpenInService={(prompt, service) => {
+                  console.log('🔗 [TaskPanel] Open in service:', service, prompt.id);
+                }}
+                className="bg-transparent border-0 shadow-none"
+              />
+            </CollapsibleSection>
 
-      {/* CTA Button - Implementation Request */}
-      <div className="flex justify-center pt-4 pb-2">
-        <ImplementationRequestCTA
-          taskTitle={task.title || task.name}
-          taskDescription={task.description}
-          subtasks={dynamicSubtasks}
-          automationScore={Math.round(businessCaseTask.automationRatio)}
-          estimatedSavings={{
-            hours: manualHoursTotal - residualHoursTotal,
-            cost: (manualHoursTotal - residualHoursTotal) * 60,
-            period: period === 'year' ? (lang === 'de' ? 'Jahr' : 'year') :
-                   period === 'month' ? (lang === 'de' ? 'Monat' : 'month') :
-                   period === 'week' ? (lang === 'de' ? 'Woche' : 'week') :
-                   (lang === 'de' ? 'Tag' : 'day')
-          }}
-          lang={lang}
-          size="lg"
-        />
+            {/* Top Subtasks Section with Progressive Disclosure */}
+            <CollapsibleSection
+              title={lang === 'de' ? 'Top Teilaufgaben' : 'Top Subtasks'}
+              description={lang === 'de' 
+                ? 'Die wichtigsten Teilaufgaben mit höchstem Automatisierungspotential'
+                : 'Most important subtasks with highest automation potential'
+              }
+              priority="medium"
+              badge={{
+                text: lang === 'de' ? 'Top 3' : 'Top 3',
+                count: Math.min(3, dynamicSubtasks.length)
+              }}
+              icon={TrendingUp}
+              {...getSectionDefaults('top-subtasks', 'medium')}
+              onToggle={(expanded) => setExpanded('top-subtasks', expanded)}
+              className="bg-white/80 backdrop-blur-sm border-white/20"
+            >
+              {isGenerating ? (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-sm">
+                    {lang === 'de' ? 'Generiere spezifische Teilaufgaben...' : 'Generating specific subtasks...'}
+                  </p>
+                </div>
+              ) : (
+                <TopSubtasksSection
+                  subtasks={dynamicSubtasks}
+                  workflows={workflows}
+                  lang={lang}
+                  topCount={3}
+                  sortBy="automationPotential"
+                  period={period}
+                />
+              )}
+            </CollapsibleSection>
+
+            {/* Insights & Trends Section with Progressive Disclosure */}
+            {trendInsights.length > 0 && (
+              <CollapsibleSection
+                title={lang === 'de' ? 'Erkenntnisse & Trends' : 'Insights & Trends'}
+                description={lang === 'de' 
+                  ? 'Automatisierungs-Trends und Marktanalysen'
+                  : 'Automation trends and market analysis'
+                }
+                priority="low"
+                badge={{
+                  text: lang === 'de' ? 'Erkenntnisse' : 'Insights',
+                  count: trendInsights.length
+                }}
+                icon={Target}
+                {...getSectionDefaults('insights', 'low')}
+                onToggle={(expanded) => setExpanded('insights', expanded)}
+                className="bg-white/80 backdrop-blur-sm border-white/20"
+              >
+                <InsightsTrendsSection
+                  insights={trendInsights}
+                  lang={lang}
+                />
+              </CollapsibleSection>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Section - Full Width CTA */}
+        <div className="xl:col-span-12">
+          <div className="mt-8 pt-6 border-t border-gray-200/50">
+            <div className="flex justify-center">
+              <ImplementationRequestCTA
+                taskTitle={task.title || task.name}
+                taskDescription={task.description}
+                subtasks={dynamicSubtasks}
+                automationScore={Math.round(businessCaseTask.automationRatio)}
+                estimatedSavings={{
+                  hours: manualHoursTotal - residualHoursTotal,
+                  cost: (manualHoursTotal - residualHoursTotal) * 60,
+                  period: period === 'year' ? (lang === 'de' ? 'Jahr' : 'year') :
+                         period === 'month' ? (lang === 'de' ? 'Monat' : 'month') :
+                         period === 'week' ? (lang === 'de' ? 'Woche' : 'week') :
+                         (lang === 'de' ? 'Tag' : 'day')
+                }}
+                lang={lang}
+                size="lg"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+// Main TaskPanel component with SmartDefaultsProvider and ContextualHelpProvider
+export default function TaskPanel(props: TaskPanelProps) {
+  return (
+    <SmartDefaultsProvider>
+      <ContextualHelpProvider>
+        <TaskPanelContent {...props} />
+      </ContextualHelpProvider>
+    </SmartDefaultsProvider>
   );
 }

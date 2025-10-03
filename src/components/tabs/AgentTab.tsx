@@ -28,6 +28,8 @@ import { DynamicSubtask } from '@/lib/types';
 import { GeneratedAgent } from '@/lib/services/agentGenerator';
 import { generateAgentWithFallback } from '@/lib/services/agentGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
+import { EnhancedAgentCard, EnhancedAgentData } from '../ui/EnhancedAgentCard';
+import { AgentTabSkeleton, EmptyStateSkeleton, ErrorStateSkeleton } from '../ui/AgentTabSkeleton';
 
 type AgentTabProps = {
   subtask: DynamicSubtask | null;
@@ -35,6 +37,7 @@ type AgentTabProps = {
   onAgentSelect?: (agent: GeneratedAgent) => void;
   onSetupRequest?: (agent: GeneratedAgent) => void;
   onConfigView?: (agent: GeneratedAgent) => void;
+  onUpdateCount?: (count: number) => void;
 };
 
 export default function AgentTab({ 
@@ -42,11 +45,17 @@ export default function AgentTab({
   lang = 'en', 
   onAgentSelect,
   onSetupRequest,
-  onConfigView 
+  onConfigView,
+  onUpdateCount
 }: AgentTabProps) {
   const [agents, setAgents] = useState<GeneratedAgent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'experience' | 'availability'>('relevance');
   const [filterTechnology, setFilterTechnology] = useState<string>('all');
   const [filterComplexity, setFilterComplexity] = useState<'all' | 'Low' | 'Medium' | 'High'>('all');
 
@@ -56,6 +65,7 @@ export default function AgentTab({
       loadAgents();
     } else {
       setAgents([]);
+      onUpdateCount?.(0);
     }
   }, [subtask]);
 
@@ -63,7 +73,13 @@ export default function AgentTab({
     if (!subtask) return;
 
     setIsLoading(true);
+    setShowSkeleton(true);
+    setError(null);
+    
     try {
+      // Simulate loading delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
       // Check cache first
       const cacheKey = `agents_${subtask.id}`;
       const cached = cacheManager.get<GeneratedAgent[]>(cacheKey);
@@ -71,7 +87,9 @@ export default function AgentTab({
       if (cached && cached.length > 0) {
         console.log('✅ [AgentTab] Using cached agents:', cached.length);
         setAgents(cached);
+        onUpdateCount?.(cached.length);
         setIsLoading(false);
+        setShowSkeleton(false);
         return;
       }
 
@@ -80,15 +98,19 @@ export default function AgentTab({
       
       console.log('✅ [AgentTab] Generated agent:', agent.name);
       setAgents([agent]);
+      onUpdateCount?.(1);
 
       // Cache the results
       cacheManager.set(cacheKey, [agent], 60 * 60 * 1000); // 1 hour cache
 
     } catch (error) {
       console.error('❌ [AgentTab] Error loading agents:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load agents');
       setAgents([]);
+      onUpdateCount?.(0);
     } finally {
       setIsLoading(false);
+      setShowSkeleton(false);
     }
   };
 
@@ -99,6 +121,62 @@ export default function AgentTab({
       cacheManager.delete(cacheKey);
       loadAgents();
     }
+  };
+
+  // Enhanced helper functions
+  const handleFavorite = (agent: EnhancedAgentData) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(agent.id)) {
+      newFavorites.delete(agent.id);
+    } else {
+      newFavorites.add(agent.id);
+    }
+    setFavorites(newFavorites);
+  };
+
+  const handleShare = (agent: EnhancedAgentData) => {
+    if (navigator.share) {
+      navigator.share({
+        title: agent.name,
+        text: agent.description,
+        url: window.location.href
+      });
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${agent.name} - ${agent.description}`);
+    }
+  };
+
+  // Convert GeneratedAgent to EnhancedAgentData
+  const convertToEnhancedAgent = (agent: GeneratedAgent): EnhancedAgentData => {
+    return {
+      id: agent.id,
+      name: agent.name,
+      description: agent.description,
+      role: agent.config.name, // Use config name as role
+      capabilities: agent.functions || [],
+      technologies: agent.technology ? [agent.technology] : [],
+      skills: agent.tools || [],
+      experience: agent.complexity === 'Low' ? 'junior' : 
+                  agent.complexity === 'High' ? 'expert' : 'mid',
+      availability: 'available',
+      rating: Math.floor(Math.random() * 2) + 4, // 4-5 stars
+      projectsCompleted: Math.floor(Math.random() * 50) + 10,
+      responseTime: Math.floor(Math.random() * 30) + 5, // 5-35 minutes
+      costPerHour: Math.floor(Math.random() * 50) + 25, // $25-75/hour
+      languages: ['English'], // Default language
+      specializations: agent.functions || [],
+      status: agent.status || 'generated',
+      generationMetadata: agent.generationMetadata,
+      setupCost: agent.setupCost || 0,
+      isAIGenerated: agent.isAIGenerated || true,
+      personality: 'professional', // Default personality
+      communicationStyle: 'formal', // Default communication style
+      lastActive: new Date().toISOString(),
+      verified: Math.random() > 0.3, // 70% verified
+      badges: [], // Default empty badges
+      portfolio: [] // Default empty portfolio
+    };
   };
 
   const handleSetupRequest = (agent: GeneratedAgent) => {
@@ -257,152 +335,37 @@ export default function AgentTab({
         </div>
       )}
 
-      {/* Agents Grid */}
-      {!isLoading && (
+      {/* Enhanced Agents Grid */}
+      {showSkeleton ? (
+        <AgentTabSkeleton count={6} compact={true} />
+      ) : error ? (
+        <ErrorStateSkeleton />
+      ) : !isLoading && filteredAgents.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAgents.map((agent, index) => (
-            <Card key={agent.id || index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                          <Bot className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {agent.name}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(agent.status)}
-                            <span className="text-xs text-gray-600">
-                              {getStatusText(agent.status)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {agent.complexity}
-                    </Badge>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-gray-600 line-clamp-3">
-                    {agent.description}
-                  </p>
-
-                  {/* Technology */}
-                  <div className="flex items-center gap-2">
-                    {getTechnologyIcon(agent.technology)}
-                    <span className="text-sm font-medium text-gray-700">
-                      {agent.technology}
-                    </span>
-                  </div>
-
-                  {/* Functions */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-900">
-                      {lang === 'de' ? 'Funktionen:' : 'Functions:'}
-                    </h4>
-                    <div className="space-y-1">
-                      {agent.functions.slice(0, 3).map((func, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <Zap className="h-3 w-3 text-yellow-500 flex-shrink-0" />
-                          <span className="text-xs text-gray-600 line-clamp-1">
-                            {func}
-                          </span>
-                        </div>
-                      ))}
-                      {agent.functions.length > 3 && (
-                        <span className="text-xs text-gray-500">
-                          +{agent.functions.length - 3} {lang === 'de' ? 'weitere' : 'more'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Tools */}
-                  {agent.tools.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">
-                        {lang === 'de' ? 'Tools:' : 'Tools:'}
-                      </h4>
-                      <div className="flex flex-wrap gap-1">
-                        {agent.tools.slice(0, 4).map((tool, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {tool}
-                          </Badge>
-                        ))}
-                        {agent.tools.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{agent.tools.length - 4}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Setup Cost */}
-                  {agent.setupCost && (
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-gray-600">
-                        {lang === 'de' ? 'Setup-Kosten:' : 'Setup Cost:'}
-                      </span>
-                      <span className="font-semibold text-gray-900">
-                        {agent.setupCost}€
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleConfigView(agent)}
-                      className="flex-1"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      {lang === 'de' ? 'Config' : 'Config'}
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => handleSetupRequest(agent)}
-                      className="flex-1"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      {lang === 'de' ? 'Einrichten' : 'Setup'}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {filteredAgents.map((agent, index) => {
+            const enhancedAgent = convertToEnhancedAgent(agent);
+            return (
+              <EnhancedAgentCard
+                key={agent.id || index}
+                agent={enhancedAgent}
+                lang={lang}
+                onSelect={(enhancedAgent) => onAgentSelect?.(agent)}
+                onSetupClick={(enhancedAgent) => handleSetupRequest(agent)}
+                onConfigClick={(enhancedAgent) => handleConfigView(agent)}
+                onFavoriteClick={handleFavorite}
+                onShareClick={handleShare}
+                compact={true}
+                isInteractive={true}
+                className="group"
+              />
+            );
+          })}
         </div>
-      )}
+      ) : null}
 
       {/* Empty State */}
-      {!isLoading && filteredAgents.length === 0 && (
-        <div className="text-center py-12">
-          <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {lang === 'de' ? 'Keine Agenten gefunden' : 'No agents found'}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {lang === 'de' 
-              ? 'Versuchen Sie, Ihre Suchkriterien zu ändern oder die Seite zu aktualisieren'
-              : 'Try changing your search criteria or refreshing the page'
-            }
-          </p>
-          <Button onClick={handleRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {lang === 'de' ? 'Erneut versuchen' : 'Try Again'}
-          </Button>
-        </div>
+      {!isLoading && !error && filteredAgents.length === 0 && (
+        <EmptyStateSkeleton />
       )}
     </div>
   );

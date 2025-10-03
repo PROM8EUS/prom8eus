@@ -443,8 +443,8 @@ export default function SubtaskSidebar({
   if (!isVisible) return null;
 
   return (
-    <div className="w-full max-w-md">
-      <Card className="shadow-sm">
+    <div className="w-full">
+      <Card className="shadow-sm hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm border-white/20">
         <CardContent className="p-6">
           <div className="space-y-4">
             {/* Header */}

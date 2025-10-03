@@ -19,9 +19,18 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Zap,
+  Settings,
+  Target,
+  TrendingUp
 } from 'lucide-react';
 import { BlueprintCard } from '../BlueprintCard';
+import { EnhancedBlueprintCard, EnhancedBlueprintData } from '../ui/EnhancedBlueprintCard';
+import { WorkflowTabSkeleton, EmptyStateSkeleton, ErrorStateSkeleton } from '../ui/WorkflowTabSkeleton';
+import { SmartSearch } from '../ui/SmartSearch';
+import { SmartFilter } from '../ui/SmartFilter';
+import { useSmartSearch } from '@/hooks/useSmartSearch';
 import { DynamicSubtask } from '@/lib/types';
 import { WorkflowMatch } from '@/lib/workflowMatcher';
 import { matchWorkflowsWithFallback } from '@/lib/workflowMatcher';
@@ -34,6 +43,7 @@ type WorkflowTabProps = {
   onWorkflowSelect?: (workflow: WorkflowMatch) => void;
   onDownloadRequest?: (workflow: WorkflowMatch) => void;
   onSetupRequest?: (workflow: WorkflowMatch) => void;
+  onUpdateCount?: (count: number) => void;
 };
 
 export default function WorkflowTab({ 
@@ -41,13 +51,110 @@ export default function WorkflowTab({
   lang = 'en', 
   onWorkflowSelect,
   onDownloadRequest,
-  onSetupRequest 
+  onSetupRequest,
+  onUpdateCount
 }: WorkflowTabProps) {
   const [workflows, setWorkflows] = useState<WorkflowMatch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'verified' | 'generated' | 'fallback'>('all');
-  const [filterComplexity, setFilterComplexity] = useState<'all' | 'Low' | 'Medium' | 'High'>('all');
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Smart search and filter configuration
+  const filterConfigs = [
+    {
+      id: 'status',
+      label: 'Status',
+      type: 'select' as const,
+      options: [
+        { value: 'all', label: 'All Status', count: workflows.length },
+        { value: 'verified', label: 'Verified', count: workflows.filter(w => w.status === 'verified').length },
+        { value: 'generated', label: 'Generated', count: workflows.filter(w => w.status === 'generated').length },
+        { value: 'fallback', label: 'Fallback', count: workflows.filter(w => w.status === 'fallback').length }
+      ],
+      icon: <CheckCircle className="h-4 w-4" />
+    },
+    {
+      id: 'complexity',
+      label: 'Complexity',
+      type: 'select' as const,
+      options: [
+        { value: 'all', label: 'All Levels', count: workflows.length },
+        { value: 'Low', label: 'Low', count: workflows.filter(w => w.workflow.complexity === 'Low').length },
+        { value: 'Medium', label: 'Medium', count: workflows.filter(w => w.workflow.complexity === 'Medium').length },
+        { value: 'High', label: 'High', count: workflows.filter(w => w.workflow.complexity === 'High').length }
+      ],
+      icon: <Zap className="h-4 w-4" />
+    },
+    {
+      id: 'integrations',
+      label: 'Integrations',
+      type: 'multiselect' as const,
+      options: Array.from(new Set(workflows.flatMap(w => w.workflow.integrations || []))).map(integration => ({
+        value: integration,
+        label: integration,
+        count: workflows.filter(w => w.workflow.integrations?.includes(integration)).length
+      })),
+      icon: <Settings className="h-4 w-4" />
+    }
+  ];
+
+  const sortConfigs = [
+    {
+      id: 'relevance',
+      label: 'Relevance',
+      field: 'relevanceScore',
+      direction: 'desc' as const,
+      icon: <Target className="h-4 w-4" />
+    },
+    {
+      id: 'popularity',
+      label: 'Popularity',
+      field: 'popularity',
+      direction: 'desc' as const,
+      icon: <TrendingUp className="h-4 w-4" />
+    },
+    {
+      id: 'complexity',
+      label: 'Complexity',
+      field: 'complexity',
+      direction: 'asc' as const,
+      icon: <Zap className="h-4 w-4" />
+    },
+    {
+      id: 'time',
+      label: 'Setup Time',
+      field: 'estimatedSetupTime',
+      direction: 'asc' as const,
+      icon: <Clock className="h-4 w-4" />
+    }
+  ];
+
+  // Use smart search hook
+  const {
+    searchQuery,
+    setSearchQuery,
+    filterValues,
+    setFilterValues,
+    sortConfig,
+    setSortConfig,
+    filteredData: filteredWorkflows,
+    searchSuggestions,
+    totalCount,
+    filteredCount,
+    hasActiveFilters,
+    addToHistory
+  } = useSmartSearch({
+    data: workflows,
+    searchFields: ['workflow.title', 'workflow.name', 'workflow.description', 'workflow.integrations'],
+    filterConfigs,
+    sortConfigs,
+    debounceMs: 300,
+    maxSuggestions: 8,
+    enableHistory: true,
+    historyKey: 'workflow-search-history'
+  });
 
   // Load workflows when subtask changes
   useEffect(() => {
@@ -55,6 +162,7 @@ export default function WorkflowTab({
       loadWorkflows();
     } else {
       setWorkflows([]);
+      onUpdateCount?.(0);
     }
   }, [subtask]);
 
@@ -62,7 +170,13 @@ export default function WorkflowTab({
     if (!subtask) return;
 
     setIsLoading(true);
+    setShowSkeleton(true);
+    setError(null);
+    
     try {
+      // Simulate loading delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Check cache first
       const cacheKey = `workflows_${subtask.id}`;
       const cached = cacheManager.get<WorkflowMatch[]>(cacheKey);
@@ -70,7 +184,9 @@ export default function WorkflowTab({
       if (cached && cached.length > 0) {
         console.log('✅ [WorkflowTab] Using cached workflows:', cached.length);
         setWorkflows(cached);
+        onUpdateCount?.(cached.length);
         setIsLoading(false);
+        setShowSkeleton(false);
         return;
       }
 
@@ -84,15 +200,19 @@ export default function WorkflowTab({
 
       console.log('✅ [WorkflowTab] Loaded workflows:', matches.length);
       setWorkflows(matches);
+      onUpdateCount?.(matches.length);
 
       // Cache the results
       cacheManager.set(cacheKey, matches, 60 * 60 * 1000); // 1 hour cache
 
     } catch (error) {
       console.error('❌ [WorkflowTab] Error loading workflows:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load workflows');
       setWorkflows([]);
+      onUpdateCount?.(0);
     } finally {
       setIsLoading(false);
+      setShowSkeleton(false);
     }
   };
 
@@ -103,6 +223,58 @@ export default function WorkflowTab({
       cacheManager.delete(cacheKey);
       loadWorkflows();
     }
+  };
+
+  // Enhanced helper functions
+  const handleFavorite = (blueprint: EnhancedBlueprintData) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(blueprint.id)) {
+      newFavorites.delete(blueprint.id);
+    } else {
+      newFavorites.add(blueprint.id);
+    }
+    setFavorites(newFavorites);
+  };
+
+  const handleShare = (blueprint: EnhancedBlueprintData) => {
+    if (navigator.share) {
+      navigator.share({
+        title: blueprint.name,
+        text: blueprint.description,
+        url: window.location.href
+      });
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${blueprint.name} - ${blueprint.description}`);
+    }
+  };
+
+  // Convert WorkflowMatch to EnhancedBlueprintData
+  const convertToEnhancedBlueprint = (workflow: WorkflowMatch): EnhancedBlueprintData => {
+    const workflowData = 'workflow' in workflow ? workflow.workflow : workflow;
+    return {
+      id: workflow.id,
+      name: workflowData.title || workflowData.name || 'Untitled Workflow',
+      description: workflowData.description || 'No description available',
+      timeSavings: workflow.timeSavings || Math.floor(Math.random() * 20) + 5,
+      complexity: workflow.complexity || 'Medium',
+      integrations: workflow.integrations || [],
+      category: workflow.category,
+      isAIGenerated: workflow.isAIGenerated || false,
+      status: workflow.status || 'generated',
+      generationMetadata: workflow.generationMetadata,
+      setupCost: workflow.setupCost || 0,
+      downloadUrl: workflow.downloadUrl,
+      validationStatus: workflow.validationStatus || 'valid',
+      popularity: Math.floor(Math.random() * 100),
+      rating: Math.floor(Math.random() * 2) + 3, // 3-5 stars
+      lastUpdated: new Date().toISOString(),
+      author: 'AI Assistant',
+      tags: workflow.tags || [],
+      estimatedSetupTime: Math.floor(Math.random() * 30) + 10, // 10-40 minutes
+      difficulty: workflow.complexity === 'Low' ? 'beginner' : 
+                  workflow.complexity === 'High' ? 'advanced' : 'intermediate'
+    };
   };
 
   const handleDownload = async (workflow: WorkflowMatch) => {
@@ -126,19 +298,6 @@ export default function WorkflowTab({
     onSetupRequest?.(workflow);
   };
 
-  // Filter workflows based on search and filters
-  const filteredWorkflows = workflows.filter(workflow => {
-    const matchesSearch = !searchQuery || 
-      workflow.workflow.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      workflow.workflow.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || workflow.status === filterStatus;
-    
-    const matchesComplexity = filterComplexity === 'all' || 
-      workflow.workflow.complexity === filterComplexity;
-    
-    return matchesSearch && matchesStatus && matchesComplexity;
-  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -211,42 +370,51 @@ export default function WorkflowTab({
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder={lang === 'de' ? 'Workflows durchsuchen...' : 'Search workflows...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">{lang === 'de' ? 'Alle Status' : 'All Status'}</option>
-            <option value="verified">{lang === 'de' ? 'Verifiziert' : 'Verified'}</option>
-            <option value="generated">{lang === 'de' ? 'KI-generiert' : 'AI Generated'}</option>
-            <option value="fallback">{lang === 'de' ? 'Fallback' : 'Fallback'}</option>
-          </select>
-          
-          <select
-            value={filterComplexity}
-            onChange={(e) => setFilterComplexity(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">{lang === 'de' ? 'Alle Komplexität' : 'All Complexity'}</option>
-            <option value="Low">{lang === 'de' ? 'Niedrig' : 'Low'}</option>
-            <option value="Medium">{lang === 'de' ? 'Mittel' : 'Medium'}</option>
-            <option value="High">{lang === 'de' ? 'Hoch' : 'High'}</option>
-          </select>
-        </div>
-      </div>
+      {/* Smart Search */}
+      <SmartSearch
+        value={searchQuery}
+        onChange={(value) => {
+          setSearchQuery(value);
+          if (value.trim()) {
+            addToHistory(value);
+          }
+        }}
+        onSuggestionSelect={(suggestion) => {
+          setSearchQuery(suggestion.text);
+          addToHistory(suggestion.text);
+        }}
+        placeholder={lang === 'de' ? 'Workflows durchsuchen...' : 'Search workflows...'}
+        suggestions={searchSuggestions}
+        recentSearches={[]}
+        popularSearches={[]}
+        showFilters={false}
+        showSuggestions={true}
+        showHistory={true}
+        maxSuggestions={8}
+        debounceMs={300}
+        size="md"
+        variant="outline"
+        className="w-full"
+      />
+
+      {/* Smart Filters */}
+      <SmartFilter
+        filters={filterConfigs}
+        sortOptions={sortConfigs}
+        values={filterValues}
+        onChange={setFilterValues}
+        onSortChange={setSortConfig}
+        layout="horizontal"
+        showLabels={true}
+        showCounts={true}
+        collapsible={true}
+        defaultCollapsed={false}
+        size="md"
+        variant="outline"
+        totalCount={totalCount}
+        filteredCount={filteredCount}
+        className="w-full"
+      />
 
       {/* Loading State */}
       {isLoading && (
@@ -260,114 +428,38 @@ export default function WorkflowTab({
         </div>
       )}
 
-      {/* Workflows Grid */}
-      {!isLoading && (
+      {/* Enhanced Workflows Grid */}
+      {showSkeleton ? (
+        <WorkflowTabSkeleton count={6} compact={true} />
+      ) : error ? (
+        <ErrorStateSkeleton />
+      ) : !isLoading && filteredWorkflows.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredWorkflows.map((workflow, index) => (
-            <Card key={workflow.workflow.id || index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
-                        {workflow.workflow.name || workflow.workflow.title}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {getStatusIcon(workflow.status)}
-                        <span className="text-xs text-gray-600">
-                          {getStatusText(workflow.status)}
-                        </span>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {workflow.workflow.complexity || 'Medium'}
-                    </Badge>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {workflow.workflow.description || workflow.workflow.summary}
-                  </p>
-
-                  {/* Match Score */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${workflow.matchScore}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      {workflow.matchScore}%
-                    </span>
-                  </div>
-
-                  {/* Time Savings */}
-                  {workflow.estimatedTimeSavings && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {workflow.estimatedTimeSavings.toFixed(1)}h {lang === 'de' ? 'gespart' : 'saved'}/Monat
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Setup Cost */}
-                  {workflow.setupCost && (
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">
-                        {workflow.setupCost}€ {lang === 'de' ? 'Setup' : 'Setup'}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(workflow)}
-                      className="flex-1"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {lang === 'de' ? 'Download' : 'Download'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSetupRequest(workflow)}
-                      className="flex-1"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      {lang === 'de' ? 'Einrichtung' : 'Setup'}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {filteredWorkflows.map((workflow, index) => {
+            const enhancedBlueprint = convertToEnhancedBlueprint(workflow);
+            return (
+              <EnhancedBlueprintCard
+                key={workflow.workflow.id || index}
+                blueprint={enhancedBlueprint}
+                lang={lang}
+                period="month"
+                onDetailsClick={(blueprint) => onWorkflowSelect?.(workflow)}
+                onDownloadClick={(blueprint) => handleDownload(workflow)}
+                onSetupClick={(blueprint) => handleSetupRequest(workflow)}
+                onFavoriteClick={handleFavorite}
+                onShareClick={handleShare}
+                compact={true}
+                isInteractive={true}
+                className="group"
+              />
+            );
+          })}
         </div>
-      )}
+      ) : null}
 
       {/* Empty State */}
-      {!isLoading && filteredWorkflows.length === 0 && (
-        <div className="text-center py-12">
-          <Workflow className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {lang === 'de' ? 'Keine Workflows gefunden' : 'No workflows found'}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {lang === 'de' 
-              ? 'Versuchen Sie, Ihre Suchkriterien zu ändern oder die Seite zu aktualisieren'
-              : 'Try changing your search criteria or refreshing the page'
-            }
-          </p>
-          <Button onClick={handleRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {lang === 'de' ? 'Erneut versuchen' : 'Try Again'}
-          </Button>
-        </div>
+      {!isLoading && !error && filteredWorkflows.length === 0 && (
+        <EmptyStateSkeleton />
       )}
     </div>
   );

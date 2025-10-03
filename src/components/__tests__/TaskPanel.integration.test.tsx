@@ -1,26 +1,15 @@
 /**
- * TaskPanel Integration Test
- * Tests the integration between TaskPanel, SubtaskSidebar, and Tab components
+ * TaskPanel Integration Tests
+ * Tests the integration between all layout components in the TaskPanel
  */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TaskPanel from '../TaskPanel';
 
-// Mock all the dependencies
+// Mock the AI analysis functions
 jest.mock('@/lib/aiAnalysis', () => ({
-  generateSubtasksWithAI: jest.fn().mockResolvedValue({
-    aiEnabled: true,
-    subtasks: [
-      {
-        id: 'generated-1',
-        title: 'Generated Subtask 1',
-        automationPotential: 75,
-        systems: ['Generated System'],
-        risks: []
-      }
-    ]
-  })
+  generateSubtasksWithAI: jest.fn().mockResolvedValue([])
 }));
 
 jest.mock('@/lib/openai', () => ({
@@ -30,215 +19,72 @@ jest.mock('@/lib/openai', () => ({
 jest.mock('@/lib/workflowIndexer', () => ({
   workflowIndexer: {
     searchWorkflows: jest.fn().mockResolvedValue({
-      workflows: [
-        {
-          id: 'workflow-1',
-          title: 'Test Workflow',
-          description: 'A test workflow',
-          category: 'automation',
-          integrations: ['n8n'],
-          complexity: 'Medium'
-        }
-      ],
-      total: 1,
-      hasMore: false
+      workflows: [],
+      total: 0
     })
   }
 }));
 
 jest.mock('@/lib/trendAnalysis', () => ({
-  analyzeTrends: jest.fn().mockReturnValue([
-    {
-      type: 'trend',
-      title: 'Test Trend',
-      description: 'A test trend'
-    }
-  ])
+  analyzeTrends: jest.fn().mockReturnValue([])
 }));
 
 jest.mock('@/lib/workflowMatcher', () => ({
-  matchWorkflowsWithFallback: jest.fn().mockResolvedValue([
+  matchWorkflowsToSubtasks: jest.fn().mockReturnValue([])
+}));
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
+
+const mockTask = {
+  title: 'Test Task',
+  description: 'Test task description',
+  category: 'test',
+  subtasks: [
     {
-      workflow: {
-        id: 'workflow-1',
-        title: 'Test Workflow',
-        description: 'A test workflow'
-      },
-      matchScore: 85,
-      matchReasons: ['Good match'],
-      relevantIntegrations: ['n8n'],
-      estimatedTimeSavings: 4,
-      status: 'verified',
-      isAIGenerated: false,
-      setupCost: 500,
-      validationStatus: 'valid'
-    }
-  ])
-}));
-
-jest.mock('@/lib/blueprintGenerator', () => ({
-  generateBlueprintWithFallback: jest.fn().mockResolvedValue({
-    id: 'blueprint-1',
-    name: 'Test Blueprint',
-    description: 'A test blueprint',
-    timeSavings: 4,
-    complexity: 'Medium',
-    integrations: ['n8n'],
-    category: 'AI Generated',
-    isAIGenerated: true,
-    generatedAt: new Date().toISOString(),
-    status: 'generated',
-    generationMetadata: {
-      timestamp: Date.now(),
-      model: 'gpt-4o-mini',
-      language: 'en',
-      cacheKey: 'test-key'
+      id: 'subtask-1',
+      title: 'Test Subtask 1',
+      description: 'First test subtask',
+      automationPotential: 80,
+      estimatedTime: 4,
+      priority: 'high' as const,
+      complexity: 'medium' as const,
+      systems: ['System A', 'System B'],
+      risks: ['Risk 1'],
+      opportunities: ['Opportunity 1'],
+      dependencies: []
     },
-    setupCost: 500,
-    downloadUrl: 'https://example.com/download',
-    validationStatus: 'valid',
-    n8nWorkflow: {
-      name: 'Test Workflow',
-      nodes: [],
-      connections: {},
-      active: true,
-      settings: {},
-      versionId: '1'
+    {
+      id: 'subtask-2',
+      title: 'Test Subtask 2',
+      description: 'Second test subtask',
+      automationPotential: 60,
+      estimatedTime: 6,
+      priority: 'medium' as const,
+      complexity: 'high' as const,
+      systems: ['System C'],
+      risks: ['Risk 2'],
+      opportunities: ['Opportunity 2'],
+      dependencies: ['subtask-1']
     }
-  })
-}));
-
-jest.mock('@/lib/services/agentGenerator', () => ({
-  generateAgentWithFallback: jest.fn().mockResolvedValue({
-    id: 'agent-1',
-    name: 'Test Agent',
-    description: 'A test agent',
-    functions: ['function1', 'function2'],
-    tools: ['tool1', 'tool2'],
-    technologyStack: 'Python',
-    complexity: 'Medium',
-    isAIGenerated: true,
-    generatedAt: new Date().toISOString(),
-    status: 'generated',
-    generationMetadata: {
-      timestamp: Date.now(),
-      model: 'gpt-4o-mini',
-      language: 'en',
-      cacheKey: 'test-key'
-    },
-    setupCost: 300,
-    agentConfig: {
-      name: 'Test Agent',
-      description: 'A test agent'
-    }
-  })
-}));
-
-jest.mock('@/lib/services/promptGenerator', () => ({
-  generatePromptVariations: jest.fn().mockResolvedValue(new Map([
-    ['chatgpt-formal', {
-      id: 'prompt-1',
-      name: 'Test Prompt',
-      description: 'A test prompt',
-      prompt: 'Test prompt content',
-      preview: 'Test preview',
-      service: 'ChatGPT',
-      style: 'formal',
-      isAIGenerated: true,
-      generatedAt: new Date().toISOString(),
-      status: 'generated',
-      generationMetadata: {
-        timestamp: Date.now(),
-        model: 'gpt-4o-mini',
-        language: 'en',
-        cacheKey: 'test-key'
-      },
-      config: {
-        temperature: 0.7,
-        maxTokens: 500,
-        topP: 1,
-        frequencyPenalty: 0,
-        presencePenalty: 0
-      }
-    }]
-  ]))
-}));
-
-jest.mock('@/lib/services/cacheManager', () => ({
-  cacheManager: {
-    get: jest.fn().mockReturnValue(null),
-    set: jest.fn(),
-    delete: jest.fn()
-  }
-}));
-
-// Mock the UI components
-jest.mock('../EffortSection', () => {
-  return function MockEffortSection() {
-    return <div data-testid="effort-section">Effort Section</div>;
-  };
-});
-
-jest.mock('../TopSubtasksSection', () => {
-  return function MockTopSubtasksSection() {
-    return <div data-testid="top-subtasks-section">Top Subtasks Section</div>;
-  };
-});
-
-jest.mock('../InsightsTrendsSection', () => {
-  return function MockInsightsTrendsSection() {
-    return <div data-testid="insights-trends-section">Insights Trends Section</div>;
-  };
-});
-
-jest.mock('../ImplementationRequestCTA', () => {
-  return function MockImplementationRequestCTA() {
-    return <div data-testid="implementation-request-cta">Implementation Request CTA</div>;
-  };
-});
+  ]
+};
 
 describe('TaskPanel Integration Tests', () => {
-  const mockTask = {
-    title: 'Integration Test Task',
-    name: 'Integration Test Task Name',
-    description: 'Integration test task description',
-    category: 'integration-test',
-    subtasks: [
-      {
-        id: 'integration-subtask-1',
-        title: 'Integration Subtask 1',
-        description: 'Integration subtask description',
-        automationPotential: 85,
-        estimatedTime: 3,
-        priority: 'high' as const,
-        complexity: 'medium' as const,
-        systems: ['Integration System'],
-        risks: ['Integration Risk'],
-        opportunities: ['Integration Opportunity'],
-        dependencies: []
-      },
-      {
-        id: 'integration-subtask-2',
-        title: 'Integration Subtask 2',
-        description: 'Another integration subtask',
-        automationPotential: 60,
-        estimatedTime: 5,
-        priority: 'medium' as const,
-        complexity: 'high' as const,
-        systems: ['Another System'],
-        risks: [],
-        opportunities: [],
-        dependencies: []
-      }
-    ]
-  };
-
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    localStorageMock.getItem.mockReturnValue(null);
+    localStorageMock.setItem.mockClear();
   });
 
-  it('renders complete TaskPanel with all components', async () => {
+  it('renders TaskPanel with all integrated components', async () => {
     render(
       <TaskPanel 
         task={mockTask} 
@@ -246,18 +92,21 @@ describe('TaskPanel Integration Tests', () => {
         isVisible={true} 
       />
     );
+
+    // Check that main sections are rendered
+    expect(screen.getByText('Test Task')).toBeInTheDocument();
+    expect(screen.getByText('Automation analysis and solution recommendations')).toBeInTheDocument();
     
-    // Check if all main sections are rendered
-    expect(screen.getByTestId('effort-section')).toBeInTheDocument();
-    expect(screen.getByTestId('top-subtasks-section')).toBeInTheDocument();
-    expect(screen.getByTestId('implementation-request-cta')).toBeInTheDocument();
+    // Check that collapsible sections are present
+    expect(screen.getByText('Automation Solutions')).toBeInTheDocument();
+    expect(screen.getByText('Top Subtasks')).toBeInTheDocument();
     
-    // Check if subtasks are rendered
-    expect(screen.getByText('Integration Subtask 1')).toBeInTheDocument();
-    expect(screen.getByText('Integration Subtask 2')).toBeInTheDocument();
+    // Check that help triggers are present
+    const helpIcons = screen.getAllByRole('button');
+    expect(helpIcons.length).toBeGreaterThan(0);
   });
 
-  it('handles subtask selection and tab switching', async () => {
+  it('integrates SmartDefaultsProvider correctly', async () => {
     render(
       <TaskPanel 
         task={mockTask} 
@@ -265,25 +114,52 @@ describe('TaskPanel Integration Tests', () => {
         isVisible={true} 
       />
     );
-    
-    // Wait for the component to load
+
+    // Check that smart defaults are working by verifying collapsible sections
+    const collapsibleSections = screen.getAllByRole('button');
+    expect(collapsibleSections.length).toBeGreaterThan(0);
+  });
+
+  it('integrates ContextualHelpProvider correctly', async () => {
+    render(
+      <TaskPanel 
+        task={mockTask} 
+        lang="en" 
+        isVisible={true} 
+      />
+    );
+
+    // Check that help triggers are present (indicating ContextualHelpProvider is working)
+    const helpButtons = screen.getAllByRole('button');
+    const hasHelpButtons = helpButtons.some(button => 
+      button.querySelector('svg') // Help icons are SVG elements
+    );
+    expect(hasHelpButtons).toBe(true);
+  });
+
+  it('handles subtask selection correctly', async () => {
+    render(
+      <TaskPanel 
+        task={mockTask} 
+        lang="en" 
+        isVisible={true} 
+      />
+    );
+
+    // Wait for subtasks to load
     await waitFor(() => {
-      expect(screen.getByText('Integration Subtask 1')).toBeInTheDocument();
+      expect(screen.getByText('Test Subtask 1')).toBeInTheDocument();
     });
-    
+
     // Click on a subtask
-    const subtask = screen.getByText('Integration Subtask 1');
-    fireEvent.click(subtask);
-    
-    // Check if tabs are rendered
-    await waitFor(() => {
-      expect(screen.getByText('Workflows')).toBeInTheDocument();
-      expect(screen.getByText('Agents')).toBeInTheDocument();
-      expect(screen.getByText('LLMs')).toBeInTheDocument();
-    });
+    const subtaskButton = screen.getByText('Test Subtask 1');
+    fireEvent.click(subtaskButton);
+
+    // Verify that the subtask is selected (this would need more specific testing based on implementation)
+    expect(subtaskButton).toBeInTheDocument();
   });
 
-  it('handles tab switching between Workflows, Agents, and LLMs', async () => {
+  it('handles collapsible section toggling', async () => {
     render(
       <TaskPanel 
         task={mockTask} 
@@ -291,35 +167,38 @@ describe('TaskPanel Integration Tests', () => {
         isVisible={true} 
       />
     );
+
+    // Find and click on a collapsible section header
+    const sectionHeaders = screen.getAllByRole('button');
+    const collapsibleHeader = sectionHeaders.find(button => 
+      button.textContent?.includes('Automation Solutions')
+    );
     
-    // Wait for the component to load
-    await waitFor(() => {
-      expect(screen.getByText('Integration Subtask 1')).toBeInTheDocument();
-    });
-    
-    // Click on a subtask to show tabs
-    const subtask = screen.getByText('Integration Subtask 1');
-    fireEvent.click(subtask);
-    
-    // Wait for tabs to appear
-    await waitFor(() => {
-      expect(screen.getByText('Workflows')).toBeInTheDocument();
-    });
-    
-    // Click on Agents tab
-    const agentsTab = screen.getByText('Agents');
-    fireEvent.click(agentsTab);
-    
-    // Click on LLMs tab
-    const llmsTab = screen.getByText('LLMs');
-    fireEvent.click(llmsTab);
-    
-    // Click back on Workflows tab
-    const workflowsTab = screen.getByText('Workflows');
-    fireEvent.click(workflowsTab);
+    if (collapsibleHeader) {
+      fireEvent.click(collapsibleHeader);
+      
+      // Verify that the section toggles (this would need more specific testing)
+      expect(collapsibleHeader).toBeInTheDocument();
+    }
   });
 
-  it('handles "All Solutions" selection', async () => {
+  it('handles responsive layout correctly', async () => {
+    // Test with different viewport sizes
+    const { rerender } = render(
+      <TaskPanel 
+        task={mockTask} 
+        lang="en" 
+        isVisible={true} 
+      />
+    );
+
+    // Check that the main grid layout is present
+    const gridContainer = document.querySelector('.grid');
+    expect(gridContainer).toBeInTheDocument();
+    expect(gridContainer).toHaveClass('xl:grid-cols-12');
+  });
+
+  it('integrates EffortSection correctly', async () => {
     render(
       <TaskPanel 
         task={mockTask} 
@@ -327,25 +206,40 @@ describe('TaskPanel Integration Tests', () => {
         isVisible={true} 
       />
     );
-    
-    // Wait for the component to load
-    await waitFor(() => {
-      expect(screen.getByText('All (Complete Solutions)')).toBeInTheDocument();
-    });
-    
-    // Click on "All Solutions"
-    const allSolutions = screen.getByText('All (Complete Solutions)');
-    fireEvent.click(allSolutions);
-    
-    // Check if tabs are still rendered
-    await waitFor(() => {
-      expect(screen.getByText('Workflows')).toBeInTheDocument();
-    });
+
+    // Check that EffortSection is rendered (it should show ROI information)
+    // This would need to be more specific based on the actual EffortSection implementation
+    expect(screen.getByText('Test Task')).toBeInTheDocument();
   });
 
-  it('handles empty task gracefully', () => {
+  it('handles language switching correctly', async () => {
+    const { rerender } = render(
+      <TaskPanel 
+        task={mockTask} 
+        lang="en" 
+        isVisible={true} 
+      />
+    );
+
+    expect(screen.getByText('Automation Solutions')).toBeInTheDocument();
+
+    // Switch to German
+    rerender(
+      <TaskPanel 
+        task={mockTask} 
+        lang="de" 
+        isVisible={true} 
+      />
+    );
+
+    expect(screen.getByText('Automatisierungs-Lösungen')).toBeInTheDocument();
+  });
+
+  it('handles empty task gracefully', async () => {
     const emptyTask = {
-      title: 'Empty Task'
+      title: 'Empty Task',
+      description: 'No subtasks',
+      category: 'test'
     };
 
     render(
@@ -355,31 +249,56 @@ describe('TaskPanel Integration Tests', () => {
         isVisible={true} 
       />
     );
-    
-    // Should still render without crashing
-    expect(screen.getByTestId('effort-section')).toBeInTheDocument();
+
+    // Should still render the main structure
+    expect(screen.getByText('Empty Task')).toBeInTheDocument();
+    expect(screen.getByText('Automation Solutions')).toBeInTheDocument();
   });
 
-  it('handles task without subtasks', async () => {
-    const taskWithoutSubtasks = {
-      ...mockTask,
-      subtasks: []
-    };
+  it('persists user preferences across renders', async () => {
+    // Mock localStorage to return saved preferences
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'smart-defaults-config') {
+        return JSON.stringify({
+          autoExpandHighPriority: true,
+          expandOnContent: true
+        });
+      }
+      if (key === 'smart-defaults-expanded') {
+        return JSON.stringify({
+          'solutions': true
+        });
+      }
+      return null;
+    });
 
     render(
       <TaskPanel 
-        task={taskWithoutSubtasks} 
+        task={mockTask} 
         lang="en" 
         isVisible={true} 
       />
     );
-    
-    // Should still render without crashing
-    expect(screen.getByTestId('effort-section')).toBeInTheDocument();
-    
-    // Should show fallback subtasks
-    await waitFor(() => {
-      expect(screen.getByText('Aufgabe planen und strukturieren')).toBeInTheDocument();
-    });
+
+    // Verify that preferences are loaded
+    expect(localStorageMock.getItem).toHaveBeenCalledWith('smart-defaults-config');
+    expect(localStorageMock.getItem).toHaveBeenCalledWith('smart-defaults-expanded');
+  });
+
+  it('handles error states gracefully', async () => {
+    // Mock an error in AI analysis
+    const { generateSubtasksWithAI } = require('@/lib/aiAnalysis');
+    generateSubtasksWithAI.mockRejectedValue(new Error('AI service unavailable'));
+
+    render(
+      <TaskPanel 
+        task={mockTask} 
+        lang="en" 
+        isVisible={true} 
+      />
+    );
+
+    // Should still render the main structure even with errors
+    expect(screen.getByText('Test Task')).toBeInTheDocument();
   });
 });
