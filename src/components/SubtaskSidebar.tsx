@@ -426,7 +426,7 @@ export default function SubtaskSidebar({
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-medium text-gray-900 truncate">
+                        <span className="text-sm font-medium text-gray-900">
                           {subtask.title}
                         </span>
                         {/* Removed favorite button */}

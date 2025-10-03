@@ -422,15 +422,13 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Subtask Navigation */}
           <div className="lg:w-1/3">
-            <div className="sticky top-6">
-              <SubtaskSidebar
-                task={task}
-                lang={lang}
-                isVisible={isVisible}
-                onSubtaskSelect={handleSubtaskSelect}
-                selectedSubtaskId={selectedSubtaskId}
-              />
-            </div>
+            <SubtaskSidebar
+              task={task}
+              lang={lang}
+              isVisible={isVisible}
+              onSubtaskSelect={handleSubtaskSelect}
+              selectedSubtaskId={selectedSubtaskId}
+            />
           </div>
 
           {/* Main Content Area - Solution Tabs */}
