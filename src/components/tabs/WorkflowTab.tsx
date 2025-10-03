@@ -325,24 +325,7 @@ export default function WorkflowTab({
     }
   };
 
-  if (!subtask) {
-    return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        <div className="text-center">
-          <Workflow className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-lg font-medium">
-            {lang === 'de' ? 'Wählen Sie eine Teilaufgabe aus' : 'Select a subtask'}
-          </p>
-          <p className="text-sm">
-            {lang === 'de' 
-              ? 'Wählen Sie eine Teilaufgabe aus der Seitenleiste aus, um Workflows anzuzeigen'
-              : 'Select a subtask from the sidebar to view workflows'
-            }
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Always show workflows, even without selected subtask
 
   return (
     <div className="space-y-6">
