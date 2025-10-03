@@ -407,37 +407,18 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
         
         {/* Header Section - Full Width */}
         <div className="xl:col-span-12">
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Target className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {task.title || task.name || 'Task Analysis'}
-                  </h1>
-                  <SectionHelp section="solutions-overview" lang={lang} />
-                </div>
-                <p className="text-gray-600 mt-1">
-                  {lang === 'de' ? 'Automatisierungsanalyse und Lösungsvorschläge' : 'Automation analysis and solution recommendations'}
-                </p>
-              </div>
-            </div>
-            
-            {/* Effort/ROI Section with Enhanced Styling */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 p-6">
-              <EffortSection
-                manualHours={manualHoursTotal}
-                automatedHours={residualHoursTotal}
-                hourlyRate={60}
-                period={period}
-                lang={lang}
-                onHourlyRateChange={(newRate) => {
-                  console.log('Hourly rate changed:', newRate);
-                }}
-              />
-            </div>
+          {/* Effort/ROI Section - Direct Display */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 p-6 mb-6">
+            <EffortSection
+              manualHours={manualHoursTotal}
+              automatedHours={residualHoursTotal}
+              hourlyRate={60}
+              period={period}
+              lang={lang}
+              onHourlyRateChange={(newRate) => {
+                console.log('Hourly rate changed:', newRate);
+              }}
+            />
           </div>
         </div>
 
