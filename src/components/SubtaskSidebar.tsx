@@ -381,12 +381,10 @@ export default function SubtaskSidebar({
               </div>
             </div>
 
-            {/* Simplified Header - Always show "Alle Teilaufgaben" */}
-            {!isCollapsed && (
-              <div className="text-sm text-gray-600 font-medium">
-                {lang === 'de' ? 'Alle Teilaufgaben' : 'All Subtasks'}
-              </div>
-            )}
+            {/* Always show "Alle Teilaufgaben" at the top */}
+            <div className="text-sm text-gray-600 font-medium">
+              {lang === 'de' ? 'Alle Teilaufgaben' : 'All Subtasks'}
+            </div>
 
             {/* Subtasks List */}
             {!isCollapsed && (
