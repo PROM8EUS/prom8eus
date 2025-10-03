@@ -405,19 +405,17 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
       {/* Simplified Layout without Grid */}
       <div className="max-w-7xl mx-auto space-y-6 p-6">
         
-        {/* Effort/ROI Section - Direct Display */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 p-6">
-          <EffortSection
-            manualHours={manualHoursTotal}
-            automatedHours={residualHoursTotal}
-            hourlyRate={60}
-            period={period}
-            lang={lang}
-            onHourlyRateChange={(newRate) => {
-              console.log('Hourly rate changed:', newRate);
-            }}
-          />
-        </div>
+        {/* Effort/ROI Section - Direct Display without Container */}
+        <EffortSection
+          manualHours={manualHoursTotal}
+          automatedHours={residualHoursTotal}
+          hourlyRate={60}
+          period={period}
+          lang={lang}
+          onHourlyRateChange={(newRate) => {
+            console.log('Hourly rate changed:', newRate);
+          }}
+        />
 
         {/* Two Column Layout */}
         <div className="flex flex-col lg:flex-row gap-6">
