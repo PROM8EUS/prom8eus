@@ -305,27 +305,7 @@ export function ExpandedSolutionTabs({
     }
   };
 
-  // Empty state when no subtask is selected
-  if (!subtask) {
-    return (
-      <Card className={`shadow-sm hover:shadow-md transition-shadow ${className}`}>
-        <CardContent className="p-8">
-          <div className="text-center">
-            <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-              {lang === 'de' ? 'Wähle eine Teilaufgabe' : 'Select a Subtask'}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {lang === 'de' 
-                ? 'Wähle eine Teilaufgabe aus der Seitenleiste, um Lösungen anzuzeigen'
-                : 'Select a subtask from the sidebar to view solutions'
-              }
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Always show tabs, even when no subtask is selected
 
   return (
     <Card className={`shadow-sm hover:shadow-md transition-shadow ${className}`}>
