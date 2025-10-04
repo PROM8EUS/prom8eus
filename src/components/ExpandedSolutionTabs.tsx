@@ -71,6 +71,7 @@ export function ExpandedSolutionTabs({
     llms: 0
   });
   const [isPreloading, setIsPreloading] = useState(true);
+  const [tabPositions, setTabPositions] = useState<Record<TabType, { left: number; width: number }>>({});
 
   // Estimate tab counts based on subtask properties (no API calls)
   useEffect(() => {
@@ -124,45 +125,6 @@ export function ExpandedSolutionTabs({
     setTimeout(estimateCounts, 100);
   }, [subtask]);
 
-  // Smart default tab selection based on subtask characteristics
-  const smartDefaultTab = useMemo((): TabType => {
-    if (!subtask) return 'workflows';
-
-    const { automationPotential, complexity, systems } = subtask;
-
-    // High automation potential + simple complexity = prefer workflows
-    if (automationPotential >= 0.8 && complexity === 'low') {
-      return 'workflows';
-    }
-
-    // Medium automation + complex systems = prefer agents
-    if (automationPotential >= 0.6 && complexity === 'high' && systems.length > 3) {
-      return 'agents';
-    }
-
-    // Low automation or creative tasks = prefer LLMs
-    if (automationPotential < 0.6 || systems.includes('Creative Tools')) {
-      return 'llms';
-    }
-
-    // Default to workflows for most cases
-    return 'workflows';
-  }, [subtask]);
-
-  // Set smart default on subtask change - DISABLED to preserve user's tab selection
-  // useEffect(() => {
-  //   if (subtask) {
-  //     const newDefaultTab = smartDefaultTab;
-  //     if (newDefaultTab !== activeTab) {
-  //       setIsTransitioning(true);
-  //       setTimeout(() => {
-  //         setActiveTab(newDefaultTab);
-  //         setIsTransitioning(false);
-  //       }, 150);
-  //     }
-  //   }
-  // }, [subtask, smartDefaultTab, activeTab]);
-
   // Tab configuration with enhanced UX
   const tabs: TabInfo[] = useMemo(() => [
     {
@@ -212,6 +174,80 @@ export function ExpandedSolutionTabs({
     [tabs]
   );
 
+  // Measure tab positions for animation
+  useEffect(() => {
+    const measureTabPositions = () => {
+      const positions: Record<TabType, { left: number; width: number }> = {} as any;
+      
+      sortedTabs.forEach((tab) => {
+        const element = document.querySelector(`[data-tab-id="${tab.id}"]`) as HTMLElement;
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const container = element.closest('.bg-gray-50') as HTMLElement;
+          if (container) {
+            const containerRect = container.getBoundingClientRect();
+            positions[tab.id] = {
+              left: rect.left - containerRect.left,
+              width: rect.width
+            };
+          }
+        }
+      });
+      
+      setTabPositions(positions);
+    };
+
+    // Measure after a short delay to ensure DOM is ready
+    const timer = setTimeout(measureTabPositions, 100);
+    
+    // Re-measure on window resize
+    window.addEventListener('resize', measureTabPositions);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measureTabPositions);
+    };
+  }, [sortedTabs, activeTab]);
+
+  // Smart default tab selection based on subtask characteristics
+  const smartDefaultTab = useMemo((): TabType => {
+    if (!subtask) return 'workflows';
+
+    const { automationPotential, complexity, systems } = subtask;
+
+    // High automation potential + simple complexity = prefer workflows
+    if (automationPotential >= 0.8 && complexity === 'low') {
+      return 'workflows';
+    }
+
+    // Medium automation + complex systems = prefer agents
+    if (automationPotential >= 0.6 && complexity === 'high' && systems.length > 3) {
+      return 'agents';
+    }
+
+    // Low automation or creative tasks = prefer LLMs
+    if (automationPotential < 0.6 || systems.includes('Creative Tools')) {
+      return 'llms';
+    }
+
+    // Default to workflows for most cases
+    return 'workflows';
+  }, [subtask]);
+
+  // Set smart default on subtask change - DISABLED to preserve user's tab selection
+  // useEffect(() => {
+  //   if (subtask) {
+  //     const newDefaultTab = smartDefaultTab;
+  //     if (newDefaultTab !== activeTab) {
+  //       setIsTransitioning(true);
+  //       setTimeout(() => {
+  //         setActiveTab(newDefaultTab);
+  //         setIsTransitioning(false);
+  //       }, 150);
+  //     }
+  //   }
+  // }, [subtask, smartDefaultTab, activeTab]);
+
   // Handle tab change with smooth transition
   const handleTabChange = (newTab: string) => {
     const tabType = newTab as TabType;
@@ -242,11 +278,12 @@ export function ExpandedSolutionTabs({
       <TabsTrigger
         key={tab.id}
         value={tab.id}
+        data-tab-id={tab.id}
         className={`
           relative flex items-center gap-2 px-4 py-3 transition-all duration-200 rounded-lg border-0 overflow-hidden
           ${isActive 
-            ? 'bg-white text-violet-600 shadow-sm' 
-            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+            ? 'text-violet-600' 
+            : 'text-gray-600 hover:text-gray-900'
           }
           ${isTransitioning ? 'opacity-50 pointer-events-none' : ''}
         `}
@@ -350,8 +387,18 @@ export function ExpandedSolutionTabs({
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           {/* Enhanced TabsList with modern styling */}
-          <div className="bg-gray-50 p-2 rounded-lg">
-            <TabsList className="grid w-full grid-cols-3 h-auto bg-transparent p-0 border-0">
+          <div className="bg-gray-50 p-2 rounded-lg relative">
+            {/* Animated background */}
+            {tabPositions[activeTab] && (
+              <div
+                className="absolute top-2 bottom-2 bg-white rounded-lg shadow-sm transition-all duration-300 ease-out z-0"
+                style={{
+                  left: `${tabPositions[activeTab].left}px`,
+                  width: `${tabPositions[activeTab].width}px`,
+                }}
+              />
+            )}
+            <TabsList className="grid w-full grid-cols-3 h-auto bg-transparent p-0 border-0 relative z-10">
               {sortedTabs.map(renderTabTrigger)}
             </TabsList>
           </div>

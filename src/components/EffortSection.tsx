@@ -338,7 +338,7 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
                     value={manualHours}
                     max={maxHours}
                     color="bg-[#34877E]"
-                    label={lang === 'de' ? 'Vorher (Manuell/Monat)' : 'Before (Manual/Month)'}
+                    label={lang === 'de' ? 'Vorher (Manuell)' : 'Before (Manual)'}
                     animated={animated}
                     showPercentage={showPercentage}
                     viewMode={viewMode}
@@ -350,7 +350,7 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
                     value={automatedHours}
                     max={maxHours}
                     color="bg-gradient-to-r from-primary to-primary/80"
-                    label={lang === 'de' ? 'Nachher (Automatisiert/Monat)' : 'After (Automated/Month)'}
+                    label={lang === 'de' ? 'Nachher (Automatisiert)' : 'After (Automated)'}
                     animated={animated}
                     showPercentage={showPercentage}
                     viewMode={viewMode}
