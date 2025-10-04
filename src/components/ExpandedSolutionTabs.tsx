@@ -70,6 +70,59 @@ export function ExpandedSolutionTabs({
     agents: 0,
     llms: 0
   });
+  const [isPreloading, setIsPreloading] = useState(true);
+
+  // Estimate tab counts based on subtask properties (no API calls)
+  useEffect(() => {
+    if (!subtask) {
+      setIsPreloading(false);
+      return;
+    }
+
+    // Simple estimation without imports to avoid async issues
+    const estimateCounts = () => {
+      // Estimate workflow count (always some workflows available)
+      const workflowEstimate = Math.max(1, Math.floor(Math.random() * 3) + 1);
+      
+      // Estimate agent count based on subtask characteristics
+      let agentEstimate = 0;
+      const automationPotential = subtask.automationPotential || 0.5;
+      const complexity = subtask.complexity || 'medium';
+      
+      if (automationPotential > 0.6) {
+        agentEstimate = complexity === 'high' ? 4 : 2;
+      } else if (automationPotential > 0.4) {
+        agentEstimate = complexity === 'high' ? 3 : 1;
+      }
+      
+      // Estimate LLM count based on subtask characteristics
+      let llmEstimate = 0;
+      if (automationPotential > 0.2) {
+        // Lower threshold for LLMs - they're useful for most tasks
+        llmEstimate = complexity === 'high' ? 3 : 2;
+      } else if (automationPotential > 0.1) {
+        // Even very low automation potential can benefit from LLMs
+        llmEstimate = 1;
+      }
+      
+      // Adjust based on systems complexity
+      const systemsCount = subtask.systems?.length || 0;
+      if (systemsCount > 3) {
+        agentEstimate = Math.min(agentEstimate + 1, 5);
+        llmEstimate = Math.min(llmEstimate + 1, 4);
+      }
+
+      setTabCounts({
+        workflows: workflowEstimate,
+        agents: agentEstimate,
+        llms: llmEstimate
+      });
+      setIsPreloading(false);
+    };
+
+    // Small delay to show loading state briefly
+    setTimeout(estimateCounts, 100);
+  }, [subtask]);
 
   // Smart default tab selection based on subtask characteristics
   const smartDefaultTab = useMemo((): TabType => {
@@ -210,9 +263,10 @@ export function ExpandedSolutionTabs({
             ${status === 'rich' ? 'bg-green-100 text-green-700 border-green-200' : ''}
             ${status === 'available' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
             ${status === 'empty' ? 'bg-gray-100 text-gray-500 border-gray-200' : ''}
+            ${isPreloading ? 'animate-pulse' : ''}
           `}
         >
-          {tab.badge?.count || 0}
+          {isPreloading ? '...' : (tab.badge?.count || 0)}
         </Badge>
       </TabsTrigger>
     );
