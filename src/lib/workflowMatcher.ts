@@ -551,10 +551,9 @@ export async function matchWorkflowsWithFallback(
   
   // If no good matches found and fallback is enabled, generate one
   if (matches.length === 0 && options.autoGenerateFallback !== false) {
-    const fallbackMatch = await generateFallbackWorkflow(subtask, options);
-    if (fallbackMatch) {
-      return [fallbackMatch];
-    }
+    // Don't generate fallback here - let the WorkflowTab handle it with proper context
+    console.log('🔍 [matchWorkflowsWithFallback] No matches found, letting WorkflowTab handle fallback generation');
+    return [];
   }
   
   return matches;

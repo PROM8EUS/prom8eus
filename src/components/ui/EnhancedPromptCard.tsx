@@ -313,12 +313,12 @@ export const EnhancedPromptCard: React.FC<EnhancedPromptCardProps> = ({
   return (
     <Card 
       className={cn(
-        "group relative overflow-hidden transition-all duration-300 ease-in-out cursor-pointer",
+        "group relative transition-all duration-300 ease-in-out cursor-pointer",
         "hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
         "border border-gray-200 hover:border-primary/30",
         "bg-white hover:bg-gradient-to-br hover:from-white hover:to-primary/5",
         isHovered && "ring-2 ring-primary/20",
-        compact ? "h-64" : "h-80",
+        compact ? "min-h-64" : "min-h-80",
         className
       )}
       onMouseEnter={handleMouseEnter}
@@ -424,7 +424,7 @@ export const EnhancedPromptCard: React.FC<EnhancedPromptCardProps> = ({
                 "bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-sm leading-relaxed",
                 "border border-gray-700 transition-all duration-300",
                 isHovered && "border-primary/30 shadow-lg",
-                "overflow-hidden"
+                "overflow-visible"
               )}
             >
               <div 

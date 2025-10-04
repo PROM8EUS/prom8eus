@@ -133,7 +133,7 @@ export function CollapsibleSection({
 
   return (
     <Card className={cn(
-      'transition-all duration-300 hover:shadow-md',
+      'transition-all duration-300',
       getPriorityStyles(),
       className
     )}>
@@ -217,13 +217,13 @@ export function CollapsibleSection({
         <div
           id={`collapsible-content-${typeof title === 'string' ? title.replace(/\s+/g, '-').toLowerCase() : 'section'}`}
           className={cn(
-            'transition-all duration-300 ease-in-out',
             isExpanded ? 'opacity-100' : 'opacity-0',
             contentClassName
           )}
           style={{
-            maxHeight: isExpanded ? 'none' : '0px',
-            overflow: isExpanded ? 'visible' : 'hidden'
+            maxHeight: isExpanded ? '999999px' : '0px',
+            overflow: isExpanded ? 'visible' : 'hidden',
+            transition: 'none'
           }}
         >
           <div className="p-4 pt-0">

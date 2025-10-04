@@ -37,7 +37,6 @@ export const ImplementationRequestCTA: React.FC<ImplementationRequestCTAProps> =
   className,
   onRequestImplementation
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleRequestImplementation = () => {
     const requestData = {
@@ -131,20 +130,15 @@ Best regards`;
   return (
     <Card 
       className={cn(
-        'bg-gradient-to-br from-primary/10 via-primary/5 to-primary/10 border-primary/30 shadow-lg hover:shadow-xl transition-all duration-300',
+        'bg-gradient-to-br from-primary/10 via-primary/5 to-primary/10 border-primary/30',
         className
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <CardContent className={sizeClasses.card}>
         <div className="text-center space-y-4">
           {/* Header with Icon */}
           <div className="flex items-center justify-center gap-2">
-            <div className={cn(
-              'p-2 rounded-full bg-primary/20 transition-all duration-300',
-              isHovered && 'bg-primary/30 scale-110'
-            )}>
+            <div className="p-2 rounded-full bg-primary/20">
               <Sparkles className={cn('text-primary', sizeClasses.icon)} />
             </div>
             <h3 className={cn('font-bold text-foreground', sizeClasses.title)}>
@@ -189,9 +183,8 @@ Best regards`;
             <Button
               onClick={handleRequestImplementation}
               className={cn(
-                'bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-300 transform',
-                sizeClasses.button,
-                isHovered && 'scale-105 shadow-lg'
+                'bg-primary hover:bg-primary/90 text-primary-foreground font-semibold',
+                sizeClasses.button
               )}
             >
               <Mail className={cn('mr-2', sizeClasses.icon)} />

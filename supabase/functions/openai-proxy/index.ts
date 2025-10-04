@@ -323,44 +323,60 @@ JSON Format:
 
 function buildBusinessCasePrompt(lang: string): string {
   return lang === 'de'
-    ? `Du bist ein Experte für Business Case Analyse. Berechne realistische Kennzahlen.
+    ? `Du bist ein Experte für Business Case Analyse. Berechne realistische monatliche Kennzahlen für eine EINZELNE Aufgabe.
 
-WICHTIG: Antworte ausschließlich mit gültigem JSON!
+WICHTIG: 
+- Berechne Werte für eine spezifische Aufgabe, nicht für eine ganze Position
+- Alle Stunden-Werte beziehen sich auf PRO MONAT
+- Realistische Werte: 2-15 Stunden pro Monat für eine einzelne Aufgabe
+- Antworte ausschließlich mit gültigem JSON!
 
 JSON-Format:
 {
-  "manualHours": 160.0,
-  "automatedHours": 99.2,
-  "automationPotential": 67,
-  "savedHours": 60.8,
-  "setupCostHours": 43.0,
-  "setupCostMoney": 1720.0,
-  "roi": 12190.9,
-  "paybackPeriodYears": 0.0,
+  "manualHours": 8.0,
+  "automatedHours": 2.0,
+  "automationPotential": 75,
+  "savedHours": 6.0,
+  "setupCostHours": 2.0,
+  "setupCostMoney": 80.0,
+  "roi": 28.0,
+  "paybackPeriodYears": 0.1,
   "hourlyRateEmployee": 45.0,
   "hourlyRateFreelancer": 35.0,
   "employmentType": "employee",
-  "reasoning": "Begründung"
-}`
-    : `You are an expert in business case analysis. Calculate realistic metrics.
+  "reasoning": "Begründung basierend auf der spezifischen Aufgabe - monatliche Werte"
+}
 
-IMPORTANT: Respond exclusively with valid JSON!
+WICHTIG: automatedHours muss konsistent mit automationPotential sein!
+- Bei 75% automationPotential: automatedHours = manualHours × 0.25 (nur 25% verbleibend)
+- Bei 60% automationPotential: automatedHours = manualHours × 0.40 (40% verbleibend)`
+    : `You are an expert in business case analysis. Calculate realistic monthly metrics for a SINGLE task.
+
+IMPORTANT: 
+- Calculate values for a specific task, not for an entire position
+- All hour values refer to PER MONTH
+- Realistic values: 2-15 hours per month for a single task
+- Respond exclusively with valid JSON!
 
 JSON Format:
 {
-  "manualHours": 160.0,
-  "automatedHours": 99.2,
-  "automationPotential": 67,
-  "savedHours": 60.8,
-  "setupCostHours": 43.0,
-  "setupCostMoney": 1720.0,
-  "roi": 12190.9,
-  "paybackPeriodYears": 0.0,
+  "manualHours": 8.0,
+  "automatedHours": 2.0,
+  "automationPotential": 75,
+  "savedHours": 6.0,
+  "setupCostHours": 2.0,
+  "setupCostMoney": 80.0,
+  "roi": 28.0,
+  "paybackPeriodYears": 0.1,
   "hourlyRateEmployee": 45.0,
   "hourlyRateFreelancer": 35.0,
   "employmentType": "employee",
-  "reasoning": "Reasoning"
-}`;
+  "reasoning": "Reasoning based on the specific task - monthly values"
+}
+
+IMPORTANT: automatedHours must be consistent with automationPotential!
+- At 75% automationPotential: automatedHours = manualHours × 0.25 (only 25% remaining)
+- At 60% automationPotential: automatedHours = manualHours × 0.40 (40% remaining)`;
 }
 
 function buildSolutionsPrompt(lang: string): string {

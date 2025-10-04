@@ -29,7 +29,6 @@ import { GeneratedAgent } from '@/lib/services/agentGenerator';
 import { generateAgentWithFallback } from '@/lib/services/agentGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 import { EnhancedAgentCard, EnhancedAgentData } from '../ui/EnhancedAgentCard';
-import { AgentTabSkeleton, EmptyStateSkeleton, ErrorStateSkeleton } from '../ui/AgentTabSkeleton';
 
 type AgentTabProps = {
   subtask: DynamicSubtask | null;
@@ -51,7 +50,6 @@ export default function AgentTab({
   const [agents, setAgents] = useState<GeneratedAgent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSkeleton, setShowSkeleton] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -61,19 +59,12 @@ export default function AgentTab({
 
   // Load agents when subtask changes
   useEffect(() => {
-    if (subtask) {
-      loadAgents();
-    } else {
-      setAgents([]);
-      onUpdateCount?.(0);
-    }
+    loadAgents();
   }, [subtask]);
 
   const loadAgents = async () => {
-    if (!subtask) return;
 
     setIsLoading(true);
-    setShowSkeleton(true);
     setError(null);
     
     try {
@@ -89,22 +80,21 @@ export default function AgentTab({
         setAgents(cached);
         onUpdateCount?.(cached.length);
         setIsLoading(false);
-        setShowSkeleton(false);
         return;
       }
 
-      // Generate agents with fallback or show example agents
+      // Generate agents based on context
       let agents: GeneratedAgent[] = [];
       
       if (subtask) {
-        // Try to generate agent for specific subtask
+        // Generate specific agent for individual subtask
         const agent = await generateAgentWithFallback(subtask, lang, 3000);
         agents = [agent];
-        console.log('✅ [AgentTab] Generated agent:', agent.name);
+        console.log('✅ [AgentTab] Generated specific agent:', agent.name);
       } else {
-        // Show example agents when no subtask is selected
-        agents = generateExampleAgents(lang);
-        console.log('✅ [AgentTab] Loaded example agents:', agents.length);
+        // Generate complete solution agents for "Alle (Komplettlösungen)"
+        agents = generateCompleteSolutionAgents(lang);
+        console.log('✅ [AgentTab] Loaded complete solution agents:', agents.length);
       }
       
       setAgents(agents);
@@ -120,7 +110,6 @@ export default function AgentTab({
       onUpdateCount?.(0);
     } finally {
       setIsLoading(false);
-      setShowSkeleton(false);
     }
   };
 
@@ -164,12 +153,44 @@ export default function AgentTab({
 
   // Convert GeneratedAgent to EnhancedAgentData
   const convertToEnhancedAgent = (agent: GeneratedAgent): EnhancedAgentData => {
+    if (!agent) {
+      console.error('❌ [AgentTab] convertToEnhancedAgent called with undefined agent');
+      return {
+        id: 'error',
+        name: 'Error',
+        description: 'Agent data not available',
+        role: 'Error',
+        technologies: [],
+        skills: [],
+        experience: 'junior',
+        availability: 'offline',
+        rating: 0,
+        projectsCompleted: 0,
+        responseTime: 0,
+        costPerHour: 0,
+        languages: [],
+        specializations: [],
+        status: 'fallback',
+        generationMetadata: {
+          timestamp: Date.now(),
+          model: 'fallback',
+          language: 'en',
+          cacheKey: 'error-fallback'
+        },
+        setupCost: 0,
+        isAIGenerated: false,
+        personality: 'professional',
+        communicationStyle: 'formal',
+        lastActive: new Date().toISOString(),
+        portfolio: [],
+        verified: false,
+      };
+    }
     return {
       id: agent.id,
       name: agent.name,
       description: agent.description,
-      role: agent.config.name, // Use config name as role
-      capabilities: agent.functions || [],
+      role: agent.config?.name || agent.name, // Use config name as role or fallback to name
       technologies: agent.technology ? [agent.technology] : [],
       skills: agent.tools || [],
       experience: agent.complexity === 'Low' ? 'junior' : 
@@ -334,12 +355,18 @@ export default function AgentTab({
       )}
 
       {/* Enhanced Agents Grid */}
-      {showSkeleton ? (
-        <AgentTabSkeleton count={6} compact={true} />
-      ) : error ? (
-        <ErrorStateSkeleton />
+      {error ? (
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {lang === 'de' ? 'Fehler beim Laden' : 'Error Loading'}
+          </h3>
+          <p className="text-gray-600">
+            {lang === 'de' ? 'Agents konnten nicht geladen werden.' : 'Agents could not be loaded.'}
+          </p>
+        </div>
       ) : !isLoading && filteredAgents.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4">
           {filteredAgents.map((agent, index) => {
             const enhancedAgent = convertToEnhancedAgent(agent);
             return (
@@ -363,64 +390,102 @@ export default function AgentTab({
 
       {/* Empty State */}
       {!isLoading && !error && filteredAgents.length === 0 && (
-        <EmptyStateSkeleton />
+        <div className="text-center py-12">
+          <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {lang === 'de' ? 'Keine Agents gefunden' : 'No Agents Found'}
+          </h3>
+          <p className="text-gray-600">
+            {lang === 'de' ? 'Versuchen Sie andere Suchbegriffe oder Filter.' : 'Try different search terms or filters.'}
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
-// Generate example agents when no real data is available
+// Generate example agents when no real data is available (DEPRECATED)
 function generateExampleAgents(lang: 'de' | 'en'): GeneratedAgent[] {
+  // This function is deprecated and should not be used
+  // Use generateCompleteSolutionAgents() instead
+  console.warn('⚠️ [AgentTab] generateExampleAgents is deprecated, use specific functions instead');
+  return generateCompleteSolutionAgents(lang);
+}
+
+// Generate complete solution agents for "Alle (Komplettlösungen)"
+function generateCompleteSolutionAgents(lang: 'de' | 'en'): GeneratedAgent[] {
   const agents: GeneratedAgent[] = [
     {
-      id: 'example-agent-1',
-      name: lang === 'de' ? 'Social Media Manager Agent' : 'Social Media Manager Agent',
+      id: 'complete-agent-1',
+      name: lang === 'de' ? 'Master Marketing Agent' : 'Master Marketing Agent',
       description: lang === 'de' 
-        ? 'Automatisiert Social Media Posts, überwacht Engagement und optimiert Content-Strategien'
-        : 'Automates social media posts, monitors engagement and optimizes content strategies',
-      capabilities: [
-        lang === 'de' ? 'Content-Erstellung' : 'Content Creation',
-        lang === 'de' ? 'Engagement-Monitoring' : 'Engagement Monitoring',
-        lang === 'de' ? 'Hashtag-Optimierung' : 'Hashtag Optimization'
-      ],
-      tools: ['Twitter API', 'LinkedIn API', 'Content Generator'],
-      technologyStack: ['Python', 'OpenAI API', 'Social Media APIs'],
-      estimatedSetupTime: 2,
-      complexity: 'medium',
-      automationLevel: 85,
-      useCases: [
-        lang === 'de' ? 'Tägliche Social Media Posts' : 'Daily social media posts',
-        lang === 'de' ? 'Engagement-Analyse' : 'Engagement analysis'
-      ],
-      benefits: [
-        lang === 'de' ? 'Zeitersparnis: 5h/Woche' : 'Time savings: 5h/week',
-        lang === 'de' ? 'Konsistente Posting-Strategie' : 'Consistent posting strategy'
-      ]
+        ? 'Umfassender Marketing-Agent für komplette Kampagnenverwaltung und Lead-Generierung'
+        : 'Comprehensive marketing agent for complete campaign management and lead generation',
+      tools: ['HubSpot', 'Mailchimp', 'Google Analytics', 'Facebook Ads', 'LinkedIn'],
+      technology: 'Python, OpenAI API, Marketing APIs, Analytics',
+      complexity: 'High',
+      isAIGenerated: true,
+      generatedAt: new Date().toISOString(),
+      config: {
+        name: 'Master Marketing Agent',
+        description: 'Comprehensive marketing agent for complete campaign management and lead generation',
+        functions: ['campaign_management', 'lead_generation', 'analytics'],
+        tools: ['HubSpot', 'Mailchimp', 'Google Analytics'],
+        technology: 'Python, OpenAI API, Marketing APIs, Analytics',
+        parameters: {},
+        environment: {}
+      },
+      functions: ['campaign_management', 'lead_generation', 'analytics'],
+      status: 'generated',
+      setupCost: 500
     },
     {
-      id: 'example-agent-2',
-      name: lang === 'de' ? 'E-Mail Marketing Agent' : 'Email Marketing Agent',
+      id: 'complete-agent-2',
+      name: lang === 'de' ? 'Data Intelligence Agent' : 'Data Intelligence Agent',
       description: lang === 'de'
-        ? 'Erstellt und versendet personalisierte E-Mail Kampagnen basierend auf Nutzerverhalten'
-        : 'Creates and sends personalized email campaigns based on user behavior',
-      capabilities: [
-        lang === 'de' ? 'Kampagnen-Erstellung' : 'Campaign Creation',
-        lang === 'de' ? 'Segmentierung' : 'Segmentation',
-        lang === 'de' ? 'A/B-Testing' : 'A/B Testing'
-      ],
-      tools: ['Mailchimp API', 'HubSpot', 'Analytics'],
-      technologyStack: ['JavaScript', 'Node.js', 'Email APIs'],
-      estimatedSetupTime: 3,
-      complexity: 'high',
-      automationLevel: 90,
-      useCases: [
-        lang === 'de' ? 'Newsletter-Versand' : 'Newsletter distribution',
-        lang === 'de' ? 'Lead-Nurturing' : 'Lead nurturing'
-      ],
-      benefits: [
-        lang === 'de' ? 'Zeitersparnis: 8h/Woche' : 'Time savings: 8h/week',
-        lang === 'de' ? 'Höhere Öffnungsraten' : 'Higher open rates'
-      ]
+        ? 'KI-gestützter Datenanalyse-Agent für umfassende Business Intelligence'
+        : 'AI-powered data analysis agent for comprehensive business intelligence',
+      tools: ['Python', 'Tableau', 'Power BI', 'Google Analytics', 'Jupyter'],
+      technology: 'Python, Machine Learning, Data APIs, Visualization',
+      complexity: 'High',
+      isAIGenerated: true,
+      generatedAt: new Date().toISOString(),
+      config: {
+        name: 'Data Intelligence Agent',
+        description: 'AI-powered data analysis agent for comprehensive business intelligence',
+        functions: ['data_analysis', 'predictive_analytics', 'reporting'],
+        tools: ['Python', 'Tableau', 'Power BI'],
+        technology: 'Python, Machine Learning, Data APIs, Visualization',
+        parameters: {},
+        environment: {}
+      },
+      functions: ['data_analysis', 'predictive_analytics', 'reporting'],
+      status: 'generated',
+      setupCost: 750
+    },
+    {
+      id: 'complete-agent-3',
+      name: lang === 'de' ? 'Communication Hub Agent' : 'Communication Hub Agent',
+      description: lang === 'de'
+        ? 'Zentraler Kommunikations-Agent für alle Kanäle und Stakeholder-Management'
+        : 'Central communication agent for all channels and stakeholder management',
+      tools: ['Slack', 'Microsoft Teams', 'Zoom', 'Calendly', 'Email'],
+      technology: 'JavaScript, Node.js, Communication APIs',
+      complexity: 'Medium',
+      isAIGenerated: true,
+      generatedAt: new Date().toISOString(),
+      config: {
+        name: 'Communication Hub Agent',
+        description: 'Central communication agent for all channels and stakeholder management',
+        functions: ['communication', 'scheduling', 'coordination'],
+        tools: ['Slack', 'Microsoft Teams', 'Zoom'],
+        technology: 'JavaScript, Node.js, Communication APIs',
+        parameters: {},
+        environment: {}
+      },
+      functions: ['communication', 'scheduling', 'coordination'],
+      status: 'generated',
+      setupCost: 300
     }
   ];
 

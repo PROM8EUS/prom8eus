@@ -24,18 +24,18 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de',
   };
   
   if (variant === 'xsmall') {
-    const xsmallRadius = 12;
+    const xsmallRadius = 8;
     const xsmallCircumference = 2 * Math.PI * xsmallRadius;
     const xsmallStrokeDasharray = xsmallCircumference;
     const xsmallStrokeDashoffset = xsmallCircumference - (percentage / 100) * xsmallCircumference;
 
     return (
-      <div className="relative w-8 h-8">
-        <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+      <div className="relative w-5 h-5">
+        <svg className="w-5 h-5 transform -rotate-90" viewBox="0 0 20 20">
           {/* Background circle */}
           <circle
-            cx="16"
-            cy="16"
+            cx="10"
+            cy="10"
             r={xsmallRadius}
             stroke="hsl(var(--muted))"
             strokeWidth="3"
@@ -43,8 +43,8 @@ const ScoreCircle = ({ score, maxScore, label, variant = 'default', lang = 'de',
           />
           {/* Progress circle */}
           <circle
-            cx="16"
-            cy="16"
+            cx="10"
+            cy="10"
             r={xsmallRadius}
             stroke="hsl(var(--primary))"
             strokeWidth="3"

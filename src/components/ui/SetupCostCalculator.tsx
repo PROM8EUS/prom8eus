@@ -352,7 +352,6 @@ export const SetupCostCalculator: React.FC<SetupCostCalculatorProps> = ({
     <Card 
       className={cn(
         'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 transition-all duration-300',
-        isCollapsed && 'hover:shadow-md',
         className
       )}
       aria-label={ariaLabel || (lang === 'de' ? 'Setup-Kosten Rechner' : 'Setup Cost Calculator')}

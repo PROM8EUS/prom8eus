@@ -47,9 +47,9 @@ type Period = 'year' | 'month' | 'week' | 'day';
 
 const HOURS_PER_PERIOD: Record<Period, number> = {
   year: 2080, // 40h * 52
-  month: 160, // 40h * 4
-  week: 40,
-  day: 8,
+  month: 40, // Realistische monatliche Arbeitszeit für eine spezifische Aufgabe
+  week: 10, // Realistische wöchentliche Arbeitszeit für eine spezifische Aufgabe
+  day: 2, // Realistische tägliche Arbeitszeit für eine spezifische Aufgabe
 };
 
 const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: periodProp, onPeriodChange }) => {
@@ -168,8 +168,8 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
       return null; // Return null if no AI data to prevent showing fallback numbers
     }
 
-    // Scale AI-generated data for selected period
-    const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['year'];
+    // AI now generates monthly values directly, so scale from month to other periods
+    const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['month'];
     
     // Use AI-generated hourly rate based on employment type, or fallback to user input
     const aiHourlyRate = businessCaseData.employmentType === 'employee' 

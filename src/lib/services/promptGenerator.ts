@@ -254,7 +254,7 @@ Format your response in a structured and practical way.
   };
 
   return {
-    id: `fallback-prompt-${subtask.id}-${service}-${Date.now()}`,
+    id: `fallback-prompt-${subtask.id}-${service}-${style}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     prompt: fallbackPrompt,
     service,
     style,
@@ -281,7 +281,7 @@ export async function generatePromptWithFallback(
   service: 'ChatGPT' | 'Claude' | 'Gemini' | 'Custom' = 'ChatGPT',
   style: 'formal' | 'creative' | 'technical' = 'formal',
   lang: 'de' | 'en' = 'en',
-  timeoutMs: number = 3000
+  timeoutMs: number = 8000
 ): Promise<GeneratedPrompt> {
   try {
     const prompt = await generatePromptForSubtask(subtask, service, style, lang, timeoutMs);

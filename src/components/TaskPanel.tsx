@@ -19,7 +19,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { EffortSection } from './EffortSection';
-import { TopSubtasksSection } from './TopSubtasksSection';
 import { InsightsTrendsSection } from './InsightsTrendsSection';
 import { ImplementationRequestCTA } from './ImplementationRequestCTA';
 import SubtaskSidebar from './SubtaskSidebar';
@@ -290,16 +289,18 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
   const [period, setPeriod] = useState<Period>('month');
   const HOURS_PER_PERIOD: Record<Period, number> = {
     year: 2080,
-    month: 160,
-    week: 40,
-    day: 8,
+    month: 40, // Realistische monatliche Arbeitszeit für eine spezifische Aufgabe
+    week: 10, // Realistische wöchentliche Arbeitszeit für eine spezifische Aufgabe
+    day: 2, // Realistische tägliche Arbeitszeit für eine spezifische Aufgabe
   };
 
-  // Calculate business case based on actual subtask effort reduction
+  // Calculate business case based on AI-generated monthly values
   let manualHoursTotal = 0;
   let residualHoursTotal = 0;
-  const basePerTaskHours = 8; // baseline per subtask for a day
-  const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['day'];
+  
+  // Calculate business case based on subtasks
+  const basePerTaskHours = 2; // Realistic baseline per subtask per month
+  const scale = HOURS_PER_PERIOD[period] / HOURS_PER_PERIOD['month'];
   
   // Calculate total manual hours from subtasks
   realSubtasks.forEach(s => {
@@ -316,20 +317,6 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
     manualHoursTotal = basePerTaskHours * scale;
     residualHoursTotal = (basePerTaskHours * 0.5) * scale; // Assume 50% automation potential
   }
-
-  // Memoize task object to prevent unnecessary re-renders
-  const businessCaseTask = useMemo(() => ({
-    name: task.name || task.title,
-    text: task.description,
-    automationRatio: realSubtasks.reduce((acc, s) => acc + s.automationPotential, 0) / Math.max(realSubtasks.length, 1) * 100,
-    humanRatio: realSubtasks.reduce((acc, s) => acc + (1 - s.automationPotential), 0) / Math.max(realSubtasks.length, 1) * 100,
-    subtasks: realSubtasks.map(s => ({
-      id: s.id,
-      title: s.title,
-      estimatedTime: s.manualHoursShare * basePerTaskHours, // base at day; BusinessCase scales by period
-      automationPotential: s.automationPotential
-    }))
-  }), [task.name, task.title, task.description, realSubtasks, basePerTaskHours]);
 
   // Convert realSubtasks to DynamicSubtask format for new components
   const dynamicSubtasks: DynamicSubtask[] = useMemo(() => {
@@ -392,18 +379,41 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
 
   // Get selected subtask for display
   const selectedSubtask = useMemo(() => {
+    console.log('🔍 [TaskPanel] selectedSubtaskId:', selectedSubtaskId);
+    console.log('🔍 [TaskPanel] dynamicSubtasks:', dynamicSubtasks);
+    console.log('🔍 [TaskPanel] dynamicSubtasks.length:', dynamicSubtasks.length);
+    console.log('🔍 [TaskPanel] dynamicSubtasks IDs:', dynamicSubtasks.map(s => s.id));
+    
     if (selectedSubtaskId === 'all') {
+      console.log('🔍 [TaskPanel] Returning null for "all"');
       return null; // Show all solutions
     }
-    return dynamicSubtasks.find(s => s.id === selectedSubtaskId) || null;
+    
+    const found = dynamicSubtasks.find(s => s.id === selectedSubtaskId);
+    console.log('🔍 [TaskPanel] Found subtask:', found);
+    return found || null;
   }, [selectedSubtaskId, dynamicSubtasks]);
+
+  // Memoize task object to prevent unnecessary re-renders
+  const businessCaseTask = useMemo(() => ({
+    name: task.name || task.title,
+    text: task.description,
+    automationRatio: realSubtasks.reduce((acc, s) => acc + s.automationPotential, 0) / Math.max(realSubtasks.length, 1) * 100,
+    humanRatio: realSubtasks.reduce((acc, s) => acc + (1 - s.automationPotential), 0) / Math.max(realSubtasks.length, 1) * 100,
+    subtasks: realSubtasks.map(s => ({
+      id: s.id,
+      title: s.title,
+      estimatedTime: s.manualHoursShare * 2, // Realistic baseline per subtask per month
+      automationPotential: s.automationPotential
+    }))
+  }), [task.name, task.title, task.description, realSubtasks]);
 
   if (!isVisible) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+    <div className="min-h-screen">
       {/* Simplified Layout without Grid */}
-      <div className="max-w-7xl mx-auto space-y-6 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Effort/ROI Section - Direct Display without Container */}
         <EffortSection
@@ -437,74 +447,36 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
             <ExpandedSolutionTabs
               subtask={selectedSubtask}
               lang={lang}
-              onWorkflowSelect={(workflow) => {
-                const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                             'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+              onWorkflowSelect={(workflow: any) => {
+                const name = workflow?.workflow?.title || workflow?.workflow?.name || 'Unknown';
                 console.log('🔍 [TaskPanel] Workflow selected:', name);
               }}
-              onWorkflowDownload={(workflow) => {
-                const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                             'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+              onWorkflowDownload={(workflow: any) => {
+                const name = workflow?.workflow?.title || workflow?.workflow?.name || 'Unknown';
                 console.log('📥 [TaskPanel] Download requested:', name);
               }}
-              onWorkflowSetup={(workflow) => {
-                const name = 'title' in workflow.workflow ? workflow.workflow.title : 
-                             'name' in workflow.workflow ? workflow.workflow.name : 'Unknown';
+              onWorkflowSetup={(workflow: any) => {
+                const name = workflow?.workflow?.title || workflow?.workflow?.name || 'Unknown';
                 console.log('⚙️ [TaskPanel] Setup requested:', name);
               }}
-              onAgentSelect={(agent) => {
-                console.log('🔍 [TaskPanel] Agent selected:', agent.name);
+              onAgentSelect={(agent: any) => {
+                console.log('🔍 [TaskPanel] Agent selected:', agent?.name);
               }}
-              onAgentSetup={(agent) => {
-                console.log('⚙️ [TaskPanel] Agent setup requested:', agent.name);
+              onAgentSetup={(agent: any) => {
+                console.log('⚙️ [TaskPanel] Agent setup requested:', agent?.name);
               }}
-              onPromptSelect={(prompt) => {
-                console.log('🔍 [TaskPanel] Prompt selected:', prompt.id);
+              onPromptSelect={(prompt: any) => {
+                console.log('🔍 [TaskPanel] Prompt selected:', prompt?.id);
               }}
-              onPromptCopy={(prompt) => {
-                console.log('📋 [TaskPanel] Prompt copied:', prompt.id);
+              onPromptCopy={(prompt: any) => {
+                console.log('📋 [TaskPanel] Prompt copied:', prompt?.id);
               }}
-              onPromptOpenInService={(prompt, service) => {
-                console.log('🔗 [TaskPanel] Open in service:', service, prompt.id);
+              onPromptOpenInService={(prompt: any, service: string) => {
+                console.log('🔗 [TaskPanel] Open in service:', service, prompt?.id);
               }}
               className="bg-transparent border-0 shadow-none"
             />
 
-            {/* Top Subtasks Section with Progressive Disclosure */}
-            <CollapsibleSection
-              title={lang === 'de' ? 'Top Teilaufgaben' : 'Top Subtasks'}
-              description={lang === 'de' 
-                ? 'Die wichtigsten Teilaufgaben mit höchstem Automatisierungspotential'
-                : 'Most important subtasks with highest automation potential'
-              }
-              priority="medium"
-              badge={{
-                text: lang === 'de' ? 'Top 3' : 'Top 3',
-                count: Math.min(3, dynamicSubtasks.length)
-              }}
-              icon={TrendingUp}
-              {...getSectionDefaults('top-subtasks', 'medium')}
-              onToggle={(expanded) => setExpanded('top-subtasks', expanded)}
-              className="bg-white/80 backdrop-blur-sm border-white/20"
-            >
-              {isGenerating ? (
-                <div className="text-center text-gray-500 py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-sm">
-                    {lang === 'de' ? 'Generiere spezifische Teilaufgaben...' : 'Generating specific subtasks...'}
-                  </p>
-                </div>
-              ) : (
-                <TopSubtasksSection
-                  subtasks={dynamicSubtasks}
-                  workflows={workflows}
-                  lang={lang}
-                  topCount={3}
-                  sortBy="automationPotential"
-                  period={period}
-                />
-              )}
-            </CollapsibleSection>
 
             {/* Insights & Trends Section with Progressive Disclosure */}
             {trendInsights.length > 0 && (
@@ -522,7 +494,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
                 icon={Target}
                 {...getSectionDefaults('insights', 'low')}
                 onToggle={(expanded) => setExpanded('insights', expanded)}
-                className="bg-white/80 backdrop-blur-sm border-white/20"
+                className=""
               >
                 <InsightsTrendsSection
                   insights={trendInsights}
@@ -536,7 +508,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
         {/* Bottom Section - Full Width CTA */}
         <div>
           <div className="mt-8 pt-6 border-t border-gray-200/50">
-            <div className="flex justify-center">
+            <div className="w-full">
               <ImplementationRequestCTA
                 taskTitle={task.title || task.name}
                 taskDescription={task.description}
@@ -544,7 +516,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false }: TaskPanelPro
                 automationScore={Math.round(businessCaseTask.automationRatio)}
                 estimatedSavings={{
                   hours: manualHoursTotal - residualHoursTotal,
-                  cost: (manualHoursTotal - residualHoursTotal) * 60,
+                  cost: (manualHoursTotal - residualHoursTotal) * 60, // Default hourly rate
                   period: period === 'year' ? (lang === 'de' ? 'Jahr' : 'year') :
                          period === 'month' ? (lang === 'de' ? 'Monat' : 'month') :
                          period === 'week' ? (lang === 'de' ? 'Woche' : 'week') :

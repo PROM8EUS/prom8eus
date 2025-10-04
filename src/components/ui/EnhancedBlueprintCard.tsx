@@ -240,22 +240,17 @@ export const EnhancedBlueprintCard: React.FC<EnhancedBlueprintCardProps> = ({
   return (
     <Card 
       className={cn(
-        "group relative overflow-hidden transition-all duration-300 ease-in-out",
-        "hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
-        "border border-gray-200 hover:border-primary/30",
-        "bg-white hover:bg-gradient-to-br hover:from-white hover:to-primary/5",
+        "group relative transition-all duration-300 ease-in-out",
+        "border border-gray-200",
+        "bg-white",
         isHovered && "ring-2 ring-primary/20",
-        compact ? "h-48" : "h-64",
+        compact ? "min-h-48" : "min-h-64",
         className
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Hover overlay */}
-      <div className={cn(
-        "absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300",
-        isHovered && "opacity-100"
-      )} />
+      {/* Hover overlay - removed */}
 
       {/* Status indicator */}
       {blueprint.status && (
@@ -281,7 +276,7 @@ export const EnhancedBlueprintCard: React.FC<EnhancedBlueprintCardProps> = ({
           {/* Header */}
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-gray-900 truncate">
                 {blueprint.name}
               </h3>
               {blueprint.author && (
@@ -291,11 +286,8 @@ export const EnhancedBlueprintCard: React.FC<EnhancedBlueprintCardProps> = ({
               )}
             </div>
             
-            {/* Quick actions on hover */}
-            <div className={cn(
-              "flex items-center gap-1 opacity-0 transition-opacity duration-200",
-              showActions && "opacity-100"
-            )}>
+            {/* Quick actions - always visible */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
@@ -320,7 +312,7 @@ export const EnhancedBlueprintCard: React.FC<EnhancedBlueprintCardProps> = ({
 
           {/* Description */}
           {blueprint.description && (
-            <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-700 transition-colors">
+            <p className="text-sm text-gray-600 line-clamp-2">
               {blueprint.description}
             </p>
           )}
@@ -376,10 +368,7 @@ export const EnhancedBlueprintCard: React.FC<EnhancedBlueprintCardProps> = ({
           </div>
 
           {/* Modern Action Buttons */}
-          <div className={cn(
-            "pt-2 transition-all duration-200",
-            showActions ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-          )}>
+          <div className="pt-2">
             <ActionButtonGroup 
               orientation="horizontal" 
               spacing="normal" 

@@ -13,15 +13,7 @@ import {
   Workflow, 
   Bot, 
   MessageSquare, 
-  Sparkles,
-  TrendingUp,
-  Clock,
-  Star,
-  ChevronRight,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  Info
+  Loader2
 } from 'lucide-react';
 import { DynamicSubtask } from '@/lib/types';
 
@@ -104,19 +96,19 @@ export function ExpandedSolutionTabs({
     return 'workflows';
   }, [subtask]);
 
-  // Set smart default on subtask change
-  useEffect(() => {
-    if (subtask) {
-      const newDefaultTab = smartDefaultTab;
-      if (newDefaultTab !== activeTab) {
-        setIsTransitioning(true);
-        setTimeout(() => {
-          setActiveTab(newDefaultTab);
-          setIsTransitioning(false);
-        }, 150);
-      }
-    }
-  }, [subtask, smartDefaultTab, activeTab]);
+  // Set smart default on subtask change - DISABLED to preserve user's tab selection
+  // useEffect(() => {
+  //   if (subtask) {
+  //     const newDefaultTab = smartDefaultTab;
+  //     if (newDefaultTab !== activeTab) {
+  //       setIsTransitioning(true);
+  //       setTimeout(() => {
+  //         setActiveTab(newDefaultTab);
+  //         setIsTransitioning(false);
+  //       }, 150);
+  //     }
+  //   }
+  // }, [subtask, smartDefaultTab, activeTab]);
 
   // Tab configuration with enhanced UX
   const tabs: TabInfo[] = useMemo(() => [
@@ -168,12 +160,13 @@ export function ExpandedSolutionTabs({
   );
 
   // Handle tab change with smooth transition
-  const handleTabChange = (newTab: TabType) => {
-    if (newTab === activeTab || isTransitioning) return;
+  const handleTabChange = (newTab: string) => {
+    const tabType = newTab as TabType;
+    if (tabType === activeTab || isTransitioning) return;
     
     setIsTransitioning(true);
     setTimeout(() => {
-      setActiveTab(newTab);
+      setActiveTab(tabType);
       setIsTransitioning(false);
     }, 150);
   };
@@ -197,23 +190,23 @@ export function ExpandedSolutionTabs({
         key={tab.id}
         value={tab.id}
         className={`
-          relative flex items-center gap-2 px-4 py-3 transition-all duration-200
+          relative flex items-center gap-2 px-4 py-3 transition-all duration-200 rounded-lg border-0 overflow-hidden
           ${isActive 
-            ? 'bg-primary text-primary-foreground shadow-sm' 
-            : 'hover:bg-muted/50'
+            ? 'bg-white text-violet-600 shadow-sm' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
           }
           ${isTransitioning ? 'opacity-50 pointer-events-none' : ''}
         `}
         onClick={() => handleTabChange(tab.id)}
       >
-        <Icon className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+        <Icon className={`h-4 w-4 ${isActive ? 'text-violet-600' : 'text-gray-500'}`} />
         <span className="font-medium">{tab.label}</span>
         
         {/* Enhanced badge with status indicator */}
         <Badge 
           variant={tab.badge?.variant || 'outline'}
           className={`
-            ml-1 transition-all duration-200
+            ml-1 pointer-events-none hover:bg-inherit flex-shrink-0 min-w-[20px] text-xs
             ${status === 'rich' ? 'bg-green-100 text-green-700 border-green-200' : ''}
             ${status === 'available' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
             ${status === 'empty' ? 'bg-gray-100 text-gray-500 border-gray-200' : ''}
@@ -221,17 +214,6 @@ export function ExpandedSolutionTabs({
         >
           {tab.badge?.count || 0}
         </Badge>
-
-        {/* Status indicator */}
-        {status === 'rich' && (
-          <Sparkles className="h-3 w-3 text-green-600 ml-1" />
-        )}
-        {status === 'available' && (
-          <CheckCircle className="h-3 w-3 text-blue-600 ml-1" />
-        )}
-        {status === 'empty' && (
-          <AlertCircle className="h-3 w-3 text-gray-400 ml-1" />
-        )}
       </TabsTrigger>
     );
   };
@@ -256,6 +238,8 @@ export function ExpandedSolutionTabs({
         setTabCounts(prev => ({ ...prev, [tabId]: count }));
       }
     };
+
+    // console.log('🔍 [ExpandedSolutionTabs] Passing subtask to WorkflowTab:', subtask);
 
     // Loading fallback component
     const LoadingFallback = () => (
@@ -308,37 +292,18 @@ export function ExpandedSolutionTabs({
   // Always show tabs, even when no subtask is selected
 
   return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${className}`}>
+    <Card className={`shadow-sm ${className}`}>
       <CardContent className="p-0">
-        <Tabs value={activeTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           {/* Enhanced TabsList with modern styling */}
-          <div className="border-b bg-muted/20">
-            <TabsList className="grid w-full grid-cols-3 h-auto bg-transparent p-0">
+          <div className="bg-gray-50 p-2 rounded-lg">
+            <TabsList className="grid w-full grid-cols-3 h-auto bg-transparent p-0 border-0">
               {sortedTabs.map(renderTabTrigger)}
             </TabsList>
-            
-            {/* Tab descriptions */}
-            <div className="px-6 py-3 bg-muted/10 border-t">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-4 w-4" />
-                <span>
-                  {tabs.find(t => t.id === activeTab)?.description}
-                </span>
-                {subtask && (
-                  <>
-                    <span className="mx-2">•</span>
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {Math.round(subtask.automationPotential * 100)}% {lang === 'de' ? 'Automatisierung' : 'Automation'}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Tab content with smooth transitions */}
-          <div className="relative">
+          <div className="relative pt-6">
             <div className={`
               transition-all duration-200 ease-in-out
               ${isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}

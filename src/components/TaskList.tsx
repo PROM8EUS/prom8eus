@@ -422,7 +422,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
           return (
             <Card 
               key={task.id} 
-              className={`transition-shadow duration-200 ${
+              className={`transition-shadow duration-200 shadow-sm ${
                 isExpanded ? 'shadow-lg' : 'hover:shadow-md'
               }`}
               style={{ 
@@ -521,9 +521,13 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                 
                 {/* Expandable content */}
                 <div 
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isExpanded ? 'max-h-[1200px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+                  className={`transition-all duration-300 ease-in-out ${
+                    isExpanded ? 'opacity-100 mt-4' : 'opacity-0'
                   }`}
+                  style={{
+                    maxHeight: isExpanded ? 'none' : '0px',
+                    overflow: isExpanded ? 'visible' : 'hidden'
+                  }}
                 >
                   <div className="pt-1 space-y-6">
                     {/* Subtasks Section */}

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Workflow, 
   Download, 
@@ -16,18 +17,19 @@ import {
   Sparkles,
   Search,
   Filter,
-  RefreshCw,
   AlertCircle,
+  ArrowUpDown,
   CheckCircle,
   Loader2,
   Zap,
   Settings,
   Target,
-  TrendingUp
+  TrendingUp,
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { BlueprintCard } from '../BlueprintCard';
 import { EnhancedBlueprintCard, EnhancedBlueprintData } from '../ui/EnhancedBlueprintCard';
-import { WorkflowTabSkeleton, EmptyStateSkeleton, ErrorStateSkeleton } from '../ui/WorkflowTabSkeleton';
 import { SmartSearch } from '../ui/SmartSearch';
 import { SmartFilter } from '../ui/SmartFilter';
 import { useSmartSearch } from '@/hooks/useSmartSearch';
@@ -56,46 +58,52 @@ export default function WorkflowTab({
 }: WorkflowTabProps) {
   const [workflows, setWorkflows] = useState<WorkflowMatch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showSkeleton, setShowSkeleton] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Smart search and filter configuration
+  // Filter configurations with dynamic counts
   const filterConfigs = [
     {
       id: 'status',
-      label: 'Status',
+      label: lang === 'de' ? 'Status' : 'Status',
       type: 'select' as const,
       options: [
-        { value: 'all', label: 'All Status', count: workflows.length },
-        { value: 'verified', label: 'Verified', count: workflows.filter(w => w.status === 'verified').length },
-        { value: 'generated', label: 'Generated', count: workflows.filter(w => w.status === 'generated').length },
-        { value: 'fallback', label: 'Fallback', count: workflows.filter(w => w.status === 'fallback').length }
+        { value: 'all', label: lang === 'de' ? 'Alle' : 'All', count: workflows.length },
+        { value: 'verified', label: lang === 'de' ? 'Verifiziert' : 'Verified', count: workflows.filter(w => w.source === 'verified').length },
+        { value: 'generated', label: lang === 'de' ? 'Generiert' : 'Generated', count: workflows.filter(w => w.source === 'generated').length },
+        { value: 'subtask-specific', label: lang === 'de' ? 'Teilaufgabe-spezifisch' : 'Subtask-specific', count: workflows.filter(w => w.source === 'subtask-specific').length },
+        { value: 'complete-solution', label: lang === 'de' ? 'Komplettlösung' : 'Complete solution', count: workflows.filter(w => w.source === 'complete-solution').length }
       ],
       icon: <CheckCircle className="h-4 w-4" />
     },
     {
       id: 'complexity',
-      label: 'Complexity',
+      label: lang === 'de' ? 'Komplexität' : 'Complexity',
       type: 'select' as const,
       options: [
-        { value: 'all', label: 'All Levels', count: workflows.length },
-        { value: 'Low', label: 'Low', count: workflows.filter(w => w.workflow.complexity === 'Low').length },
-        { value: 'Medium', label: 'Medium', count: workflows.filter(w => w.workflow.complexity === 'Medium').length },
-        { value: 'High', label: 'High', count: workflows.filter(w => w.workflow.complexity === 'High').length }
+        { value: 'all', label: lang === 'de' ? 'Alle' : 'All', count: workflows.length },
+        { value: 'low', label: lang === 'de' ? 'Niedrig' : 'Low', count: workflows.filter(w => w.workflow.complexity === 'low').length },
+        { value: 'medium', label: lang === 'de' ? 'Mittel' : 'Medium', count: workflows.filter(w => w.workflow.complexity === 'medium').length },
+        { value: 'high', label: lang === 'de' ? 'Hoch' : 'High', count: workflows.filter(w => w.workflow.complexity === 'high').length }
       ],
       icon: <Zap className="h-4 w-4" />
     },
     {
-      id: 'integrations',
-      label: 'Integrations',
-      type: 'multiselect' as const,
-      options: Array.from(new Set(workflows.flatMap(w => w.workflow.integrations || []))).map(integration => ({
-        value: integration,
-        label: integration,
-        count: workflows.filter(w => w.workflow.integrations?.includes(integration)).length
-      })),
+      id: 'category',
+      label: lang === 'de' ? 'Kategorie' : 'Category',
+      type: 'select' as const,
+      options: [
+        { value: 'all', label: lang === 'de' ? 'Alle' : 'All', count: workflows.length },
+        { value: 'marketing', label: lang === 'de' ? 'Marketing' : 'Marketing', count: workflows.filter(w => w.workflow.category === 'marketing').length },
+        { value: 'analytics', label: lang === 'de' ? 'Analytics' : 'Analytics', count: workflows.filter(w => w.workflow.category === 'analytics').length },
+        { value: 'communication', label: lang === 'de' ? 'Kommunikation' : 'Communication', count: workflows.filter(w => w.workflow.category === 'communication').length },
+        { value: 'data', label: lang === 'de' ? 'Daten' : 'Data', count: workflows.filter(w => w.workflow.category === 'data').length },
+        { value: 'integration', label: lang === 'de' ? 'Integration' : 'Integration', count: workflows.filter(w => w.workflow.category === 'integration').length },
+        { value: 'general', label: lang === 'de' ? 'Allgemein' : 'General', count: workflows.filter(w => w.workflow.category === 'general').length }
+      ],
       icon: <Settings className="h-4 w-4" />
     }
   ];
@@ -103,31 +111,31 @@ export default function WorkflowTab({
   const sortConfigs = [
     {
       id: 'relevance',
-      label: 'Relevance',
-      field: 'relevanceScore',
+      label: lang === 'de' ? 'Relevanz' : 'Relevance',
+      field: 'score',
       direction: 'desc' as const,
       icon: <Target className="h-4 w-4" />
     },
     {
-      id: 'popularity',
-      label: 'Popularity',
-      field: 'popularity',
-      direction: 'desc' as const,
-      icon: <TrendingUp className="h-4 w-4" />
-    },
-    {
       id: 'complexity',
-      label: 'Complexity',
-      field: 'complexity',
+      label: lang === 'de' ? 'Komplexität' : 'Complexity',
+      field: 'workflow.complexity',
       direction: 'asc' as const,
       icon: <Zap className="h-4 w-4" />
     },
     {
       id: 'time',
-      label: 'Setup Time',
-      field: 'estimatedSetupTime',
+      label: lang === 'de' ? 'Einrichtungszeit' : 'Setup Time',
+      field: 'workflow.estimatedTime',
       direction: 'asc' as const,
       icon: <Clock className="h-4 w-4" />
+    },
+    {
+      id: 'automation',
+      label: lang === 'de' ? 'Automatisierung' : 'Automation',
+      field: 'workflow.automationLevel',
+      direction: 'desc' as const,
+      icon: <TrendingUp className="h-4 w-4" />
     }
   ];
 
@@ -158,19 +166,16 @@ export default function WorkflowTab({
 
   // Load workflows when subtask changes
   useEffect(() => {
-    if (subtask) {
-      loadWorkflows();
-    } else {
-      setWorkflows([]);
-      onUpdateCount?.(0);
-    }
+    loadWorkflows();
   }, [subtask]);
 
   const loadWorkflows = async () => {
-    if (!subtask) return;
+      // console.log('🔍 [WorkflowTab] Current subtask:', subtask);
+      // console.log('🔍 [WorkflowTab] Is "Alle (Komplettlösungen)" selected?', !subtask);
+      // console.log('🔍 [WorkflowTab] Subtask ID:', subtask?.id);
+      // console.log('🔍 [WorkflowTab] Subtask title:', subtask?.title);
 
     setIsLoading(true);
-    setShowSkeleton(true);
     setError(null);
     
     try {
@@ -179,36 +184,39 @@ export default function WorkflowTab({
       
       // Check cache first
       const cacheKey = `workflows_${subtask?.id || 'all'}`;
+      // console.log('🔍 [WorkflowTab] Cache key:', cacheKey);
+      
+      // TEMPORARY: Clear ALL cache to test generation
+      // cacheManager.clear();
+      // console.log('🧹 [WorkflowTab] Cleared ALL cache for testing');
+      
       const cached = cacheManager.get<WorkflowMatch[]>(cacheKey);
       
       if (cached && cached.length > 0) {
-        console.log('✅ [WorkflowTab] Using cached workflows:', cached.length);
+        // console.log('✅ [WorkflowTab] Using cached workflows:', cached.length);
+        // console.log('🔍 [WorkflowTab] Cached workflow titles:', cached.map(w => w.workflow.title));
         setWorkflows(cached);
         onUpdateCount?.(cached.length);
         setIsLoading(false);
-        setShowSkeleton(false);
         return;
       }
 
-      // Generate workflows with fallback or show example workflows
+      // Generate workflows based on context
       let matches: WorkflowMatch[] = [];
       
-      if (subtask) {
-        // Try to match workflows for specific subtask
-        matches = await matchWorkflowsWithFallback(subtask, [], {
-          maxResults: 10,
-          minScore: 20,
-          autoGenerateFallback: true,
-          language: lang
-        });
-      }
-      
-      // If no matches or no subtask, show example workflows
-      if (matches.length === 0) {
-        matches = generateExampleWorkflows(lang);
+      if (subtask && subtask.id !== 'all') {
+        // Generate specific workflows for individual subtask
+        // console.log('🔍 [WorkflowTab] Generating SPECIFIC workflows for subtask:', subtask.title);
+        matches = generateSubtaskWorkflows(subtask, lang);
+        // console.log('🔍 [WorkflowTab] Generated specific workflows:', matches.map(w => w.workflow.title));
+      } else {
+        // Generate complete solution workflows for "Alle (Komplettlösungen)"
+        // console.log('🔍 [WorkflowTab] Generating COMPLETE SOLUTION workflows for "Alle (Komplettlösungen)"');
+        matches = generateCompleteSolutionWorkflows(lang);
+        // console.log('🔍 [WorkflowTab] Generated complete solution workflows:', matches.map(w => w.workflow.title));
       }
 
-      console.log('✅ [WorkflowTab] Loaded workflows:', matches.length);
+      // console.log('✅ [WorkflowTab] Loaded workflows:', matches.length);
       setWorkflows(matches);
       onUpdateCount?.(matches.length);
 
@@ -222,23 +230,9 @@ export default function WorkflowTab({
       onUpdateCount?.(0);
     } finally {
       setIsLoading(false);
-      setShowSkeleton(false);
     }
   };
 
-  const handleRefresh = () => {
-    if (subtask) {
-      // Clear cache and reload
-      const cacheKey = `workflows_${subtask.id}`;
-      cacheManager.delete(cacheKey);
-      loadWorkflows();
-    } else {
-      // Clear cache for 'all' and reload
-      const cacheKey = `workflows_all`;
-      cacheManager.delete(cacheKey);
-      loadWorkflows();
-    }
-  };
 
   // Enhanced helper functions
   const handleFavorite = (blueprint: EnhancedBlueprintData) => {
@@ -351,68 +345,148 @@ export default function WorkflowTab({
             {lang === 'de' ? 'Workflow-Lösungen' : 'Workflow Solutions'}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {lang === 'de' 
-              ? `Für: ${subtask?.title || 'Alle Teilaufgaben'}`
-              : `For: ${subtask?.title || 'All Subtasks'}`
-            }
+            {lang === 'de' ? 'Für:' : 'For:'} {subtask?.title || (lang === 'de' ? 'Alle Teilaufgaben' : 'All Subtasks')}
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
+          onClick={() => loadWorkflows()}
+          className="flex items-center gap-2"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className="h-4 w-4" />
           {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
         </Button>
       </div>
 
-      {/* Smart Search */}
-      <SmartSearch
-        value={searchQuery}
-        onChange={(value) => {
-          setSearchQuery(value);
-          if (value.trim()) {
-            addToHistory(value);
-          }
-        }}
-        onSuggestionSelect={(suggestion) => {
-          setSearchQuery(suggestion.text);
-          addToHistory(suggestion.text);
-        }}
-        placeholder={lang === 'de' ? 'Workflows durchsuchen...' : 'Search workflows...'}
-        suggestions={searchSuggestions}
-        recentSearches={[]}
-        popularSearches={[]}
-        showFilters={false}
-        showSuggestions={true}
-        showHistory={true}
-        maxSuggestions={8}
-        debounceMs={300}
-        size="md"
-        variant="outline"
-        className="w-full"
-      />
+      {/* Search, Filter and Sort in one line */}
+      <div className="flex items-center gap-4">
+        {/* Search */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (e.target.value.trim()) {
+                addToHistory(e.target.value);
+              }
+            }}
+            placeholder={lang === 'de' ? 'Workflows durchsuchen...' : 'Search workflows...'}
+            className="pl-10 w-full"
+          />
+        </div>
 
-      {/* Smart Filters */}
-      <SmartFilter
-        filters={filterConfigs}
-        sortOptions={sortConfigs}
-        values={filterValues}
-        onChange={setFilterValues}
-        onSortChange={setSortConfig}
-        layout="horizontal"
-        showLabels={true}
-        showCounts={true}
-        collapsible={true}
-        defaultCollapsed={false}
-        size="md"
-        variant="outline"
-        totalCount={totalCount}
-        filteredCount={filteredCount}
-        className="w-full"
-      />
+        {/* Filter Trigger */}
+        <Button
+          variant={hasActiveFilters ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 ${hasActiveFilters ? 'bg-primary text-primary-foreground' : ''}`}
+        >
+          <Filter className="h-4 w-4" />
+          {lang === 'de' ? 'Filter' : 'Filters'}
+          {hasActiveFilters && (
+            <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 text-xs">
+              {Object.values(filterValues).filter(v => v && v !== 'all').length}
+            </Badge>
+          )}
+        </Button>
+
+        {/* Sort Dropdown */}
+        <Select value={sortConfig?.field || 'relevance'} onValueChange={(value) => setSortConfig({ field: value, direction: 'asc' })}>
+          <SelectTrigger className="w-40">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4 text-gray-400" />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="relevance">{lang === 'de' ? 'Relevanz' : 'Relevance'}</SelectItem>
+            <SelectItem value="popularity">{lang === 'de' ? 'Beliebtheit' : 'Popularity'}</SelectItem>
+            <SelectItem value="complexity">{lang === 'de' ? 'Komplexität' : 'Complexity'}</SelectItem>
+            <SelectItem value="setupTime">{lang === 'de' ? 'Einrichtungszeit' : 'Setup Time'}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Filters in one line */}
+      {showFilters && (
+        <div className="flex items-center gap-4">
+          {/* Status Filter */}
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 mb-1">{lang === 'de' ? 'Status' : 'Status'}</label>
+            <Select 
+              value={filterValues.status || 'all'} 
+              onValueChange={(value) => setFilterValues(prev => ({ ...prev, status: value }))}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {filterConfigs[0].options.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Complexity Filter */}
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 mb-1">{lang === 'de' ? 'Komplexität' : 'Complexity'}</label>
+            <Select 
+              value={filterValues.complexity || 'all'} 
+              onValueChange={(value) => setFilterValues(prev => ({ ...prev, complexity: value }))}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {filterConfigs[1].options.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 mb-1">{lang === 'de' ? 'Kategorie' : 'Category'}</label>
+            <Select 
+              value={filterValues.category || 'all'} 
+              onValueChange={(value) => setFilterValues(prev => ({ ...prev, category: value }))}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {filterConfigs[2].options.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Clear All Button - only show if filters are active */}
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterValues({})}
+              className="ml-auto p-2"
+              title={lang === 'de' ? 'Alle Filter zurücksetzen' : 'Clear all filters'}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -427,12 +501,18 @@ export default function WorkflowTab({
       )}
 
       {/* Enhanced Workflows Grid */}
-      {showSkeleton ? (
-        <WorkflowTabSkeleton count={6} compact={true} />
-      ) : error ? (
-        <ErrorStateSkeleton />
+      {error ? (
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {lang === 'de' ? 'Fehler beim Laden' : 'Error Loading'}
+          </h3>
+          <p className="text-gray-600">
+            {lang === 'de' ? 'Workflows konnten nicht geladen werden.' : 'Workflows could not be loaded.'}
+          </p>
+        </div>
       ) : !isLoading && filteredWorkflows.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4">
           {filteredWorkflows.map((workflow, index) => {
             const enhancedBlueprint = convertToEnhancedBlueprint(workflow);
             return (
@@ -457,76 +537,245 @@ export default function WorkflowTab({
 
       {/* Empty State */}
       {!isLoading && !error && filteredWorkflows.length === 0 && (
-        <EmptyStateSkeleton />
+        <div className="text-center py-12">
+          <Zap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {lang === 'de' ? 'Keine Workflows gefunden' : 'No Workflows Found'}
+          </h3>
+          <p className="text-gray-600">
+            {lang === 'de' ? 'Versuchen Sie andere Suchbegriffe oder Filter.' : 'Try different search terms or filters.'}
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
-// Generate example workflows when no real data is available
-function generateExampleWorkflows(lang: 'de' | 'en'): WorkflowMatch[] {
+// Generate complete solution workflows for "Alle (Komplettlösungen)"
+function generateCompleteSolutionWorkflows(lang: 'de' | 'en'): WorkflowMatch[] {
+  console.log('🔍 [generateCompleteSolutionWorkflows] Creating COMPLETE SOLUTION workflows');
   const workflows: WorkflowMatch[] = [
     {
       workflow: {
-        id: 'example-1',
-        title: lang === 'de' ? 'Social Media Automatisierung' : 'Social Media Automation',
+        id: 'complete-1',
+        title: lang === 'de' ? 'Komplette Marketing-Automatisierung' : 'Complete Marketing Automation',
         description: lang === 'de' 
-          ? 'Automatisiertes Posting und Monitoring für Social Media Plattformen'
-          : 'Automated posting and monitoring for social media platforms',
+          ? 'End-to-End Marketing-Automatisierung von Lead-Generierung bis Conversion-Tracking'
+          : 'End-to-end marketing automation from lead generation to conversion tracking',
         category: 'marketing',
-        complexity: 'medium',
-        integrations: ['Twitter', 'LinkedIn', 'Facebook'],
-        estimatedTime: 2.5,
+        complexity: 'high',
+        integrations: ['HubSpot', 'Mailchimp', 'Google Analytics', 'Facebook Ads', 'LinkedIn'],
+        estimatedTime: 25.0,
         automationLevel: 85
+      },
+      score: 95,
+      reasons: [
+        lang === 'de' ? 'Umfassende Automatisierung' : 'Comprehensive automation',
+        lang === 'de' ? 'End-to-End Lösung' : 'End-to-end solution'
+      ],
+      source: 'complete-solution'
+    },
+    {
+      workflow: {
+        id: 'complete-2',
+        title: lang === 'de' ? 'Vollständige Datenanalyse-Pipeline' : 'Complete Data Analysis Pipeline',
+        description: lang === 'de'
+          ? 'Komplette Datenverarbeitung von Sammlung bis Berichterstellung mit KI-Insights'
+          : 'Complete data processing from collection to reporting with AI insights',
+        category: 'analytics',
+        complexity: 'high',
+        integrations: ['Google Analytics', 'Tableau', 'Power BI', 'Python', 'Jupyter'],
+        estimatedTime: 30.0,
+        automationLevel: 90
       },
       score: 92,
       reasons: [
-        lang === 'de' ? 'Hohe Automatisierungsrate' : 'High automation rate',
-        lang === 'de' ? 'Beliebte Integrationen' : 'Popular integrations'
+        lang === 'de' ? 'KI-gestützte Analyse' : 'AI-powered analysis',
+        lang === 'de' ? 'Automatisierte Berichte' : 'Automated reports'
       ],
-      source: 'example'
+      source: 'complete-solution'
     },
     {
       workflow: {
-        id: 'example-2',
-        title: lang === 'de' ? 'E-Mail Marketing Workflow' : 'Email Marketing Workflow',
+        id: 'complete-3',
+        title: lang === 'de' ? 'Integrierte Kommunikations-Plattform' : 'Integrated Communication Platform',
         description: lang === 'de'
-          ? 'Automatisierte E-Mail Kampagnen und Lead-Nurturing'
-          : 'Automated email campaigns and lead nurturing',
-        category: 'marketing',
-        complexity: 'high',
-        integrations: ['Mailchimp', 'HubSpot', 'Salesforce'],
-        estimatedTime: 4.0,
-        automationLevel: 90
+          ? 'Zentrale Kommunikations-Automatisierung für alle Kanäle und Stakeholder'
+          : 'Central communication automation for all channels and stakeholders',
+        category: 'communication',
+        complexity: 'medium',
+        integrations: ['Slack', 'Microsoft Teams', 'Zoom', 'Calendly', 'Email'],
+        estimatedTime: 18.0,
+        automationLevel: 80
       },
       score: 88,
       reasons: [
-        lang === 'de' ? 'Umfassende Automatisierung' : 'Comprehensive automation',
-        lang === 'de' ? 'Professionelle Tools' : 'Professional tools'
+        lang === 'de' ? 'Multi-Channel Integration' : 'Multi-channel integration',
+        lang === 'de' ? 'Zentrale Steuerung' : 'Central control'
       ],
-      source: 'example'
-    },
-    {
-      workflow: {
-        id: 'example-3',
-        title: lang === 'de' ? 'Datenanalyse Pipeline' : 'Data Analysis Pipeline',
-        description: lang === 'de'
-          ? 'Automatisierte Datensammlung und Berichterstellung'
-          : 'Automated data collection and reporting',
-        category: 'analytics',
-        complexity: 'high',
-        integrations: ['Google Analytics', 'Tableau', 'Power BI'],
-        estimatedTime: 3.5,
-        automationLevel: 75
-      },
-      score: 85,
-      reasons: [
-        lang === 'de' ? 'Zeitsparende Automatisierung' : 'Time-saving automation',
-        lang === 'de' ? 'Umfassende Berichte' : 'Comprehensive reports'
-      ],
-      source: 'example'
+      source: 'complete-solution'
     }
   ];
 
   return workflows;
+}
+
+// Generate specific workflows for individual subtasks
+function generateSubtaskWorkflows(subtask: DynamicSubtask, lang: 'de' | 'en'): WorkflowMatch[] {
+  const titleLower = subtask.title.toLowerCase();
+  
+  console.log('🔍 [generateSubtaskWorkflows] Generating SPECIFIC workflows for:', subtask.title);
+  
+  // Generate workflows based on subtask content
+  if (titleLower.includes('sammeln') || titleLower.includes('aggreg')) {
+    return [
+      {
+        workflow: {
+          id: `subtask-${subtask.id}-1`,
+          title: lang === 'de' ? 'Datensammel-Workflow' : 'Data Collection Workflow',
+          description: lang === 'de' 
+            ? 'Automatisierte Datensammlung mit ETL-Pipeline und Data Warehouse'
+            : 'Automated data collection with ETL pipeline and data warehouse',
+          category: 'data',
+          complexity: 'high',
+          integrations: ['Airbyte', 'Snowflake', 'Slack'],
+          estimatedTime: 12.0,
+          automationLevel: 85
+        },
+        score: 90,
+        reasons: [
+          lang === 'de' ? 'Spezifisch für Datensammlung' : 'Specific for data collection',
+          lang === 'de' ? 'ETL-Pipeline' : 'ETL pipeline'
+        ],
+        source: 'subtask-specific'
+      }
+    ];
+  } else if (titleLower.includes('interview') || titleLower.includes('termin')) {
+    return [
+      {
+        workflow: {
+          id: `subtask-${subtask.id}-1`,
+          title: lang === 'de' ? 'Termin-Verwaltungs-Workflow' : 'Appointment Management Workflow',
+          description: lang === 'de'
+            ? 'Automatische Kalenderverwaltung und E-Mail-Benachrichtigungen'
+            : 'Automatic calendar management and email notifications',
+          category: 'scheduling',
+          complexity: 'medium',
+          integrations: ['Google Calendar', 'Gmail', 'Calendly'],
+          estimatedTime: 8.0,
+          automationLevel: 75
+        },
+        score: 85,
+        reasons: [
+          lang === 'de' ? 'Kalender-Integration' : 'Calendar integration',
+          lang === 'de' ? 'Automatische Benachrichtigungen' : 'Automatic notifications'
+        ],
+        source: 'subtask-specific'
+      }
+    ];
+  } else if (titleLower.includes('anzeige') || titleLower.includes('post')) {
+    return [
+      {
+        workflow: {
+          id: `subtask-${subtask.id}-1`,
+          title: lang === 'de' ? 'Posting-Workflow' : 'Posting Workflow',
+          description: lang === 'de'
+            ? 'Automatisches Erstellen und Veröffentlichen von Anzeigen'
+            : 'Automatic creation and publishing of job postings',
+          category: 'publishing',
+          complexity: 'medium',
+          integrations: ['LinkedIn', 'Indeed', 'Xing'],
+          estimatedTime: 6.0,
+          automationLevel: 70
+        },
+        score: 80,
+        reasons: [
+          lang === 'de' ? 'Multi-Platform Posting' : 'Multi-platform posting',
+          lang === 'de' ? 'Automatisierte Erstellung' : 'Automated creation'
+        ],
+        source: 'subtask-specific'
+      }
+    ];
+  }
+  
+  // Generate multiple specific workflows for any subtask
+  const workflows: WorkflowMatch[] = [];
+  
+  // Workflow 1: Main automation workflow
+  workflows.push({
+    workflow: {
+      id: `subtask-${subtask.id}-1`,
+      title: lang === 'de' ? `${subtask.title} - Automatisierung` : `${subtask.title} - Automation`,
+      description: lang === 'de'
+        ? `Spezifischer Workflow für: ${subtask.title}`
+        : `Specific workflow for: ${subtask.title}`,
+      category: 'general',
+      complexity: 'medium',
+      integrations: ['General Tools', 'APIs'],
+      estimatedTime: 10.0,
+      automationLevel: 75
+    },
+    score: 80,
+    reasons: [
+      lang === 'de' ? 'Spezifisch für diese Teilaufgabe' : 'Specific for this subtask',
+      lang === 'de' ? 'Maßgeschneidert' : 'Tailored'
+    ],
+    source: 'subtask-specific'
+  });
+
+  // Workflow 2: Data processing workflow
+  workflows.push({
+    workflow: {
+      id: `subtask-${subtask.id}-2`,
+      title: lang === 'de' ? `${subtask.title} - Datenverarbeitung` : `${subtask.title} - Data Processing`,
+      description: lang === 'de'
+        ? `Automatisierte Datenverarbeitung für: ${subtask.title}`
+        : `Automated data processing for: ${subtask.title}`,
+      category: 'data',
+      complexity: 'high',
+      integrations: ['Python', 'SQL', 'APIs'],
+      estimatedTime: 15.0,
+      automationLevel: 85
+    },
+    score: 75,
+    reasons: [
+      lang === 'de' ? 'Datenverarbeitung' : 'Data processing',
+      lang === 'de' ? 'KI-gestützt' : 'AI-powered'
+    ],
+    source: 'subtask-specific'
+  });
+
+  // Workflow 3: Integration workflow
+  workflows.push({
+    workflow: {
+      id: `subtask-${subtask.id}-3`,
+      title: lang === 'de' ? `${subtask.title} - Integration` : `${subtask.title} - Integration`,
+      description: lang === 'de'
+        ? `System-Integration für: ${subtask.title}`
+        : `System integration for: ${subtask.title}`,
+      category: 'integration',
+      complexity: 'medium',
+      integrations: ['Zapier', 'n8n', 'Webhooks'],
+      estimatedTime: 8.0,
+      automationLevel: 70
+    },
+    score: 70,
+    reasons: [
+      lang === 'de' ? 'System-Integration' : 'System integration',
+      lang === 'de' ? 'Multi-Platform' : 'Multi-platform'
+    ],
+    source: 'subtask-specific'
+  });
+
+  return workflows;
+}
+
+// Generate example workflows when no real data is available (DEPRECATED - use specific functions above)
+function generateExampleWorkflows(lang: 'de' | 'en'): WorkflowMatch[] {
+  // This function should NEVER be called anymore!
+  // All workflows should go through the proper context-aware functions
+  console.error('🚨 [generateExampleWorkflows] This function should NOT be called! Use context-aware functions instead!');
+  
+  // Return empty array to force proper function usage
+  return [];
 }

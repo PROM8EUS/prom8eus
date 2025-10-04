@@ -196,8 +196,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <Card className={cn("border-destructive/50 bg-destructive/5", className)}>
-          <CardHeader>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className={cn("border-destructive/50 bg-destructive/5 w-full max-w-md", className)}>
+            <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -317,7 +318,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               If this problem persists, please contact support with the error ID above.
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       );
     }
 

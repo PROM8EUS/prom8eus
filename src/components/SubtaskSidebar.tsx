@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppIcon } from './AppIcon';
+import ScoreCircle from './ScoreCircle';
 import { 
   Workflow, 
   Zap, 
@@ -207,7 +208,6 @@ export default function SubtaskSidebar({
   const [selectedTools, setSelectedTools] = useState<Record<string, string[]>>({});
   
   // Simplified state - no search, filter, or favorites
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Handle tool selection
   const handleToolToggle = (subtaskId: string, toolId: string) => {
@@ -226,9 +226,6 @@ export default function SubtaskSidebar({
 
   // Simplified handlers - no search, filter, or favorites
 
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   // Get typical applications for a subtask
   const getTypicalApplications = (subtask: Subtask) => {
@@ -322,28 +319,28 @@ export default function SubtaskSidebar({
       console.log('⚠️ [SubtaskSidebar] No subtasks available, using fallback');
       baseSubtasks = [
         {
-          id: 'planning',
+          id: 'task-1',
           title: 'Aufgabe planen und strukturieren',
           systems: ['Planning Tools', 'Documentation'],
           manualHoursShare: 0.20,
           automationPotential: 0.60
         },
         {
-          id: 'execution',
+          id: 'task-2',
           title: 'Aufgabe ausführen',
           systems: ['Execution Tools', 'Workflow'],
           manualHoursShare: 0.40,
           automationPotential: 0.80
         },
         {
-          id: 'coordination',
+          id: 'task-3',
           title: 'Koordination und Kommunikation',
           systems: ['Communication Tools', 'Collaboration'],
           manualHoursShare: 0.25,
           automationPotential: 0.75
         },
         {
-          id: 'evaluation',
+          id: 'task-4',
           title: 'Ergebnisse evaluieren und dokumentieren',
           systems: ['Analytics', 'Documentation'],
           manualHoursShare: 0.15,
@@ -360,39 +357,29 @@ export default function SubtaskSidebar({
 
   return (
     <div className="w-full">
-      <Card className="shadow-sm hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm border-white/20">
-        <CardContent className="p-6">
-          <div className="space-y-4">
+      <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between py-3">
               <h3 className="text-lg font-semibold text-gray-900">
                 {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
               </h3>
               <div className="flex items-center gap-2">
                 <AnimatedCounterBadge count={realSubtasks.length} isLoading={isGenerating} />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleCollapse}
-                  className="h-8 w-8 p-0"
-                >
-                  {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronRight className="h-4 w-4 rotate-90" />}
-                </Button>
               </div>
             </div>
 
             {/* Subtasks List */}
-            {!isCollapsed && (
             <div className="space-y-3">
-              {/* "Alle" as first item in the list */}
-              <div
-                className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+              {/* "Alle (Komplettlösungen)" as first item in the list */}
+              <Card
+                className={`cursor-pointer transition-all duration-200 ${
                   selectedSubtaskId === 'all'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
                 onClick={() => onSubtaskSelect?.('all')}
               >
+                <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -402,57 +389,70 @@ export default function SubtaskSidebar({
                       <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     </div>
                     
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="h-3 w-3 text-blue-500" />
+                    <div className="mb-2">
                       <span className="text-xs text-gray-600">
-                        {realSubtasks.length} {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
+                        {lang === 'de' ? 'Übergreifende Lösungen' : 'Overarching solutions'}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Individual subtasks */}
               {realSubtasks.map((subtask, index) => (
-                <div
+                <Card
                   key={subtask.id}
-                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+                  className={`cursor-pointer transition-all duration-200 ${
                     selectedSubtaskId === subtask.id
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                   onClick={() => onSubtaskSelect?.(subtask.id)}
                 >
+                  <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-medium text-gray-900">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                          <ScoreCircle 
+                            score={Math.round(subtask.automationPotential * 100)} 
+                            maxScore={100} 
+                            variant="xsmall" 
+                            lang={lang}
+                            animate={false}
+                            label=""
+                            showPercentage={false}
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 flex-1">
                           {subtask.title}
-                        </span>
-                        {/* Removed favorite button */}
-                        <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      </div>
-                      
-                      {/* Automation Potential */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <Zap className="h-3 w-3 text-yellow-500" />
-                        <span className="text-xs text-gray-600">
-                          {Math.round(subtask.automationPotential * 100)}% {lang === 'de' ? 'Automatisierung' : 'Automation'}
                         </span>
                       </div>
 
                       {/* Systems */}
                       {subtask.systems && subtask.systems.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {subtask.systems.slice(0, 3).map((system) => (
-                            <Badge key={system} variant="secondary" className="text-xs">
+                        <div className="flex items-center gap-1 mb-2 overflow-hidden">
+                          {subtask.systems.slice(0, 2).map((system) => (
+                            <Badge key={system} variant="secondary" className="text-xs flex-shrink-0">
                               {system}
                             </Badge>
                           ))}
-                          {subtask.systems.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{subtask.systems.length - 3}
-                            </Badge>
+                          {subtask.systems.length > 2 && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-xs flex-shrink-0 cursor-help">
+                                    +{subtask.systems.length - 2}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="text-xs">
+                                    {subtask.systems.slice(2).join(', ')}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       )}
@@ -464,9 +464,7 @@ export default function SubtaskSidebar({
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="w-5 h-5 rounded-sm overflow-hidden bg-gray-100 flex items-center justify-center">
-                                  <div className="w-4 h-4 bg-gray-200 rounded-sm flex items-center justify-center text-xs font-medium text-gray-600">
-                                    {app.name.charAt(0)}
-                                  </div>
+                                  <AppIcon tool={app} size="sm" />
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -477,44 +475,14 @@ export default function SubtaskSidebar({
                         ))}
                       </div>
                     </div>
+                    <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
                   </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-            )}
 
-            {/* All Solutions Option */}
-            {!isCollapsed && (
-            <div className="pt-2 border-t border-gray-200">
-              <div
-                className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                  selectedSubtaskId === 'all'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-                }`}
-                onClick={() => onSubtaskSelect?.('all')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-gray-900">
-                      {lang === 'de' ? 'Alle (Komplettlösungen)' : 'All (Complete Solutions)'}
-                    </span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  {lang === 'de' 
-                    ? 'Übergreifende Lösungen für die gesamte Aufgabe'
-                    : 'Comprehensive solutions for the entire task'
-                  }
-                </p>
-              </div>
-            </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

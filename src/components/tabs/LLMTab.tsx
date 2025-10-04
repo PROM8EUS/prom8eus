@@ -29,7 +29,6 @@ import { GeneratedPrompt } from '@/lib/services/promptGenerator';
 import { generatePromptVariations } from '@/lib/services/promptGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 import { EnhancedPromptCard, EnhancedPromptData } from '../ui/EnhancedPromptCard';
-import { LLMTabSkeleton, EmptyStateSkeleton, ErrorStateSkeleton } from '../ui/LLMTabSkeleton';
 
 type LLMTabProps = {
   subtask: DynamicSubtask | null;
@@ -51,7 +50,6 @@ export default function LLMTab({
   const [prompts, setPrompts] = useState<GeneratedPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSkeleton, setShowSkeleton] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -62,19 +60,12 @@ export default function LLMTab({
 
   // Load prompts when subtask changes
   useEffect(() => {
-    if (subtask) {
-      loadPrompts();
-    } else {
-      setPrompts([]);
-      onUpdateCount?.(0);
-    }
+    loadPrompts();
   }, [subtask]);
 
   const loadPrompts = async () => {
-    if (!subtask) return;
 
     setIsLoading(true);
-    setShowSkeleton(true);
     setError(null);
     
     try {
@@ -90,22 +81,21 @@ export default function LLMTab({
         setPrompts(cached);
         onUpdateCount?.(cached.length);
         setIsLoading(false);
-        setShowSkeleton(false);
         return;
       }
 
-      // Generate prompt variations or show example prompts
+      // Generate prompts based on context
       let promptList: GeneratedPrompt[] = [];
       
       if (subtask) {
-        // Try to generate prompts for specific subtask
+        // Generate specific prompts for individual subtask
         const promptMap = await generatePromptVariations(subtask, ['ChatGPT', 'Claude'], ['formal', 'technical'], lang);
         promptList = Array.from(promptMap.values());
-        console.log('✅ [LLMTab] Generated prompts:', promptList.length);
+        console.log('✅ [LLMTab] Generated specific prompts:', promptList.length);
       } else {
-        // Show example prompts when no subtask is selected
-        promptList = generateExamplePrompts(lang);
-        console.log('✅ [LLMTab] Loaded example prompts:', promptList.length);
+        // Generate complete solution prompts for "Alle (Komplettlösungen)"
+        promptList = generateCompleteSolutionPrompts(lang);
+        console.log('✅ [LLMTab] Loaded complete solution prompts:', promptList.length);
       }
       
       setPrompts(promptList);
@@ -121,7 +111,6 @@ export default function LLMTab({
       onUpdateCount?.(0);
     } finally {
       setIsLoading(false);
-      setShowSkeleton(false);
     }
   };
 
@@ -153,7 +142,7 @@ export default function LLMTab({
   const handleShare = (prompt: EnhancedPromptData) => {
     if (navigator.share) {
       navigator.share({
-        title: prompt.title || prompt.service,
+        title: prompt.service,
         text: prompt.prompt,
         url: window.location.href
       });
@@ -359,17 +348,23 @@ export default function LLMTab({
       )}
 
       {/* Enhanced Prompts Grid */}
-      {showSkeleton ? (
-        <LLMTabSkeleton count={6} compact={true} />
-      ) : error ? (
-        <ErrorStateSkeleton />
+      {error ? (
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {lang === 'de' ? 'Fehler beim Laden' : 'Error Loading'}
+          </h3>
+          <p className="text-gray-600">
+            {lang === 'de' ? 'Prompts konnten nicht geladen werden.' : 'Prompts could not be loaded.'}
+          </p>
+        </div>
       ) : !isLoading && filteredPrompts.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4">
           {filteredPrompts.map((prompt, index) => {
             const enhancedPrompt = convertToEnhancedPrompt(prompt);
             return (
               <EnhancedPromptCard
-                key={prompt.id || index}
+                key={`${prompt.id || 'prompt'}-${index}-${prompt.service || 'unknown'}`}
                 prompt={enhancedPrompt}
                 lang={lang}
                 onSelect={(enhancedPrompt) => onPromptSelect?.(prompt)}
@@ -388,62 +383,93 @@ export default function LLMTab({
 
       {/* Empty State */}
       {!isLoading && !error && filteredPrompts.length === 0 && (
-        <EmptyStateSkeleton />
+        <div className="text-center py-12">
+          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {lang === 'de' ? 'Keine Prompts gefunden' : 'No Prompts Found'}
+          </h3>
+          <p className="text-gray-600">
+            {lang === 'de' ? 'Versuchen Sie andere Suchbegriffe oder Filter.' : 'Try different search terms or filters.'}
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
-// Generate example prompts when no real data is available
+// Generate example prompts when no real data is available (DEPRECATED)
 function generateExamplePrompts(lang: 'de' | 'en'): GeneratedPrompt[] {
+  // This function is deprecated and should not be used
+  // Use generateCompleteSolutionPrompts() instead
+  console.warn('⚠️ [LLMTab] generateExamplePrompts is deprecated, use specific functions instead');
+  return generateCompleteSolutionPrompts(lang);
+}
+
+// Generate complete solution prompts for "Alle (Komplettlösungen)"
+function generateCompleteSolutionPrompts(lang: 'de' | 'en'): GeneratedPrompt[] {
   const prompts: GeneratedPrompt[] = [
     {
-      id: 'example-prompt-1',
+      id: 'complete-prompt-1',
       service: 'ChatGPT',
       style: 'formal',
-      title: lang === 'de' ? 'Social Media Content Generator' : 'Social Media Content Generator',
+      preview: lang === 'de' 
+        ? 'Erstelle eine umfassende Marketing-Strategie für [Produkt/Dienstleistung]...'
+        : 'Create a comprehensive marketing strategy for [product/service]...',
       prompt: lang === 'de' 
-        ? 'Erstelle 5 ansprechende Social Media Posts für [Thema]. Jeder Post sollte:\n- Eine klare Botschaft haben\n- Emojis enthalten\n- Hashtags verwenden\n- Die Zielgruppe [Zielgruppe] ansprechen\n- Zwischen 50-100 Wörtern lang sein'
-        : 'Create 5 engaging social media posts about [topic]. Each post should:\n- Have a clear message\n- Include emojis\n- Use hashtags\n- Target [audience]\n- Be 50-100 words long',
-      description: lang === 'de' 
-        ? 'Generiert ansprechende Social Media Inhalte mit optimaler Länge und Formatierung'
-        : 'Generates engaging social media content with optimal length and formatting',
-      useCase: lang === 'de' ? 'Content-Erstellung' : 'Content Creation',
-      complexity: 'medium',
-      estimatedTokens: 150,
-      category: 'marketing'
+        ? 'Erstelle eine umfassende Marketing-Strategie für [Produkt/Dienstleistung]:\n\n1. Marktanalyse und Zielgruppen-Definition\n2. Wettbewerbsanalyse\n3. Content-Strategie (Blog, Social Media, Email)\n4. Lead-Generierung und Nurturing\n5. Conversion-Optimierung\n6. Performance-Metriken und KPIs\n7. Budget-Planung\n8. Zeitplan und Meilensteine\n\nZielgruppe: [Zielgruppe]\nBudget: [Budget]\nZeitraum: [Zeitraum]\n\nFormat: Strukturiert, datenbasiert, umsetzbar'
+        : 'Create a comprehensive marketing strategy for [product/service]:\n\n1. Market analysis and target audience definition\n2. Competitive analysis\n3. Content strategy (blog, social media, email)\n4. Lead generation and nurturing\n5. Conversion optimization\n6. Performance metrics and KPIs\n7. Budget planning\n8. Timeline and milestones\n\nTarget audience: [audience]\nBudget: [budget]\nTimeframe: [timeframe]\n\nFormat: Structured, data-driven, actionable',
+      status: 'generated',
+      isAIGenerated: true,
+      generatedAt: new Date().toISOString(),
+      config: {
+        temperature: 0.7,
+        maxTokens: 1000,
+        topP: 0.9,
+        frequencyPenalty: 0.0,
+        presencePenalty: 0.0
+      }
     },
     {
-      id: 'example-prompt-2',
+      id: 'complete-prompt-2',
       service: 'Claude',
       style: 'technical',
-      title: lang === 'de' ? 'E-Mail Marketing Kampagne' : 'Email Marketing Campaign',
+      preview: lang === 'de'
+        ? 'Entwickle ein umfassendes Business Intelligence Dashboard für [Unternehmen/Bereich]...'
+        : 'Develop a comprehensive Business Intelligence Dashboard for [company/area]...',
       prompt: lang === 'de'
-        ? 'Entwickle eine E-Mail Marketing Kampagne für [Produkt/Dienstleistung]. Erstelle:\n1. Betreffzeile (max. 50 Zeichen)\n2. E-Mail Text (200-300 Wörter)\n3. Call-to-Action\n4. Follow-up Strategie\n\nZielgruppe: [Zielgruppe]\nZiel: [Ziel]'
-        : 'Develop an email marketing campaign for [product/service]. Create:\n1. Subject line (max. 50 characters)\n2. Email text (200-300 words)\n3. Call-to-action\n4. Follow-up strategy\n\nTarget audience: [audience]\nGoal: [goal]',
-      description: lang === 'de'
-        ? 'Erstellt vollständige E-Mail Marketing Kampagnen mit strategischem Ansatz'
-        : 'Creates complete email marketing campaigns with strategic approach',
-      useCase: lang === 'de' ? 'Marketing-Automatisierung' : 'Marketing Automation',
-      complexity: 'high',
-      estimatedTokens: 300,
-      category: 'marketing'
+        ? 'Entwickle ein umfassendes Business Intelligence Dashboard für [Unternehmen/Bereich]:\n\n1. Datenquellen-Identifikation\n2. KPI-Definition und Metriken\n3. Dashboard-Layout und Visualisierungen\n4. Automatisierte Berichte\n5. Alert-Systeme\n6. Datenqualität und Governance\n7. Benutzerrollen und Berechtigungen\n8. Implementierungsplan\n\nBereich: [Bereich]\nDatenquellen: [Datenquellen]\nZielgruppe: [Zielgruppe]\n\nFormat: Technisch detailliert, umsetzbar, skalierbar'
+        : 'Develop a comprehensive Business Intelligence Dashboard for [company/area]:\n\n1. Data source identification\n2. KPI definition and metrics\n3. Dashboard layout and visualizations\n4. Automated reports\n5. Alert systems\n6. Data quality and governance\n7. User roles and permissions\n8. Implementation plan\n\nArea: [area]\nData sources: [data sources]\nTarget audience: [audience]\n\nFormat: Technically detailed, actionable, scalable',
+      status: 'generated',
+      isAIGenerated: true,
+      generatedAt: new Date().toISOString(),
+      config: {
+        temperature: 0.7,
+        maxTokens: 1000,
+        topP: 0.9,
+        frequencyPenalty: 0.0,
+        presencePenalty: 0.0
+      }
     },
     {
-      id: 'example-prompt-3',
+      id: 'complete-prompt-3',
       service: 'ChatGPT',
       style: 'formal',
-      title: lang === 'de' ? 'Datenanalyse Bericht' : 'Data Analysis Report',
+      preview: lang === 'de'
+        ? 'Erstelle eine umfassende Kommunikations-Strategie für [Projekt/Initiative]...'
+        : 'Create a comprehensive communication strategy for [project/initiative]...',
       prompt: lang === 'de'
-        ? 'Analysiere die folgenden Daten und erstelle einen strukturierten Bericht:\n\n[Daten einfügen]\n\nDer Bericht sollte enthalten:\n- Executive Summary\n- Wichtigste Erkenntnisse\n- Trends und Muster\n- Empfehlungen\n- Grafische Darstellungen (beschreiben)\n\nFormat: Professionell, datenbasiert, handlungsorientiert'
-        : 'Analyze the following data and create a structured report:\n\n[Insert data]\n\nThe report should include:\n- Executive Summary\n- Key findings\n- Trends and patterns\n- Recommendations\n- Visual representations (describe)\n\nFormat: Professional, data-driven, action-oriented',
-      description: lang === 'de'
-        ? 'Wandelt Rohdaten in aussagekräftige, handlungsorientierte Berichte um'
-        : 'Transforms raw data into meaningful, action-oriented reports',
-      useCase: lang === 'de' ? 'Datenanalyse' : 'Data Analysis',
-      complexity: 'high',
-      estimatedTokens: 400,
-      category: 'analytics'
+        ? 'Erstelle eine umfassende Kommunikations-Strategie für [Projekt/Initiative]:\n\n1. Stakeholder-Analyse und Mapping\n2. Kommunikations-Ziele und Botschaften\n3. Kanal-Strategie (Email, Meetings, Slack, etc.)\n4. Content-Plan und Templates\n5. Feedback-Mechanismen\n6. Eskalations-Prozesse\n7. Erfolgs-Metriken\n8. Krisen-Kommunikation\n\nProjekt: [Projekt]\nStakeholder: [Stakeholder]\nZeitraum: [Zeitraum]\n\nFormat: Strukturiert, praxisorientiert, messbar'
+        : 'Create a comprehensive communication strategy for [project/initiative]:\n\n1. Stakeholder analysis and mapping\n2. Communication goals and messages\n3. Channel strategy (email, meetings, Slack, etc.)\n4. Content plan and templates\n5. Feedback mechanisms\n6. Escalation processes\n7. Success metrics\n8. Crisis communication\n\nProject: [project]\nStakeholders: [stakeholders]\nTimeframe: [timeframe]\n\nFormat: Structured, practical, measurable',
+      status: 'generated',
+      isAIGenerated: true,
+      generatedAt: new Date().toISOString(),
+      config: {
+        temperature: 0.7,
+        maxTokens: 1000,
+        topP: 0.9,
+        frequencyPenalty: 0.0,
+        presencePenalty: 0.0
+      }
     }
   ];
 
