@@ -28,8 +28,7 @@ import {
   X,
   RefreshCw
 } from 'lucide-react';
-import { BlueprintCard } from '../BlueprintCard';
-import { EnhancedBlueprintCard, EnhancedBlueprintData } from '../ui/EnhancedBlueprintCard';
+import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
 import { SmartSearch } from '../ui/SmartSearch';
 import { SmartFilter } from '../ui/SmartFilter';
 import { useSmartSearch } from '@/hooks/useSmartSearch';
@@ -259,13 +258,13 @@ export default function WorkflowTab({
   };
 
   // Convert WorkflowMatch to EnhancedBlueprintData
-  const convertToEnhancedBlueprint = (workflow: WorkflowMatch): EnhancedBlueprintData => {
+  const convertToUnifiedSolution = (workflow: WorkflowMatch): UnifiedSolutionData => {
     const workflowData = 'workflow' in workflow ? workflow.workflow : workflow;
     return {
       id: workflow.id,
       name: workflowData.title || workflowData.name || 'Untitled Workflow',
       description: workflowData.description || 'No description available',
-      timeSavings: workflow.timeSavings || Math.floor(Math.random() * 20) + 5,
+      type: 'workflow',
       complexity: workflow.complexity || 'Medium',
       integrations: workflow.integrations || [],
       category: workflow.category,
@@ -273,16 +272,15 @@ export default function WorkflowTab({
       status: workflow.status || 'generated',
       generationMetadata: workflow.generationMetadata,
       setupCost: workflow.setupCost || 0,
-      downloadUrl: workflow.downloadUrl,
-      validationStatus: workflow.validationStatus || 'valid',
       popularity: Math.floor(Math.random() * 100),
       rating: Math.floor(Math.random() * 2) + 3, // 3-5 stars
       lastUpdated: new Date().toISOString(),
       author: 'AI Assistant',
       tags: workflow.tags || [],
-      estimatedSetupTime: Math.floor(Math.random() * 30) + 10, // 10-40 minutes
       difficulty: workflow.complexity === 'Low' ? 'beginner' : 
-                  workflow.complexity === 'High' ? 'advanced' : 'intermediate'
+                  workflow.complexity === 'High' ? 'advanced' : 'intermediate',
+      triggerType: workflow.triggerType,
+      matchScore: workflow.matchScore
     };
   };
 
@@ -514,16 +512,15 @@ export default function WorkflowTab({
       ) : !isLoading && filteredWorkflows.length > 0 ? (
         <div className="space-y-4">
           {filteredWorkflows.map((workflow, index) => {
-            const enhancedBlueprint = convertToEnhancedBlueprint(workflow);
+            const unifiedSolution = convertToUnifiedSolution(workflow);
             return (
-              <EnhancedBlueprintCard
+              <UnifiedSolutionCard
                 key={workflow.workflow.id || index}
-                blueprint={enhancedBlueprint}
+                solution={unifiedSolution}
                 lang={lang}
-                period="month"
-                onDetailsClick={(blueprint) => onWorkflowSelect?.(workflow)}
-                onDownloadClick={(blueprint) => handleDownload(workflow)}
-                onSetupClick={(blueprint) => handleSetupRequest(workflow)}
+                onSelect={(unifiedSolution) => onWorkflowSelect?.(workflow)}
+                onDownloadClick={(unifiedSolution) => handleDownload(workflow)}
+                onSetupClick={(unifiedSolution) => handleSetupRequest(workflow)}
                 onFavoriteClick={handleFavorite}
                 onShareClick={handleShare}
                 compact={true}

@@ -28,7 +28,7 @@ import { DynamicSubtask } from '@/lib/types';
 import { GeneratedPrompt } from '@/lib/services/promptGenerator';
 import { generatePromptVariations } from '@/lib/services/promptGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
-import { EnhancedPromptCard, EnhancedPromptData } from '../ui/EnhancedPromptCard';
+import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
 
 type LLMTabProps = {
   subtask: DynamicSubtask | null;
@@ -129,7 +129,7 @@ export default function LLMTab({
   };
 
   // Enhanced helper functions
-  const handleFavorite = (prompt: EnhancedPromptData) => {
+  const handleFavorite = (prompt: UnifiedSolutionData) => {
     const newFavorites = new Set(favorites);
     if (newFavorites.has(prompt.id)) {
       newFavorites.delete(prompt.id);
@@ -139,23 +139,26 @@ export default function LLMTab({
     setFavorites(newFavorites);
   };
 
-  const handleShare = (prompt: EnhancedPromptData) => {
+  const handleShare = (prompt: UnifiedSolutionData) => {
     if (navigator.share) {
       navigator.share({
-        title: prompt.service,
+        title: prompt.name,
         text: prompt.prompt,
         url: window.location.href
       });
     } else {
       // Fallback to clipboard
-      navigator.clipboard.writeText(`${prompt.title || prompt.service} - ${prompt.prompt}`);
+      navigator.clipboard.writeText(`${prompt.name || prompt.service} - ${prompt.prompt}`);
     }
   };
 
   // Convert GeneratedPrompt to EnhancedPromptData
-  const convertToEnhancedPrompt = (prompt: GeneratedPrompt): EnhancedPromptData => {
+  const convertToUnifiedSolution = (prompt: GeneratedPrompt): UnifiedSolutionData => {
     return {
       id: prompt.id,
+      name: `${prompt.service} ${prompt.style} Prompt`,
+      description: `Optimized prompt for ${prompt.service}`,
+      type: 'llm',
       prompt: prompt.prompt,
       service: prompt.service,
       style: prompt.style,
@@ -163,8 +166,6 @@ export default function LLMTab({
       status: prompt.status || 'generated',
       generationMetadata: prompt.generationMetadata,
       isAIGenerated: prompt.isAIGenerated || true,
-      title: `${prompt.service} ${prompt.style} Prompt`,
-      description: `Optimized prompt for ${prompt.service}`,
       category: 'AI Prompt',
       tags: [prompt.service, prompt.style, 'AI'],
       estimatedTokens: Math.floor(Math.random() * 500) + 100, // 100-600 tokens
@@ -361,15 +362,15 @@ export default function LLMTab({
       ) : !isLoading && filteredPrompts.length > 0 ? (
         <div className="space-y-4">
           {filteredPrompts.map((prompt, index) => {
-            const enhancedPrompt = convertToEnhancedPrompt(prompt);
+            const unifiedSolution = convertToUnifiedSolution(prompt);
             return (
-              <EnhancedPromptCard
+              <UnifiedSolutionCard
                 key={`${prompt.id || 'prompt'}-${index}-${prompt.service || 'unknown'}`}
-                prompt={enhancedPrompt}
+                solution={unifiedSolution}
                 lang={lang}
-                onSelect={(enhancedPrompt) => onPromptSelect?.(prompt)}
-                onCopyClick={(enhancedPrompt) => handleCopyPrompt(prompt)}
-                onOpenInServiceClick={(enhancedPrompt) => handleOpenInService(prompt)}
+                onSelect={(unifiedSolution) => onPromptSelect?.(prompt)}
+                onCopyClick={(unifiedSolution) => handleCopyPrompt(prompt)}
+                onOpenInServiceClick={(unifiedSolution) => handleOpenInService(prompt)}
                 onFavoriteClick={handleFavorite}
                 onShareClick={handleShare}
                 compact={true}

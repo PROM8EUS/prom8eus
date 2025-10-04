@@ -28,7 +28,7 @@ import { DynamicSubtask } from '@/lib/types';
 import { GeneratedAgent } from '@/lib/services/agentGenerator';
 import { generateAgentWithFallback } from '@/lib/services/agentGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
-import { EnhancedAgentCard, EnhancedAgentData } from '../ui/EnhancedAgentCard';
+import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
 
 type AgentTabProps = {
   subtask: DynamicSubtask | null;
@@ -128,7 +128,7 @@ export default function AgentTab({
   };
 
   // Enhanced helper functions
-  const handleFavorite = (agent: EnhancedAgentData) => {
+  const handleFavorite = (agent: UnifiedSolutionData) => {
     const newFavorites = new Set(favorites);
     if (newFavorites.has(agent.id)) {
       newFavorites.delete(agent.id);
@@ -138,7 +138,7 @@ export default function AgentTab({
     setFavorites(newFavorites);
   };
 
-  const handleShare = (agent: EnhancedAgentData) => {
+  const handleShare = (agent: UnifiedSolutionData) => {
     if (navigator.share) {
       navigator.share({
         title: agent.name,
@@ -151,14 +151,15 @@ export default function AgentTab({
     }
   };
 
-  // Convert GeneratedAgent to EnhancedAgentData
-  const convertToEnhancedAgent = (agent: GeneratedAgent): EnhancedAgentData => {
+// Convert GeneratedAgent to UnifiedSolutionData
+const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData => {
     if (!agent) {
       console.error('❌ [AgentTab] convertToEnhancedAgent called with undefined agent');
       return {
         id: 'error',
         name: 'Error',
         description: 'Agent data not available',
+        type: 'agent',
         role: 'Error',
         technologies: [],
         skills: [],
@@ -190,6 +191,7 @@ export default function AgentTab({
       id: agent.id,
       name: agent.name,
       description: agent.description,
+      type: 'agent',
       role: agent.config?.name || agent.name, // Use config name as role or fallback to name
       technologies: agent.technology ? [agent.technology] : [],
       skills: agent.tools || [],
@@ -368,15 +370,15 @@ export default function AgentTab({
       ) : !isLoading && filteredAgents.length > 0 ? (
         <div className="space-y-4">
           {filteredAgents.map((agent, index) => {
-            const enhancedAgent = convertToEnhancedAgent(agent);
+            const unifiedSolution = convertToUnifiedSolution(agent);
             return (
-              <EnhancedAgentCard
+              <UnifiedSolutionCard
                 key={agent.id || index}
-                agent={enhancedAgent}
+                solution={unifiedSolution}
                 lang={lang}
-                onSelect={(enhancedAgent) => onAgentSelect?.(agent)}
-                onSetupClick={(enhancedAgent) => handleSetupRequest(agent)}
-                onConfigClick={(enhancedAgent) => handleConfigView(agent)}
+                onSelect={(unifiedSolution) => onAgentSelect?.(agent)}
+                onSetupClick={(unifiedSolution) => handleSetupRequest(agent)}
+                onConfigClick={(unifiedSolution) => handleConfigView(agent)}
                 onFavoriteClick={handleFavorite}
                 onShareClick={handleShare}
                 compact={true}
