@@ -308,12 +308,12 @@ export const HourlyRateEditor: React.FC<HourlyRateEditorProps> = ({
   const insights = getInsights();
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('space-y-1', className)}>
       {/* Label and Icon */}
       {showLabel && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {showIcon && (
-            <div className="p-1 bg-primary/10 rounded">
+            <div className="p-0.5 bg-primary/10 rounded">
               <DollarSign className={cn('text-primary', sizeClasses.icon)} />
             </div>
           )}
@@ -336,7 +336,7 @@ export const HourlyRateEditor: React.FC<HourlyRateEditorProps> = ({
       )}
 
       {/* Main Editor */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <InlineEditCurrency
           value={value}
           onChange={handleSave}
@@ -381,7 +381,7 @@ export const HourlyRateEditor: React.FC<HourlyRateEditorProps> = ({
 
       {/* Insights */}
       {insights && insights.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-0.5">
           {insights.map((insight, index) => (
             <Badge
               key={index}
@@ -396,7 +396,7 @@ export const HourlyRateEditor: React.FC<HourlyRateEditorProps> = ({
 
       {/* Trends */}
       {showTrends && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <TrendingUp className="h-3 w-3" />
           <span>
             {lang === 'de' 
@@ -409,8 +409,8 @@ export const HourlyRateEditor: React.FC<HourlyRateEditorProps> = ({
 
       {/* Comparison */}
       {showComparison && (
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="bg-muted/50 rounded p-2">
+        <div className="grid grid-cols-2 gap-1 text-xs">
+          <div className="bg-muted/50 rounded p-1.5">
             <div className="text-muted-foreground">
               {lang === 'de' ? 'Min' : 'Min'}
             </div>

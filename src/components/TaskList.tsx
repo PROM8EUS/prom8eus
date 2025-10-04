@@ -75,6 +75,36 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
   const [selectedTool, setSelectedTool] = useState<AITool | null>(null);
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
 
+  // Scroll handler for header shadows
+  useEffect(() => {
+    const handleScroll = () => {
+      expandedTasks.forEach(taskId => {
+        const header = document.getElementById(`task-header-${taskId}`);
+        const scrollContainer = header?.parentElement?.querySelector('.overflow-y-auto');
+        
+        if (header && scrollContainer) {
+          if (scrollContainer.scrollTop > 0) {
+            header.classList.add('shadow-md');
+          } else {
+            header.classList.remove('shadow-md');
+          }
+        }
+      });
+    };
+
+    // Add scroll listeners to all expanded task containers
+    const scrollContainers = document.querySelectorAll('.overflow-y-auto');
+    scrollContainers.forEach(container => {
+      container.addEventListener('scroll', handleScroll);
+    });
+
+    return () => {
+      scrollContainers.forEach(container => {
+        container.removeEventListener('scroll', handleScroll);
+      });
+    };
+  }, [expandedTasks]);
+
   const toggleTask = (taskId: string) => {
     const newExpanded = new Set(expandedTasks);
     if (newExpanded.has(taskId)) {
@@ -422,7 +452,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
           return (
             <Card 
               key={task.id} 
-              className={`transition-shadow duration-200 shadow-sm ${
+              className={`transition-shadow duration-200 shadow-sm h-full flex flex-col ${
                 isExpanded ? 'shadow-lg' : 'hover:shadow-md'
               }`}
               style={{ 
@@ -431,11 +461,12 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                 opacity: 0
               }}
             >
-              <CardContent className="p-4">
-                <div 
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => toggleTask(taskId)}
-                >
+              {/* Fixed Header */}
+              <div 
+                className="flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 z-10 transition-shadow duration-200 cursor-pointer rounded-lg"
+                onClick={() => toggleTask(taskId)}
+                id={`task-header-${taskId}`}
+              >
                   <div className="flex items-center space-x-3 flex-1">
                     {/* ScoreCircle for all tasks */}
                     <div className="flex items-center justify-end">
@@ -517,19 +548,12 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       )}
                     </div>
                   </div>
-                </div>
+              </div>
                 
-                {/* Expandable content */}
-                <div 
-                  className={`transition-all duration-300 ease-in-out ${
-                    isExpanded ? 'opacity-100 mt-4' : 'opacity-0'
-                  }`}
-                  style={{
-                    maxHeight: isExpanded ? 'none' : '0px',
-                    overflow: isExpanded ? 'visible' : 'hidden'
-                  }}
-                >
-                  <div className="pt-1 space-y-6">
+              {/* Scrollable Content */}
+              {isExpanded && (
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-4 space-y-6">
                     {/* Subtasks Section */}
                     {task.subtasks && task.subtasks.length > 0 && (
                       <div className="space-y-4">
@@ -625,7 +649,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                     />
                   </div>
                 </div>
-              </CardContent>
+              )}
             </Card>
           );
         })}

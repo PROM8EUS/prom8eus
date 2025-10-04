@@ -60,9 +60,10 @@ interface EffortSectionProps {
 const useAnimatedCounter = (end: number, duration: number = 2000, start: number = 0) => {
   const [count, setCount] = useState(start);
   const [isAnimating, setIsAnimating] = useState(false);
-  const frameRef = useRef<number>();
 
   useEffect(() => {
+    if (end === start) return;
+    
     setIsAnimating(true);
     const startTime = Date.now();
     
@@ -74,22 +75,16 @@ const useAnimatedCounter = (end: number, duration: number = 2000, start: number 
       const easeOutCubic = 1 - Math.pow(1 - progress, 3);
       const currentCount = start + (end - start) * easeOutCubic;
       
-      setCount(currentCount);
+      setCount(Math.round(currentCount * 10) / 10);
       
       if (progress < 1) {
-        frameRef.current = requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
       } else {
         setIsAnimating(false);
       }
     };
     
-    frameRef.current = requestAnimationFrame(animate);
-    
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
+    requestAnimationFrame(animate);
   }, [end, duration, start]);
 
   return { count, isAnimating };
@@ -103,46 +98,32 @@ const AnimatedProgressBar: React.FC<{
   label: string;
   animated?: boolean;
   showPercentage?: boolean;
-  viewMode?: 'time' | 'money';
-  hourlyRate?: number;
-  lang?: 'de' | 'en';
-}> = ({ value, max, color, label, animated = true, showPercentage = true, viewMode = 'time', hourlyRate = 60, lang = 'de' }) => {
-  const displayValue = viewMode === 'money' ? value * hourlyRate : value;
-  const displayMax = viewMode === 'money' ? max * hourlyRate : max;
-  const { count } = useAnimatedCounter(animated ? displayValue : displayValue, 1500);
-  const percentage = (count / displayMax) * 100;
-
-  const formatValue = (val: number) => {
-    if (viewMode === 'money') {
-      return new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(val);
-    }
-    return `${val.toFixed(1)}h`;
-  };
+  viewMode: 'time' | 'money';
+  hourlyRate: number;
+  lang: 'de' | 'en';
+}> = ({ value, max, color, label, animated = true, showPercentage = true, viewMode, hourlyRate, lang }) => {
+  const { count: animatedValue } = useAnimatedCounter(animated ? value : value, 1500);
+  const percentage = (animatedValue / max) * 100;
+  const cost = animatedValue * hourlyRate;
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-muted-foreground font-medium">{label}</span>
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-medium text-gray-700">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-foreground">{formatValue(count)}</span>
+          <span className="font-semibold text-gray-900">
+            {viewMode === 'time' ? `${animatedValue.toFixed(1)}h` : `€${cost.toFixed(0)}`}
+          </span>
           {showPercentage && (
-            <Badge variant="secondary" className="text-xs">
+            <span className="text-xs text-gray-500">
               {percentage.toFixed(0)}%
-            </Badge>
+            </span>
           )}
         </div>
       </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
+      <div className="w-full bg-gray-200 rounded-full h-2">
         <div 
-          className={cn(
-            "h-full rounded-full transition-all duration-1000 ease-out",
-            color
-          )}
+          className={`h-2 rounded-full transition-all duration-1000 ease-out ${color}`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
       </div>
@@ -155,71 +136,41 @@ const ROIBlock: React.FC<{
   savedHours: number;
   savedCost: number;
   period: string;
-  lang: 'de' | 'en';
   animated?: boolean;
-  showTrends?: boolean;
-  viewMode?: 'time' | 'money';
-}> = ({ savedHours, savedCost, period, lang, animated = true, showTrends = true, viewMode = 'time' }) => {
+  lang: 'de' | 'en';
+}> = ({ savedHours, savedCost, period, animated = true, lang }) => {
   const { count: animatedHours } = useAnimatedCounter(animated ? savedHours : savedHours, 2000);
   const { count: animatedCost } = useAnimatedCounter(animated ? savedCost : savedCost, 2500);
   const savingsPercentage = (savedHours / (savedHours + savedHours * 0.1)) * 100; // Mock calculation
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="p-2 bg-green-100 rounded-lg">
-          <TrendingUp className="h-5 w-5 text-green-600" />
+    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-100 rounded-full">
+            <TrendingUp className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-green-900">
+              {lang === 'de' ? 'Einsparungen' : 'Savings'}
+            </h4>
+            <p className="text-sm text-green-700">
+              {lang === 'de' ? 'Durch Automatisierung' : 'Through automation'}
+            </p>
+          </div>
         </div>
-        <h4 className="font-semibold text-green-800">
-          {lang === 'de' ? 'ROI Übersicht' : 'ROI Overview'}
-        </h4>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-green-900">
+            {animatedHours.toFixed(1)}h
+          </div>
+          <div className="text-lg font-semibold text-green-700">
+            €{animatedCost.toFixed(0)}
+          </div>
+          <div className="text-xs text-green-600">
+            {lang === 'de' ? `pro ${period}` : `per ${period}`}
+          </div>
+        </div>
       </div>
-      
-      {viewMode === 'time' ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-700">
-              {animatedHours.toFixed(1)}h
-            </div>
-            <div className="text-xs text-green-600">
-              {lang === 'de' ? 'Zeitersparnis' : 'Time Saved'}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-700">
-              {Math.round(animatedCost).toLocaleString('de-DE')}€
-            </div>
-            <div className="text-xs text-green-600">
-              {lang === 'de' ? 'Kosteneinsparung' : 'Cost Savings'}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center">
-          <div className="text-3xl font-bold text-green-700">
-            {new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
-              style: 'currency',
-              currency: 'EUR',
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0
-            }).format(animatedCost)}
-          </div>
-          <div className="text-sm text-green-600">
-            {lang === 'de' ? 'Kosteneinsparung pro ' + period : 'Cost savings per ' + period}
-          </div>
-        </div>
-      )}
-      
-      {showTrends && (
-        <div className="flex items-center justify-center gap-2 pt-2 border-t border-green-200">
-          <div className="flex items-center gap-1">
-            <TrendingUp className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium text-green-700">
-              {savingsPercentage.toFixed(0)}% {lang === 'de' ? 'Effizienzsteigerung' : 'Efficiency Gain'}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -239,7 +190,7 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
   showAnimatedCounters = true,
   showROIBlock = true,
   showDetailedBreakdown = false,
-  showComparisonChart = true,
+  showComparisonChart = false,
   showTrends = true,
   showInsights = false,
   // Visual enhancements
@@ -257,17 +208,14 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
   ariaLabel,
   ariaDescription
 }) => {
-  const [isEditingRate, setIsEditingRate] = useState(false);
-  const [tempRate, setTempRate] = useState(hourlyRate);
-  const [isExpanded, setIsExpanded] = useState(!collapsible);
-  const [isCollapsed, setIsCollapsed] = useState(collapsible);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<'time' | 'money'>('time');
 
   // Calculate savings
   const savedHours = manualHours - automatedHours;
   const manualCost = manualHours * hourlyRate;
   const automatedCost = automatedHours * hourlyRate;
-  const savedCost = savedHours * hourlyRate;
+  const savedCost = manualCost - automatedCost;
   const savingsPercentage = (savedHours / manualHours) * 100;
 
   // Calculate percentages for progress bars
@@ -280,33 +228,18 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
     year: lang === 'de' ? 'Jahr' : 'year',
     month: lang === 'de' ? 'Monat' : 'month',
     week: lang === 'de' ? 'Woche' : 'week',
-    day: lang === 'de' ? 'Tag' : 'day',
+    day: lang === 'de' ? 'Tag' : 'day'
   }[period];
 
   // Animated counters
   const { count: animatedManualHours } = useAnimatedCounter(animated ? manualHours : manualHours, 1500);
   const { count: animatedAutomatedHours } = useAnimatedCounter(animated ? automatedHours : automatedHours, 1800);
   const { count: animatedSavedHours } = useAnimatedCounter(animated ? savedHours : savedHours, 2000);
-  const { count: animatedSavedCost } = useAnimatedCounter(animated ? savedCost : savedCost, 2200);
-
-  const handleSaveRate = () => {
-    if (tempRate > 0 && onHourlyRateChange) {
-      onHourlyRateChange(tempRate);
-    }
-    setIsEditingRate(false);
-  };
-
-  const handleCancelEdit = () => {
-    setTempRate(hourlyRate);
-    setIsEditingRate(false);
-  };
+  const { count: animatedSavedCost } = useAnimatedCounter(animated ? savedCost : savedCost, 2500);
 
   const toggleExpanded = () => {
-    if (collapsible) {
+    if (collapsible || expandable) {
       setIsCollapsed(!isCollapsed);
-    }
-    if (expandable) {
-      setIsExpanded(!isExpanded);
     }
   };
 
@@ -316,7 +249,7 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
       case 'compact':
         return 'p-3 space-y-3';
       case 'detailed':
-        return 'p-6 space-y-6';
+        return 'p-6 space-y-5';
       case 'minimal':
         return 'p-2 space-y-2';
       default:
@@ -434,39 +367,33 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
                 savedHours={savedHours}
                 savedCost={savedCost}
                 period={periodLabel}
-                lang={lang}
                 animated={animated}
-                showTrends={showTrends}
-                viewMode={viewMode}
+                lang={lang}
               />
             )}
 
             {/* Detailed Breakdown */}
             {showDetailedBreakdown && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <PieChart className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm font-semibold text-foreground">
-                    {lang === 'de' ? 'Detaillierte Aufschlüsselung' : 'Detailed Breakdown'}
-                  </h4>
-                </div>
-                
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  {lang === 'de' ? 'Detaillierte Aufschlüsselung' : 'Detailed Breakdown'}
+                </h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {lang === 'de' ? 'Manuelle Kosten' : 'Manual Costs'}
+                  <div className="bg-white/50 rounded-lg p-3 border border-gray-200">
+                    <div className="text-sm text-gray-600 mb-1">
+                      {lang === 'de' ? 'Manuelle Stunden' : 'Manual Hours'}
                     </div>
-                    <div className="text-lg font-bold text-destructive">
-                      {Math.round(manualCost).toLocaleString('de-DE')}€
+                    <div className="text-2xl font-bold text-gray-900">
+                      {animatedManualHours.toFixed(1)}h
                     </div>
                   </div>
-                  
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {lang === 'de' ? 'Automatisierte Kosten' : 'Automated Costs'}
+                  <div className="bg-white/50 rounded-lg p-3 border border-gray-200">
+                    <div className="text-sm text-gray-600 mb-1">
+                      {lang === 'de' ? 'Automatisierte Stunden' : 'Automated Hours'}
                     </div>
-                    <div className="text-lg font-bold text-primary">
-                      {Math.round(automatedCost).toLocaleString('de-DE')}€
+                    <div className="text-2xl font-bold text-primary">
+                      {animatedAutomatedHours.toFixed(1)}h
                     </div>
                   </div>
                 </div>
@@ -475,58 +402,31 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
 
             {/* Kompakter Stundensatz Editor - nur bei Geld-Ansicht */}
             {interactive && viewMode === 'money' && (
-              <div className="bg-white/50 rounded-lg p-3 border border-gray-200">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
-                      {lang === 'de' ? 'Stundensatz' : 'Hourly Rate'}
-                    </span>
+              <div className="bg-white/50 rounded-lg p-2 border border-gray-200">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-gray-700 flex-shrink-0">
+                    {lang === 'de' ? 'Stundensatz:' : 'Hourly rate:'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <HourlyRateEditor
+                      value={hourlyRate}
+                      onChange={(newRate) => {
+                        onHourlyRateChange?.(newRate);
+                      }}
+                      onValidationChange={(isValid, message) => {
+                        // Handle validation feedback
+                        console.log('Validation:', isValid, message);
+                      }}
+                      lang={lang}
+                      className="w-full"
+                      showLabel={false}
+                      showIcon={false}
+                      showTooltip={false}
+                      showTrends={false}
+                      showComparison={false}
+                      showInsights={false}
+                    />
                   </div>
-                  
-                  <HourlyRateEditor
-                    value={hourlyRate}
-                    onChange={onHourlyRateChange || (() => {})}
-                    onSave={(newRate) => {
-                      if (onHourlyRateChange) {
-                        onHourlyRateChange(newRate);
-                      }
-                    }}
-                    showLabel={false}
-                    showIcon={false}
-                    showTooltip={true}
-                    showValidation={false}
-                    showSuccess={false}
-                    showError={false}
-                    size="sm"
-                    variant="compact"
-                    disabled={false}
-                    readOnly={false}
-                    autoFocus={false}
-                    min={0}
-                    max={500}
-                    step={1}
-                    showTrends={false}
-                    showComparison={false}
-                    showInsights={false}
-                    period={period}
-                    lang={lang}
-                    onEditStart={() => {
-                      setIsEditingRate(true);
-                    }}
-                    onEditEnd={() => {
-                      setIsEditingRate(false);
-                    }}
-                    onValidationChange={(isValid, message) => {
-                      // Handle validation feedback
-                      console.log('Validation:', isValid, message);
-                    }}
-                    ariaLabel={lang === 'de' ? 'Stundensatz bearbeiten' : 'Edit hourly rate'}
-                    ariaDescription={lang === 'de' 
-                      ? 'Bearbeiten Sie den Stundensatz für ROI-Berechnungen'
-                      : 'Edit the hourly rate for ROI calculations'
-                    }
-                  />
                 </div>
               </div>
             )}
@@ -534,31 +434,17 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
             {/* Insights Section */}
             {showInsights && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm font-semibold text-foreground">
-                    {lang === 'de' ? 'Erkenntnisse' : 'Insights'}
-                  </h4>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>
-                      {lang === 'de' 
-                        ? `Sie sparen ${savingsPercentage.toFixed(0)}% Ihrer Zeit durch Automatisierung`
-                        : `You save ${savingsPercentage.toFixed(0)}% of your time through automation`
-                      }
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm">
-                    <TrendingUp className="h-4 w-4 text-blue-500" />
-                    <span>
-                      {lang === 'de' 
-                        ? `ROI von ${Math.round((savedCost / automatedCost) * 100)}% in ${periodLabel}`
-                        : `ROI of ${Math.round((savedCost / automatedCost) * 100)}% in ${periodLabel}`
-                      }
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-500" />
+                  {lang === 'de' ? 'Erkenntnisse' : 'Insights'}
+                </h4>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="text-sm text-amber-800">
+                    <span className="font-medium">
+                      {lang === 'de' ? 'ROI von ' : 'ROI of '}
+                      {Math.round((savedCost / automatedCost) * 100)}%
+                      {lang === 'de' ? ' in ' : ' in '}
+                      {periodLabel}
                     </span>
                   </div>
                 </div>
@@ -572,4 +458,3 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
 };
 
 export default EffortSection;
-

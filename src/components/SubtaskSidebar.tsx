@@ -358,18 +358,18 @@ export default function SubtaskSidebar({
   return (
     <div className="w-full">
       <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between py-3">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
-              </h3>
-              <div className="flex items-center gap-2">
-                <AnimatedCounterBadge count={realSubtasks.length} isLoading={isGenerating} />
-              </div>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between py-3">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
+          </h3>
+          <div className="flex items-center gap-2">
+            <AnimatedCounterBadge count={realSubtasks.length} isLoading={isGenerating} />
+          </div>
+        </div>
 
-            {/* Subtasks List */}
-            <div className="space-y-3">
+        {/* Subtasks List */}
+        <div className="space-y-3">
               {/* "Alle (Komplettlösungen)" as first item in the list */}
               <Card
                 className={`cursor-pointer transition-all duration-200 ${
@@ -480,8 +480,7 @@ export default function SubtaskSidebar({
                   </CardContent>
                 </Card>
               ))}
-            </div>
-
+        </div>
       </div>
     </div>
   );
