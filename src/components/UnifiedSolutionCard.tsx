@@ -23,8 +23,6 @@ import {
   TrendingUp,
   Users,
   Zap,
-  Star,
-  Bookmark,
   Share2,
   Copy,
   ExternalLink,
@@ -54,13 +52,13 @@ import {
   Download,
   Upload,
   RefreshCw,
-  Heart,
   ThumbsUp,
   MessageSquare as Chat,
   Bell,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SolutionStatus, GenerationMetadata } from '@/lib/types';
@@ -162,7 +160,6 @@ export interface UnifiedSolutionData {
   views?: number;
   downloads?: number;
   shares?: number;
-  favorites?: number;
   comments?: number;
 }
 
@@ -176,7 +173,6 @@ interface UnifiedSolutionCardProps {
   onConfigClick?: (solution: UnifiedSolutionData) => void;
   onCopyClick?: (solution: UnifiedSolutionData) => void;
   onOpenInServiceClick?: (solution: UnifiedSolutionData, service?: string) => void;
-  onFavoriteClick?: (solution: UnifiedSolutionData) => void;
   onShareClick?: (solution: UnifiedSolutionData) => void;
   onDownloadClick?: (solution: UnifiedSolutionData) => void;
   
@@ -343,7 +339,6 @@ const generateAvatarPlaceholder = (name: string, personality?: string) => {
 // Skeleton loading components
 const SolutionCardSkeleton = ({ compact = true, type = 'workflow' }: { compact?: boolean; type?: string }) => (
   <Card className={cn(
-    "animate-pulse",
     "min-h-fit" // Automatische Höhe auch für Skeleton
   )}>
     <CardContent className="p-4">
@@ -450,7 +445,6 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   onConfigClick,
   onCopyClick,
   onOpenInServiceClick,
-  onFavoriteClick,
   onShareClick,
   onDownloadClick,
   className,
@@ -460,7 +454,6 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -520,12 +513,6 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
     }
   };
 
-  // Handle favorite toggle
-  const handleFavorite = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setIsFavorited(!isFavorited);
-    onFavoriteClick?.(solution);
-  };
 
   // Handle share
   const handleShare = (e?: React.MouseEvent) => {
@@ -665,15 +652,6 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
     }
 
     // Common utility actions
-    if (onFavoriteClick) {
-      buttons.push({
-        icon: isFavorited ? Heart : Heart,
-        label: lang === 'de' ? 'Favorit' : 'Favorite',
-        onClick: handleFavorite,
-        variant: 'ghost' as const,
-        className: isFavorited ? 'text-red-500' : ''
-      });
-    }
 
     if (onShareClick) {
       buttons.push({
@@ -694,11 +672,9 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   return (
     <Card 
       className={cn(
-        "group relative overflow-hidden transition-all duration-300 ease-in-out",
-        "hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
-        "border border-gray-200 hover:border-primary/30",
-        "bg-white hover:bg-gradient-to-br hover:from-white hover:to-primary/5",
-        isHovered && "ring-2 ring-primary/20",
+        "group relative overflow-hidden",
+        "border border-gray-200",
+        "bg-white",
         isInteractive && "cursor-pointer",
         "min-h-fit", // Automatische Höhe statt feste Höhe
         className
@@ -707,11 +683,6 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
       onMouseLeave={handleMouseLeave}
       onClick={handleSelect}
     >
-      {/* Hover overlay */}
-      <div className={cn(
-        "absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300",
-        isHovered && "opacity-100"
-      )} />
 
       {/* Status indicator */}
       {solution.status && (
@@ -739,10 +710,9 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
             {/* Icon */}
             <div className={cn(
               "rounded-full flex items-center justify-center",
-              "shadow-md transition-all duration-300",
+              "shadow-md",
               getTypeStyle(solution.type),
-              compact ? "h-10 w-10" : "h-12 w-12",
-              isHovered && "scale-110 shadow-lg"
+              compact ? "h-10 w-10" : "h-12 w-12"
             )}>
               <TypeIcon className={cn(
                 compact ? "w-5 h-5" : "w-6 h-6"
@@ -832,7 +802,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={handleExpand}
-                  className="h-6 px-2 text-xs hover:bg-gray-100"
+                  className="h-6 px-2 text-xs"
                 >
                   {isExpanded ? (
                     <>

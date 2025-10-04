@@ -51,7 +51,6 @@ export default function AgentTab({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'experience' | 'availability'>('relevance');
   const [filterTechnology, setFilterTechnology] = useState<string>('all');
@@ -128,15 +127,6 @@ export default function AgentTab({
   };
 
   // Enhanced helper functions
-  const handleFavorite = (agent: UnifiedSolutionData) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(agent.id)) {
-      newFavorites.delete(agent.id);
-    } else {
-      newFavorites.add(agent.id);
-    }
-    setFavorites(newFavorites);
-  };
 
   const handleShare = (agent: UnifiedSolutionData) => {
     if (navigator.share) {
@@ -379,7 +369,6 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
                 onSelect={(unifiedSolution) => onAgentSelect?.(agent)}
                 onSetupClick={(unifiedSolution) => handleSetupRequest(agent)}
                 onConfigClick={(unifiedSolution) => handleConfigView(agent)}
-                onFavoriteClick={handleFavorite}
                 onShareClick={handleShare}
                 compact={true}
                 isInteractive={true}

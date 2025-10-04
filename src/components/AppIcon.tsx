@@ -2,7 +2,7 @@ import React from 'react';
 import { AITool, getToolDescription, getToolFeatures } from '../lib/catalog/aiTools';
 
 interface AppIconProps {
-  tool: AITool;
+  tool: AITool | { id: string; name: string; logoKey?: string; category?: string };
   size?: 'sm' | 'md' | 'lg';
   showName?: boolean;
   className?: string;
@@ -55,13 +55,13 @@ const AppIcon: React.FC<AppIconProps> = ({
   const [logoUrl, setLogoUrl] = React.useState<string>('');
   const [showFallback, setShowFallback] = React.useState<boolean>(false);
 
-  const localAssetPath = `/logos/${tool.id}.png`;
-  const storageKey = `logo_cache_${tool.id}`;
+  const localAssetPath = `/logos/${tool.logoKey || tool.id}.png`;
+  const storageKey = `logo_cache_${tool.logoKey || tool.id}`;
   const LOGO_DEV_API_KEY = (import.meta as any)?.env?.VITE_LOGO_DEV_API_KEY;
 
   const fetchAndCacheLogoDev = async (): Promise<string | null> => {
     try {
-      const domain = logoDevDomains[tool.id];
+      const domain = logoDevDomains[tool.logoKey || tool.id];
       if (!domain || !LOGO_DEV_API_KEY) return null;
       const url = `https://img.logo.dev/${domain}?token=${LOGO_DEV_API_KEY}&size=128&format=png`;
       const resp = await fetch(url, { mode: 'cors' });
@@ -121,7 +121,7 @@ const AppIcon: React.FC<AppIconProps> = ({
     setLogoUrl(localAssetPath);
     setShowFallback(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tool.id]);
+  }, [tool.id, tool.logoKey]);
 
   const handleImageError = async () => {
     // If local asset failed, try fetching from logo.dev, then clearbit

@@ -159,13 +159,49 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
   // Derive a domain category when missing
   const inferDomainCategory = (text: string): string => {
     const t = text.toLowerCase();
-    if (/(react|node|typescript|javascript|frontend|backend|entwicklung|programmierung|api)/.test(t)) return currentLang === 'de' ? 'Software-Entwicklung' : 'Software Development';
-    if (/(datenbank|database|sql|postgres|mysql|schema|optimierung)/.test(t)) return currentLang === 'de' ? 'Datenmanagement' : 'Data Management';
-    if (/(integration|api|schnittstelle|connect|webhook)/.test(t)) return currentLang === 'de' ? 'Integration' : 'Integration';
-    if (/(test|testing|qa|qualität|qualitätssicherung|review|code review)/.test(t)) return currentLang === 'de' ? 'Qualitätssicherung' : 'Quality Assurance';
-    if (/(doku|dokumentation|documentation|bericht|report)/.test(t)) return currentLang === 'de' ? 'Dokumentation' : 'Documentation';
-    if (/(debug|fehler|bug|wartung|support)/.test(t)) return currentLang === 'de' ? 'Fehlerbehebung' : 'Debugging';
-    if (/(team|agil|meeting|koordination|zusammenarbeit)/.test(t)) return currentLang === 'de' ? 'Teamarbeit' : 'Teamwork';
+    
+    // Marketing & Content
+    if (/(marketing|content|social media|kampagne|campaign|werbung|advertising|brand|branding|seo|social|media|content-erstellung|content-creation)/.test(t)) return currentLang === 'de' ? 'Marketing' : 'Marketing';
+    
+    // Sales & Customer
+    if (/(sales|verkauf|kunde|customer|client|lead|prospect|vertrieb|account|relationship)/.test(t)) return currentLang === 'de' ? 'Vertrieb' : 'Sales';
+    
+    // Finance & Accounting
+    if (/(finance|finanz|accounting|buchhaltung|budget|kosten|cost|rechnung|invoice|zahlung|payment)/.test(t)) return currentLang === 'de' ? 'Finanzen' : 'Finance';
+    
+    // HR & People
+    if (/(hr|personal|human resources|recruiting|bewerbung|application|onboarding|training|schulung)/.test(t)) return currentLang === 'de' ? 'Personalwesen' : 'Human Resources';
+    
+    // Operations & Process
+    if (/(operation|prozess|process|workflow|automatisierung|automation|optimierung|optimization|efficiency)/.test(t)) return currentLang === 'de' ? 'Prozesse' : 'Operations';
+    
+    // Data & Analytics
+    if (/(daten|data|analytics|analyse|analysis|reporting|bericht|report|kpi|metric|dashboard)/.test(t)) return currentLang === 'de' ? 'Daten & Analytics' : 'Data & Analytics';
+    
+    // Software & IT
+    if (/(react|node|typescript|javascript|frontend|backend|entwicklung|programmierung|api|software|it|system)/.test(t)) return currentLang === 'de' ? 'Software-Entwicklung' : 'Software Development';
+    
+    // Database & Storage
+    if (/(datenbank|database|sql|postgres|mysql|schema|storage|speicher)/.test(t)) return currentLang === 'de' ? 'Datenmanagement' : 'Data Management';
+    
+    // Integration & APIs
+    if (/(integration|api|schnittstelle|connect|webhook|interface)/.test(t)) return currentLang === 'de' ? 'Integration' : 'Integration';
+    
+    // Quality & Testing
+    if (/(test|testing|qa|qualität|qualitätssicherung|review|code review|quality)/.test(t)) return currentLang === 'de' ? 'Qualitätssicherung' : 'Quality Assurance';
+    
+    // Documentation
+    if (/(doku|dokumentation|documentation|bericht|report|manual|handbuch)/.test(t)) return currentLang === 'de' ? 'Dokumentation' : 'Documentation';
+    
+    // Support & Maintenance
+    if (/(debug|fehler|bug|wartung|support|maintenance|troubleshooting)/.test(t)) return currentLang === 'de' ? 'Support' : 'Support';
+    
+    // Team & Collaboration
+    if (/(team|agil|meeting|koordination|zusammenarbeit|collaboration|project|projekt)/.test(t)) return currentLang === 'de' ? 'Teamarbeit' : 'Teamwork';
+    
+    // Strategy & Planning
+    if (/(strategie|strategy|planung|planning|roadmap|vision|ziel|goal|objective)/.test(t)) return currentLang === 'de' ? 'Strategie' : 'Strategy';
+    
     return currentLang === 'de' ? 'Allgemein' : 'General';
   };
 
@@ -452,13 +488,16 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
           return (
             <Card 
               key={task.id} 
-              className={`transition-shadow duration-200 shadow-sm h-full flex flex-col ${
+              className={`transition-all duration-500 ease-in-out shadow-sm flex flex-col ${
                 isExpanded ? 'shadow-lg' : 'hover:shadow-md'
               }`}
               style={{ 
                 animation: `fade-in 0.5s ease-out forwards`,
                 animationDelay: `${index * 0.1}s`,
-                opacity: 0
+                opacity: 0,
+                maxHeight: isExpanded ? '2000px' : '120px',
+                overflow: 'visible',
+                position: 'relative'
               }}
             >
               {/* Fixed Header */}
@@ -551,9 +590,12 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
               </div>
                 
               {/* Scrollable Content */}
-              {isExpanded && (
-                <div className="flex-1 overflow-y-auto">
-                  <div className="p-4 space-y-6">
+              <div 
+                className={`transition-all duration-500 ease-in-out ${
+                  isExpanded ? 'opacity-100' : 'opacity-0 max-h-px overflow-hidden'
+                }`}
+              >
+                <div className="p-4 space-y-6">
                     {/* Subtasks Section */}
                     {task.subtasks && task.subtasks.length > 0 && (
                       <div className="space-y-4">
@@ -647,9 +689,8 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       onOpenSolutions={() => {}}
                       isVisible={isExpanded}
                     />
-                  </div>
                 </div>
-              )}
+              </div>
             </Card>
           );
         })}

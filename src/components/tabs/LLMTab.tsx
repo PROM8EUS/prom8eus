@@ -51,7 +51,6 @@ export default function LLMTab({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'relevance' | 'effectiveness' | 'tokens' | 'service'>('relevance');
   const [filterService, setFilterService] = useState<string>('all');
@@ -129,15 +128,6 @@ export default function LLMTab({
   };
 
   // Enhanced helper functions
-  const handleFavorite = (prompt: UnifiedSolutionData) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(prompt.id)) {
-      newFavorites.delete(prompt.id);
-    } else {
-      newFavorites.add(prompt.id);
-    }
-    setFavorites(newFavorites);
-  };
 
   const handleShare = (prompt: UnifiedSolutionData) => {
     if (navigator.share) {
@@ -371,7 +361,6 @@ export default function LLMTab({
                 onSelect={(unifiedSolution) => onPromptSelect?.(prompt)}
                 onCopyClick={(unifiedSolution) => handleCopyPrompt(prompt)}
                 onOpenInServiceClick={(unifiedSolution) => handleOpenInService(prompt)}
-                onFavoriteClick={handleFavorite}
                 onShareClick={handleShare}
                 compact={true}
                 isInteractive={true}

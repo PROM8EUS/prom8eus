@@ -91,52 +91,13 @@ async function setCachedSubtasksForText(taskText: string, subtasks: Subtask[]): 
   console.log(`💾 [SubtasksCache] Saved ${subtasks.length} items for ${key}`);
 }
 
-// Animated Counter Badge Component
-const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: boolean }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+// Simple Counter Component
+const SimpleCounter = ({ count, isLoading }: { count: number; isLoading: boolean }) => {
 
-  const ITEM_HEIGHT = 16; // px — compact height to avoid changing tab size
-
-  useEffect(() => {
-    if (isLoading) {
-      setCurrentIndex(0);
-      setIsAnimating(false);
-      return;
-    }
-
-    // Only animate when count changes and we're not loading
-    if (count > 0 && !isAnimating && !isLoading) {
-      setIsAnimating(true);
-      const duration = 2000; // 2s for a subtler animation
-      const steps = Math.min(80, Math.max(30, count * 20));
-      const stepDuration = duration / steps;
-      
-      let currentStep = 0;
-      const timer = setInterval(() => {
-        currentStep++;
-        const progress = currentStep / steps;
-        const targetIndex = Math.floor(progress * count);
-        setCurrentIndex(Math.min(targetIndex, count - 1));
-        
-        if (currentStep >= steps) {
-          setCurrentIndex(count - 1);
-          setIsAnimating(false);
-          clearInterval(timer);
-        }
-      }, stepDuration);
-      
-      return () => clearInterval(timer);
-    } else if (count > 0 && !isLoading) {
-      // If not animating but count is available, set it directly
-      setCurrentIndex(count - 1);
-    }
-  }, [count, isLoading, isAnimating]);
-
-  // Loading shimmer — compact and brand-colored
+  // Loading shimmer — just gray text
   if (isLoading) {
     return (
-      <span className="ml-1 inline-flex items-center justify-center h-5 min-w-[18px] px-1.5 rounded-full bg-primary/80 text-primary-foreground text-[10px] leading-none animate-pulse">
+      <span className="ml-1 text-gray-500 text-[10px] leading-none animate-pulse">
         ·
       </span>
     );
@@ -148,22 +109,8 @@ const AnimatedCounterBadge = ({ count, isLoading }: { count: number; isLoading: 
   }
 
   return (
-    <span className="ml-1 inline-flex items-center justify-center h-5 min-w-[18px] px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] leading-none overflow-hidden">
-      <span 
-        className="relative"
-        style={{ height: ITEM_HEIGHT, display: 'inline-block' }}
-      >
-        <span 
-          className="transition-transform duration-100 ease-out block"
-          style={{ transform: `translateY(-${currentIndex * ITEM_HEIGHT}px)` }}
-        >
-          {Array.from({ length: count }, (_, i) => i + 1).map((num) => (
-            <span key={num} className="flex items-center justify-center" style={{ height: ITEM_HEIGHT, lineHeight: `${ITEM_HEIGHT}px` }}>
-              {num}
-            </span>
-          ))}
-        </span>
-      </span>
+    <span className="ml-1 text-gray-500 text-[10px] leading-none">
+      {count}
     </span>
   );
 };
@@ -229,59 +176,67 @@ export default function SubtaskSidebar({
 
   // Get typical applications for a subtask
   const getTypicalApplications = (subtask: Subtask) => {
-    // Define typical applications based on subtask content with Simple Icons mapping
+    // Define typical applications based on subtask content - using available logos
     const applications = [
       { id: 'excel-ai', name: 'Excel AI', logoKey: 'excel-ai', category: 'data' },
-      { id: 'powerpoint', name: 'PowerPoint', logoKey: 'powerpoint', category: 'presentation' },
-      { id: 'word', name: 'Word', logoKey: 'word', category: 'documentation' },
-      { id: 'outlook', name: 'Outlook', logoKey: 'outlook', category: 'communication' },
-      { id: 'teams', name: 'Teams', logoKey: 'teams', category: 'collaboration' },
-      { id: 'sharepoint', name: 'SharePoint', logoKey: 'sharepoint', category: 'storage' },
-      { id: 'powerbi', name: 'Power BI', logoKey: 'powerbi', category: 'analytics' },
-      { id: 'salesforce', name: 'Salesforce', logoKey: 'salesforce', category: 'crm' },
-      { id: 'slack', name: 'Slack', logoKey: 'slack', category: 'communication' },
-      { id: 'notion', name: 'Notion', logoKey: 'notion', category: 'documentation' },
-      { id: 'asana', name: 'Asana', logoKey: 'asana', category: 'project' },
-      { id: 'trello', name: 'Trello', logoKey: 'trello', category: 'project' },
-      { id: 'figma', name: 'Figma', logoKey: 'figma', category: 'design' },
-      { id: 'canva', name: 'Canva', logoKey: 'canva', category: 'design' },
-      { id: 'google-sheets', name: 'Google Sheets', logoKey: 'google-sheets', category: 'data' },
-      { id: 'google-docs', name: 'Google Docs', logoKey: 'google-docs', category: 'documentation' },
-      { id: 'zoom', name: 'Zoom', logoKey: 'zoom', category: 'communication' },
-      { id: 'calendar', name: 'Google Calendar', logoKey: 'calendar', category: 'scheduling' },
-      { id: 'dropbox', name: 'Dropbox', logoKey: 'dropbox', category: 'storage' },
-      { id: 'onedrive', name: 'OneDrive', logoKey: 'onedrive', category: 'storage' }
+      { id: 'power-bi-ai', name: 'Power BI', logoKey: 'power-bi-ai', category: 'analytics' },
+      { id: 'google-sheets-ai', name: 'Google Sheets', logoKey: 'google-sheets-ai', category: 'data' },
+      { id: 'chatgpt', name: 'ChatGPT', logoKey: 'chatgpt', category: 'ai' },
+      { id: 'claude', name: 'Claude', logoKey: 'claude', category: 'ai' },
+      { id: 'gemini', name: 'Gemini', logoKey: 'gemini', category: 'ai' },
+      { id: 'grok', name: 'Grok', logoKey: 'grok', category: 'ai' },
+      { id: 'perplexity', name: 'Perplexity', logoKey: 'perplexity', category: 'ai' },
+      { id: 'notion-ai', name: 'Notion AI', logoKey: 'notion-ai', category: 'documentation' },
+      { id: 'canva-ai', name: 'Canva AI', logoKey: 'canva-ai', category: 'design' },
+      { id: 'copy-ai', name: 'Copy.ai', logoKey: 'copy-ai', category: 'content' },
+      { id: 'writesonic', name: 'Writesonic', logoKey: 'writesonic', category: 'content' },
+      { id: 'jasper', name: 'Jasper', logoKey: 'jasper', category: 'content' },
+      { id: 'grammarly', name: 'Grammarly', logoKey: 'grammarly', category: 'writing' },
+      { id: 'github-copilot', name: 'GitHub Copilot', logoKey: 'github-copilot', category: 'development' },
+      { id: 'code-whisperer', name: 'Code Whisperer', logoKey: 'code-whisperer', category: 'development' },
+      { id: 'tabnine', name: 'Tabnine', logoKey: 'tabnine', category: 'development' },
+      { id: 'microsoft-copilot', name: 'Microsoft Copilot', logoKey: 'microsoft-copilot', category: 'ai' },
+      { id: 'obsidian-ai', name: 'Obsidian AI', logoKey: 'obsidian-ai', category: 'documentation' },
+      { id: 'airtable-ai', name: 'Airtable AI', logoKey: 'airtable-ai', category: 'data' }
     ];
 
     // Filter applications based on subtask title/content
     const lowerTitle = subtask.title.toLowerCase();
     
     if (lowerTitle.includes('daten') || lowerTitle.includes('data') || lowerTitle.includes('analyse') || lowerTitle.includes('report')) {
-      return applications.filter(app => ['excel', 'powerbi', 'google-sheets'].includes(app.id));
+      return applications.filter(app => ['excel-ai', 'power-bi-ai', 'google-sheets-ai', 'airtable-ai'].includes(app.id));
     }
     
     if (lowerTitle.includes('präsentation') || lowerTitle.includes('presentation') || lowerTitle.includes('meeting')) {
-      return applications.filter(app => ['powerpoint', 'teams', 'zoom'].includes(app.id));
+      return applications.filter(app => ['canva-ai', 'notion-ai', 'microsoft-copilot'].includes(app.id));
     }
     
     if (lowerTitle.includes('dokument') || lowerTitle.includes('document') || lowerTitle.includes('bericht')) {
-      return applications.filter(app => ['word', 'google-docs', 'notion'].includes(app.id));
+      return applications.filter(app => ['notion-ai', 'obsidian-ai', 'microsoft-copilot'].includes(app.id));
     }
     
     if (lowerTitle.includes('kommunikation') || lowerTitle.includes('communication') || lowerTitle.includes('email')) {
-      return applications.filter(app => ['outlook', 'teams', 'slack'].includes(app.id));
+      return applications.filter(app => ['microsoft-copilot', 'chatgpt', 'claude'].includes(app.id));
     }
     
     if (lowerTitle.includes('projekt') || lowerTitle.includes('project') || lowerTitle.includes('task')) {
-      return applications.filter(app => ['asana', 'trello', 'notion'].includes(app.id));
+      return applications.filter(app => ['notion-ai', 'airtable-ai', 'microsoft-copilot'].includes(app.id));
     }
     
     if (lowerTitle.includes('design') || lowerTitle.includes('visual') || lowerTitle.includes('grafik')) {
-      return applications.filter(app => ['figma', 'canva', 'powerpoint'].includes(app.id));
+      return applications.filter(app => ['canva-ai', 'chatgpt', 'claude'].includes(app.id));
     }
     
-    if (lowerTitle.includes('storage') || lowerTitle.includes('datei') || lowerTitle.includes('file')) {
-      return applications.filter(app => ['sharepoint', 'dropbox', 'onedrive'].includes(app.id));
+    if (lowerTitle.includes('entwicklung') || lowerTitle.includes('development') || lowerTitle.includes('programmierung') || lowerTitle.includes('coding')) {
+      return applications.filter(app => ['github-copilot', 'code-whisperer', 'tabnine', 'microsoft-copilot'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('content') || lowerTitle.includes('text') || lowerTitle.includes('schreiben') || lowerTitle.includes('writing')) {
+      return applications.filter(app => ['copy-ai', 'writesonic', 'jasper', 'grammarly', 'chatgpt'].includes(app.id));
+    }
+    
+    if (lowerTitle.includes('ai') || lowerTitle.includes('automatisierung') || lowerTitle.includes('automation')) {
+      return applications.filter(app => ['chatgpt', 'claude', 'gemini', 'grok', 'perplexity', 'microsoft-copilot'].includes(app.id));
     }
     
     // Default: return common applications
@@ -364,7 +319,7 @@ export default function SubtaskSidebar({
             {lang === 'de' ? 'Teilaufgaben' : 'Subtasks'}
           </h3>
           <div className="flex items-center gap-2">
-            <AnimatedCounterBadge count={realSubtasks.length} isLoading={isGenerating} />
+            <SimpleCounter count={realSubtasks.length} isLoading={isGenerating} />
           </div>
         </div>
 

@@ -58,7 +58,6 @@ export default function WorkflowTab({
   const [workflows, setWorkflows] = useState<WorkflowMatch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -234,15 +233,6 @@ export default function WorkflowTab({
 
 
   // Enhanced helper functions
-  const handleFavorite = (blueprint: EnhancedBlueprintData) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(blueprint.id)) {
-      newFavorites.delete(blueprint.id);
-    } else {
-      newFavorites.add(blueprint.id);
-    }
-    setFavorites(newFavorites);
-  };
 
   const handleShare = (blueprint: EnhancedBlueprintData) => {
     if (navigator.share) {
@@ -521,7 +511,6 @@ export default function WorkflowTab({
                 onSelect={(unifiedSolution) => onWorkflowSelect?.(workflow)}
                 onDownloadClick={(unifiedSolution) => handleDownload(workflow)}
                 onSetupClick={(unifiedSolution) => handleSetupRequest(workflow)}
-                onFavoriteClick={handleFavorite}
                 onShareClick={handleShare}
                 compact={true}
                 isInteractive={true}
