@@ -39,12 +39,16 @@ export default defineConfig({
             './src/components/tabs/LLMTab.tsx',
             './src/lib/services/promptGenerator.ts'
           ],
+          'cache-services': [
+            './src/lib/services/cacheManager.ts',
+            './src/lib/services/analysisCacheService.ts',
+            './src/lib/services/simpleCache.ts'
+          ],
           'ui-components': [
             './src/components/ui/StatusBadge.tsx',
             './src/components/ui/CollapsibleSection.tsx'
           ],
           'services': [
-            './src/lib/services/cacheManager.ts',
             './src/lib/workflowIndexerUnified.ts',
             './src/lib/trendAnalysis.ts'
           ]
