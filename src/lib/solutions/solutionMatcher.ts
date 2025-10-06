@@ -3,7 +3,8 @@ import { AIAgent } from './aiAgentsCatalog';
 import { N8nWorkflow } from '../n8nApi';
 import { mapSubtaskToAgents } from './agentCategorization';
 import { getAgentRecommendationsForSubtask } from './agentSubtaskMapping';
-import { WorkflowIndex, AgentIndex } from '../workflowIndexer';
+import { UnifiedWorkflow } from '../schemas/unifiedWorkflow';
+import { AgentIndex } from '../schemas/agentIndex';
 import { WorkflowScoring, WorkflowScoringContext } from './workflowScoring';
 import { AgentScoring, AgentScoringContext } from './agentScoring';
 

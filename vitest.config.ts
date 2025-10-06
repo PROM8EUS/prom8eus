@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
-    include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
+    include: ['test/**/*.test.ts', 'test/**/*.test.tsx', 'src/**/__tests__/**/*.test.ts'],
     exclude: ['node_modules', 'dist', 'supabase-mcp'],
     coverage: {
       provider: 'v8',

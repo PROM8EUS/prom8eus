@@ -8,7 +8,7 @@
 import { UnifiedWorkflow, WorkflowCreationContext, GenerationMetadata } from './schemas/unifiedWorkflow';
 import { DynamicSubtask } from './schemas/analysis';
 import { openaiClient } from './openai';
-import { getFeatureFlagManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowWriteEnabled, isUnifiedWorkflowAiGenerationEnabled } from './featureFlags';
+import { getFeatureToggleManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowWriteEnabled, isUnifiedWorkflowAIGenerationEnabled } from './featureToggle';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UnifiedWorkflowGenerationOptions {
@@ -30,7 +30,7 @@ export interface UnifiedWorkflowGenerationResult {
 }
 
 export class UnifiedWorkflowGenerator {
-  private featureFlagManager = getFeatureFlagManager();
+  private featureToggleManager = getFeatureToggleManager();
 
   constructor() {
   }

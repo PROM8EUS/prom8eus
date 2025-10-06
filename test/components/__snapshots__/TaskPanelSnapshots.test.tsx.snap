@@ -1,0 +1,1014 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TaskPanel Snapshot Tests > should match ExpandedSolutionTabsSimplified snapshot with English language 1`] = `
+<div
+  class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200"
+>
+  <div
+    class="p-0"
+  >
+    <div
+      class="w-full"
+      data-orientation="horizontal"
+      dir="ltr"
+    >
+      <div
+        class="border-b border-gray-200 px-6 pt-6"
+      >
+        <div
+          class="flex items-center justify-between mb-4"
+        >
+          <div>
+            <h3
+              class="text-lg font-semibold text-gray-900"
+            >
+              Snapshot Subtask
+            </h3>
+            <p
+              class="text-sm text-gray-600 mt-1"
+            >
+              Snapshot Description
+            </p>
+          </div>
+        </div>
+        <div
+          aria-orientation="horizontal"
+          class="h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground grid w-full grid-cols-3"
+          data-orientation="horizontal"
+          role="tablist"
+          style="outline: none;"
+          tabindex="0"
+        >
+          <button
+            aria-controls="radix-:r8:-content-workflows"
+            aria-selected="true"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="active"
+            id="radix-:r8:-trigger-workflows"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-workflow h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              Workflow Solutions
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80 ml-1 h-5 px-1.5 text-xs"
+            >
+              1
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:r8:-content-agents"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:r8:-trigger-agents"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-bot h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 8V4H8"
+              />
+              <rect
+                height="12"
+                rx="2"
+                width="16"
+                x="4"
+                y="8"
+              />
+              <path
+                d="M2 14h2"
+              />
+              <path
+                d="M20 14h2"
+              />
+              <path
+                d="M15 13v2"
+              />
+              <path
+                d="M9 13v2"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              AI Agent Solutions
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:r8:-content-llms"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:r8:-trigger-llms"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-message-square h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              LLM Prompt Solutions
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+        </div>
+      </div>
+      <div
+        class="p-6"
+      >
+        <div
+          class="flex items-center justify-center py-8"
+        >
+          <svg
+            class="lucide lucide-loader-circle h-6 w-6 animate-spin mr-2"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+            />
+          </svg>
+          <span
+            class="text-sm text-gray-600"
+          >
+            Loading content...
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TaskPanel Snapshot Tests > should match ExpandedSolutionTabsSimplified snapshot with custom className 1`] = `
+<div
+  class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200 custom-class"
+>
+  <div
+    class="p-0"
+  >
+    <div
+      class="w-full"
+      data-orientation="horizontal"
+      dir="ltr"
+    >
+      <div
+        class="border-b border-gray-200 px-6 pt-6"
+      >
+        <div
+          class="flex items-center justify-between mb-4"
+        >
+          <div>
+            <h3
+              class="text-lg font-semibold text-gray-900"
+            >
+              Snapshot Subtask
+            </h3>
+            <p
+              class="text-sm text-gray-600 mt-1"
+            >
+              Snapshot Description
+            </p>
+          </div>
+        </div>
+        <div
+          aria-orientation="horizontal"
+          class="h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground grid w-full grid-cols-3"
+          data-orientation="horizontal"
+          role="tablist"
+          style="outline: none;"
+          tabindex="0"
+        >
+          <button
+            aria-controls="radix-:rc:-content-workflows"
+            aria-selected="true"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="active"
+            id="radix-:rc:-trigger-workflows"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-workflow h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              Workflow-Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80 ml-1 h-5 px-1.5 text-xs"
+            >
+              1
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:rc:-content-agents"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:rc:-trigger-agents"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-bot h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 8V4H8"
+              />
+              <rect
+                height="12"
+                rx="2"
+                width="16"
+                x="4"
+                y="8"
+              />
+              <path
+                d="M2 14h2"
+              />
+              <path
+                d="M20 14h2"
+              />
+              <path
+                d="M15 13v2"
+              />
+              <path
+                d="M9 13v2"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              AI-Agent Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:rc:-content-llms"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:rc:-trigger-llms"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-message-square h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              LLM-Prompt Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+        </div>
+      </div>
+      <div
+        class="p-6"
+      >
+        <div
+          class="flex items-center justify-center py-8"
+        >
+          <svg
+            class="lucide lucide-loader-circle h-6 w-6 animate-spin mr-2"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+            />
+          </svg>
+          <span
+            class="text-sm text-gray-600"
+          >
+            Lade Inhalt...
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TaskPanel Snapshot Tests > should match ExpandedSolutionTabsSimplified snapshot with loading state 1`] = `
+<div
+  class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200"
+>
+  <div
+    class="p-0"
+  >
+    <div
+      class="w-full"
+      data-orientation="horizontal"
+      dir="ltr"
+    >
+      <div
+        class="border-b border-gray-200 px-6 pt-6"
+      >
+        <div
+          class="flex items-center justify-between mb-4"
+        >
+          <div>
+            <h3
+              class="text-lg font-semibold text-gray-900"
+            >
+              Snapshot Subtask
+            </h3>
+            <p
+              class="text-sm text-gray-600 mt-1"
+            >
+              Snapshot Description
+            </p>
+          </div>
+        </div>
+        <div
+          aria-orientation="horizontal"
+          class="h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground grid w-full grid-cols-3"
+          data-orientation="horizontal"
+          role="tablist"
+          style="outline: none;"
+          tabindex="0"
+        >
+          <button
+            aria-controls="radix-:r4:-content-workflows"
+            aria-selected="true"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="active"
+            id="radix-:r4:-trigger-workflows"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-workflow h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              Workflow-Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:r4:-content-agents"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:r4:-trigger-agents"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-bot h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 8V4H8"
+              />
+              <rect
+                height="12"
+                rx="2"
+                width="16"
+                x="4"
+                y="8"
+              />
+              <path
+                d="M2 14h2"
+              />
+              <path
+                d="M20 14h2"
+              />
+              <path
+                d="M15 13v2"
+              />
+              <path
+                d="M9 13v2"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              AI-Agent Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:r4:-content-llms"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:r4:-trigger-llms"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-message-square h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              LLM-Prompt Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+        </div>
+      </div>
+      <div
+        class="p-6"
+      >
+        <div
+          class="flex items-center justify-center py-8"
+        >
+          <svg
+            class="lucide lucide-loader-circle h-6 w-6 animate-spin mr-2"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+            />
+          </svg>
+          <span
+            class="text-sm text-gray-600"
+          >
+            Lade Inhalt...
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TaskPanel Snapshot Tests > should match ExpandedSolutionTabsSimplified snapshot with null subtask 1`] = `
+<div
+  class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200"
+>
+  <div
+    class="p-6"
+  >
+    <div
+      class="text-center py-8"
+    >
+      <p
+        class="text-gray-500"
+      >
+        Wählen Sie eine Unteraufgabe aus, um Lösungen anzuzeigen
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TaskPanel Snapshot Tests > should match ExpandedSolutionTabsSimplified snapshot with subtask 1`] = `
+<div
+  class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200"
+>
+  <div
+    class="p-0"
+  >
+    <div
+      class="w-full"
+      data-orientation="horizontal"
+      dir="ltr"
+    >
+      <div
+        class="border-b border-gray-200 px-6 pt-6"
+      >
+        <div
+          class="flex items-center justify-between mb-4"
+        >
+          <div>
+            <h3
+              class="text-lg font-semibold text-gray-900"
+            >
+              Snapshot Subtask
+            </h3>
+            <p
+              class="text-sm text-gray-600 mt-1"
+            >
+              Snapshot Description
+            </p>
+          </div>
+        </div>
+        <div
+          aria-orientation="horizontal"
+          class="h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground grid w-full grid-cols-3"
+          data-orientation="horizontal"
+          role="tablist"
+          style="outline: none;"
+          tabindex="0"
+        >
+          <button
+            aria-controls="radix-:r0:-content-workflows"
+            aria-selected="true"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="active"
+            id="radix-:r0:-trigger-workflows"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-workflow h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              Workflow-Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80 ml-1 h-5 px-1.5 text-xs"
+            >
+              1
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:r0:-content-agents"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:r0:-trigger-agents"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-bot h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 8V4H8"
+              />
+              <rect
+                height="12"
+                rx="2"
+                width="16"
+                x="4"
+                y="8"
+              />
+              <path
+                d="M2 14h2"
+              />
+              <path
+                d="M20 14h2"
+              />
+              <path
+                d="M15 13v2"
+              />
+              <path
+                d="M9 13v2"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              AI-Agent Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+          <button
+            aria-controls="radix-:r0:-content-llms"
+            aria-selected="false"
+            class="justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:r0:-trigger-llms"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <svg
+              class="lucide lucide-message-square h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              />
+            </svg>
+            <span
+              class="hidden sm:inline"
+            >
+              LLM-Prompt Lösungen
+            </span>
+            <div
+              class="inline-flex items-center rounded-full border py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground ml-1 h-5 px-1.5 text-xs"
+            >
+              0
+            </div>
+          </button>
+        </div>
+      </div>
+      <div
+        class="p-6"
+      >
+        <div
+          class="flex items-center justify-center py-8"
+        >
+          <svg
+            class="lucide lucide-loader-circle h-6 w-6 animate-spin mr-2"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+            />
+          </svg>
+          <span
+            class="text-sm text-gray-600"
+          >
+            Lade Inhalt...
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TaskPanel Snapshot Tests > should match SubtaskSidebarSimplified snapshot with empty state 1`] = `
+<div
+  class="space-y-4"
+>
+  <div
+    class="flex items-center justify-between"
+  >
+    <h3
+      class="text-lg font-semibold text-gray-900"
+    >
+      Unteraufgaben
+    </h3>
+  </div>
+  <div
+    class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200"
+  >
+    <div
+      class="p-4"
+    >
+      <div
+        class="text-center py-8"
+      >
+        <p
+          class="text-sm text-gray-500"
+        >
+          Keine Unteraufgaben verfügbar
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TaskPanel Snapshot Tests > should match SubtaskSidebarSimplified snapshot with loading state 1`] = `
+<div
+  class="space-y-4"
+>
+  <div
+    class="flex items-center justify-between"
+  >
+    <h3
+      class="text-lg font-semibold text-gray-900"
+    >
+      Unteraufgaben
+    </h3>
+    <span
+      class="text-sm text-gray-500"
+    >
+      1
+       
+      Aufgaben
+    </span>
+  </div>
+  <div
+    class="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200"
+  >
+    <div
+      class="p-4"
+    >
+      <div
+        class="flex items-center justify-center py-8"
+      >
+        <div
+          class="text-center"
+        >
+          <svg
+            class="lucide lucide-loader-circle h-6 w-6 animate-spin mx-auto mb-2"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+            />
+          </svg>
+          <p
+            class="text-sm text-gray-600"
+          >
+            Lade Unteraufgaben...
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

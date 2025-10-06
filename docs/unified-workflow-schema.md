@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Unified Workflow Schema is a comprehensive data model that consolidates all workflow types (GitHub, n8n.io, AI-generated) into a single, consistent structure. This schema eliminates data inconsistencies, reduces conversion overhead, and provides a unified interface for workflow management.
+The Unified Workflow Schema is a **simplified, streamlined** data model that consolidates all workflow types (GitHub, n8n.io, AI-generated) into a single, consistent structure. This schema eliminates data inconsistencies, reduces conversion overhead, and provides **clear, minimal interfaces** for workflow management.
+
+> **Note**: This documentation has been updated to reflect the new simplified architecture with clear interfaces and minimal caching as part of the over-engineering remediation effort.
 
 ## Schema Architecture
 
@@ -230,47 +232,86 @@ import { UnifiedSolutionCard } from '@/components/UnifiedSolutionCard';
 
 ### Service Classes
 
-#### UnifiedWorkflowIndexer
-Main service for workflow management:
+#### SimplifiedWorkflowIndexer
+**New simplified service** for workflow management with clear interfaces:
 
 ```typescript
-import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
+import { simplifiedWorkflowIndexer } from '@/lib/workflowIndexerSimplified';
 
-// Load workflows
-const workflows = await unifiedWorkflowIndexer.loadWorkflows();
+// Search workflows with clear parameters
+const result = await simplifiedWorkflowIndexer.search({
+  q: 'email marketing',
+  source: ['ai-generated', 'github'],
+  complexity: ['medium', 'high'],
+  limit: 20,
+  sort_by: 'relevance'
+});
 
-// Get AI-generated workflows
-const aiWorkflows = await unifiedWorkflowIndexer.getAIGeneratedWorkflows();
+// Get statistics
+const stats = await simplifiedWorkflowIndexer.getStats();
+console.log(`Total workflows: ${stats.totalWorkflows}`);
+console.log(`Cache hit rate: ${(stats.cacheStats.hitRate * 100).toFixed(1)}%`);
 
-// Search workflows
-const results = await unifiedWorkflowIndexer.searchWorkflows({
-  query: 'email marketing',
-  source: 'ai-generated',
-  limit: 20
+// Refresh workflows
+const refreshResult = await simplifiedWorkflowIndexer.refresh({
+  sourceId: 'github',
+  force: true,
+  incremental: false
 });
 ```
 
-#### UnifiedWorkflowGenerator
-AI workflow generation service:
+#### SimplifiedWorkflowGenerator
+**New simplified service** for AI workflow generation with clear interfaces:
 
 ```typescript
-import { UnifiedWorkflowGenerator } from '@/lib/workflowGeneratorUnified';
+import { generateWorkflow, generateMultipleWorkflows } from '@/lib/workflowGeneratorSimplified';
 
-const generator = new UnifiedWorkflowGenerator();
-
-// Generate workflow for subtask
-const result = await generator.generateWorkflowForSubtask({
-  subtask: subtask,
+// Generate single workflow
+const result = await generateWorkflow({
+  subtask: {
+    id: 'task-1',
+    title: 'Email Marketing',
+    description: 'Automated email campaigns',
+    automationPotential: 85
+  },
   lang: 'en',
-  timeoutMs: 5000
+  timeoutMs: 10000
+}, {
+  useCache: true,
+  useFallback: true,
+  maxRetries: 3
 });
 
 // Generate multiple workflows
-const workflows = await generator.generateWorkflowsForSubtasks({
-  subtasks: subtasks,
+const multipleResult = await generateMultipleWorkflows({
+  subtask: subtask,
+  count: 3,
   lang: 'en',
-  timeoutMs: 10000
+  timeoutMs: 15000
 });
+
+console.log(`Generated ${multipleResult.workflows.length} workflows`);
+console.log(`Errors: ${multipleResult.errors.length}`);
+```
+
+#### SimpleCache
+**New lightweight caching system** with clear statistics:
+
+```typescript
+import { workflowCache, searchCache, statsCache } from '@/lib/services/simpleCache';
+
+// Basic cache operations
+workflowCache.set('key1', workflowData, 60000); // 1 minute TTL
+const data = workflowCache.get('key1');
+
+// Cache statistics
+const stats = workflowCache.getStats();
+console.log(`Hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
+console.log(`Total requests: ${stats.totalRequests}`);
+
+// Cache management
+workflowCache.clearPattern('task-.*'); // Clear by pattern
+workflowCache.clear(); // Clear all
 ```
 
 ## Feature Flags
@@ -284,16 +325,39 @@ const workflows = await generator.generateWorkflowsForSubtasks({
 ### Usage
 
 ```typescript
-import { useFeatureFlag } from '@/lib/featureFlags';
+import { getFeatureToggleManager } from '@/lib/featureToggle';
 
-const { isEnabled: isUnifiedEnabled } = useFeatureFlag('unified_workflow_read');
+const manager = getFeatureToggleManager();
 
-if (isUnifiedEnabled) {
-  // Use unified schema
-  const workflows = await unifiedWorkflowIndexer.loadWorkflows();
+// Check if unified workflow generation is enabled
+if (manager.isEnabled('unified_workflow_ai_generation')) {
+  // Use simplified generator
+  const result = await generateWorkflow({
+    subtask: subtask,
+    lang: 'en',
+    timeoutMs: 10000
+  });
 } else {
-  // Fallback to legacy
-  const workflows = await legacyWorkflowIndexer.loadWorkflows();
+  // Use fallback generation
+  const result = await generateSimpleWorkflow({
+    subtask: subtask,
+    lang: 'en'
+  });
+}
+
+// Check if unified workflow reading is enabled
+if (manager.isEnabled('unified_workflow_read')) {
+  // Use simplified indexer
+  const result = await simplifiedWorkflowIndexer.search({
+    q: 'email marketing',
+    limit: 20
+  });
+} else {
+  // Use legacy indexer
+  const result = await legacyWorkflowIndexer.searchWorkflows({
+    query: 'email marketing',
+    limit: 20
+  });
 }
 ```
 
@@ -407,17 +471,92 @@ WITH CHECK (true);
 ### Unit Tests
 
 ```typescript
-// Test database functions
-describe('Database Functions', () => {
-  it('should search workflows by text query', async () => {
-    const result = await mockDatabaseFunctions.search_unified_workflows({
-      search_query: 'email marketing',
-      limit_count: 10
+// Test simplified workflow generator
+describe('SimplifiedWorkflowGenerator', () => {
+  it('should generate workflow successfully', async () => {
+    const result = await generateWorkflow({
+      subtask: mockSubtask,
+      lang: 'en',
+      timeoutMs: 10000
+    }, {
+      useCache: true,
+      useFallback: true
     });
     
-    expect(result.error).toBeNull();
-    expect(result.data).toBeDefined();
-    expect(Array.isArray(result.data)).toBe(true);
+    expect(result.workflow).toBeDefined();
+    expect(result.metadata?.source).toBe('ai');
+    expect(result.metadata?.processingTimeMs).toBeGreaterThan(0);
+  });
+
+  it('should handle generation errors gracefully', async () => {
+    const result = await generateWorkflow({
+      subtask: invalidSubtask,
+      lang: 'en'
+    });
+    
+    expect(result.error).toBeDefined();
+    expect(result.workflow).toBeUndefined();
+    expect(result.metadata?.source).toBe('fallback');
+  });
+});
+
+// Test simplified workflow indexer
+describe('SimplifiedWorkflowIndexer', () => {
+  it('should search workflows with filters', async () => {
+    const result = await simplifiedWorkflowIndexer.search({
+      q: 'email marketing',
+      source: ['ai-generated'],
+      complexity: ['medium'],
+      limit: 10
+    });
+    
+    expect(result.workflows).toBeDefined();
+    expect(result.total).toBeGreaterThanOrEqual(0);
+    expect(result.page).toBe(1);
+    expect(result.hasMore).toBeDefined();
+  });
+
+  it('should provide cache statistics', async () => {
+    const stats = await simplifiedWorkflowIndexer.getStats();
+    
+    expect(stats.totalWorkflows).toBeGreaterThanOrEqual(0);
+    expect(stats.cacheStats.hitRate).toBeGreaterThanOrEqual(0);
+    expect(stats.cacheStats.totalRequests).toBeGreaterThanOrEqual(0);
+  });
+});
+
+// Test simple cache system
+describe('SimpleCache', () => {
+  it('should store and retrieve data', () => {
+    const cache = new SimpleCache<string>();
+    
+    cache.set('key1', 'value1', 60000);
+    const value = cache.get('key1');
+    
+    expect(value).toBe('value1');
+  });
+
+  it('should handle TTL expiration', () => {
+    const cache = new SimpleCache<string>();
+    
+    cache.set('key1', 'value1', 1); // 1ms TTL
+    setTimeout(() => {
+      const value = cache.get('key1');
+      expect(value).toBeNull();
+    }, 10);
+  });
+
+  it('should provide statistics', () => {
+    const cache = new SimpleCache<string>();
+    
+    cache.set('key1', 'value1');
+    cache.get('key1'); // Hit
+    cache.get('key2'); // Miss
+    
+    const stats = cache.getStats();
+    expect(stats.totalRequests).toBe(2);
+    expect(stats.totalHits).toBe(1);
+    expect(stats.hitRate).toBe(0.5);
   });
 });
 ```
@@ -425,18 +564,62 @@ describe('Database Functions', () => {
 ### Integration Tests
 
 ```typescript
-// Test end-to-end workflow generation
-describe('AI Workflow Generation', () => {
-  it('should generate workflow for subtask', async () => {
-    const result = await workflowGenerator.generateWorkflowForSubtask({
+// Test end-to-end workflow generation with simplified interfaces
+describe('Simplified Workflow Generation Integration', () => {
+  it('should generate and cache workflows', async () => {
+    const result = await generateWorkflow({
       subtask: mockSubtask,
       lang: 'en',
-      timeoutMs: 5000
+      timeoutMs: 10000
+    }, {
+      useCache: true
     });
     
     expect(result.workflow).toBeDefined();
-    expect(result.workflow.source).toBe('ai-generated');
-    expect(result.workflow.isAIGenerated).toBe(true);
+    expect(result.metadata?.source).toBe('ai');
+    
+    // Test cache hit
+    const cachedResult = await generateWorkflow({
+      subtask: mockSubtask,
+      lang: 'en'
+    }, {
+      useCache: true
+    });
+    
+    expect(cachedResult.metadata?.source).toBe('cache');
+  });
+
+  it('should handle multiple workflow generation', async () => {
+    const result = await generateMultipleWorkflows({
+      subtask: mockSubtask,
+      count: 3,
+      lang: 'en'
+    });
+    
+    expect(result.workflows.length).toBeGreaterThan(0);
+    expect(result.metadata?.successCount).toBeGreaterThan(0);
+    expect(result.metadata?.totalProcessingTimeMs).toBeGreaterThan(0);
+  });
+});
+
+// Test workflow indexer integration
+describe('Simplified Workflow Indexer Integration', () => {
+  it('should search and refresh workflows', async () => {
+    // Search workflows
+    const searchResult = await simplifiedWorkflowIndexer.search({
+      q: 'test',
+      limit: 5
+    });
+    
+    expect(searchResult.workflows).toBeDefined();
+    
+    // Refresh workflows
+    const refreshResult = await simplifiedWorkflowIndexer.refresh({
+      force: true
+    });
+    
+    expect(refreshResult.success).toBeDefined();
+    expect(refreshResult.processingTimeMs).toBeGreaterThan(0);
   });
 });
 ```

@@ -6,6 +6,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isUnifiedWorkflowReadEnabled } from '../_shared/feature-toggles.ts';
 
 interface UnifiedWorkflow {
   id: string;
@@ -84,27 +85,6 @@ function getSupabase() {
   }
   
   return createClient(url, serviceKey);
-}
-
-/**
- * Check if unified workflow schema is enabled
- */
-async function isUnifiedWorkflowEnabled(): Promise<boolean> {
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('feature_flags')
-      .select('enabled')
-      .eq('name', 'unified_workflow_read')
-      .eq('environment', 'production')
-      .single();
-
-    if (error || !data) return false;
-    return data.enabled;
-  } catch (error) {
-    console.warn('Failed to check unified workflow feature flag:', error);
-    return false;
-  }
 }
 
 /**
@@ -230,7 +210,7 @@ async function handler(req: Request): Promise<Response> {
     const supabase = getSupabase();
 
     // Check if unified workflow schema is enabled
-    const useUnified = await isUnifiedWorkflowEnabled();
+    const useUnified = isUnifiedWorkflowReadEnabled();
     
     if (useUnified) {
       return await handleUnifiedWorkflows(supabase, sources, batchSize, startTime);

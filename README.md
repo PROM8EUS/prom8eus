@@ -14,7 +14,7 @@ Eine intelligente Plattform zur Analyse von Stellenanzeigen und Bewertung des Au
 ### Advanced Features
 - **LLM-Powered Enrichment**: Automatische Datenverbesserung mit GPT-4o-mini
 - **Health Monitoring**: Comprehensive Health-Checks für alle Quellen
-- **Admin Workflows**: Vollständige Admin-Validierung und Feedback-Systeme
+- **Simplified Admin Interface**: Streamlined admin interface for system management
 - **Scoring Systems**: Workflow-Scores (0-100) und Agent-Tiers (Generalist/Specialist/Experimental)
 
 ## 📊 Solution Sources & Data
@@ -91,30 +91,23 @@ Jede Branche verfügt über spezialisierte AI-Tools:
 - **Incremental Update Scheduling** mit Health-Based Logic
 - **Automatic Recovery** mit Exponential Backoff
 
-## 🔧 Admin Workflows & Management
+## 🔧 Simplified Admin Interface
 
-### Enhanced Source Management
-- **Per-Type Source Display** mit separaten Workflow- und Agent-Quellen
+### Streamlined Source Management
+- **Unified Source Display** mit konsolidierten Workflow- und Agent-Quellen
 - **Real-Time Health Monitoring** mit Status-Indikatoren
-- **Cache Analytics** mit detaillierten Performance-Metriken
+- **Cache Analytics** mit Performance-Metriken
 - **Manual Refresh Controls** mit Status-Tracking
 - **Error Reporting** mit Recovery-Status
 
-### Validation & Quality Control
-- **Admin Validation Queue** für LLM-extrahierte Setup-Steps
-- **Domain Override Management** für manuelle Domain-Klassifikation
-- **Batch Validation Operations** für Bulk-Approval
+### Quality Control & Management
+- **Simplified Validation** für Setup-Steps
+- **Domain Management** für manuelle Domain-Klassifikation
+- **Batch Operations** für Bulk-Approval
 - **Audit Trail** für alle Admin-Aktionen
 - **Quality Metrics** basierend auf User-Feedback
 
-### User Feedback System
-- **Pilot Feedback Capture** für detaillierte User-Feedback
-- **Analytics Dashboard** mit aggregierten Feedback-Statistiken
-- **Session Tracking** für Feedback-Kontinuität
-- **Quality Assessment** basierend auf Feedback-Daten
-- **Continuous Improvement** durch Feedback-Loops
-
-### Implementation Request Funnel
+### Implementation Request Management
 - **User Request Form** für Implementation-Anfragen
 - **Email Integration** mit automatischen Benachrichtigungen
 - **Request Tracking** mit Status-Updates
@@ -210,6 +203,18 @@ npm run dev
 
 # Build für Produktion
 npm run build
+
+# Tests ausführen
+npm run test
+
+# Tests mit UI
+npm run test:ui
+
+# Test Coverage
+npm run test:coverage
+
+# Linting
+npm run lint
 ```
 
 ## 📚 Documentation
@@ -219,16 +224,38 @@ npm run build
 - **`docs/LLM_CATALOG.md`** - Comprehensive catalog of all AI tools by industry
 - **`docs/recommendations-mvp.md`** - MVP recommendations and implementation guide
 
+### Feature Toggle Documentation
+- **`docs/feature-toggles.md`** - Complete feature toggle system documentation
+- **`docs/feature-toggle-migration.md`** - Migration guide from old feature flags to new toggles
+- **`docs/configuration-system.md`** - Configuration system documentation and best practices
+- **`docs/environment-variables.md`** - Comprehensive environment variables reference and setup guide
+
+### Migration and Remediation Documentation
+- **`docs/overengineering-remediation-migration-guide.md`** - Complete technical migration guide for the over-engineering remediation
+- **`docs/team-memo-overengineering-remediation.md`** - Executive summary and team memo for the remediation effort
+
+### Rollout and Deployment Documentation
+- **`docs/rollout-plan-feature-toggles.md`** - Comprehensive rollout plan for feature toggles and phased deployment
+- **`docs/dark-launch-strategy.md`** - Dark launch strategy for safe feature deployment
+- **`docs/rollout-implementation-guide.md`** - Step-by-step implementation guide with commands and troubleshooting
+
+### Monitoring and Analytics Documentation
+- **`docs/monitoring-system.md`** - Comprehensive monitoring system for refactored analysis and marketplace flows
+
 ### Key Implementation Files
 - **`src/lib/workflowIndexer.ts`** - Unified solution loading, caching, and filtering
 - **`src/lib/solutions/enrichmentService.ts`** - LLM-powered data enrichment pipeline
 - **`src/lib/solutions/agentSourceHealthService.ts`** - Comprehensive health monitoring
 - **`src/lib/solutions/incrementalUpdateScheduler.ts`** - Intelligent update scheduling
 
+### Feature Toggle System
+- **`src/lib/featureToggle.ts`** - Lightweight feature toggle system using environment variables
+- **`supabase/functions/_shared/feature-toggles.ts`** - Shared feature toggle utilities for Supabase Edge Functions
+- **`src/lib/config.ts`** - Configuration system with robust boolean environment variable handling
+
 ### Admin Components
 - **`src/components/EnhancedSourcesManagement.tsx`** - Per-type source management
-- **`src/components/AdminValidationQueue.tsx`** - Unified validation interface
-- **`src/components/PilotFeedbackManagement.tsx`** - User feedback system
+- **`src/components/ImplementationRequestsManagement.tsx`** - Implementation request management
 
 ### Database Schema
 - **`supabase/migrations/20250128000007_consolidated_admin_system.sql`** - Admin system schema
@@ -301,11 +328,11 @@ We welcome contributions to further enhance the dual-type solution platform:
 - **AI Agents**: CrewAI Examples, HuggingFace Spaces, GitHub Agent Repositories
 
 **Admin Capabilities:**
-- **Enhanced Source Management** with per-type monitoring
-- **Validation Queue** for LLM-generated content
-- **Pilot Feedback System** with analytics
-- **Implementation Request Funnel** with email integration
+- **Streamlined Source Management** with unified monitoring
+- **Simplified Validation** for content quality control
+- **Implementation Request Management** with email integration
 - **Health Monitoring** with incremental updates
+- **Performance Analytics** with detailed metrics
 
 **Technical Highlights:**
 - **Type-Safe Operations** with comprehensive validation
@@ -320,16 +347,117 @@ MIT License - see LICENSE file for details.
 
 ## Environment Variables
 
-This project uses environment variables for configuration. Copy `.env.example` to `.env` and fill in your actual values:
+This project uses environment variables for configuration. For a comprehensive guide to all environment variables, see [Environment Variables Documentation](docs/environment-variables.md).
 
-```bash
-cp .env.example .env
-```
+### Quick Setup
+
+1. Create a `.env` file in the project root
+2. Add your environment variables (see [Environment Variables Documentation](docs/environment-variables.md) for complete list)
+3. Restart your development server
 
 ### Required Environment Variables
 
 - **Supabase Configuration**: Database and authentication settings
 - **Logo.dev API Key**: For AI tool logo fallbacks (get your keys from [logo.dev](https://logo.dev))
+
+### Feature Toggles
+
+The application uses a lightweight feature toggle system based on environment variables. All toggles are enabled by default but can be disabled by setting the corresponding environment variable to `false`.
+
+#### Client-Side Feature Toggles (VITE_*)
+
+```bash
+# Unified Workflow Schema
+VITE_UNIFIED_WORKFLOW_SCHEMA=true
+VITE_UNIFIED_WORKFLOW_READ=true
+VITE_UNIFIED_WORKFLOW_WRITE=true
+VITE_UNIFIED_WORKFLOW_SEARCH=true
+VITE_UNIFIED_WORKFLOW_AI_GENERATION=true
+VITE_UNIFIED_WORKFLOW_MIGRATION=false
+VITE_UNIFIED_WORKFLOW_FRONTEND=true
+VITE_UNIFIED_WORKFLOW_ANALYTICS=false
+
+# General Features
+VITE_ENABLE_AI_ANALYSIS=true
+VITE_ENABLE_WORKFLOW_SEARCH=true
+VITE_ENABLE_AGENT_RECOMMENDATIONS=true
+VITE_RECOMMENDATIONS_ENABLE_LLM=true
+VITE_RECOMMENDATIONS_ENABLE_CACHE=true
+VITE_RECOMMENDATIONS_TOP_K=6
+VITE_RECOMMENDATIONS_LLM_TIMEOUT_MS=3000
+VITE_RECOMMENDATIONS_CACHE_TTL_MINUTES=60
+```
+
+#### Server-Side Feature Toggles (Deno.env)
+
+```bash
+# Unified Workflow Schema (for Supabase Edge Functions)
+UNIFIED_WORKFLOW_SCHEMA=true
+UNIFIED_WORKFLOW_READ=true
+UNIFIED_WORKFLOW_WRITE=true
+UNIFIED_WORKFLOW_SEARCH=true
+UNIFIED_WORKFLOW_AI_GENERATION=true
+UNIFIED_WORKFLOW_MIGRATION=false
+UNIFIED_WORKFLOW_FRONTEND=true
+UNIFIED_WORKFLOW_ANALYTICS=false
+```
+
+#### Feature Toggle Usage
+
+```typescript
+// Client-side usage
+import { getFeatureToggleManager, isUnifiedWorkflowEnabled } from '@/lib/featureToggle';
+
+const manager = getFeatureToggleManager();
+const isEnabled = manager.isEnabled('unified_workflow_schema');
+
+// Or using helper functions
+const isEnabled = isUnifiedWorkflowEnabled();
+```
+
+```typescript
+// Server-side usage (Supabase Edge Functions)
+import { checkFeatureToggle, isUnifiedWorkflowReadEnabled } from '../_shared/feature-toggles.ts';
+
+const isEnabled = checkFeatureToggle('unified_workflow_read');
+// Or using helper functions
+const isEnabled = isUnifiedWorkflowReadEnabled();
+```
+
+#### Available Feature Toggles
+
+| Toggle Name | Description | Default | Environment Variable |
+|-------------|-------------|---------|---------------------|
+| `unified_workflow_schema` | Enable unified workflow schema | `true` | `VITE_UNIFIED_WORKFLOW_SCHEMA` |
+| `unified_workflow_read` | Enable unified workflow reading | `true` | `VITE_UNIFIED_WORKFLOW_READ` |
+| `unified_workflow_write` | Enable unified workflow writing | `true` | `VITE_UNIFIED_WORKFLOW_WRITE` |
+| `unified_workflow_search` | Enable unified workflow search | `true` | `VITE_UNIFIED_WORKFLOW_SEARCH` |
+| `unified_workflow_ai_generation` | Enable AI workflow generation | `true` | `VITE_UNIFIED_WORKFLOW_AI_GENERATION` |
+| `unified_workflow_migration` | Enable workflow migration features | `false` | `VITE_UNIFIED_WORKFLOW_MIGRATION` |
+| `unified_workflow_frontend` | Enable unified workflow frontend | `true` | `VITE_UNIFIED_WORKFLOW_FRONTEND` |
+| `unified_workflow_analytics` | Enable workflow analytics | `false` | `VITE_UNIFIED_WORKFLOW_ANALYTICS` |
+
+#### Boolean Environment Variable Format
+
+The system supports various boolean formats for environment variables:
+
+**Truthy values**: `true`, `1`, `yes`, `on`
+**Falsy values**: `false`, `0`, `no`, `off`
+
+Examples:
+```bash
+# All of these enable the feature
+VITE_UNIFIED_WORKFLOW_SCHEMA=true
+VITE_UNIFIED_WORKFLOW_SCHEMA=1
+VITE_UNIFIED_WORKFLOW_SCHEMA=yes
+VITE_UNIFIED_WORKFLOW_SCHEMA=on
+
+# All of these disable the feature
+VITE_UNIFIED_WORKFLOW_SCHEMA=false
+VITE_UNIFIED_WORKFLOW_SCHEMA=0
+VITE_UNIFIED_WORKFLOW_SCHEMA=no
+VITE_UNIFIED_WORKFLOW_SCHEMA=off
+```
 
 ### Logo.dev API Setup
 

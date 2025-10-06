@@ -7,6 +7,7 @@
 // deno-lint-ignore-file no-explicit-any
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isUnifiedWorkflowReadEnabled } from '../_shared/feature-toggles.ts';
 
 type Subtask = { id?: string; name: string; keywords?: string[] };
 
@@ -39,27 +40,6 @@ function getSupabase() {
   const key = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) throw new Error("Supabase env missing");
   return createClient(url, key);
-}
-
-/**
- * Check if unified workflow schema is enabled
- */
-async function checkUnifiedWorkflowFlag(): Promise<boolean> {
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('feature_flags')
-      .select('enabled')
-      .eq('name', 'unified_workflow_read')
-      .eq('environment', 'production')
-      .single();
-
-    if (error || !data) return false;
-    return data.enabled;
-  } catch (error) {
-    console.warn('Failed to check unified workflow feature flag:', error);
-    return false;
-  }
 }
 
 const normalize = (s: string) => (s || "").toLowerCase().trim();
@@ -193,7 +173,7 @@ async function handler(req: Request): Promise<Response> {
     });
 
     // Check if unified workflow schema is enabled
-    const useUnified = await checkUnifiedWorkflowFlag();
+    const useUnified = isUnifiedWorkflowReadEnabled();
     
     if (useUnified) {
       // Use unified workflow recommendations

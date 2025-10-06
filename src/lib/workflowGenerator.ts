@@ -9,7 +9,7 @@ import { BlueprintData } from '@/components/BlueprintCard';
 import { WorkflowSolutionInterface } from './interfaces';
 import { cacheManager } from './services/cacheManager';
 import { WorkflowSchemaMapper } from './schemas/unifiedWorkflow';
-import { getFeatureFlagManager } from './featureFlags';
+import { getFeatureToggleManager, isUnifiedWorkflowGeneratorEnabled } from './featureToggle';
 
 export interface GeneratedBlueprint extends BlueprintData {
   isAIGenerated: true;
@@ -78,22 +78,25 @@ export async function generateWorkflowForSubtask(
   console.log(`🎨 [WorkflowGenerator] Generating AI workflow for: "${subtask.title}" (timeout: ${timeoutMs}ms)`);
   
   // Check if unified workflow schema is enabled
-  const featureFlagManager = getFeatureFlagManager();
-  const useUnified = await featureFlagManager.isEnabled('unified_workflow_read');
-  const useAIGeneration = await featureFlagManager.isEnabled('unified_workflow_ai_generation');
+  const featureToggleManager = getFeatureToggleManager();
+  const useUnified = featureToggleManager.isEnabled('unified_workflow_read');
+  const useAIGeneration = featureToggleManager.isEnabled('unified_workflow_ai_generation');
   
   if (useUnified && useAIGeneration) {
     // Use unified workflow generator
-    const { unifiedWorkflowGenerator } = await import('./workflowGeneratorUnified');
-    const result = await unifiedWorkflowGenerator.generateWorkflowForSubtask({
-      subtask,
-      lang,
-      timeoutMs
-    });
+    // Only import unified workflow generator if feature toggle is enabled
+    if (isUnifiedWorkflowGeneratorEnabled()) {
+      const { unifiedWorkflowGenerator } = await import('./workflowGeneratorUnified');
+      const result = await unifiedWorkflowGenerator.generateWorkflowForSubtask({
+        subtask,
+        lang,
+        timeoutMs
+      });
     
-    if (result.workflow) {
-      // Convert UnifiedWorkflow to GeneratedBlueprint for backward compatibility
-      return convertUnifiedToGeneratedBlueprint(result.workflow);
+      if (result.workflow) {
+        // Convert UnifiedWorkflow to GeneratedBlueprint for backward compatibility
+        return convertUnifiedToGeneratedBlueprint(result.workflow);
+      }
     }
     
     return null;

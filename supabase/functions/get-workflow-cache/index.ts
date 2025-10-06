@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isUnifiedWorkflowReadEnabled } from '../_shared/feature-toggles.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,14 +26,7 @@ serve(async (req) => {
     )
 
     // Check if unified workflow schema is enabled
-    const { data: flagData } = await supabaseClient
-      .from('feature_flags')
-      .select('enabled')
-      .eq('name', 'unified_workflow_read')
-      .eq('environment', 'production')
-      .single();
-
-    const useUnified = flagData?.enabled || false;
+    const useUnified = isUnifiedWorkflowReadEnabled();
 
     const { source, version, pageSize = 10000 } = await req.json()
 

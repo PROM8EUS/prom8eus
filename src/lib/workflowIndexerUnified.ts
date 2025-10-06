@@ -11,7 +11,7 @@ import { openaiClient } from './openai';
 import { UnifiedWorkflow, WorkflowSearchParams, WorkflowCreationContext } from './schemas/unifiedWorkflow';
 import { WorkflowCacheManager, CacheConfig, CacheStats } from './workflowCacheManager';
 import { WorkflowDataProcessor, WorkflowStats } from './workflowDataProcessor';
-import { getFeatureFlagManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowReadEnabled, isUnifiedWorkflowWriteEnabled } from './featureFlags';
+import { getFeatureToggleManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowReadEnabled, isUnifiedWorkflowWriteEnabled } from './featureToggle';
 
 export interface UnifiedWorkflowSearchParams extends WorkflowSearchParams {
   user_id?: string;
@@ -42,7 +42,7 @@ export class UnifiedWorkflowIndexer {
   private currentSourceKey: string | undefined = undefined;
   private cacheManager: WorkflowCacheManager;
   private dataProcessor: WorkflowDataProcessor;
-  private featureFlagManager = getFeatureFlagManager();
+  private featureToggleManager = getFeatureToggleManager();
 
   constructor() {
     this.cacheManager = new WorkflowCacheManager();

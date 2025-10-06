@@ -6,7 +6,7 @@
  */
 
 import { UnifiedWorkflow, WorkflowCreationContext } from './schemas/unifiedWorkflow';
-import { getFeatureFlagManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowReadEnabled, isUnifiedWorkflowWriteEnabled } from './featureFlags';
+import { getFeatureToggleManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowReadEnabled, isUnifiedWorkflowWriteEnabled } from './featureToggle';
 
 export interface N8nApiOptions {
   limit?: number;
@@ -36,7 +36,7 @@ export class N8nApiUnified {
   private availableCategoriesExpiryKey = 'n8n_unified_available_categories_cache_expiry';
   private availableCategoriesCacheExpiryHours = 24;
 
-  private featureFlagManager = getFeatureFlagManager();
+  private featureToggleManager = getFeatureToggleManager();
 
   constructor() {
   }

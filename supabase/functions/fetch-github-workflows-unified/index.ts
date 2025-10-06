@@ -7,6 +7,8 @@
 
 declare const Deno: any;
 
+import { checkFeatureToggle } from '../_shared/feature-toggles.ts';
+
 interface UnifiedWorkflow {
   id: string;
   title: string;
@@ -99,9 +101,9 @@ Deno.serve(async (req: Request) => {
     const source = typeof body.source === 'string' ? body.source : 'github';
     const normalized = normalizeSource(source);
 
-    // Check feature flags
-    const useUnified = await checkFeatureFlag('unified_workflow_read');
-    const useUnifiedWrite = await checkFeatureFlag('unified_workflow_write');
+    // Check feature toggles
+    const useUnified = checkFeatureToggle('unified_workflow_read');
+    const useUnifiedWrite = checkFeatureToggle('unified_workflow_write');
 
     if (normalized === 'n8n.io') {
       const page = Number(body.page) > 0 ? Number(body.page) : 1;
@@ -178,24 +180,6 @@ function normalizeSource(source: string): string {
   if (s.includes('awesome')) return 'awesome-n8n-templates';
   if (s.includes('ai') || s.includes('enhanced')) return 'ai-enhanced';
   return s.replace(/\s+/g, '-');
-}
-
-async function checkFeatureFlag(flagName: string): Promise<boolean> {
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('feature_flags')
-      .select('enabled')
-      .eq('name', flagName)
-      .eq('environment', 'production')
-      .single();
-
-    if (error || !data) return false;
-    return data.enabled;
-  } catch (error) {
-    console.warn(`Failed to check feature flag ${flagName}:`, error);
-    return false;
-  }
 }
 
 function getSupabase() {

@@ -1,4 +1,4 @@
-import { AgentIndex } from '../workflowIndexer';
+import { AgentIndex } from '../schemas/agentIndex';
 
 export type AgentTier = 'Generalist' | 'Specialist' | 'Experimental';
 

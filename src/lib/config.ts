@@ -36,6 +36,29 @@ export interface AppConfig {
 }
 
 /**
+ * Helper function to get boolean environment variables
+ */
+function getBooleanEnv(envVar: string, defaultValue: boolean): boolean {
+  const value = import.meta.env[envVar];
+  
+  if (value === undefined) {
+    return defaultValue;
+  }
+  
+  // Handle various truthy values
+  if (value === 'true' || value === '1' || value === 'yes' || value === 'on') {
+    return true;
+  }
+  
+  if (value === 'false' || value === '0' || value === 'no' || value === 'off') {
+    return false;
+  }
+  
+  // Default to the provided default value for unrecognized values
+  return defaultValue;
+}
+
+/**
  * Get configuration from environment variables with fallbacks
  * NOTE: OpenAI API key is now handled securely on the backend only
  */
@@ -60,15 +83,15 @@ export const getConfig = (): AppConfig => {
       n8nUrl: import.meta.env.VITE_N8N_API_URL || 'https://api.github.com',
     },
     features: {
-      enableAiAnalysis: import.meta.env.VITE_ENABLE_AI_ANALYSIS === 'true' || true,
-      enableWorkflowSearch: import.meta.env.VITE_ENABLE_WORKFLOW_SEARCH === 'true' || true,
-      enableAgentRecommendations: import.meta.env.VITE_ENABLE_AGENT_RECOMMENDATIONS === 'true' || true,
+      enableAiAnalysis: getBooleanEnv('VITE_ENABLE_AI_ANALYSIS', true),
+      enableWorkflowSearch: getBooleanEnv('VITE_ENABLE_WORKFLOW_SEARCH', true),
+      enableAgentRecommendations: getBooleanEnv('VITE_ENABLE_AGENT_RECOMMENDATIONS', true),
     },
     recommendations: {
-      enableLLM: import.meta.env.VITE_RECOMMENDATIONS_ENABLE_LLM === 'true' || true,
+      enableLLM: getBooleanEnv('VITE_RECOMMENDATIONS_ENABLE_LLM', true),
       topK: parseInt(import.meta.env.VITE_RECOMMENDATIONS_TOP_K || '6'),
       llmTimeoutMs: parseInt(import.meta.env.VITE_RECOMMENDATIONS_LLM_TIMEOUT_MS || '3000'),
-      enableCache: import.meta.env.VITE_RECOMMENDATIONS_ENABLE_CACHE === 'true' || true,
+      enableCache: getBooleanEnv('VITE_RECOMMENDATIONS_ENABLE_CACHE', true),
       cacheTTLMinutes: parseInt(import.meta.env.VITE_RECOMMENDATIONS_CACHE_TTL_MINUTES || '60'),
     },
   };

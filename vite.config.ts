@@ -55,7 +55,7 @@ export default defineConfig({
           ],
           'services': [
             './src/lib/services/cacheManager.ts',
-            './src/lib/workflowIndexer.ts',
+            './src/lib/workflowIndexerUnified.ts',
             './src/lib/trendAnalysis.ts'
           ]
         }
