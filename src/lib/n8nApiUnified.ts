@@ -7,9 +7,6 @@
 
 import { UnifiedWorkflow, WorkflowCreationContext } from './schemas/unifiedWorkflow';
 import { getFeatureFlagManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowReadEnabled, isUnifiedWorkflowWriteEnabled } from './featureFlags';
-import { ValidationService } from './services/validationService';
-import { DomainClassificationService } from './services/domainClassificationService';
-import { NotificationService } from './services/notificationService';
 
 export interface N8nApiOptions {
   limit?: number;
@@ -39,15 +36,9 @@ export class N8nApiUnified {
   private availableCategoriesExpiryKey = 'n8n_unified_available_categories_cache_expiry';
   private availableCategoriesCacheExpiryHours = 24;
 
-  private validationService: ValidationService;
-  private domainClassificationService: DomainClassificationService;
-  private notificationService: NotificationService;
   private featureFlagManager = getFeatureFlagManager();
 
   constructor() {
-    this.validationService = new ValidationService();
-    this.domainClassificationService = new DomainClassificationService();
-    this.notificationService = new NotificationService();
   }
 
   /**

@@ -12,9 +12,6 @@ import { UnifiedWorkflow, WorkflowSearchParams, WorkflowCreationContext } from '
 import { WorkflowCacheManager, CacheConfig, CacheStats } from './workflowCacheManager';
 import { WorkflowDataProcessor, WorkflowStats } from './workflowDataProcessor';
 import { getFeatureFlagManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowReadEnabled, isUnifiedWorkflowWriteEnabled } from './featureFlags';
-import { ValidationService } from './services/validationService';
-import { DomainClassificationService } from './services/domainClassificationService';
-import { NotificationService } from './services/notificationService';
 
 export interface UnifiedWorkflowSearchParams extends WorkflowSearchParams {
   user_id?: string;
@@ -45,17 +42,11 @@ export class UnifiedWorkflowIndexer {
   private currentSourceKey: string | undefined = undefined;
   private cacheManager: WorkflowCacheManager;
   private dataProcessor: WorkflowDataProcessor;
-  private validationService: ValidationService;
-  private domainClassificationService: DomainClassificationService;
-  private notificationService: NotificationService;
   private featureFlagManager = getFeatureFlagManager();
 
   constructor() {
     this.cacheManager = new WorkflowCacheManager();
     this.dataProcessor = new WorkflowDataProcessor();
-    this.validationService = new ValidationService();
-    this.domainClassificationService = new DomainClassificationService();
-    this.notificationService = new NotificationService();
     this.initializeStats();
     
     // Load from server-side cache asynchronously (server-only)
@@ -103,7 +94,7 @@ export class UnifiedWorkflowIndexer {
       }
     } catch (error) {
       console.error('Failed to load from server cache:', error);
-      this.notificationService.sendAlert('cache_load_error', {
+      console.warn('Cache load error:', {
         source: source || 'all',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -322,7 +313,7 @@ export class UnifiedWorkflowIndexer {
       return { workflows: realWorkflows, total: realWorkflows.length, hasMore: false };
     } catch (error) {
       console.error('Search workflows error:', error);
-      this.notificationService.sendAlert('search_error', {
+      console.warn('Search error:', {
         params,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -514,7 +505,7 @@ export class UnifiedWorkflowIndexer {
       return null;
     } catch (error) {
       console.error('Failed to create AI-generated workflow:', error);
-      this.notificationService.sendAlert('ai_generation_error', {
+      console.warn('AI generation error:', {
         context,
         error: error instanceof Error ? error.message : 'Unknown error'
       });

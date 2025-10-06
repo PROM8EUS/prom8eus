@@ -9,9 +9,6 @@ import { UnifiedWorkflow, WorkflowCreationContext, GenerationMetadata } from './
 import { DynamicSubtask } from './schemas/analysis';
 import { openaiClient } from './openai';
 import { getFeatureFlagManager, isUnifiedWorkflowEnabled, isUnifiedWorkflowWriteEnabled, isUnifiedWorkflowAiGenerationEnabled } from './featureFlags';
-import { ValidationService } from './services/validationService';
-import { DomainClassificationService } from './services/domainClassificationService';
-import { NotificationService } from './services/notificationService';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UnifiedWorkflowGenerationOptions {
@@ -33,15 +30,9 @@ export interface UnifiedWorkflowGenerationResult {
 }
 
 export class UnifiedWorkflowGenerator {
-  private validationService: ValidationService;
-  private domainClassificationService: DomainClassificationService;
-  private notificationService: NotificationService;
   private featureFlagManager = getFeatureFlagManager();
 
   constructor() {
-    this.validationService = new ValidationService();
-    this.domainClassificationService = new DomainClassificationService();
-    this.notificationService = new NotificationService();
   }
 
   /**
