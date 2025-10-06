@@ -124,6 +124,9 @@ export class OpenAIClient {
       messages = payload.messages;
     } else if (payload.action === 'chat') {
       messages = payload.messages || [];
+    } else {
+      // For other actions, construct messages based on action type
+      messages = this.constructMessagesForAction(payload);
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -162,6 +165,83 @@ export class OpenAIClient {
       usage: data.usage,
       model: data.model
     };
+  }
+
+  /**
+   * Construct messages for different action types
+   */
+  private constructMessagesForAction(payload: any): OpenAIMessage[] {
+    const { action, taskText, jobText, subtasks, subtask, lang = 'de' } = payload;
+    
+    switch (action) {
+      case 'generate-subtasks':
+        return [
+          {
+            role: 'system',
+            content: lang === 'de' 
+              ? `Du bist ein Experte für Aufgabenanalyse. Zerlege komplexe Aufgaben in spezifische Unteraufgaben.
+JSON Format:
+{"subtasks":[{"id":"task-1","title":"Titel","description":"Beschreibung","automationPotential":85,"estimatedTime":2,"priority":"high","complexity":"medium","systems":["System1"],"risks":["Risiko1"],"opportunities":["Chance1"],"dependencies":["Abhängigkeit1"]}]}`
+              : `You are an expert task analyst. Break down complex tasks into specific subtasks.
+JSON Format:
+{"subtasks":[{"id":"task-1","title":"Title","description":"Description","automationPotential":85,"estimatedTime":2,"priority":"high","complexity":"medium","systems":["System1"],"risks":["Risk1"],"opportunities":["Opportunity1"],"dependencies":["Dependency1"]}]}`
+          },
+          {
+            role: 'user',
+            content: lang === 'de'
+              ? `Zerlege diese Aufgabe in spezifische Unteraufgaben:\n\nAUFGABE: ${taskText}\n\nFOKUS: Erstelle realistische Unteraufgaben mit korrekten Automatisierungswerten.`
+              : `Break down this task into specific subtasks:\n\nTASK: ${taskText}\n\nFOCUS: Create realistic subtasks with correct automation values.`
+          }
+        ];
+
+      case 'generate-business-case':
+        return [
+          {
+            role: 'system',
+            content: lang === 'de'
+              ? `Du bist ein Experte für Business Case Analyse. Analysiere Aufgaben und erstelle detaillierte Business Cases.
+JSON Format:
+{"manualHours":40,"automatedHours":8,"automationPotential":80,"savedHours":32,"setupCostHours":16,"setupCostMoney":800,"roi":300,"paybackPeriodYears":0.5,"hourlyRateEmployee":50,"hourlyRateFreelancer":80,"employmentType":"employee","reasoning":"Begründung"}`
+              : `You are a business case analysis expert. Analyze tasks and create detailed business cases.
+JSON Format:
+{"manualHours":40,"automatedHours":8,"automationPotential":80,"savedHours":32,"setupCostHours":16,"setupCostMoney":800,"roi":300,"paybackPeriodYears":0.5,"hourlyRateEmployee":50,"hourlyRateFreelancer":80,"employmentType":"employee","reasoning":"Reasoning"}`
+          },
+          {
+            role: 'user',
+            content: lang === 'de'
+              ? `Erstelle einen Business Case für diese Aufgabe:\n\nAUFGABE: ${taskText}\n\nUNTERAUFGABEN: ${JSON.stringify(subtasks)}`
+              : `Create a business case for this task:\n\nTASK: ${taskText}\n\nSUBTASKS: ${JSON.stringify(subtasks)}`
+          }
+        ];
+
+      case 'generate-workflow':
+        return [
+          {
+            role: 'system',
+            content: lang === 'de'
+              ? `Du bist ein Workflow-Experte. Erstelle detaillierte Workflow-Beschreibungen.
+JSON Format:
+{"name":"Workflow Name","description":"Beschreibung","complexity":"Medium","integrations":["System1"],"steps":[{"title":"Schritt 1","description":"Beschreibung","tools":["Tool1"]}]}`
+              : `You are a workflow expert. Create detailed workflow descriptions.
+JSON Format:
+{"name":"Workflow Name","description":"Description","complexity":"Medium","integrations":["System1"],"steps":[{"title":"Step 1","description":"Description","tools":["Tool1"]}]}`
+          },
+          {
+            role: 'user',
+            content: lang === 'de'
+              ? `Erstelle einen Workflow für diese Unteraufgabe:\n\nUNTERAUFGABE: ${JSON.stringify(subtask)}`
+              : `Create a workflow for this subtask:\n\nSUBTASK: ${JSON.stringify(subtask)}`
+          }
+        ];
+
+      default:
+        return [
+          {
+            role: 'user',
+            content: taskText || jobText || 'Please help with this request.'
+          }
+        ];
+    }
   }
 
   /**

@@ -29,6 +29,7 @@ import { DynamicSubtask, UnifiedWorkflow } from '@/lib/types';
 import { UnifiedSolutionCard } from '@/components/UnifiedSolutionCard';
 import { clearAllWorkflowCaches } from '@/lib/workflowGenerator';
 import FilterBar from '@/components/FilterBar';
+import WorkflowDetailModal from '@/components/WorkflowDetailModal';
 
 type WorkflowTabProps = {
   subtask: DynamicSubtask | null;
@@ -66,6 +67,29 @@ export default function WorkflowTab({
   const [sortBy, setSortBy] = useState<string>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Modal state
+  const [selectedWorkflow, setSelectedWorkflow] = useState<UnifiedWorkflow | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Convert UnifiedWorkflow to WorkflowIndex for the modal
+  const convertToWorkflowIndex = (workflow: UnifiedWorkflow) => {
+    return {
+      id: workflow.id,
+      source: 'ai-generated',
+      title: workflow.title,
+      summary: workflow.description,
+      link: '#',
+      category: workflow.category || 'General',
+      integrations: workflow.integrations || [],
+      complexity: workflow.complexity as 'Low' | 'Medium' | 'High',
+      tags: workflow.tags || [],
+      active: true,
+      triggerType: 'Manual' as const,
+      nodeCount: workflow.steps?.length || 0,
+      license: 'Unknown'
+    };
+  };
 
 
   // Load workflows when subtask changes OR when generatedWorkflows change
@@ -174,6 +198,8 @@ export default function WorkflowTab({
   // Handle workflow selection
   const handleWorkflowSelect = React.useCallback((workflow: UnifiedWorkflow) => {
     console.log('🔍 [WorkflowTab] Workflow selected:', workflow.title);
+    setSelectedWorkflow(workflow);
+    setIsModalOpen(true);
     onWorkflowSelect?.(workflow);
   }, [onWorkflowSelect]);
 
@@ -351,6 +377,17 @@ export default function WorkflowTab({
           </Button>
         </div>
       )}
+
+      {/* Workflow Detail Modal */}
+      <WorkflowDetailModal
+        workflow={selectedWorkflow ? convertToWorkflowIndex(selectedWorkflow) : null}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedWorkflow(null);
+        }}
+        lang={lang}
+      />
     </div>
   );
 }

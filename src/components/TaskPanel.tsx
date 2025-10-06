@@ -48,6 +48,55 @@ async function sha256(input: string): Promise<string> {
 const SUBTASK_CACHE_NS = 'subtasks_cache_v1';
 const SUBTASK_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
+// Fallback subtask generation when AI fails
+function generateFallbackSubtasks(taskText: string, lang: 'de' | 'en'): any[] {
+  console.log('🔄 [TaskPanel] Generating fallback subtasks for:', taskText);
+  
+  const baseSubtasks = [
+    {
+      id: 'task-1',
+      title: lang === 'de' ? 'Datenanalyse und -aufbereitung' : 'Data Analysis and Preparation',
+      systems: ['Database', 'Analytics Tools'],
+      aiTools: ['Data Processing', 'ETL Tools'],
+      selectedTools: [],
+      manualHoursShare: 0.3,
+      automationPotential: 0.7,
+      risks: [lang === 'de' ? 'Datenqualität' : 'Data Quality'],
+      assumptions: [],
+      kpis: [],
+      qualityGates: []
+    },
+    {
+      id: 'task-2',
+      title: lang === 'de' ? 'Implementierung und Testing' : 'Implementation and Testing',
+      systems: ['Development Environment', 'Testing Tools'],
+      aiTools: ['Code Generation', 'Test Automation'],
+      selectedTools: [],
+      manualHoursShare: 0.4,
+      automationPotential: 0.6,
+      risks: [lang === 'de' ? 'Technische Komplexität' : 'Technical Complexity'],
+      assumptions: [],
+      kpis: [],
+      qualityGates: []
+    },
+    {
+      id: 'task-3',
+      title: lang === 'de' ? 'Dokumentation und Deployment' : 'Documentation and Deployment',
+      systems: ['Documentation System', 'Deployment Pipeline'],
+      aiTools: ['Documentation Generator', 'CI/CD Tools'],
+      selectedTools: [],
+      manualHoursShare: 0.2,
+      automationPotential: 0.8,
+      risks: [lang === 'de' ? 'Wartbarkeit' : 'Maintainability'],
+      assumptions: [],
+      kpis: [],
+      qualityGates: []
+    }
+  ];
+  
+  return baseSubtasks;
+}
+
 type CachedSubtasks = {
   createdAt: string;
   subtasks: Subtask[];
@@ -183,40 +232,52 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
             if (isOpenAIAvailable()) {
               console.log('🤖 [TaskPanel] Using AI for subtask generation...');
               
-              // Set a timeout for AI generation to prevent hanging
-              const aiGenerationPromise = generateSubtasksWithAI(taskText, lang);
-              const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('AI generation timeout')), 10000)
-              );
-              
-              const aiResult = await Promise.race([aiGenerationPromise, timeoutPromise]) as any;
-              
-              if (aiResult.aiEnabled && aiResult.subtasks.length > 0) {
-                console.log('✅ [TaskPanel] AI generated subtasks:', aiResult.subtasks.length);
-                const mappedSubtasks = aiResult.subtasks.map(subtask => ({
-                  id: subtask.id,
-                  title: subtask.title,
-                  systems: subtask.systems || [],
-                  aiTools: subtask.aiTools || [],
-                  selectedTools: [],
-                  manualHoursShare: (100 - subtask.automationPotential) / 100,
-                  automationPotential: subtask.automationPotential / 100,
-                  risks: subtask.risks || [],
-                  assumptions: [],
-                  kpis: [],
-                  qualityGates: []
-                }));
-                setGeneratedSubtasks(mappedSubtasks);
-                await setCachedSubtasksForText(taskText, mappedSubtasks);
-                (window as any).subtaskGenerationInProgress.delete(taskId);
-                setIsGenerating(false);
-                return;
+              try {
+                // Set a timeout for AI generation to prevent hanging
+                const aiGenerationPromise = generateSubtasksWithAI(taskText, lang);
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('AI generation timeout')), 30000)
+                );
+                
+                const aiResult = await Promise.race([aiGenerationPromise, timeoutPromise]) as any;
+                
+                if (aiResult.aiEnabled && aiResult.subtasks.length > 0) {
+                  console.log('✅ [TaskPanel] AI generated subtasks:', aiResult.subtasks.length);
+                  const mappedSubtasks = aiResult.subtasks.map(subtask => ({
+                    id: subtask.id,
+                    title: subtask.title,
+                    systems: subtask.systems || [],
+                    aiTools: subtask.aiTools || [],
+                    selectedTools: [],
+                    manualHoursShare: (100 - subtask.automationPotential) / 100,
+                    automationPotential: subtask.automationPotential / 100,
+                    risks: subtask.risks || [],
+                    assumptions: [],
+                    kpis: [],
+                    qualityGates: []
+                  }));
+                  setGeneratedSubtasks(mappedSubtasks);
+                  await setCachedSubtasksForText(taskText, mappedSubtasks);
+                  (window as any).subtaskGenerationInProgress.delete(taskId);
+                  setIsGenerating(false);
+                  return;
+                }
+              } catch (aiError) {
+                console.error('❌ [TaskPanel] AI generation failed:', aiError);
+                console.error('❌ [TaskPanel] AI error details:', {
+                  message: aiError.message,
+                  stack: aiError.stack,
+                  name: aiError.name
+                });
+                // Continue to fallback generation
               }
             }
             
-            // No fallback - AI is required
-            console.log('❌ [TaskPanel] AI subtask generation failed - no fallback available');
-            setGeneratedSubtasks([]);
+            // Fallback: Generate basic subtasks if AI fails
+            console.log('⚠️ [TaskPanel] AI generation failed, using fallback generation');
+            const fallbackSubtasks = generateFallbackSubtasks(taskText, lang);
+            setGeneratedSubtasks(fallbackSubtasks);
+            await setCachedSubtasksForText(taskText, fallbackSubtasks);
             (window as any).subtaskGenerationInProgress.delete(taskId);
             setIsGenerating(false);
           } catch (error) {

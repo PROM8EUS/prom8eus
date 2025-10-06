@@ -165,7 +165,11 @@ export class CacheManager {
    * Generate cache key for generated content
    */
   generateKey(type: 'workflow' | 'agent' | 'prompt', subtaskId: string, metadata: GenerationMetadata): string {
-    const { model, language, timestamp } = metadata;
+    const { model, language, timestamp, cacheKey } = metadata;
+    // Use cacheKey if available (includes variation info), otherwise fallback to basic key
+    if (cacheKey) {
+      return `${type}_${cacheKey}`;
+    }
     return `${type}_${subtaskId}_${model}_${language}_${Math.floor(timestamp / (60 * 1000))}`; // Round to minute
   }
 

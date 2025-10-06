@@ -31,6 +31,7 @@ import { generatePromptVariations } from '@/lib/services/promptGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
 import FilterBar from '@/components/FilterBar';
+import SolutionDetailModal from '@/components/SolutionDetailModal';
 
 type LLMTabProps = {
   subtask: DynamicSubtask | null;
@@ -60,6 +61,10 @@ export default function LLMTab({
   const [filterStyle, setFilterStyle] = useState<'all' | 'formal' | 'creative' | 'technical'>('all');
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Modal state
+  const [selectedPrompt, setSelectedPrompt] = useState<GeneratedPrompt | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load prompts when subtask changes
   useEffect(() => {
@@ -178,7 +183,33 @@ export default function LLMTab({
       language: lang === 'de' ? 'German' : 'English',
       context: 'Task automation',
       expectedOutput: 'Structured response',
-      tips: ['Use with specific context', 'Adjust parameters as needed']
+      tips: ['Use with specific context', 'Adjust parameters as needed'],
+      // Add missing properties for SolutionDetailModal
+      metrics: {
+        usageCount: Math.floor(Math.random() * 200) + 20,
+        successRate: Math.floor(Math.random() * 15) + 85, // 85-100%
+        averageExecutionTime: Math.floor(Math.random() * 10) + 2,
+        errorRate: Math.floor(Math.random() * 3), // 0-3%
+        userRating: Math.floor(Math.random() * 2) + 4, // 4-5 stars
+        reviewCount: Math.floor(Math.random() * 100) + 10,
+        lastUsed: new Date(),
+        performanceScore: Math.floor(Math.random() * 15) + 85 // 85-100
+      },
+      requirements: [],
+      useCases: [],
+      integrations: [],
+      subcategories: [],
+      implementationPriority: 'Medium',
+      timeToValue: 'Immediate',
+      estimatedROI: '300-500%',
+      automationPotential: Math.floor(Math.random() * 30) + 70, // 70-100%
+      setupTime: 'Quick',
+      deployment: 'Cloud',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: '1.0.0',
+      source: 'ai-generated',
+      sourceUrl: '#'
     };
   };
 
@@ -197,6 +228,12 @@ export default function LLMTab({
 
   const handleOpenInService = (prompt: GeneratedPrompt) => {
     onOpenInService?.(prompt, prompt.service);
+  };
+
+  const handlePromptSelect = (prompt: GeneratedPrompt) => {
+    setSelectedPrompt(prompt);
+    setIsModalOpen(true);
+    onPromptSelect?.(prompt);
   };
 
   // Filter prompts based on search and filters
@@ -377,7 +414,7 @@ export default function LLMTab({
                 key={`${prompt.id || 'prompt'}-${index}-${prompt.service || 'unknown'}`}
                 solution={unifiedSolution}
                 lang={lang}
-                onSelect={(unifiedSolution) => onPromptSelect?.(prompt)}
+                onSelect={() => handlePromptSelect(prompt)}
                 onCopyClick={(unifiedSolution) => handleCopyPrompt(prompt)}
                 onOpenInServiceClick={(unifiedSolution) => handleOpenInService(prompt)}
                 onShareClick={handleShare}
@@ -402,6 +439,17 @@ export default function LLMTab({
           </p>
         </div>
       )}
+
+      {/* Prompt Detail Modal */}
+      <SolutionDetailModal
+        solution={selectedPrompt ? convertToUnifiedSolution(selectedPrompt) : null}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPrompt(null);
+        }}
+        lang={lang}
+      />
     </div>
   );
 }

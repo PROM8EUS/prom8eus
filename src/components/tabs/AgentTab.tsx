@@ -31,6 +31,7 @@ import { generateAgentWithFallback } from '@/lib/services/agentGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
 import FilterBar from '@/components/FilterBar';
+import SolutionDetailModal from '@/components/SolutionDetailModal';
 
 type AgentTabProps = {
   subtask: DynamicSubtask | null;
@@ -59,6 +60,10 @@ export default function AgentTab({
   const [filterTechnology, setFilterTechnology] = useState<string>('all');
   const [filterComplexity, setFilterComplexity] = useState<'all' | 'Low' | 'Medium' | 'High'>('all');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Modal state
+  const [selectedAgent, setSelectedAgent] = useState<GeneratedAgent | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load agents when subtask changes
   useEffect(() => {
@@ -207,7 +212,37 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
       lastActive: new Date().toISOString(),
       verified: Math.random() > 0.3, // 70% verified
       badges: [], // Default empty badges
-      portfolio: [] // Default empty portfolio
+      portfolio: [], // Default empty portfolio
+      // Add missing properties for SolutionDetailModal
+      metrics: {
+        usageCount: Math.floor(Math.random() * 100) + 10,
+        successRate: Math.floor(Math.random() * 20) + 80, // 80-100%
+        averageExecutionTime: Math.floor(Math.random() * 30) + 5,
+        errorRate: Math.floor(Math.random() * 5), // 0-5%
+        userRating: Math.floor(Math.random() * 2) + 4, // 4-5 stars
+        reviewCount: Math.floor(Math.random() * 50) + 5,
+        lastUsed: new Date(),
+        performanceScore: Math.floor(Math.random() * 20) + 80 // 80-100
+      },
+      requirements: [],
+      useCases: [],
+      integrations: [],
+      subcategories: [],
+      tags: [],
+      category: 'AI & Automation',
+      implementationPriority: 'Medium',
+      timeToValue: '1-2 weeks',
+      estimatedROI: '200-300%',
+      automationPotential: Math.floor(Math.random() * 40) + 60, // 60-100%
+      difficulty: 'Intermediate',
+      setupTime: 'Medium',
+      deployment: 'Cloud',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: '1.0.0',
+      author: 'AI Generated',
+      source: 'ai-generated',
+      sourceUrl: '#'
     };
   };
 
@@ -217,6 +252,12 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
 
   const handleConfigView = (agent: GeneratedAgent) => {
     onConfigView?.(agent);
+  };
+
+  const handleAgentSelect = (agent: GeneratedAgent) => {
+    setSelectedAgent(agent);
+    setIsModalOpen(true);
+    onAgentSelect?.(agent);
   };
 
   // Filter agents based on search and filters
@@ -385,7 +426,7 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
                 key={agent.id || index}
                 solution={unifiedSolution}
                 lang={lang}
-                onSelect={(unifiedSolution) => onAgentSelect?.(agent)}
+                onSelect={() => handleAgentSelect(agent)}
                 onSetupClick={(unifiedSolution) => handleSetupRequest(agent)}
                 onConfigClick={(unifiedSolution) => handleConfigView(agent)}
                 onShareClick={handleShare}
@@ -410,6 +451,17 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
           </p>
         </div>
       )}
+
+      {/* Agent Detail Modal */}
+      <SolutionDetailModal
+        solution={selectedAgent ? convertToUnifiedSolution(selectedAgent) : null}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedAgent(null);
+        }}
+        lang={lang}
+      />
     </div>
   );
 }

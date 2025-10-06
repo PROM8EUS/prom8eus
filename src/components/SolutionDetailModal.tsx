@@ -144,7 +144,7 @@ export default function SolutionDetailModal({
           />
         ))}
         <span className="ml-2 text-sm font-medium">{rating}</span>
-        <span className="text-sm text-muted-foreground">({solution.metrics.reviewCount} reviews)</span>
+        <span className="text-sm text-muted-foreground">({solution.metrics?.reviewCount || 0} reviews)</span>
       </div>
     );
   };
@@ -176,11 +176,11 @@ export default function SolutionDetailModal({
           <div className="text-sm text-muted-foreground">Time to Value</div>
         </div>
         <div className="text-center p-3 bg-muted rounded-lg">
-          <div className="text-2xl font-bold text-primary">{solution.metrics.successRate.toFixed(1)}%</div>
+          <div className="text-2xl font-bold text-primary">{solution.metrics?.successRate?.toFixed(1) || '0.0'}%</div>
           <div className="text-sm text-muted-foreground">Success Rate</div>
         </div>
         <div className="text-center p-3 bg-muted rounded-lg">
-          <div className="text-2xl font-bold text-primary">{solution.metrics.usageCount}</div>
+          <div className="text-2xl font-bold text-primary">{solution.metrics?.usageCount || 0}</div>
           <div className="text-sm text-muted-foreground">Active Users</div>
         </div>
       </div>
@@ -190,7 +190,7 @@ export default function SolutionDetailModal({
   const renderRequirements = () => {
     return (
       <div className="space-y-3">
-        {solution.requirements.map((req, index) => (
+        {(solution.requirements || []).map((req, index) => (
           <div key={index} className="p-3 border rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant={req.importance === 'Required' ? 'destructive' : 'secondary'}>
@@ -199,7 +199,7 @@ export default function SolutionDetailModal({
               <span className="font-medium">{req.category}</span>
             </div>
             <ul className="space-y-1">
-              {req.items.map((item, itemIndex) => (
+              {(req.items || []).map((item, itemIndex) => (
                 <li key={itemIndex} className="flex items-center gap-2 text-sm">
                   <CheckCircle className="h-3 w-3 text-green-500" />
                   {item}
@@ -221,7 +221,7 @@ export default function SolutionDetailModal({
   const renderUseCases = () => {
     return (
       <div className="space-y-4">
-        {solution.useCases.map((useCase, index) => (
+        {(solution.useCases || []).map((useCase, index) => (
           <div key={index} className="p-4 border rounded-lg">
             <div className="flex items-start justify-between mb-3">
               <h4 className="font-semibold">{useCase.scenario}</h4>
@@ -240,11 +240,11 @@ export default function SolutionDetailModal({
               </div>
             </div>
             
-            {useCase.prerequisites.length > 0 && (
+            {(useCase.prerequisites || []).length > 0 && (
               <div className="mt-3 pt-3 border-t">
                 <span className="text-sm font-medium">Prerequisites:</span>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {useCase.prerequisites.map((prereq, prereqIndex) => (
+                  {(useCase.prerequisites || []).map((prereq, prereqIndex) => (
                     <Badge key={prereqIndex} variant="secondary" className="text-xs">
                       {prereq}
                     </Badge>
@@ -261,7 +261,7 @@ export default function SolutionDetailModal({
   const renderIntegrations = () => {
     return (
       <div className="space-y-3">
-        {solution.integrations.map((integration, index) => (
+        {(solution.integrations || []).map((integration, index) => (
           <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-muted rounded">
@@ -489,7 +489,7 @@ export default function SolutionDetailModal({
                         <div>
                           <span className="text-xs font-medium text-muted-foreground">Prerequisites:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {step.prerequisites.map((prereq, index) => (
+                            {(step.prerequisites || []).map((prereq, index) => (
                               <Badge key={index} variant="secondary" className="text-xs">
                                 {prereq}
                               </Badge>
@@ -501,7 +501,7 @@ export default function SolutionDetailModal({
                         <div>
                           <span className="text-xs font-medium text-muted-foreground">Tools Required:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {step.tools_required.map((tool, index) => (
+                            {(step.tools_required || []).map((tool, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {tool}
                               </Badge>
@@ -625,7 +625,8 @@ export default function SolutionDetailModal({
   };
 
   const renderPrerequisites = () => {
-    const prerequisites = solution.requirements
+    // Fixed: Added null checking for requirements array
+    const prerequisites = (solution.requirements || [])
       .filter(req => req.importance === 'Required')
       .flatMap(req => req.items);
     
@@ -874,7 +875,7 @@ export default function SolutionDetailModal({
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Created:</span>
-              <span>{solution.createdAt.toLocaleDateString()}</span>
+              <span>{solution.createdAt?.toLocaleDateString() || 'N/A'}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Tag className="h-4 w-4 text-muted-foreground" />
@@ -907,7 +908,7 @@ export default function SolutionDetailModal({
         <div>
           <h4 className="font-medium mb-2">Subcategories</h4>
           <div className="flex flex-wrap gap-2">
-            {solution.subcategories.map((subcategory, index) => (
+            {(solution.subcategories || []).map((subcategory, index) => (
               <Badge key={index} variant="outline">
                 {subcategory}
               </Badge>
@@ -918,7 +919,7 @@ export default function SolutionDetailModal({
         <div>
           <h4 className="font-medium mb-2">Tags</h4>
           <div className="flex flex-wrap gap-2">
-            {solution.tags.map((tag, index) => (
+            {(solution.tags || []).map((tag, index) => (
               <Badge key={index} variant="secondary">
                 {tag}
               </Badge>
@@ -1004,7 +1005,8 @@ export default function SolutionDetailModal({
                   {solution.implementationPriority}
                 </Badge>
               </div>
-              {renderStars(solution.metrics.userRating)}
+              {/* Fixed: Added null checking for metrics */}
+              {solution.metrics?.userRating && renderStars(solution.metrics.userRating)}
             </div>
           </div>
         </DialogHeader>
@@ -1027,15 +1029,15 @@ export default function SolutionDetailModal({
               <h4 className="font-medium mb-3">Quick Stats</h4>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="text-center p-3 bg-muted rounded">
-                  <div className="text-lg font-bold">{solution.metrics.performanceScore}</div>
+                  <div className="text-lg font-bold">{solution.metrics?.performanceScore || 'N/A'}</div>
                   <div className="text-muted-foreground">Performance Score</div>
                 </div>
                 <div className="text-center p-3 bg-muted rounded">
-                  <div className="text-lg font-bold">{solution.metrics.errorRate.toFixed(1)}%</div>
+                  <div className="text-lg font-bold">{solution.metrics?.errorRate?.toFixed(1) || '0.0'}%</div>
                   <div className="text-muted-foreground">Error Rate</div>
                 </div>
                 <div className="text-center p-3 bg-muted rounded">
-                  <div className="text-lg font-bold">{solution.metrics.lastUsed.toLocaleDateString()}</div>
+                  <div className="text-lg font-bold">{solution.metrics?.lastUsed?.toLocaleDateString() || 'N/A'}</div>
                   <div className="text-muted-foreground">Last Used</div>
                 </div>
               </div>
