@@ -5,7 +5,7 @@ import { DynamicSubtask } from '@/lib/types';
 import { SubtaskCard } from './SubtaskCard';
 import { BlueprintCard, BlueprintData } from './BlueprintCard';
 import { matchWorkflowsToSubtask } from '@/lib/workflowMatcher';
-import { WorkflowIndex } from '@/lib/workflowIndexer';
+import { WorkflowIndex } from '@/lib/schemas/workflowIndex';
 import { generateWorkflowFast } from '@/lib/workflowGenerator';
 import { isOpenAIAvailable } from '@/lib/openai';
 

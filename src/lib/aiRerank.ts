@@ -1,4 +1,4 @@
-import { N8nWorkflow } from '@/lib/n8nApi';
+import { N8nWorkflow } from '@/lib/schemas/n8nWorkflow';
 
 export interface RerankedWorkflow {
   workflow: N8nWorkflow;

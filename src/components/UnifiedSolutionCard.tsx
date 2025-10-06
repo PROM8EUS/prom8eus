@@ -61,7 +61,7 @@ import {
   Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SolutionStatus, GenerationMetadata } from '@/lib/types';
+import { SolutionStatus, GenerationMetadata, UnifiedWorkflow } from '@/lib/types';
 
 // Base interface for all solution types
 export interface UnifiedSolutionData {
@@ -164,23 +164,79 @@ export interface UnifiedSolutionData {
 }
 
 interface UnifiedSolutionCardProps {
-  solution: UnifiedSolutionData;
+  solution: UnifiedSolutionData | UnifiedWorkflow;
   lang?: 'de' | 'en';
   
   // Action handlers
-  onSelect?: (solution: UnifiedSolutionData) => void;
-  onSetupClick?: (solution: UnifiedSolutionData) => void;
-  onConfigClick?: (solution: UnifiedSolutionData) => void;
-  onCopyClick?: (solution: UnifiedSolutionData) => void;
-  onOpenInServiceClick?: (solution: UnifiedSolutionData, service?: string) => void;
-  onShareClick?: (solution: UnifiedSolutionData) => void;
-  onDownloadClick?: (solution: UnifiedSolutionData) => void;
+  onSelect?: (solution: UnifiedSolutionData | UnifiedWorkflow) => void;
+  onSetupClick?: (solution: UnifiedSolutionData | UnifiedWorkflow) => void;
+  onConfigClick?: (solution: UnifiedSolutionData | UnifiedWorkflow) => void;
+  onCopyClick?: (solution: UnifiedSolutionData | UnifiedWorkflow) => void;
+  onOpenInServiceClick?: (solution: UnifiedSolutionData | UnifiedWorkflow, service?: string) => void;
+  onShareClick?: (solution: UnifiedSolutionData | UnifiedWorkflow) => void;
+  onDownloadClick?: (solution: UnifiedSolutionData | UnifiedWorkflow) => void;
   
   className?: string;
   compact?: boolean;
   showSkeleton?: boolean;
   isInteractive?: boolean;
 }
+
+// Helper function to normalize solution data
+const normalizeSolution = (inputSolution: UnifiedSolutionData | UnifiedWorkflow): UnifiedSolutionData => {
+  // If it's already UnifiedSolutionData, return as is
+  if ('type' in inputSolution && inputSolution.type) {
+    return inputSolution as UnifiedSolutionData;
+  }
+  
+  // Convert UnifiedWorkflow to UnifiedSolutionData
+  const workflow = inputSolution as UnifiedWorkflow;
+  
+  // Generate stable values based on workflow ID to avoid random changes
+  const stableHash = workflow.id.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  
+  return {
+    id: workflow.id,
+    name: workflow.title,
+    description: workflow.description,
+    type: 'workflow' as const,
+    filename: `${workflow.title.toLowerCase().replace(/\s+/g, '-')}.json`,
+    category: workflow.category || 'Workflow',
+    priority: (workflow.complexity === 'High' ? 'High' : workflow.complexity === 'Medium' ? 'Medium' : 'Low') as 'Low' | 'Medium' | 'High',
+    rating: 4.0,
+    reviewCount: Math.abs(stableHash % 50) + 10,
+    triggerType: workflow.triggerType as 'Complex' | 'Webhook' | 'Manual' | 'Scheduled',
+    complexity: workflow.complexity === 'Easy' ? 'Low' : workflow.complexity === 'Medium' ? 'Medium' : 'High',
+    integrations: workflow.integrations || [],
+    tags: workflow.tags || [],
+    matchScore: Math.abs(stableHash % 30) + 70,
+    timeSavings: Math.abs(stableHash % 20) + 5,
+    downloadUrl: workflow.downloadUrl,
+    validationStatus: 'valid' as const,
+    estimatedSetupTime: Math.abs(stableHash % 60) + 15,
+    active: true,
+    lastUpdated: workflow.updatedAt || workflow.createdAt,
+    authorName: workflow.author?.name || 'AI Assistant',
+    authorVerified: workflow.author?.verified || true,
+    pricing: 'Free' as const,
+    isAIGenerated: workflow.isAIGenerated || false,
+    status: workflow.status || 'generated' as const,
+    source: workflow.source,
+    version: workflow.version,
+    created: workflow.createdAt,
+    lastModified: workflow.updatedAt,
+    generationMetadata: workflow.generationMetadata,
+    badges: workflow.tags || [],
+    popularity: workflow.popularity,
+    effectiveness: workflow.timeSavings,
+    setupCost: workflow.setupCost,
+    estimatedCost: workflow.estimatedCost,
+    estimatedTime: workflow.estimatedTime
+  };
+};
 
 // Service styling for LLMs
 const getServiceStyle = (service?: string) => {
@@ -460,7 +516,9 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   const [copySuccess, setCopySuccess] = useState(false);
   const codeRef = useRef<HTMLDivElement>(null);
 
-  const TypeIcon = getTypeIcon(solution.type);
+  // Normalize solution data to UnifiedSolutionData format
+  const normalizedSolution = normalizeSolution(solution);
+  const TypeIcon = getTypeIcon(normalizedSolution.type);
 
   // Simulate loading state
   useEffect(() => {
@@ -490,12 +548,12 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   // Handle copy action
   const handleCopy = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (solution.type === 'llm' && solution.prompt) {
+    if (normalizedSolution.type === 'llm' && normalizedSolution.prompt) {
       setIsLoading(true);
       setIsCopied(true);
       
       try {
-        await navigator.clipboard.writeText(solution.prompt);
+        await navigator.clipboard.writeText(normalizedSolution.prompt);
         setCopySuccess(true);
         onCopyClick?.(solution);
         
@@ -546,7 +604,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   // Handle open in service
   const handleOpenInService = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    onOpenInServiceClick?.(solution, solution.service);
+    onOpenInServiceClick?.(solution, normalizedSolution.service);
   };
 
   // Handle select
@@ -561,19 +619,19 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   };
 
   // Generate avatar placeholder for agents
-  const { color, initials } = solution.type === 'agent' 
-    ? generateAvatarPlaceholder(solution.name, solution.personality)
+  const { color, initials } = normalizedSolution.type === 'agent' 
+    ? generateAvatarPlaceholder(normalizedSolution.name, normalizedSolution.personality)
     : { color: '', initials: '' };
 
   // Get prompt preview for LLMs
   const getPromptPreview = () => {
-    if (!solution.prompt) return '';
+    if (!normalizedSolution.prompt) return '';
     if (isExpanded || !compact) {
-      return solution.prompt;
+      return normalizedSolution.prompt;
     }
-    return solution.prompt.length > 200 
-      ? solution.prompt.substring(0, 200) + '...'
-      : solution.prompt;
+    return normalizedSolution.prompt.length > 200 
+      ? normalizedSolution.prompt.substring(0, 200) + '...'
+      : normalizedSolution.prompt;
   };
 
   // Get action buttons based on solution type
@@ -591,7 +649,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
     }
 
     // Type-specific actions
-    switch (solution.type) {
+    switch (normalizedSolution.type) {
       case 'workflow':
         if (onDownloadClick) {
           buttons.push({
@@ -640,7 +698,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
             className: isCopied ? 'text-green-600' : ''
           });
         }
-        if (onOpenInServiceClick && solution.service) {
+        if (onOpenInServiceClick && normalizedSolution.service) {
           buttons.push({
             icon: ExternalLink,
             label: lang === 'de' ? 'In Service öffnen' : 'Open in Service',
@@ -666,7 +724,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
   };
 
   if (showSkeleton) {
-    return <SolutionCardSkeleton compact={compact} type={solution.type} />;
+    return <SolutionCardSkeleton compact={compact} type={normalizedSolution.type} />;
   }
 
   return (
@@ -685,19 +743,19 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
     >
 
       {/* Status indicator */}
-      {solution.status && (
+      {normalizedSolution.status && (
         <div className="absolute top-3 right-3 z-10">
           <Badge 
             variant="outline" 
-            className={cn("text-xs", getStatusStyle(solution.status))}
+            className={cn("text-xs", getStatusStyle(normalizedSolution.status))}
           >
-            {solution.status === 'generated' && <Sparkles className="h-3 w-3 mr-1" />}
-            {solution.status === 'verified' && <CheckCircle className="h-3 w-3 mr-1" />}
-            {solution.status === 'fallback' && <AlertCircle className="h-3 w-3 mr-1" />}
+            {normalizedSolution.status === 'generated' && <Sparkles className="h-3 w-3 mr-1" />}
+            {normalizedSolution.status === 'verified' && <CheckCircle className="h-3 w-3 mr-1" />}
+            {normalizedSolution.status === 'fallback' && <AlertCircle className="h-3 w-3 mr-1" />}
             {lang === 'de' 
-              ? (solution.status === 'generated' ? 'Generiert' : 
-                 solution.status === 'verified' ? 'Verifiziert' : 'Fallback')
-              : solution.status
+              ? (normalizedSolution.status === 'generated' ? 'Generiert' : 
+                 normalizedSolution.status === 'verified' ? 'Verifiziert' : 'Fallback')
+              : normalizedSolution.status
             }
           </Badge>
         </div>
@@ -711,7 +769,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
             <div className={cn(
               "rounded-full flex items-center justify-center",
               "shadow-md",
-              getTypeStyle(solution.type),
+              getTypeStyle(normalizedSolution.type),
               compact ? "h-10 w-10" : "h-12 w-12"
             )}>
               <TypeIcon className={cn(
@@ -725,13 +783,13 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
                 "font-semibold text-gray-900 leading-tight mb-1 truncate",
                 compact ? "text-sm" : "text-base"
               )}>
-                {solution.name}
+                {normalizedSolution.name}
               </h3>
               
               {/* Role/Service info */}
-              {(solution.role || solution.service) && (
+              {(normalizedSolution.role || normalizedSolution.service) && (
                 <p className="text-xs text-gray-600 mb-2">
-                  {solution.role || solution.service}
+                  {normalizedSolution.role || normalizedSolution.service}
                 </p>
               )}
               
@@ -739,37 +797,37 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
               <div className="flex items-center gap-1 flex-wrap">
                 <Badge 
                   variant="outline" 
-                  className={cn("text-xs", getTypeStyle(solution.type))}
+                  className={cn("text-xs", getTypeStyle(normalizedSolution.type))}
                 >
-                  {solution.type === 'workflow' && (lang === 'de' ? 'Workflow' : 'Workflow')}
-                  {solution.type === 'agent' && (lang === 'de' ? 'Agent' : 'Agent')}
-                  {solution.type === 'llm' && (lang === 'de' ? 'Prompt' : 'Prompt')}
+                  {normalizedSolution.type === 'workflow' && (lang === 'de' ? 'Workflow' : 'Workflow')}
+                  {normalizedSolution.type === 'agent' && (lang === 'de' ? 'Agent' : 'Agent')}
+                  {normalizedSolution.type === 'llm' && (lang === 'de' ? 'Prompt' : 'Prompt')}
                 </Badge>
                 
-                {solution.difficulty && (
+                {normalizedSolution.difficulty && (
                   <Badge 
                     variant="outline" 
-                    className={cn("text-xs", getDifficultyStyle(solution.difficulty))}
+                    className={cn("text-xs", getDifficultyStyle(normalizedSolution.difficulty))}
                   >
-                    {solution.difficulty}
+                    {normalizedSolution.difficulty}
                   </Badge>
                 )}
                 
-                {solution.priority && (
+                {normalizedSolution.priority && (
                   <Badge 
                     variant="outline" 
-                    className={cn("text-xs", getPriorityStyle(solution.priority))}
+                    className={cn("text-xs", getPriorityStyle(normalizedSolution.priority))}
                   >
-                    {solution.priority}
+                    {normalizedSolution.priority}
                   </Badge>
                 )}
                 
-                {solution.pricing && (
+                {normalizedSolution.pricing && (
                   <Badge 
                     variant="outline" 
-                    className={cn("text-xs", getPricingStyle(solution.pricing))}
+                    className={cn("text-xs", getPricingStyle(normalizedSolution.pricing))}
                   >
-                    {solution.pricing}
+                    {normalizedSolution.pricing}
                   </Badge>
                 )}
               </div>
@@ -777,14 +835,14 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
           </div>
 
           {/* Description */}
-          {solution.description && (
+          {normalizedSolution.description && (
             <p className="text-sm text-gray-600 line-clamp-2">
-              {solution.description}
+              {normalizedSolution.description}
             </p>
           )}
 
           {/* Type-specific content */}
-          {solution.type === 'llm' && solution.prompt && (
+          {normalizedSolution.type === 'llm' && normalizedSolution.prompt && (
             <div className="space-y-2">
               <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-700 font-mono">
                 <div 
@@ -797,7 +855,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
                   }}
                 />
               </div>
-              {solution.prompt.length > 200 && (
+              {normalizedSolution.prompt.length > 200 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -822,7 +880,7 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
 
           {/* Skills/Capabilities/Tags */}
           <div className="flex flex-wrap gap-1">
-            {solution.skills?.slice(0, 3).map((skill, index) => (
+            {normalizedSolution.skills?.slice(0, 3).map((skill, index) => (
               <Badge 
                 key={index} 
                 variant="outline" 
@@ -831,17 +889,17 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
                 {skill}
               </Badge>
             ))}
-            {solution.capabilities?.slice(0, 2).map((capability, index) => (
+            {normalizedSolution.capabilities?.slice(0, 2).map((capability, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {capability}
               </Badge>
             ))}
-            {solution.integrations?.slice(0, 2).map((integration, index) => (
+            {normalizedSolution.integrations?.slice(0, 2).map((integration, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {integration}
               </Badge>
             ))}
-            {solution.tags?.slice(0, 2).map((tag, index) => (
+            {normalizedSolution.tags?.slice(0, 2).map((tag, index) => (
               <Badge key={index} variant="secondary" className="text-xs">
                 {tag}
               </Badge>
@@ -850,41 +908,41 @@ export const UnifiedSolutionCard: React.FC<UnifiedSolutionCardProps> = ({
 
           {/* Stats */}
           <div className="flex items-center gap-4 text-xs text-gray-600">
-            {solution.rating && (
+            {normalizedSolution.rating && (
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                <span>{solution.rating.toFixed(1)}</span>
-                {solution.reviewCount && (
-                  <span>({solution.reviewCount})</span>
+                <span>{normalizedSolution.rating.toFixed(1)}</span>
+                {normalizedSolution.reviewCount && (
+                  <span>({normalizedSolution.reviewCount})</span>
                 )}
               </div>
             )}
             
-            {solution.projectsCompleted && (
+            {normalizedSolution.projectsCompleted && (
               <div className="flex items-center gap-1">
                 <Target className="w-3 h-3" />
-                <span>{solution.projectsCompleted} projects</span>
+                <span>{normalizedSolution.projectsCompleted} projects</span>
               </div>
             )}
             
-            {solution.responseTime && (
+            {normalizedSolution.responseTime && (
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>{solution.responseTime}min</span>
+                <span>{normalizedSolution.responseTime}min</span>
               </div>
             )}
             
-            {solution.estimatedTokens && (
+            {normalizedSolution.estimatedTokens && (
               <div className="flex items-center gap-1">
                 <Code className="w-3 h-3" />
-                <span>{solution.estimatedTokens} tokens</span>
+                <span>{normalizedSolution.estimatedTokens} tokens</span>
               </div>
             )}
             
-            {solution.timeSavings && (
+            {normalizedSolution.timeSavings && (
               <div className="flex items-center gap-1">
                 <Timer className="w-3 h-3" />
-                <span>{solution.timeSavings}h saved</span>
+                <span>{normalizedSolution.timeSavings}h saved</span>
               </div>
             )}
           </div>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AI_TOOLS } from '@/lib/catalog/aiTools';
 import { WorkflowBrowser } from './WorkflowBrowser';
 import { getGitHubConfig } from '@/lib/config';
-import { workflowIndexer, SourceHealthStatus, SourceAlert, CacheStats } from '@/lib/workflowIndexer';
+import { SourceHealthStatus, SourceAlert, CacheStats } from '@/lib/schemas/workflowIndex';
+import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 import { performanceMetrics } from '@/lib/performanceMetrics';
 import { usageAnalytics } from '@/lib/usageAnalytics';
 import { dataValidationEngine } from '@/lib/dataValidationSystem';
@@ -168,7 +169,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
 
   const loadWorkflowStats = async (source?: string) => {
     try {
-      const stats = await workflowIndexer.getStats(source);
+      const stats = await unifiedWorkflowIndexer.getStats(source);
       setWorkflowStats(stats);
     } catch (error) {
       console.error('Error loading workflow stats:', error);
@@ -1187,7 +1188,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
               {/* Quick actions */}
               <div className="flex gap-2">
                 <Button variant="outline" onClick={async () => {
-                  await workflowIndexer.forceRefreshWorkflows(managedSource.id);
+                  await unifiedWorkflowIndexer.forceRefreshWorkflows(managedSource.id);
                   await loadSources();
                 }}>
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -1417,7 +1418,7 @@ export default function SourcesManagement({ lang = 'de' }: SourcesManagementProp
                 <Button 
                   variant="outline" 
                   onClick={() => {
-                    workflowIndexer.clearAllCache();
+                    unifiedWorkflowIndexer.clearAllCache();
                     loadCacheAnalytics();
                   }}
                 >

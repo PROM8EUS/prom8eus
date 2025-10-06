@@ -16,11 +16,12 @@ interface OpenAIMessage {
 }
 
 interface OpenAIRequestBody {
-  action: 'chat' | 'analyze-job' | 'generate-subtasks' | 'generate-business-case' | 'find-solutions' | 'complete-analysis';
+  action: 'chat' | 'analyze-job' | 'analyze-job-complete' | 'generate-subtasks' | 'generate-business-case' | 'find-solutions' | 'complete-analysis' | 'generate-workflow';
   messages?: OpenAIMessage[];
   jobText?: string;
   taskText?: string;
   subtasks?: any[];
+  subtask?: any;
   lang?: 'de' | 'en';
   options?: {
     temperature?: number;
@@ -45,7 +46,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY not configured on server');
     }
 
-    const { action, messages, jobText, taskText, subtasks, lang = 'de', options }: OpenAIRequestBody = await req.json();
+    const { action, messages, jobText, taskText, subtasks, subtask, lang = 'de', options }: OpenAIRequestBody = await req.json();
 
     let systemPrompt = '';
     let userPrompt = '';
@@ -191,6 +192,15 @@ ${jobText.slice(0, 1000)}`;
           ? `Führe eine komplette Analyse dieser Aufgabe durch:\n\nAUFGABE: ${taskText}`
           : `Perform a complete analysis of this task:\n\nTASK: ${taskText}`;
         maxTokens = 3000;
+        break;
+
+      case 'generate-workflow':
+        if (!subtask) {
+          throw new Error('subtask required for generate-workflow action');
+        }
+        systemPrompt = buildWorkflowGenerationPrompt(lang);
+        userPrompt = buildWorkflowGenerationUserPrompt(subtask, lang);
+        maxTokens = 2000;
         break;
 
       default:
@@ -469,5 +479,111 @@ function buildSolutionsUserPrompt(taskText: string, subtasks: any[], lang: strin
   return lang === 'de'
     ? `HAUPTAUFGABE: ${taskText}\n\nTEILAUFGABEN:\n${subtasksText}\n\nErstelle spezifische Workflows und AI-Agenten.`
     : `MAIN TASK: ${taskText}\n\nSUBTASKS:\n${subtasksText}\n\nCreate specific workflows and AI agents.`;
+}
+
+function buildWorkflowGenerationPrompt(lang: string): string {
+  return lang === 'de'
+    ? `Du bist ein Experte für n8n Workflow-Automatisierung. Erstelle einen vollständigen n8n Workflow basierend auf der gegebenen Unteraufgabe.
+
+WICHTIGE REGELN:
+1. Antworte NUR mit gültigem JSON - keine Erklärungen oder zusätzlichen Text
+2. Erstelle realistische n8n Nodes mit korrekten Parametern
+3. Verwende echte n8n Node-Typen (HTTP Request, Webhook, Slack, etc.)
+4. Erstelle logische Verbindungen zwischen den Nodes
+5. Berücksichtige die angegebenen Systeme und Integrationen
+6. Mache den Workflow praktisch und umsetzbar
+
+JSON Format:
+{
+  "name": "Workflow Name",
+  "description": "Detaillierte Beschreibung des Workflows",
+  "summary": "Kurze Zusammenfassung",
+  "nodes": [
+    {
+      "id": "node-id",
+      "name": "Node Name",
+      "type": "n8n-node-type",
+      "position": [x, y],
+      "parameters": { /* n8n node parameters */ }
+    }
+  ],
+  "connections": {
+    "node-id": {
+      "main": [[{"node": "target-node-id", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1"
+}`
+    : `You are an expert in n8n workflow automation. Create a complete n8n workflow based on the given subtask.
+
+IMPORTANT RULES:
+1. Respond ONLY with valid JSON - no explanations or additional text
+2. Create realistic n8n nodes with correct parameters
+3. Use real n8n node types (HTTP Request, Webhook, Slack, etc.)
+4. Create logical connections between nodes
+5. Consider the specified systems and integrations
+6. Make the workflow practical and implementable
+
+JSON Format:
+{
+  "name": "Workflow Name",
+  "description": "Detailed workflow description",
+  "summary": "Short summary",
+  "nodes": [
+    {
+      "id": "node-id",
+      "name": "Node Name",
+      "type": "n8n-node-type",
+      "position": [x, y],
+      "parameters": { /* n8n node parameters */ }
+    }
+  ],
+  "connections": {
+    "node-id": {
+      "main": [[{"node": "target-node-id", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1"
+}`;
+}
+
+function buildWorkflowGenerationUserPrompt(subtask: any, lang: string): string {
+  return lang === 'de'
+    ? `Erstelle einen n8n Workflow für folgende Unteraufgabe:
+
+Titel: ${subtask.title}
+Beschreibung: ${subtask.description}
+Automatisierungspotential: ${subtask.automationPotential}%
+Geschätzte Zeit: ${subtask.estimatedTime}
+Priorität: ${subtask.priority}
+Komplexität: ${subtask.complexity}
+Systeme: ${subtask.systems?.join(', ') || 'Keine'}
+Risiken: ${subtask.risks?.join(', ') || 'Keine'}
+Möglichkeiten: ${subtask.opportunities?.join(', ') || 'Keine'}
+Abhängigkeiten: ${subtask.dependencies?.join(', ') || 'Keine'}
+AI Tools: ${subtask.aiTools?.join(', ') || 'Keine'}
+
+Erstelle einen praktischen, umsetzbaren n8n Workflow mit realistischen Nodes und Verbindungen.`
+    : `Create an n8n workflow for the following subtask:
+
+Title: ${subtask.title}
+Description: ${subtask.description}
+Automation Potential: ${subtask.automationPotential}%
+Estimated Time: ${subtask.estimatedTime}
+Priority: ${subtask.priority}
+Complexity: ${subtask.complexity}
+Systems: ${subtask.systems?.join(', ') || 'None'}
+Risks: ${subtask.risks?.join(', ') || 'None'}
+Opportunities: ${subtask.opportunities?.join(', ') || 'None'}
+Dependencies: ${subtask.dependencies?.join(', ') || 'None'}
+AI Tools: ${subtask.aiTools?.join(', ') || 'None'}
+
+Create a practical, implementable n8n workflow with realistic nodes and connections.`;
 }
 

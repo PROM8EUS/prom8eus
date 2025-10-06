@@ -41,6 +41,27 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+/**
+ * Check if unified workflow schema is enabled
+ */
+async function checkUnifiedWorkflowFlag(): Promise<boolean> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('name', 'unified_workflow_read')
+      .eq('environment', 'production')
+      .single();
+
+    if (error || !data) return false;
+    return data.enabled;
+  } catch (error) {
+    console.warn('Failed to check unified workflow feature flag:', error);
+    return false;
+  }
+}
+
 const normalize = (s: string) => (s || "").toLowerCase().trim();
 function normalizeIntegration(raw: string): string {
   const s = normalize(raw);
@@ -170,6 +191,17 @@ async function handler(req: Request): Promise<Response> {
         "Access-Control-Allow-Origin": "*",
       },
     });
+
+    // Check if unified workflow schema is enabled
+    const useUnified = await checkUnifiedWorkflowFlag();
+    
+    if (useUnified) {
+      // Use unified workflow recommendations
+      const { handler: unifiedHandler } = await import('./recommend-workflows-unified/index.ts');
+      return await unifiedHandler(req);
+    }
+
+    // Legacy implementation
     const input = await req.json() as Input;
     const supabase = getSupabase();
 

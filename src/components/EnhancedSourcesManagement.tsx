@@ -45,12 +45,12 @@ import {
 } from 'lucide-react';
 
 import {
-  workflowIndexer,
   WorkflowIndex,
   AgentIndex,
   isAgentIndex
-} from '@/lib/workflowIndexer';
-import { CacheStats } from '@/lib/workflowIndexer';
+} from '@/lib/schemas/workflowIndex';
+import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
+import { CacheStats } from '@/lib/schemas/workflowIndex';
 import SolutionCard, { SolutionData } from './SolutionCard';
 import SolutionDetailModal from './SolutionDetailModal';
 import { Solution, SolutionCategory } from '@/types/solutions';
@@ -636,7 +636,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
       const updatedWorkflowSources = await Promise.all(
         workflowList.map(async (source) => {
           try {
-            const stats = await workflowIndexer.getStats(source.id);
+            const stats = await unifiedWorkflowIndexer.getStats(source.id);
             workflowTotal += stats.total;
             workflowMetrics[source.id] = {
               id: source.id,
@@ -670,7 +670,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
         })
       );
 
-      const allSolutions = workflowIndexer.getAllSolutions();
+      const allSolutions = unifiedWorkflowIndexer.getAllSolutions();
       const agents = allSolutions.filter((solution): solution is AgentIndex =>
         isAgentIndex(solution)
       );
@@ -707,7 +707,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
       setTotalWorkflows(workflowTotal);
       setTotalAgents(agents.length);
 
-      const cacheData = await workflowIndexer.getCacheStats();
+      const cacheData = await unifiedWorkflowIndexer.getCacheStats();
       setCacheStats(cacheData);
     } catch (error) {
       console.error('Failed to load source statistics:', error);
@@ -725,7 +725,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
       const sourcesToRefresh = workflowSources.map((s) => s.id);
       for (const sourceId of sourcesToRefresh) {
         try {
-          await workflowIndexer.forceRefreshWorkflows(sourceId);
+          await unifiedWorkflowIndexer.forceRefreshWorkflows(sourceId);
         } catch (error) {
           console.warn(`Failed to refresh ${sourceId}:`, error);
         }
@@ -772,15 +772,15 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
       if (managed.kind === 'workflow') {
         const limit = entriesState.pageSize;
         const offset = page * limit;
-        let result = await workflowIndexer.searchWorkflows({
+        let result = await unifiedWorkflowIndexer.searchWorkflows({
           source: managed.source.id,
           limit,
           offset
         });
 
         if ((result.total ?? result.workflows.length) === 0 && page === 0) {
-          await workflowIndexer.forceRefreshWorkflows(managed.source.id);
-          result = await workflowIndexer.searchWorkflows({
+          await unifiedWorkflowIndexer.forceRefreshWorkflows(managed.source.id);
+          result = await unifiedWorkflowIndexer.searchWorkflows({
             source: managed.source.id,
             limit,
             offset
@@ -908,7 +908,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
     if (managedSource.kind !== 'workflow') return;
     setIsRefreshingSelected(true);
     try {
-      await workflowIndexer.forceRefreshWorkflows(managedSource.source.id);
+      await unifiedWorkflowIndexer.forceRefreshWorkflows(managedSource.source.id);
       await loadSourceStats();
       await loadSourceEntries(managedSource, entriesState.page);
     } finally {

@@ -1,14 +1,15 @@
-# Prom8eus - Dual-Type Solution Platform
+# Prom8eus - Unified Workflow Platform
 
-Eine intelligente Plattform zur Analyse von Stellenanzeigen und Bewertung des Automatisierungspotenzials mit **Workflows** und **AI Agents**. Das System unterstützt ein einheitliches **SolutionIndex**-Modell für beide Lösungstypen mit typspezifischen Feldern und gemeinsamen Kernfunktionen.
+Eine intelligente Plattform zur Analyse von Stellenanzeigen und Bewertung des Automatisierungspotenzials mit **Unified Workflows**. Das System verwendet ein einheitliches **UnifiedWorkflow**-Schema für alle Workflow-Typen (GitHub, n8n.io, AI-generated) mit konsistenter Datenstruktur und optimierter Performance.
 
-## 🚀 Dual-Type Solution Model
+## 🚀 Unified Workflow Schema
 
-### Unified Solution Architecture
-- **Workflows**: n8n Community Templates, Official n8n.io Templates, AI-Enhanced Templates
-- **AI Agents**: CrewAI Examples, HuggingFace Spaces, GitHub Agent Repositories
-- **Unified Interface**: Einheitliche Anzeige und Bewertung beider Lösungstypen
-- **Type-Specific Features**: Spezifische Metadaten und Bewertungskriterien pro Typ
+### Unified Workflow Architecture
+- **GitHub Workflows**: Community n8n workflows from GitHub repositories
+- **n8n.io Templates**: Official n8n template gallery workflows
+- **AI-Generated Workflows**: Context-based AI workflow generation
+- **Unified Interface**: Einheitliche Anzeige und Bewertung aller Workflow-Typen
+- **Consistent Data Model**: Einheitliches Schema für alle Workflow-Quellen
 
 ### Advanced Features
 - **LLM-Powered Enrichment**: Automatische Datenverbesserung mit GPT-4o-mini

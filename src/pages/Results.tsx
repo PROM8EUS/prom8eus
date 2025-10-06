@@ -86,7 +86,7 @@ interface TaskForDisplay {
   humanRatio?: number;
 }
 
-// Fallback mock data
+// Fallback data - this is now deprecated, use real AI analysis instead
 const mockTasks: TaskForDisplay[] = [
   {
     id: '1',
@@ -458,7 +458,7 @@ const Results = () => {
         }
       } catch (error) {
         console.error('Error loading analysis results:', error);
-        // Keep using mock data as fallback
+        // Keep using fallback data as last resort
       }
     }
   }, [searchParams]); // Add searchParams dependency to detect share links

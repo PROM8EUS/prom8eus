@@ -1,6 +1,6 @@
 import { supabase } from '../supabase';
 import { openaiClient } from '../openai';
-import { SolutionIndex, WorkflowIndex, AgentIndex } from './workflowIndexer';
+import { SolutionIndex, WorkflowIndex, AgentIndex } from './schemas/workflowIndex';
 
 export interface EnrichmentResult {
   success: boolean;

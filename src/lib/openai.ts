@@ -390,6 +390,52 @@ export class OpenAIClient {
   }
 
   /**
+   * Generate n8n workflow for a subtask
+   */
+  async generateWorkflow(
+    subtask: any,
+    lang: 'de' | 'en' = 'de'
+  ): Promise<{
+    name: string;
+    description: string;
+    summary: string;
+    nodes: Array<{
+      id: string;
+      name: string;
+      type: string;
+      position: [number, number];
+      parameters: any;
+    }>;
+    connections: Record<string, any>;
+    settings: any;
+    versionId: string;
+  }> {
+    const cacheKey = `generate-workflow-${lang}-${subtask.id || subtask.title}`;
+    const cached = this.getFromCache(cacheKey);
+    if (cached) return cached;
+
+    const response = await this.callBackend({
+      action: 'generate-workflow',
+      subtask,
+      lang
+    });
+
+    try {
+      const result = JSON.parse(response.content);
+      this.setCache(cacheKey, result);
+      return result;
+    } catch (error) {
+      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
+        this.setCache(cacheKey, result);
+        return result;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Analyze individual task
    */
   async analyzeTask(

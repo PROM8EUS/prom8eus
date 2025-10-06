@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Save, X, RefreshCw, Tag } from 'lucide-react';
-import { WorkflowIndexer } from '@/lib/workflowIndexer';
+import { UnifiedUnifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 import { CapabilityChip } from './CapabilityChip';
 
 interface CapabilityTag {
@@ -67,8 +67,8 @@ export function CapabilityManagement() {
     setLoading(true);
     try {
       const [allTags, coreTagsData] = await Promise.all([
-        WorkflowIndexer.getAgentCapabilityTags(),
-        WorkflowIndexer.getCoreCapabilityTags()
+        UnifiedWorkflowIndexer.getAgentCapabilityTags(),
+        UnifiedWorkflowIndexer.getCoreCapabilityTags()
       ]);
 
       setCapabilityTags(allTags);

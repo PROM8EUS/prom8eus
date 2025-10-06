@@ -30,6 +30,27 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+/**
+ * Check if unified workflow schema is enabled
+ */
+async function checkUnifiedWorkflowFlag(): Promise<boolean> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('name', 'unified_workflow_read')
+      .eq('environment', 'production')
+      .single();
+
+    if (error || !data) return false;
+    return data.enabled;
+  } catch (error) {
+    console.warn('Failed to check unified workflow feature flag:', error);
+    return false;
+  }
+}
+
 function normalizeIntegration(raw: string): string {
   const s = (raw || "").toLowerCase();
   const map: Record<string, string> = {
@@ -137,6 +158,17 @@ async function handler(req: Request): Promise<Response> {
         "Access-Control-Allow-Origin": "*",
       },
     });
+
+    // Check if unified workflow schema is enabled
+    const useUnified = await checkUnifiedWorkflowFlag();
+    
+    if (useUnified) {
+      // Use unified workflow indexing
+      const { handler: unifiedHandler } = await import('./index-workflows-unified/index.ts');
+      return await unifiedHandler(req);
+    }
+
+    // Legacy implementation
     const { sources = ["github","awesome-n8n-templates","n8n.io","ai-enhanced"], batchSize = 800 } = await req.json().catch(() => ({}));
     const supabase = getSupabase();
 

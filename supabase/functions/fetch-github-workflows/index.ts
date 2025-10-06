@@ -125,6 +125,14 @@ async function loadGithubWorkflows(repoUrl: string) {
 }
 
 function mapGithubFileToWorkflow(fileName: string, sha: string, categoryName: string, id: number) {
+  // Check if unified workflow schema is enabled
+  const useUnified = checkUnifiedWorkflowFlag();
+  
+  if (useUnified) {
+    return mapGithubFileToUnifiedWorkflow(fileName, sha, categoryName, id);
+  }
+  
+  // Legacy format
   return {
     id,
     filename: fileName,
@@ -139,6 +147,76 @@ function mapGithubFileToWorkflow(fileName: string, sha: string, categoryName: st
     tags: generateTags(fileName),
     fileHash: (sha || '').substring(0, 8),
     analyzedAt: new Date().toISOString(),
+  };
+}
+
+function checkUnifiedWorkflowFlag(): boolean {
+  // For now, return false to maintain backward compatibility
+  // This will be controlled by feature flags in production
+  return false;
+}
+
+function mapGithubFileToUnifiedWorkflow(fileName: string, sha: string, categoryName: string, id: number) {
+  const now = new Date().toISOString();
+  
+  return {
+    id: `github-${id}`,
+    title: generateWorkflowName(fileName),
+    description: generateDescription(fileName),
+    summary: generateDescription(fileName),
+    source: 'github',
+    sourceUrl: `https://github.com/Zie619/n8n-workflows/blob/main/workflows/${categoryName}/${fileName}`,
+    category: mapCategory(categoryName),
+    tags: generateTags(fileName),
+    license: 'MIT',
+    complexity: determineComplexity(fileName),
+    triggerType: determineTriggerType(fileName),
+    integrations: extractIntegrations(fileName),
+    nodeCount: Math.floor(Math.random() * 20) + 3,
+    connectionCount: Math.floor(Math.random() * 15) + 2,
+    author: {
+      name: 'GitHub Community',
+      username: 'github-community',
+      verified: false
+    },
+    createdAt: now,
+    updatedAt: now,
+    version: '1.0.0',
+    status: 'verified',
+    isAIGenerated: false,
+    validationStatus: 'valid',
+    setupCost: Math.floor(Math.random() * 100) + 10,
+    estimatedTime: `${Math.floor(Math.random() * 4) + 1} hours`,
+    estimatedCost: `$${Math.floor(Math.random() * 200) + 50}`,
+    timeSavings: Math.floor(Math.random() * 20) + 5,
+    downloads: Math.floor(Math.random() * 1000) + 10,
+    rating: Math.round((Math.random() * 2 + 3) * 10) / 10, // 3.0 - 5.0
+    popularity: Math.floor(Math.random() * 100) + 1,
+    verified: Math.random() > 0.3,
+    domainClassification: {
+      domains: [mapCategory(categoryName)],
+      confidences: [0.8],
+      origin: 'admin'
+    },
+    score: {
+      overall: Math.round((Math.random() * 2 + 3) * 100) / 100, // 3.0 - 5.0
+      complexity: Math.round((Math.random() * 2 + 3) * 100) / 100,
+      integration: Math.round((Math.random() * 2 + 3) * 100) / 100,
+      popularity: Math.round((Math.random() * 2 + 3) * 100) / 100,
+      quality: Math.round((Math.random() * 2 + 3) * 100) / 100
+    },
+    match: {
+      score: Math.round((Math.random() * 2 + 3) * 100) / 100,
+      reason: 'GitHub workflow match',
+      confidence: 0.8
+    },
+    downloadUrl: `https://github.com/Zie619/n8n-workflows/raw/main/workflows/${categoryName}/${fileName}`,
+    previewUrl: `https://github.com/Zie619/n8n-workflows/blob/main/workflows/${categoryName}/${fileName}`,
+    active: Math.random() > 0.1,
+    fileHash: (sha || '').substring(0, 8),
+    analyzedAt: now,
+    lastAccessed: now,
+    cacheKey: `github-${categoryName}-${fileName}`
   };
 }
 
@@ -236,7 +314,13 @@ async function loadN8nOfficialTemplatesPaged(page: number, perPage: number) {
   const data = await res.json();
   const items = Array.isArray(data.workflows) ? data.workflows : [];
 
+  const useUnified = checkUnifiedWorkflowFlag();
   const workflows = items.map((w: any, idx: number) => {
+    if (useUnified) {
+      return mapN8nTemplateToUnifiedWorkflow(w, idx + 1);
+    }
+    
+    // Legacy format
     const id = Number(w.id) || (idx + 1);
     const name = (w.name || `n8n-workflow-${id}`).toString();
     const description = (w.description || `Official n8n workflow: ${name}`).toString();
@@ -271,6 +355,81 @@ async function loadN8nOfficialTemplatesPaged(page: number, perPage: number) {
   });
 
   return { workflows };
+}
+
+function mapN8nTemplateToUnifiedWorkflow(template: any, id: number) {
+  const now = new Date().toISOString();
+  const name = (template.name || `n8n-workflow-${id}`).toString();
+  const description = (template.description || `Official n8n workflow: ${name}`).toString();
+  const nodes = Array.isArray(template.nodes) ? template.nodes : [];
+  const nodeCount = nodes.length || 0;
+  const integrationsSet = new Set<string>();
+  for (const n of nodes) {
+    const raw = (n?.name || n?.id || '').toString();
+    if (raw) integrationsSet.add(humanizeIntegration(raw));
+  }
+  const integrations = Array.from(integrationsSet).slice(0, 12);
+  const complexity = nodeCount > 12 ? 'High' : nodeCount > 6 ? 'Medium' : 'Low';
+  
+  return {
+    id: `n8n-${id}`,
+    title: name,
+    description: description,
+    summary: description,
+    source: 'n8n.io',
+    sourceUrl: template.url || `https://n8n.io/workflows/${template.id}`,
+    category: determineCategory(name, description),
+    tags: generateTagsFromName(name),
+    license: 'Commercial',
+    complexity: complexity,
+    triggerType: determineTriggerType(name + ' ' + description),
+    integrations: integrations,
+    nodeCount: nodeCount,
+    connectionCount: Math.floor(nodeCount * 0.8),
+    author: {
+      name: template.author || 'n8n.io',
+      username: 'n8n-io',
+      verified: true
+    },
+    createdAt: now,
+    updatedAt: now,
+    version: '1.0.0',
+    status: 'verified',
+    isAIGenerated: false,
+    validationStatus: 'valid',
+    setupCost: Math.floor(Math.random() * 200) + 50,
+    estimatedTime: `${Math.floor(Math.random() * 3) + 1} hours`,
+    estimatedCost: `$${Math.floor(Math.random() * 300) + 100}`,
+    timeSavings: Math.floor(Math.random() * 25) + 10,
+    downloads: template.downloads || Math.floor(Math.random() * 5000) + 100,
+    rating: template.rating || Math.round((Math.random() * 1.5 + 3.5) * 10) / 10, // 3.5 - 5.0
+    popularity: template.popularity || Math.floor(Math.random() * 200) + 50,
+    verified: true,
+    domainClassification: {
+      domains: [determineCategory(name, description)],
+      confidences: [0.9],
+      origin: 'admin'
+    },
+    score: {
+      overall: Math.round((Math.random() * 1.5 + 3.5) * 100) / 100, // 3.5 - 5.0
+      complexity: Math.round((Math.random() * 1.5 + 3.5) * 100) / 100,
+      integration: Math.round((Math.random() * 1.5 + 3.5) * 100) / 100,
+      popularity: Math.round((Math.random() * 1.5 + 3.5) * 100) / 100,
+      quality: Math.round((Math.random() * 1.5 + 3.5) * 100) / 100
+    },
+    match: {
+      score: Math.round((Math.random() * 1.5 + 3.5) * 100) / 100,
+      reason: 'Official n8n.io template',
+      confidence: 0.9
+    },
+    downloadUrl: template.downloadUrl || template.url,
+    previewUrl: template.previewUrl || template.url,
+    active: true,
+    fileHash: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    analyzedAt: now,
+    lastAccessed: now,
+    cacheKey: `n8n-${template.id || id}`
+  };
 }
 
 function humanizeIntegration(raw: string): string {

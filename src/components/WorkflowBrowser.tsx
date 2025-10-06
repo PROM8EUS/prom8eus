@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Download, Eye, Filter, Zap, Clock, Play, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import { workflowIndexer, WorkflowIndex, WorkflowStats, WorkflowSearchParams } from '@/lib/workflowIndexer';
+import { WorkflowIndex, WorkflowStats, WorkflowSearchParams } from '@/lib/schemas/workflowIndex';
+import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 import SolutionCard, { SolutionData } from './SolutionCard';
 import SolutionDetailModal from './SolutionDetailModal';
 import { Solution, WorkflowSolution } from '@/types/solutions';
@@ -41,7 +42,7 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
 
   const loadStats = async () => {
     try {
-      const statsData = await workflowIndexer.getStats();
+      const statsData = await unifiedWorkflowIndexer.getStats();
       setStats(statsData);
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -53,13 +54,13 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
     try {
       // Add source filter to search params if provided
       const params = sourceFilter ? { ...searchParams, source: sourceFilter } : searchParams;
-      const result = await workflowIndexer.searchWorkflows(params);
+      const result = await unifiedWorkflowIndexer.searchWorkflows(params);
       
       setWorkflows(result.workflows);
       setTotal(result.total);
       
       // Reload stats after loading workflows to get updated statistics
-      const updatedStats = await workflowIndexer.getStats();
+      const updatedStats = await unifiedWorkflowIndexer.getStats();
       setStats(updatedStats);
     } catch (error) {
       console.error('Error loading workflows:', error);
@@ -292,8 +293,8 @@ export function WorkflowBrowser({ className, sourceFilter, isAdmin = false }: Wo
     // TODO: Implement download functionality
   };
 
-  const categories = workflowIndexer.getCategories();
-  const categoryDisplayNames = workflowIndexer.getCategoryDisplayNames();
+  const categories = unifiedWorkflowIndexer.getCategories();
+  const categoryDisplayNames = unifiedWorkflowIndexer.getCategoryDisplayNames();
 
   return (
     <div className={`space-y-4 ${className}`}>

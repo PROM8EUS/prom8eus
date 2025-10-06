@@ -4,7 +4,7 @@
  */
 
 import { DynamicSubtask, SolutionStatus, GenerationMetadata } from './types';
-import { WorkflowIndex } from './workflowIndexer';
+import { WorkflowIndex } from './schemas/workflowIndex';
 import { N8nWorkflow } from './n8nApi';
 import { WorkflowSolutionInterface } from './interfaces';
 

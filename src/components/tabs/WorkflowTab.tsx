@@ -1,6 +1,7 @@
 /**
  * WorkflowTab Component - Migrated to UnifiedWorkflow
  * Displays workflow solutions using the new unified schema
+ * Updated: Mock data generation replaced with real AI generation
  */
 
 import React, { useState, useEffect } from 'react';
@@ -24,7 +25,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { DynamicSubtask, UnifiedWorkflow } from '@/lib/types';
-import { UnifiedSolutionCard, UnifiedSolutionData } from '@/components/UnifiedSolutionCard';
+import { UnifiedSolutionCard } from '@/components/UnifiedSolutionCard';
 import { clearAllWorkflowCaches } from '@/lib/workflowGenerator';
 
 type WorkflowTabProps = {
@@ -60,8 +61,22 @@ export default function WorkflowTab({
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [complexityFilter, setComplexityFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('ai-generated'); // Default to AI-generated only
   const [sortBy, setSortBy] = useState<string>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Get available sources from workflows
+  const getAvailableSources = (workflows: UnifiedWorkflow[]): string[] => {
+    const sources = new Set<string>();
+    workflows.forEach(workflow => {
+      if (workflow.isAIGenerated) {
+        sources.add('ai-generated');
+      } else {
+        sources.add(workflow.source || 'unknown');
+      }
+    });
+    return Array.from(sources).sort();
+  };
 
   // Load workflows when subtask changes OR when generatedWorkflows change
   useEffect(() => {
@@ -86,14 +101,25 @@ export default function WorkflowTab({
       let filteredWorkflows = generatedWorkflows;
       
       if (subtask && subtask.id !== 'all') {
-        // Filter workflows that match the selected subtask
-        // For UnifiedWorkflow, we can filter by source or other criteria
-        filteredWorkflows = generatedWorkflows.filter(w => 
-          w.source === 'ai-generated' && w.isAIGenerated
-        );
-        console.log(`🎯 [WorkflowTab] Filtered workflows for subtask "${subtask.title}":`, filteredWorkflows.length);
+        // Filter workflows that match the selected subtask and source filter
+        filteredWorkflows = generatedWorkflows.filter(w => {
+          // Apply source filter first
+          const matchesSource = sourceFilter === 'all' || w.source === sourceFilter || 
+                               (sourceFilter === 'ai-generated' && w.isAIGenerated);
+          
+          // Apply subtask-specific filtering
+          const matchesSubtask = w.source === 'ai-generated' && w.isAIGenerated;
+          
+          return matchesSource && matchesSubtask;
+        });
+        console.log(`🎯 [WorkflowTab] Filtered workflows for subtask "${subtask.title}" with source "${sourceFilter}":`, filteredWorkflows.length);
       } else {
-        console.log('🎯 [WorkflowTab] Showing all workflows for "Alle":', generatedWorkflows.length);
+        // Apply only source filter when showing all workflows
+        filteredWorkflows = generatedWorkflows.filter(w => {
+          return sourceFilter === 'all' || w.source === sourceFilter || 
+                 (sourceFilter === 'ai-generated' && w.isAIGenerated);
+        });
+        console.log(`🎯 [WorkflowTab] Showing workflows with source "${sourceFilter}":`, filteredWorkflows.length);
       }
       
       // Deduplicate workflows by ID
@@ -110,12 +136,19 @@ export default function WorkflowTab({
       setFilteredWorkflows(deduplicatedWorkflows);
       setIsLoading(false); // Stop loading when workflows are ready
       onUpdateCount?.(deduplicatedWorkflows.length);
+
+      // Auto-adjust source filter if current filter has no results
+      const availableSources = getAvailableSources(deduplicatedWorkflows);
+      if (sourceFilter !== 'all' && !availableSources.includes(sourceFilter)) {
+        console.log(`🔄 [WorkflowTab] Source filter "${sourceFilter}" has no results, switching to "all"`);
+        setSourceFilter('all');
+      }
     } else {
       // Show loading state when no workflows are available yet
       setIsLoading(true);
       console.log('⏳ [WorkflowTab] No workflows available yet, showing loading state');
     }
-  }, [subtask, generatedWorkflows, isGeneratingInitial]);
+  }, [subtask, generatedWorkflows, isGeneratingInitial, sourceFilter]);
 
   // Filter and sort workflows based on search and filter criteria
   useEffect(() => {
@@ -159,43 +192,7 @@ export default function WorkflowTab({
     setFilteredWorkflows(filtered);
   }, [workflows, searchQuery, complexityFilter, sortBy, sortOrder]);
 
-  // Convert UnifiedWorkflow to UnifiedSolutionData for UnifiedSolutionCard with FULL metadata
-  // Memoize this function to prevent unnecessary re-renders - Fixed duplicate declaration
-  const convertToUnifiedSolution = React.useCallback((workflow: UnifiedWorkflow): UnifiedSolutionData => {
-    // Generate stable values based on workflow ID to avoid random changes
-    const stableHash = workflow.id.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    
-    return {
-      id: workflow.id,
-      name: workflow.title,
-      description: workflow.description,
-      type: 'workflow' as const,
-      filename: `${workflow.title.toLowerCase().replace(/\s+/g, '-')}.json`,
-      category: workflow.category || 'Workflow',
-      priority: (workflow.complexity === 'High' ? 'High' : workflow.complexity === 'Medium' ? 'Medium' : 'Low') as 'Low' | 'Medium' | 'High',
-      rating: 4.0,
-      reviewCount: Math.abs(stableHash % 50) + 10,
-      triggerType: workflow.triggerType as 'Complex' | 'Webhook' | 'Manual' | 'Scheduled',
-      complexity: workflow.complexity === 'Easy' ? 'Low' : workflow.complexity === 'Medium' ? 'Medium' : 'High',
-      integrations: workflow.integrations || [],
-      tags: workflow.tags || [],
-      matchScore: Math.abs(stableHash % 30) + 70,
-      timeSavings: Math.abs(stableHash % 20) + 5, // Add time savings for workflows
-      downloadUrl: workflow.downloadUrl,
-      validationStatus: 'valid' as const,
-      estimatedSetupTime: Math.abs(stableHash % 60) + 15, // 15-75 minutes
-      active: true,
-      lastUpdated: workflow.updatedAt || workflow.createdAt,
-      authorName: 'AI Assistant',
-      authorVerified: true,
-      pricing: 'Free' as const,
-      isAIGenerated: true,
-      status: 'generated' as const
-    };
-  }, []);
+  // No conversion needed - UnifiedSolutionCard now accepts UnifiedWorkflow directly
 
   // Handle workflow selection
   const handleWorkflowSelect = React.useCallback((workflow: UnifiedWorkflow) => {
@@ -300,6 +297,47 @@ export default function WorkflowTab({
           
           {/* Filters */}
           <div className="flex items-center gap-3">
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="h-9 w-40">
+                <SelectValue placeholder={lang === 'de' ? 'Quelle' : 'Source'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-3 w-3 text-gray-500" />
+                    {lang === 'de' ? 'Alle Quellen' : 'All Sources'}
+                  </div>
+                </SelectItem>
+                {getAvailableSources(generatedWorkflows).map(source => (
+                  <SelectItem key={source} value={source}>
+                    <div className="flex items-center gap-2">
+                      {source === 'ai-generated' ? (
+                        <>
+                          <Sparkles className="h-3 w-3 text-purple-500" />
+                          {lang === 'de' ? 'AI-Generiert' : 'AI Generated'}
+                        </>
+                      ) : source === 'github' ? (
+                        <>
+                          <Workflow className="h-3 w-3 text-gray-600" />
+                          GitHub
+                        </>
+                      ) : source === 'n8n.io' ? (
+                        <>
+                          <Workflow className="h-3 w-3 text-blue-600" />
+                          n8n.io
+                        </>
+                      ) : (
+                        <>
+                          <Workflow className="h-3 w-3 text-gray-500" />
+                          {source}
+                        </>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={complexityFilter} onValueChange={setComplexityFilter}>
               <SelectTrigger className="h-9 w-32">
                 <SelectValue placeholder={lang === 'de' ? 'Komplexität' : 'Complexity'} />
@@ -340,6 +378,14 @@ export default function WorkflowTab({
           ? `${filteredWorkflows.length} Workflow${filteredWorkflows.length !== 1 ? 's' : ''} gefunden`
           : `${filteredWorkflows.length} workflow${filteredWorkflows.length !== 1 ? 's' : ''} found`
         }
+        {sourceFilter !== 'all' && (
+          <span className="ml-2 text-gray-500">
+            {lang === 'de' 
+              ? `(Quelle: ${sourceFilter === 'ai-generated' ? 'AI-Generiert' : sourceFilter})`
+              : `(Source: ${sourceFilter === 'ai-generated' ? 'AI Generated' : sourceFilter})`
+            }
+          </span>
+        )}
       </div>
 
       {/* Workflows Grid */}
@@ -347,11 +393,21 @@ export default function WorkflowTab({
         {filteredWorkflows.map((workflow) => (
           <div 
             key={workflow.id}
-            className="cursor-pointer"
+            className="cursor-pointer relative"
             onClick={() => handleWorkflowSelect(workflow)}
           >
+            {/* AI Generated Badge */}
+            {workflow.isAIGenerated && (
+              <div className="absolute top-2 right-2 z-10">
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  {lang === 'de' ? 'AI' : 'AI'}
+                </Badge>
+              </div>
+            )}
+            
             <UnifiedSolutionCard
-              solution={convertToUnifiedSolution(workflow)}
+              solution={workflow}
               lang={lang}
               onSelect={() => handleWorkflowSelect(workflow)}
               onSetupClick={() => handleWorkflowSelect(workflow)}

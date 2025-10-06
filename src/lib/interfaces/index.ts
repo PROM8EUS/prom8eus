@@ -15,7 +15,6 @@ export * from './ui';
 export {
   SolutionStatus,
   GenerationMetadata,
-  WorkflowSolution,
   AgentSolution,
   LLMSolution,
   BadgeStatus,

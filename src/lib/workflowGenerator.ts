@@ -9,6 +9,7 @@ import { BlueprintData } from '@/components/BlueprintCard';
 import { WorkflowSolutionInterface } from './interfaces';
 import { cacheManager } from './services/cacheManager';
 import { WorkflowSchemaMapper } from './schemas/unifiedWorkflow';
+import { getFeatureFlagManager } from './featureFlags';
 
 export interface GeneratedBlueprint extends BlueprintData {
   isAIGenerated: true;
@@ -30,6 +31,43 @@ export interface GeneratedBlueprint extends BlueprintData {
 }
 
 /**
+ * Convert UnifiedWorkflow to GeneratedBlueprint for backward compatibility
+ */
+function convertUnifiedToGeneratedBlueprint(workflow: UnifiedWorkflow): GeneratedBlueprint {
+  return {
+    id: workflow.id,
+    name: workflow.title,
+    description: workflow.description,
+    category: workflow.category,
+    complexity: workflow.complexity,
+    integrations: workflow.integrations,
+    estimatedTime: workflow.estimatedTime || '2 hours',
+    estimatedCost: workflow.estimatedCost || '$100',
+    automationPotential: workflow.timeSavings || 50,
+    isAIGenerated: true,
+    generatedAt: workflow.createdAt,
+    status: workflow.status,
+    generationMetadata: workflow.generationMetadata || {
+      timestamp: Date.now(),
+      model: 'gpt-4o-mini',
+      language: 'de',
+      cacheKey: workflow.cacheKey || ''
+    },
+    setupCost: workflow.setupCost || 100,
+    downloadUrl: workflow.downloadUrl,
+    validationStatus: workflow.validationStatus || 'valid',
+    n8nWorkflow: workflow.n8nWorkflow || {
+      name: workflow.title,
+      nodes: [],
+      connections: {},
+      active: true,
+      settings: {},
+      versionId: '1.0.0'
+    }
+  };
+}
+
+/**
  * Generate a workflow for a subtask using AI with intelligent caching
  */
 export async function generateWorkflowForSubtask(
@@ -39,6 +77,29 @@ export async function generateWorkflowForSubtask(
 ): Promise<GeneratedBlueprint | null> {
   console.log(`🎨 [WorkflowGenerator] Generating AI workflow for: "${subtask.title}" (timeout: ${timeoutMs}ms)`);
   
+  // Check if unified workflow schema is enabled
+  const featureFlagManager = getFeatureFlagManager();
+  const useUnified = await featureFlagManager.isEnabled('unified_workflow_read');
+  const useAIGeneration = await featureFlagManager.isEnabled('unified_workflow_ai_generation');
+  
+  if (useUnified && useAIGeneration) {
+    // Use unified workflow generator
+    const { unifiedWorkflowGenerator } = await import('./workflowGeneratorUnified');
+    const result = await unifiedWorkflowGenerator.generateWorkflowForSubtask({
+      subtask,
+      lang,
+      timeoutMs
+    });
+    
+    if (result.workflow) {
+      // Convert UnifiedWorkflow to GeneratedBlueprint for backward compatibility
+      return convertUnifiedToGeneratedBlueprint(result.workflow);
+    }
+    
+    return null;
+  }
+
+  // Legacy implementation
   // Create generation metadata for caching
   const generationMetadata: GenerationMetadata = {
     timestamp: Date.now(),

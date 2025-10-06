@@ -1,4 +1,4 @@
-import { WorkflowIndex, AgentIndex } from './workflowIndexer';
+import { WorkflowIndex, AgentIndex } from './schemas/workflowIndex';
 
 export interface WorkflowScore {
   workflowId: string;

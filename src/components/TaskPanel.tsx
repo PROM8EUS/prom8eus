@@ -33,7 +33,7 @@ import { DynamicSubtask, UnifiedWorkflow, WorkflowCreationContext } from '@/lib/
 import { generateSubtasksWithAI } from '@/lib/aiAnalysis';
 import { isOpenAIAvailable } from '@/lib/openai';
 import { generateWorkflowFast, generateUnifiedWorkflow, generateMultipleUnifiedWorkflows } from '@/lib/workflowGenerator';
-import { workflowIndexer } from '@/lib/workflowIndexer';
+import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 import { WorkflowMigration } from '@/lib/schemas/migration';
 
 // Simple string->SHA256 helper for stable cache keys

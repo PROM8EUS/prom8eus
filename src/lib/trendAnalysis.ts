@@ -3,7 +3,7 @@
  * Analyzes automation trends from workflows, solutions, and market data
  */
 
-import { WorkflowIndex } from './workflowIndexer';
+import { WorkflowIndex } from './schemas/workflowIndex';
 import { N8nWorkflow } from './n8nApi';
 import { DynamicSubtask } from './types';
 

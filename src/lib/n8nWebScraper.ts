@@ -142,11 +142,12 @@ export class N8nWebScraper {
   
   /**
    * Parse HTML response (fallback method)
+   * This method is now deprecated - use the new unified workflow generator instead
    */
   private parseHtmlResponse(html: string, options: any): N8nScrapingResult {
-    // This is a simplified parser - in a real implementation, you'd use a proper HTML parser
-    // For now, we'll create mock data based on the known structure from n8n.io
+    console.warn('parseHtmlResponse is deprecated - use unified workflow generator instead');
     
+    // Return minimal fallback data
     const mockWorkflows: N8nWorkflowTemplate[] = [
       {
         id: 'n8n-1',

@@ -4,7 +4,7 @@ import SolutionCard from './SolutionCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SolutionDetailModal from './SolutionDetailModal';
 import SolutionIcon from './ui/SolutionIcon';
-import { workflowIndexer } from '@/lib/workflowIndexer';
+import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 import { rerankWorkflows } from '@/lib/aiRerank';
 import { recommendWorkflows } from '@/lib/recommendations/client';
 
@@ -199,12 +199,12 @@ export default function SolutionsTab({
       let searchParams: any = { source: 'all', limit: 1200, offset: 0 };
       const wantedCombined = new Set<string>([...Array.from(wantedTools), ...inferred.map(normalizeTool)]);
       if (wantedCombined.size > 0) searchParams.integrations = Array.from(wantedCombined);
-      let { workflows } = await workflowIndexer.searchWorkflows(searchParams);
+      let { workflows } = await unifiedWorkflowIndexer.searchWorkflows(searchParams);
 
       // secondary fetch: query-scoped pool driven by task/subtasks
       let scoped: any[] = [];
       try {
-        const qRes = await workflowIndexer.searchWorkflows({ source: 'all', q, limit: 1200, offset: 0 });
+        const qRes = await unifiedWorkflowIndexer.searchWorkflows({ source: 'all', q, limit: 1200, offset: 0 });
         scoped = qRes.workflows || [];
       } catch {}
 
@@ -214,9 +214,9 @@ export default function SolutionsTab({
 
       if ((!basePool || basePool.length === 0)) {
         console.info('[Solutions] No cached results. Forcing refresh from sources...');
-        try { await workflowIndexer.forceRefreshWorkflows('github'); } catch (e) { console.warn('[Solutions] GitHub refresh failed', e); }
-        try { await workflowIndexer.forceRefreshWorkflows('n8n.io'); } catch (e) { console.warn('[Solutions] n8n.io refresh failed', e); }
-        const retry = await workflowIndexer.searchWorkflows(searchParams);
+        try { await unifiedWorkflowIndexer.forceRefreshWorkflows('github'); } catch (e) { console.warn('[Solutions] GitHub refresh failed', e); }
+        try { await unifiedWorkflowIndexer.forceRefreshWorkflows('n8n.io'); } catch (e) { console.warn('[Solutions] n8n.io refresh failed', e); }
+        const retry = await unifiedWorkflowIndexer.searchWorkflows(searchParams);
         basePool = retry.workflows;
       }
 
@@ -259,8 +259,8 @@ export default function SolutionsTab({
       if (!candidates || candidates.length < 10) {
         console.info('[Solutions] Merging per-source pools as fallback');
         const [gh, n8n] = await Promise.all([
-          workflowIndexer.searchWorkflows({ source: 'github', limit: 2000, offset: 0 }),
-          workflowIndexer.searchWorkflows({ source: 'n8n.io', limit: 6000, offset: 0 })
+          unifiedWorkflowIndexer.searchWorkflows({ source: 'github', limit: 2000, offset: 0 }),
+          unifiedWorkflowIndexer.searchWorkflows({ source: 'n8n.io', limit: 6000, offset: 0 })
         ]);
         const merged = [...(gh?.workflows || []), ...(n8n?.workflows || [])];
         const seen = new Set<string>();

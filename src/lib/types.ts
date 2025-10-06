@@ -14,20 +14,7 @@ export interface GenerationMetadata {
 }
 
 // Workflow Solution Types - DEPRECATED: Use UnifiedWorkflow instead
-export interface WorkflowSolution {
-  id: string;
-  name: string;
-  description: string;
-  steps: string[];
-  status: SolutionStatus;
-  integrations: string[];
-  complexity: 'Low' | 'Medium' | 'High';
-  setupCost: number;
-  isAIGenerated: boolean;
-  generationMetadata?: GenerationMetadata;
-  downloadUrl?: string;
-  validationStatus?: 'valid' | 'invalid';
-}
+// WorkflowSolution interface removed - use UnifiedWorkflow from schemas/unifiedWorkflow.ts
 
 // Re-export UnifiedWorkflow for convenience
 export { UnifiedWorkflow, WorkflowCreationContext, WorkflowSearchParams } from './schemas/unifiedWorkflow';

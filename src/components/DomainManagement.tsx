@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, Save, X, Plus, RefreshCw } from 'lucide-react';
-import { WorkflowIndexer } from '@/lib/workflowIndexer';
+import { UnifiedUnifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 import { supabase } from '../lib/supabase';
 
 interface DomainOverride {
@@ -63,8 +63,8 @@ export function DomainManagement() {
     setLoading(true);
     try {
       const [overridesData, statsData, domainsData] = await Promise.all([
-        WorkflowIndexer.prototype.getAdminOverrides(),
-        WorkflowIndexer.prototype.getDomainClassificationStats(),
+        UnifiedWorkflowIndexer.prototype.getAdminOverrides(),
+        UnifiedWorkflowIndexer.prototype.getDomainClassificationStats(),
         supabase.rpc('get_ontology_domains')
       ]);
 
@@ -97,7 +97,7 @@ export function DomainManagement() {
 
     setSaving(true);
     try {
-      const success = await WorkflowIndexer.prototype.adminOverrideDomainClassification(
+      const success = await UnifiedWorkflowIndexer.prototype.adminOverrideDomainClassification(
         editingOverride.title,
         editingOverride.summary,
         editingOverride.source_id,

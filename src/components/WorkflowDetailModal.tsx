@@ -20,7 +20,7 @@ import {
   TrendingUp,
   Activity
 } from 'lucide-react';
-import { WorkflowIndex } from '@/lib/workflowIndexer';
+import { WorkflowIndex } from '@/lib/schemas/workflowIndex';
 
 interface WorkflowDetailModalProps {
   workflow: WorkflowIndex | null;

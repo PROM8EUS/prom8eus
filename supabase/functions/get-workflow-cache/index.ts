@@ -24,6 +24,16 @@ serve(async (req) => {
       }
     )
 
+    // Check if unified workflow schema is enabled
+    const { data: flagData } = await supabaseClient
+      .from('feature_flags')
+      .select('enabled')
+      .eq('name', 'unified_workflow_read')
+      .eq('environment', 'production')
+      .single();
+
+    const useUnified = flagData?.enabled || false;
+
     const { source, version, pageSize = 10000 } = await req.json()
 
     if (!source) {
@@ -36,13 +46,31 @@ serve(async (req) => {
       )
     }
 
-    // Query the workflow_cache table
-    const { data, error } = await supabaseClient
-      .from('workflow_cache')
-      .select('*')
-      .eq('source', source)
-      .eq('version', version || '1.0')
-      .limit(pageSize)
+    let data, error;
+
+    if (useUnified) {
+      // Query the unified_workflows table
+      const { data: unifiedData, error: unifiedError } = await supabaseClient
+        .from('unified_workflows')
+        .select('*')
+        .eq('source', source)
+        .eq('active', true)
+        .limit(pageSize);
+      
+      data = unifiedData;
+      error = unifiedError;
+    } else {
+      // Query the workflow_cache table (legacy)
+      const { data: legacyData, error: legacyError } = await supabaseClient
+        .from('workflow_cache')
+        .select('*')
+        .eq('source', source)
+        .eq('version', version || '1.0')
+        .limit(pageSize);
+      
+      data = legacyData;
+      error = legacyError;
+    }
 
     if (error) {
       console.error('Database error:', error)
@@ -60,11 +88,12 @@ serve(async (req) => {
         data: data || [],
         count: data?.length || 0,
         source,
-        version: version || '1.0'
+        version: version || '1.0',
+        unified: useUnified
       }),
       { 
         status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
 

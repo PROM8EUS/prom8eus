@@ -1,3 +1,12 @@
+/**
+ * @deprecated This file is deprecated and will be removed in a future version.
+ * Use the new unified schema files instead:
+ * - For WorkflowIndex: use @/lib/schemas/workflowIndex
+ * - For N8nWorkflow: use @/lib/schemas/n8nWorkflow
+ * - For WorkflowIndexer: use @/lib/workflowIndexerUnified
+ * - For N8nApi: use @/lib/n8nApiUnified
+ */
+
 // n8n API Client for fetching workflows from n8n.io
 export interface N8nWorkflow {
   id: string;

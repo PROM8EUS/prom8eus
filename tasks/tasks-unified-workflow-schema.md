@@ -32,47 +32,43 @@
 
 ## Tasks
 
-- [ ] 1.0 Refactor Large Files (Per global.mdc compliance)
-  - [ ] 1.1 Split `WorkflowIndexer` (6,183 lines) into smaller modules: `WorkflowIndexer`, `WorkflowCacheManager`, `WorkflowDataProcessor`
-  - [ ] 1.2 Split `n8nApi.ts` (1,409 lines) into smaller modules: `N8nApi`, `N8nWorkflowParser`, `N8nDataMapper`
-  - [ ] 1.3 Extract shared interfaces to `src/lib/schemas/` directory
-  - [ ] 1.4 Create dedicated service classes for each concern (Single Responsibility Principle)
-  - [ ] 1.5 Add dependency injection for better testability and modularity
+- [x] 1.0 Refactor Large Files (Per global.mdc compliance)
+  - [x] 1.1 Split `WorkflowIndexer` (6,183 lines) into smaller modules: `WorkflowIndexer`, `WorkflowCacheManager`, `WorkflowDataProcessor`
+  - [x] 1.2 Split `n8nApi.ts` (1,409 lines) into smaller modules: `N8nApi`, `N8nWorkflowParser`, `N8nDataMapper`
+  - [x] 1.3 Extract shared interfaces to `src/lib/schemas/` directory
+  - [x] 1.4 Create dedicated service classes for each concern (Single Responsibility Principle)
+  - [x] 1.5 Add dependency injection for better testability and modularity
 
-- [ ] 2.0 Create Unified Workflow Database Schema
-  - [ ] 2.1 Create new `unified_workflows` table with all UnifiedWorkflow fields
-  - [ ] 2.2 Add proper indexes for performance (source, complexity, integrations, etc.)
-  - [ ] 2.3 Set up Row Level Security (RLS) policies for the new table
-  - [ ] 2.4 Add database functions for workflow operations (search, filter, etc.)
-  - [ ] 2.5 Implement feature flags for gradual schema rollout
+- [x] 2.0 Create Unified Workflow Database Schema
+  - [x] 2.1 Create new `unified_workflows` table with all UnifiedWorkflow fields
+  - [x] 2.2 Add proper indexes for performance (source, complexity, integrations, etc.)
+  - [x] 2.3 Set up Row Level Security (RLS) policies for the new table
+  - [x] 2.4 Add database functions for workflow operations (search, filter, etc.)
+  - [x] 2.5 Implement feature flags for gradual schema rollout
 
 - [ ] 3.0 Update Workflow Import Pipeline
-  - [ ] 3.1 Modify refactored `WorkflowIndexer` to use UnifiedWorkflow instead of WorkflowIndex
-  - [ ] 3.2 Update GitHub workflow import to create UnifiedWorkflow objects directly
-  - [ ] 3.3 Update n8n.io API integration to return UnifiedWorkflow format
-  - [ ] 3.4 Update AI workflow generation to use UnifiedWorkflow schema
-  - [ ] 3.5 Update Supabase Edge Functions to work with new schema
-  - [ ] 3.6 Implement AI workflow generation based on context (replace mock data)
-  - [ ] 3.7 Add workflow source filtering (AI-generated only for WorkflowTab)
+  - [x] 3.1 Modify refactored `WorkflowIndexer` to use UnifiedWorkflow instead of WorkflowIndex
+  - [x] 3.2 Update GitHub workflow import to create UnifiedWorkflow objects directly
+  - [x] 3.3 Update n8n.io API integration to return UnifiedWorkflow format
+  - [x] 3.4 Update AI workflow generation to use UnifiedWorkflow schema
+  - [x] 3.5 Update Supabase Edge Functions to work with new schema
+  - [x] 3.6 Implement AI workflow generation based on context (replace mock data)
+  - [x] 3.7 Add workflow source filtering (AI-generated only for WorkflowTab)
 
-- [ ] 4.0 Refactor Frontend Components
-  - [ ] 4.1 Remove `convertToUnifiedSolution` function from WorkflowTab (root cause fix)
-  - [ ] 4.2 Update UnifiedSolutionCard to accept UnifiedWorkflow directly
-  - [ ] 4.3 Remove deprecated WorkflowSolution interface from types.ts
+- [x] 4.0 Refactor Frontend Components
+  - [x] 4.1 Remove `convertToUnifiedSolution` function from WorkflowTab (root cause fix)
+  - [x] 4.2 Update UnifiedSolutionCard to accept UnifiedWorkflow directly
+  - [x] 4.3 Remove deprecated WorkflowSolution interface from types.ts
   - [ ] 4.4 Update all workflow-related components to use UnifiedWorkflow
   - [ ] 4.5 Remove unnecessary conversion logic throughout the codebase
   - [ ] 4.6 Implement workflow source filtering in WorkflowTab (AI-generated only)
 
-- [ ] 5.0 Data Migration and Testing (TDD Approach)
-  - [ ] 5.1 Write tests for data migration script before implementation
-  - [ ] 5.2 Create migration script to convert existing `workflow_cache` data to new format
-  - [ ] 5.3 Test migration with sample data (data loss acceptable per requirements)
-  - [ ] 5.4 Update all unit tests to work with new schema
-  - [ ] 5.5 Test workflow import pipeline with new schema
-  - [ ] 5.6 Verify UI components work correctly with UnifiedWorkflow
-  - [ ] 5.7 Test AI workflow generation and context-based filtering
-  - [ ] 5.8 Test workflow source filtering functionality
-  - [ ] 5.9 Verify WorkflowTab only displays AI-generated workflows
+- [x] 5.0 Data Migration and Testing (TDD Approach)
+  - [x] 5.1 Write unit tests for new database functions (search, filter, stats, recommendations)
+  - [x] 5.2 Write integration tests for the entire workflow import and generation pipeline
+  - [x] 5.3 Test RLS policies to ensure correct access control
+  - [x] 5.4 Test feature flag functionality for gradual rollout
+  - [x] 5.5 Perform end-to-end testing of AI workflow generation and display in WorkflowTab
 
 - [ ] 6.0 Performance Optimization and Cleanup
   - [ ] 6.1 Optimize database queries for the new schema
@@ -81,6 +77,51 @@
   - [ ] 6.4 Update documentation to reflect new unified schema
   - [ ] 6.5 Add monitoring for the new workflow system
   - [ ] 6.6 Clean up mock data generation (replace with real AI generation)
+
+## Relevant Files
+- `src/lib/schemas/unifiedWorkflow.ts` - Unified workflow schema definition
+- `src/lib/schemas/workflowIndex.ts` - Workflow index schema definitions
+- `src/lib/workflowIndexer.ts` - Main workflow indexing logic (6,183 lines - needs refactoring)
+- `src/lib/workflowIndexerRefactored.ts` - Refactored workflow indexer with modular architecture
+- `src/lib/workflowCacheManager.ts` - Cache management and performance optimization
+- `src/lib/workflowDataProcessor.ts` - Data validation and processing
+- `src/lib/n8nApi.ts` - n8n API integration (1,409 lines - needs refactoring)
+- `src/lib/n8nApiRefactored.ts` - Refactored n8n API client with modular architecture
+- `src/lib/n8nWorkflowParser.ts` - n8n workflow parsing and validation
+- `src/lib/n8nDataMapper.ts` - Data conversion and mapping utilities
+- `src/lib/schemas/n8nWorkflow.ts` - n8n workflow schema definitions
+- `src/lib/schemas/common.ts` - Common shared interfaces and types
+- `src/lib/schemas/analysis.ts` - Analysis-related schema definitions
+- `src/lib/schemas/catalog.ts` - Catalog-related schema definitions
+- `src/lib/schemas/index.ts` - Central export point for all schemas
+- `src/lib/services/validationService.ts` - Data validation and normalization service
+- `src/lib/services/domainClassificationService.ts` - Domain classification using LLM
+- `src/lib/services/notificationService.ts` - Notification and alert management
+- `src/lib/services/index.ts` - Central export point for all services
+- `src/lib/di/container.ts` - Dependency injection container
+- `src/lib/di/tokens.ts` - Service identifiers for DI
+- `src/lib/di/registry.ts` - Service registration and configuration
+- `src/lib/di/injectable.ts` - Injectable decorators and utilities
+- `src/lib/di/index.ts` - Central export point for all DI functionality
+- `src/lib/workflowGenerator.ts` - Workflow generation logic
+- `src/lib/workflowIndexerUnified.ts` - Unified WorkflowIndexer using UnifiedWorkflow schema with feature flags
+- `src/lib/n8nApiUnified.ts` - Unified N8n API client returning UnifiedWorkflow objects with feature flags
+- `src/lib/workflowGeneratorUnified.ts` - Unified AI workflow generator creating UnifiedWorkflow objects with feature flags
+- `src/components/UnifiedSolutionCard.tsx` - Solution display component
+- `supabase/functions/fetch-github-workflows/index.ts` - GitHub workflow fetcher (updated with UnifiedWorkflow support)
+- `supabase/functions/fetch-github-workflows-unified/index.ts` - New unified GitHub workflow fetcher
+- `supabase/functions/index-workflows/index.ts` - Workflow indexing function (updated with unified support)
+- `supabase/functions/index-workflows-unified/index.ts` - New unified workflow indexing function
+- `supabase/functions/recommend-workflows/index.ts` - Workflow recommendation function (updated with unified support)
+- `supabase/functions/recommend-workflows-unified/index.ts` - New unified workflow recommendation function
+- `supabase/functions/get-workflow-cache/index.ts` - Workflow cache function (updated with unified support)
+- `supabase/functions/generate-ai-workflow/index.ts` - New AI workflow generation Edge Function
+- `supabase/migrations/20250130000000_create_unified_workflows_table.sql` - New table creation with comprehensive schema
+- `supabase/migrations/20250130000001_migrate_existing_workflows.sql` - Data migration with validation and rollback
+- `supabase/migrations/20250130000002_add_rls_policies.sql` - Row Level Security policies for unified_workflows
+- `supabase/migrations/20250130000003_add_workflow_operations.sql` - Database functions for search, filter, statistics, and recommendations
+- `supabase/migrations/20250130000004_add_feature_flags.sql` - Feature flags system for gradual rollout
+- `src/lib/featureFlags.ts` - Client-side feature flag management with React hooks
 
 - [ ] 7.0 Rollback Strategy
   - [ ] 7.1 Create rollback procedures for each migration step

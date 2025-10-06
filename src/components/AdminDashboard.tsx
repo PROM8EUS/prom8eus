@@ -26,7 +26,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ lang }: AdminDashboardProps) {
   const [showAITest, setShowAITest] = useState(false);
 
-  // Mock data - in production, this would come from an API
+  // Fallback data - in production, this would come from an API
   const stats = {
     totalUsers: 1247,
     totalAnalyses: 8934,

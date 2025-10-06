@@ -1,6 +1,6 @@
 import { supabase } from '../supabase';
 import { EnrichmentService } from './enrichmentService';
-import { SolutionIndex, WorkflowIndex, AgentIndex } from './workflowIndexer';
+import { SolutionIndex, WorkflowIndex, AgentIndex } from './schemas/workflowIndex';
 
 export interface EnrichmentTrigger {
   id: string;

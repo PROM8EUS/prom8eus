@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RefreshCw, Clock, Database, CheckCircle, XCircle, Loader2, Trash2 } from 'lucide-react';
-import { workflowIndexer } from '@/lib/workflowIndexer';
+import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
 
 interface WorkflowRefreshControlsProps {
   onRefresh?: () => void;
@@ -39,7 +39,7 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
 
   const loadCacheStatus = async () => {
     const cacheKey = getCacheKey(source);
-    const status = await workflowIndexer.getCacheStatus(cacheKey);
+    const status = await unifiedWorkflowIndexer.getCacheStatus(cacheKey);
     setLastFetch(status.lastFetch);
     setWorkflowCount(status.workflowCount);
     setHasCache(status.hasCache);
@@ -55,7 +55,7 @@ export default function WorkflowRefreshControls({ onRefresh, source }: WorkflowR
     
     try {
       const cacheKey = getCacheKey(source);
-      const result = await workflowIndexer.forceRefreshWorkflows(cacheKey);
+      const result = await unifiedWorkflowIndexer.forceRefreshWorkflows(cacheKey);
       setRefreshResult(result);
       
       // Reload cache status
