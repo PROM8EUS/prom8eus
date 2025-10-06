@@ -56,9 +56,10 @@
 
 ## 🧪 Development Workflow
 1. **Plan:** Break tasks into sub-steps. Confirm assumptions with docs or teammates when unsure.
-2. **Small Commits:** Make granular, well-described commits. Keep the working tree clean.
-3. **Edit, Don’t Copy:** Modify existing files; avoid ad-hoc duplicates (e.g., `component-v2.tsx`).
-4. **Verify Integrations:** After refactoring, ensure all callers/integration points still work. Run relevant tests.
+2. **Clarify Before Implementing:** Before implementing, ask me any questions needed to fully understand the task and clarify ambiguities. Also present me with suggestions, alternatives, or improvements I haven't thought of, as simple yes/no questions or, if multiple choices exist, as clear option sets (A, B, C, etc.) for me to pick from.
+3. **Small Commits:** Make granular, well-described commits. Keep the working tree clean.
+4. **Edit, Don't Copy:** Modify existing files; avoid ad-hoc duplicates (e.g., `component-v2.tsx`).
+5. **Verify Integrations:** After refactoring, ensure all callers/integration points still work. Run relevant tests.
 
 ## ✅ Testing & Validation
 1. **TDD Mindset:** For new features, outline tests → write failing tests → implement → refactor. For bug fixes, reproduce with a test first.
