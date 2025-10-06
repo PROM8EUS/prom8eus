@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { t } from '../lib/i18n/i18n';
 import { openaiClient } from '../lib/openai';
-import { businessCaseCache } from '../lib/businessCaseCache';
+import { analysisCacheService } from '../lib/services/analysisCacheService';
 
 interface BusinessCaseProps {
   task: {
@@ -111,12 +111,17 @@ const BusinessCase: React.FC<BusinessCaseProps> = ({ task, lang = 'de', period: 
 
         try {
           console.log('🤖 Generating business case for:', task.text);
-          const data = await businessCaseCache.getOrGenerate(
-            task.text,
-            task.subtasks,
-            lang,
-            openaiClient.generateBusinessCase.bind(openaiClient)
-          );
+          // Generate cache key for business case
+          const cacheKey = `business-case-${task.text}-${lang}`;
+          
+          // Check cache first
+          let data = analysisCacheService.get(cacheKey, 'business-case');
+          if (!data) {
+            // Generate new business case
+            data = await openaiClient.generateBusinessCase(task.text, task.subtasks, lang);
+            // Cache the result
+            analysisCacheService.set(cacheKey, 'business-case', data, 30 * 60 * 1000); // 30 minutes TTL
+          }
           console.log('✅ Business case generated:', data);
           setBusinessCaseData(data);
           

@@ -5,7 +5,58 @@ import { Clock, BarChart3, Trash2, Users, Eye, CheckSquare } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { t } from "@/lib/i18n/i18n";
 import ScoreCircle from "./ScoreCircle";
-import { generateDemoAnalyses, getDemoAnalysisData } from "@/lib/demoData";
+// Demo data for when no public analyses are available
+const generateDemoAnalyses = () => [
+  {
+    id: 'demo_1',
+    timestamp: Date.now() - 3600000,
+    score: 85,
+    jobTitle: 'Data Scientist',
+    taskCount: 12,
+    summary: 'Analyse zeigt hohes Automatisierungspotenzial für Datenverarbeitung und Modellierung',
+    isPublic: true,
+    views: 24,
+    author: 'Demo User 1'
+  },
+  {
+    id: 'demo_2',
+    timestamp: Date.now() - 7200000,
+    score: 72,
+    jobTitle: 'Marketing Manager',
+    taskCount: 15,
+    summary: 'Gute Automatisierungsmöglichkeiten für Content-Erstellung und Kampagnen-Management',
+    isPublic: true,
+    views: 18,
+    author: 'Demo User 2'
+  }
+];
+
+const getDemoAnalysisData = (id: string) => {
+  const demoData: Record<string, any> = {
+    'demo_1': {
+      totalScore: 85,
+      ratio: { automatisierbar: 85, mensch: 15 },
+      tasks: [
+        {
+          text: 'Datenaufbereitung und -bereinigung',
+          score: 95,
+          label: 'Automatisierbar',
+          category: 'data_processing',
+          confidence: 90,
+          complexity: 'medium',
+          automationTrend: 'increasing'
+        }
+      ],
+      summary: 'Analyse zeigt hohes Automatisierungspotenzial für Datenverarbeitung und Modellierung',
+      recommendations: [
+        'Implementierung von automatisierten Datenpipelines',
+        'Verwendung von AutoML-Tools für Modellierung'
+      ],
+      originalText: 'Data Scientist Position mit Fokus auf Datenanalyse und Modellierung'
+    }
+  };
+  return demoData[id];
+};
 
 interface AnalysisHistoryItem {
   id: string;
