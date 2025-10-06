@@ -7,13 +7,7 @@ import {
   Users,
   Shield,
   RefreshCw,
-  TestTube,
-  Tag,
-  Zap,
-  ListTodo,
   Mail,
-  CheckSquare,
-  MessageSquare,
   LayoutDashboard
 } from 'lucide-react';
 
@@ -32,138 +26,76 @@ export default function AdminLayout({ children, lang, onLogout, currentView = 'd
     onLogout();
   };
 
-  const adminMenuItems = {
-    core: [
-      {
-        id: 'dashboard',
-        title: lang === 'de' ? 'Dashboard' : 'Dashboard',
-        description: lang === 'de' ? 'Übersicht und Statistiken' : 'Overview & metrics',
-        icon: LayoutDashboard,
-        href: '/admin'
-      },
-      {
-        id: 'sources',
-        title: lang === 'de' ? 'Quellen' : 'Sources',
-        description: lang === 'de' ? 'Workflows & Agenten verwalten' : 'Manage workflows & agents',
-        icon: RefreshCw,
-        href: '/admin/sources'
-      },
-      {
-        id: 'validation-queue',
-        title: lang === 'de' ? 'Validierung' : 'Validation',
-        description: lang === 'de' ? 'LLM-Ausgaben prüfen' : 'Review LLM output',
-        icon: CheckSquare,
-        href: '/admin/validation-queue'
-      },
-      {
-        id: 'pilot-feedback',
-        title: lang === 'de' ? 'Pilot-Feedback' : 'Pilot Feedback',
-        description: lang === 'de' ? 'Erkenntnisse aus Tests' : 'Insights from pilots',
-        icon: MessageSquare,
-        href: '/admin/pilot-feedback'
-      }
-    ],
-    catalog: [
-      {
-        id: 'domains',
-        title: lang === 'de' ? 'Domänen' : 'Domains',
-        description: lang === 'de' ? 'Ontologien & Zuordnung' : 'Ontologies & mapping',
-        icon: Tag,
-        href: '/admin/domains'
-      },
-      {
-        id: 'capabilities',
-        title: lang === 'de' ? 'Fähigkeiten' : 'Capabilities',
-        description: lang === 'de' ? 'Agent-Fähigkeiten pflegen' : 'Maintain agent capabilities',
-        icon: Zap,
-        href: '/admin/capabilities'
-      },
-      {
-        id: 'implementation-steps',
-        title: lang === 'de' ? 'Implementierungsschritte' : 'Implementation Steps',
-        description: lang === 'de' ? 'Step-Extraktionen verwalten' : 'Manage extracted steps',
-        icon: ListTodo,
-        href: '/admin/implementation-steps'
-      },
-      {
-        id: 'implementation-requests',
-        title: lang === 'de' ? 'Implementierungsanfragen' : 'Implementation Requests',
-        description: lang === 'de' ? 'Eingehende Wünsche' : 'Incoming requests',
-        icon: Mail,
-        href: '/admin/implementation-requests'
-      }
-    ],
-    tools: [
-      {
-        id: 'test',
-        title: lang === 'de' ? 'Workflow Test' : 'Workflow Test',
-        description: lang === 'de' ? 'Playground & Simulation' : 'Playground & simulation',
-        icon: TestTube,
-        href: '/admin/test'
-      },
-      {
-        id: 'users',
-        title: lang === 'de' ? 'Benutzer' : 'Users',
-        description: lang === 'de' ? 'Zugriff & Rollen' : 'Access & roles',
-        icon: Users,
-        href: '/admin/users'
-      },
-      {
-        id: 'settings',
-        title: lang === 'de' ? 'Einstellungen' : 'Settings',
-        description: lang === 'de' ? 'Systemkonfiguration' : 'System configuration',
-        icon: Settings,
-        href: '/admin/settings'
-      }
-    ]
-  } as const;
+  const adminMenuItems = [
+    {
+      id: 'dashboard',
+      title: lang === 'de' ? 'Dashboard' : 'Dashboard',
+      description: lang === 'de' ? 'Übersicht und Statistiken' : 'Overview & metrics',
+      icon: LayoutDashboard,
+      href: '/admin'
+    },
+    {
+      id: 'sources',
+      title: lang === 'de' ? 'Quellen' : 'Sources',
+      description: lang === 'de' ? 'Workflows & Agenten verwalten' : 'Manage workflows & agents',
+      icon: RefreshCw,
+      href: '/admin/sources'
+    },
+    {
+      id: 'implementation-requests',
+      title: lang === 'de' ? 'Implementierungsanfragen' : 'Implementation Requests',
+      description: lang === 'de' ? 'Eingehende Wünsche' : 'Incoming requests',
+      icon: Mail,
+      href: '/admin/implementation-requests'
+    },
+    {
+      id: 'users',
+      title: lang === 'de' ? 'Benutzer' : 'Users',
+      description: lang === 'de' ? 'Zugriff & Rollen' : 'Access & roles',
+      icon: Users,
+      href: '/admin/users'
+    },
+    {
+      id: 'settings',
+      title: lang === 'de' ? 'Einstellungen' : 'Settings',
+      description: lang === 'de' ? 'Systemkonfiguration' : 'System configuration',
+      icon: Settings,
+      href: '/admin/settings'
+    }
+  ] as const;
 
-  const renderNavGroup = (
-    title: string,
-    description: string,
-    items: typeof adminMenuItems.core
-  ) => (
-    <div className="space-y-2">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{title}</p>
-        <p className="text-[11px] text-gray-400">{description}</p>
-      </div>
-      <div className="space-y-1">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onViewChange?.(item.id)}
-              className={cn(
-                'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors flex items-center gap-3',
-                isActive
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              )}
-            >
-              <span
-                className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-md',
-                  isActive ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="flex-1">
-                <div className="font-medium leading-tight">{item.title}</div>
-                <p className={cn('text-[11px] leading-tight', isActive ? 'text-white/80' : 'text-gray-400')}>
-                  {item.description}
-                </p>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  const renderNavItem = (item: typeof adminMenuItems[0]) => {
+    const Icon = item.icon;
+    const isActive = currentView === item.id;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => onViewChange?.(item.id)}
+        className={cn(
+          'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors flex items-center gap-3',
+          isActive
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-gray-600 hover:bg-gray-100'
+        )}
+      >
+        <span
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-md',
+            isActive ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="flex-1">
+          <div className="font-medium leading-tight">{item.title}</div>
+          <p className={cn('text-[11px] leading-tight', isActive ? 'text-white/80' : 'text-gray-400')}>
+            {item.description}
+          </p>
+        </span>
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -198,21 +130,19 @@ export default function AdminLayout({ children, lang, onLogout, currentView = 'd
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-6">
           <aside className="w-64 shrink-0 space-y-6">
-            {renderNavGroup(
-              lang === 'de' ? 'Kernbereiche' : 'Core Areas',
-              lang === 'de' ? 'Monitoring & tägliche Arbeit' : 'Monitoring & daily work',
-              adminMenuItems.core
-            )}
-            {renderNavGroup(
-              lang === 'de' ? 'Katalog-Verwaltung' : 'Catalog Management',
-              lang === 'de' ? 'Struktur & Inhalte pflegen' : 'Maintain structure & content',
-              adminMenuItems.catalog
-            )}
-            {renderNavGroup(
-              lang === 'de' ? 'Tools & Einstellungen' : 'Tools & Settings',
-              lang === 'de' ? 'Konfiguration & Utilities' : 'Configuration & utilities',
-              adminMenuItems.tools
-            )}
+            <div className="space-y-2">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  {lang === 'de' ? 'Admin-Bereich' : 'Admin Area'}
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  {lang === 'de' ? 'Systemverwaltung' : 'System management'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                {adminMenuItems.map(renderNavItem)}
+              </div>
+            </div>
           </aside>
 
           <main className="flex-1">

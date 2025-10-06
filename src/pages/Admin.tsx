@@ -4,14 +4,8 @@ import AdminLogin from '@/components/AdminLogin';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import AdminLayout from '@/components/AdminLayout';
 import AdminDashboard from '@/components/AdminDashboard';
-import { WorkflowTest } from '@/components/WorkflowTest';
-import { DomainManagement } from '@/components/DomainManagement';
-import { CapabilityManagement } from '@/components/CapabilityManagement';
-import ImplementationStepsManagement from '@/components/ImplementationStepsManagement';
 import { ImplementationRequestsManagement } from '@/components/ImplementationRequestsManagement';
 import EnhancedSourcesManagement from '@/components/EnhancedSourcesManagement';
-import { AdminValidationQueue } from '@/components/AdminValidationQueue';
-import { PilotFeedbackManagement } from '@/components/PilotFeedbackManagement';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,24 +18,12 @@ export default function Admin() {
   const path = location.pathname.replace(/\/$/, '');
   const currentView = (path.endsWith('/sources') || path.endsWith('/enhanced-sources'))
     ? 'sources'
-    : path.endsWith('/validation-queue')
-    ? 'validation-queue'
-    : path.endsWith('/pilot-feedback')
-    ? 'pilot-feedback'
-    : path.endsWith('/domains')
-    ? 'domains'
-    : path.endsWith('/capabilities')
-    ? 'capabilities'
-    : path.endsWith('/implementation-steps')
-    ? 'implementation-steps'
     : path.endsWith('/implementation-requests')
     ? 'implementation-requests'
     : path.endsWith('/users')
     ? 'users'
     : path.endsWith('/settings')
     ? 'settings'
-    : path.endsWith('/test')
-    ? 'test'
     : 'dashboard';
 
   useEffect(() => {
@@ -83,21 +65,6 @@ export default function Admin() {
       case 'sources':
         navigate('/admin/sources');
         break;
-      case 'validation-queue':
-        navigate('/admin/validation-queue');
-        break;
-      case 'pilot-feedback':
-        navigate('/admin/pilot-feedback');
-        break;
-      case 'domains':
-        navigate('/admin/domains');
-        break;
-      case 'capabilities':
-        navigate('/admin/capabilities');
-        break;
-      case 'implementation-steps':
-        navigate('/admin/implementation-steps');
-        break;
       case 'implementation-requests':
         navigate('/admin/implementation-requests');
         break;
@@ -106,9 +73,6 @@ export default function Admin() {
         break;
       case 'settings':
         navigate('/admin/settings');
-        break;
-      case 'test':
-        navigate('/admin/test');
         break;
       default:
         navigate('/admin');
@@ -138,13 +102,7 @@ export default function Admin() {
       <Routes>
         <Route index element={<AdminDashboard lang={lang} />} />
         <Route path="sources" element={<EnhancedSourcesManagement lang={lang} />} />
-        <Route path="validation-queue" element={<AdminValidationQueue />} />
-        <Route path="pilot-feedback" element={<PilotFeedbackManagement />} />
-        <Route path="domains" element={<DomainManagement />} />
-        <Route path="capabilities" element={<CapabilityManagement />} />
-        <Route path="implementation-steps" element={<ImplementationStepsManagement />} />
         <Route path="implementation-requests" element={<ImplementationRequestsManagement />} />
-        <Route path="test" element={<WorkflowTest />} />
         <Route path="users" element={
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
