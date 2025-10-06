@@ -186,7 +186,7 @@ const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({
       </div>
 
       {/* Workflow Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1">
         {filteredWorkflows.map((workflow) => (
           <Card 
             key={workflow.id} 

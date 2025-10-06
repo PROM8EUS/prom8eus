@@ -3,11 +3,12 @@
  * Generates high-quality n8n workflow blueprints with intelligent caching and fallback
  */
 
-import { DynamicSubtask, SolutionStatus, GenerationMetadata } from './types';
+import { DynamicSubtask, SolutionStatus, GenerationMetadata, UnifiedWorkflow, WorkflowCreationContext } from './types';
 import { openaiClient } from './openai';
 import { BlueprintData } from '@/components/BlueprintCard';
 import { WorkflowSolutionInterface } from './interfaces';
 import { cacheManager } from './services/cacheManager';
+import { WorkflowSchemaMapper } from './schemas/unifiedWorkflow';
 
 export interface GeneratedBlueprint extends BlueprintData {
   isAIGenerated: true;
@@ -224,49 +225,80 @@ export function generateFallbackBlueprint(
   lang: 'de' | 'en' = 'en',
   variation: number = 0
 ): GeneratedBlueprint {
-  // Generate specific names based on task type
+  // Generate specific names based on task type with variation
   const taskTitle = subtask.title.toLowerCase();
   let fallbackName, fallbackDescription;
   
+  // Create unique variations based on subtask ID and variation number
+  const uniqueId = subtask.id.split('-').pop() || '1';
+  const variationSuffix = variation > 0 ? ` (Variante ${variation + 1})` : '';
+  
   if (taskTitle.includes('konflikt') || taskTitle.includes('mediation')) {
-    fallbackName = lang === 'de' 
-      ? `Mediations-Assistent: ${subtask.title}`
-      : `Mediation Assistant: ${subtask.title}`;
+    const variations = [
+      `Mediations-Assistent: ${subtask.title}`,
+      `Konfliktlöser: ${subtask.title}`,
+      `Streitschlichter: ${subtask.title}`,
+      `Mediations-Workflow: ${subtask.title}`
+    ];
+    fallbackName = (variations[variation % variations.length] || variations[0]) + variationSuffix;
     fallbackDescription = lang === 'de'
       ? `Intelligenter Workflow für strukturierte Konfliktlösung: ${subtask.description || subtask.title}`
       : `Intelligent workflow for structured conflict resolution: ${subtask.description || subtask.title}`;
   } else if (taskTitle.includes('gespräch')) {
-    fallbackName = lang === 'de' 
-      ? `Gesprächs-Coach: ${subtask.title}`
-      : `Conversation Coach: ${subtask.title}`;
+    const variations = [
+      `Gesprächs-Coach: ${subtask.title}`,
+      `Kommunikations-Assistent: ${subtask.title}`,
+      `Dialog-Workflow: ${subtask.title}`,
+      `Gesprächs-Manager: ${subtask.title}`
+    ];
+    fallbackName = (variations[variation % variations.length] || variations[0]) + variationSuffix;
     fallbackDescription = lang === 'de'
       ? `KI-gestützter Workflow für effektive Gesprächsführung: ${subtask.description || subtask.title}`
       : `AI-powered workflow for effective conversation management: ${subtask.description || subtask.title}`;
   } else if (taskTitle.includes('mitarbeiterentwicklung') || taskTitle.includes('personalplanung')) {
-    fallbackName = lang === 'de' 
-      ? `Talent-Entwickler: ${subtask.title}`
-      : `Talent Developer: ${subtask.title}`;
+    const variations = [
+      `Talent-Entwickler: ${subtask.title}`,
+      `Personal-Coach: ${subtask.title}`,
+      `Mitarbeiter-Mentor: ${subtask.title}`,
+      `Entwicklungs-Assistent: ${subtask.title}`,
+      `HR-Workflow: ${subtask.title}`,
+      `Personalplanung: ${subtask.title}`
+    ];
+    fallbackName = (variations[variation % variations.length] || variations[0]) + variationSuffix;
     fallbackDescription = lang === 'de'
       ? `Strategischer Workflow für Mitarbeiterentwicklung: ${subtask.description || subtask.title}`
       : `Strategic workflow for employee development: ${subtask.description || subtask.title}`;
   } else if (taskTitle.includes('onboarding') || taskTitle.includes('einarbeitung')) {
-    fallbackName = lang === 'de' 
-      ? `Onboarding-Guide: ${subtask.title}`
-      : `Onboarding Guide: ${subtask.title}`;
+    const variations = [
+      `Onboarding-Guide: ${subtask.title}`,
+      `Einarbeitungs-Assistent: ${subtask.title}`,
+      `Neulings-Workflow: ${subtask.title}`,
+      `Start-Helfer: ${subtask.title}`
+    ];
+    fallbackName = (variations[variation % variations.length] || variations[0]) + variationSuffix;
     fallbackDescription = lang === 'de'
       ? `Strukturierter Workflow für nahtlose Einarbeitung: ${subtask.description || subtask.title}`
       : `Structured workflow for seamless onboarding: ${subtask.description || subtask.title}`;
   } else if (taskTitle.includes('bewerbung') || taskTitle.includes('recruiting')) {
-    fallbackName = lang === 'de' 
-      ? `Recruiting-Expert: ${subtask.title}`
-      : `Recruiting Expert: ${subtask.title}`;
+    const variations = [
+      `Recruiting-Expert: ${subtask.title}`,
+      `Talent-Scout: ${subtask.title}`,
+      `Bewerber-Manager: ${subtask.title}`,
+      `HR-Recruiter: ${subtask.title}`
+    ];
+    fallbackName = (variations[variation % variations.length] || variations[0]) + variationSuffix;
     fallbackDescription = lang === 'de'
       ? `Intelligenter Workflow für effizientes Recruiting: ${subtask.description || subtask.title}`
       : `Intelligent workflow for efficient recruiting: ${subtask.description || subtask.title}`;
   } else {
-    fallbackName = lang === 'de' 
-      ? `Smart-Workflow: ${subtask.title}`
-      : `Smart Workflow: ${subtask.title}`;
+    const variations = [
+      `Smart-Workflow: ${subtask.title}`,
+      `Automatisierungs-Assistent: ${subtask.title}`,
+      `Prozess-Optimierer: ${subtask.title}`,
+      `Workflow-Manager: ${subtask.title}`,
+      `Task-Automator: ${subtask.title}`
+    ];
+    fallbackName = (variations[variation % variations.length] || variations[0]) + variationSuffix;
     fallbackDescription = lang === 'de'
       ? `Intelligenter Workflow für optimierte Prozesse: ${subtask.description || subtask.title}`
       : `Intelligent workflow for optimized processes: ${subtask.description || subtask.title}`;
@@ -447,7 +479,7 @@ export function generateFallbackBlueprint(
   };
 
   return {
-      id: `fallback-v3-${subtask.id}-${Date.now()}`,
+      id: `fallback-v3-${subtask.id}-${variation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`,
     name: fallbackName,
     description: fallbackDescription,
     timeSavings: subtask.estimatedTime * 0.3, // Conservative estimate
@@ -472,16 +504,17 @@ export function generateFallbackBlueprint(
 export async function generateBlueprintWithFallback(
   subtask: DynamicSubtask,
   lang: 'de' | 'en' = 'en',
-  timeoutMs: number = 3000 // Reduced timeout for faster fallback
+  timeoutMs: number = 3000, // Reduced timeout for faster fallback
+  variation: number = 0 // Add variation parameter
 ): Promise<GeneratedBlueprint> {
-  console.log(`🎯 [WorkflowGenerator] Starting workflow generation with fallback for: "${subtask.title}"`);
+  console.log(`🎯 [WorkflowGenerator] Starting workflow generation with fallback for: "${subtask.title}" (variation: ${variation})`);
   
-  // Create generation metadata for fallback caching
+  // Create generation metadata for fallback caching with variation
   const fallbackMetadata: GenerationMetadata = {
     timestamp: Date.now(),
     model: 'fallback-v2',
     language: lang,
-    cacheKey: `fallback_v2_${subtask.id}_${lang}_${Math.floor(Date.now() / (60 * 1000))}`
+    cacheKey: `fallback_v2_${subtask.id}_${lang}_${variation}_${Math.floor(Date.now() / (60 * 1000))}`
   };
 
   // Check cache for fallback first
@@ -502,8 +535,8 @@ export async function generateBlueprintWithFallback(
     console.log(`🔄 [WorkflowGenerator] AI generation failed (${error.message}), using intelligent fallback`);
   }
   
-  // Generate and cache fallback blueprint immediately
-  const fallbackBlueprint = generateFallbackBlueprint(subtask, lang);
+  // Generate and cache fallback blueprint with variation
+  const fallbackBlueprint = generateFallbackBlueprint(subtask, lang, variation);
   
   // Cache the fallback workflow
   cacheManager.cacheWorkflow(subtask.id, fallbackMetadata, fallbackBlueprint, 12 * 60 * 60 * 1000); // 12 hours
@@ -649,24 +682,24 @@ async function generateWorkflowMetadata(
         : `Main Task: ${subtask.title}. Create an integrated workflow name emphasizing OPTIMIZATION. Use terms like "Optimizer", "Integrator", "Pro". Generate: {"name":"Optimizer-[Specific Name]","description":"Integrates and optimizes [what]","complexity":"medium"}`
     }
   ] : [
-    // TEILAUFGABEN-SPEZIFISCHE WORKFLOWS - EXTREM DIFERENZIERT
+    // TEILAUFGABEN-SPEZIFISCHE WORKFLOWS - KONTEXT-SPEZIFISCH
     {
-      system: lang === 'de' ? 'Generiere einen AUTOMATISIERUNGS-Workflow. Fokussiere auf AUTOMATISIERUNG und EFFIZIENZ. Nur JSON.' : 'Generate an AUTOMATION workflow. Focus on AUTOMATION and EFFICIENCY. JSON only.',
+      system: lang === 'de' ? 'Generiere einen AUTOMATISIERUNGS-Workflow für die spezifische HR-Aufgabe. Fokussiere auf AUTOMATISIERUNG und EFFIZIENZ. Nur JSON.' : 'Generate an AUTOMATION workflow for the specific HR task. Focus on AUTOMATION and EFFICIENCY. JSON only.',
       user: lang === 'de' 
-        ? `Teilaufgabe: ${subtask.title}. Erstelle einen AUTOMATISIERUNGS-Workflow. Verwende Begriffe wie "Auto", "Smart", "Pro", "Bot", "Machine". Generiere: {"name":"Auto-[Spezifischer Name]","description":"Automatisiert [was]","complexity":"medium"}`
-        : `Subtask: ${subtask.title}. Create an AUTOMATION workflow. Use terms like "Auto", "Smart", "Pro", "Bot", "Machine". Generate: {"name":"Auto-[Specific Name]","description":"Automates [what]","complexity":"medium"}`
+        ? `HR-Aufgabe: ${subtask.title}. Erstelle einen AUTOMATISIERUNGS-Workflow der spezifisch für diese HR-Aufgabe ist. Verwende Begriffe wie "Auto", "Smart", "Pro", "Bot", "Machine". Generiere: {"name":"Auto-[Spezifischer Name]","description":"Automatisiert ${subtask.title} durch [spezifische HR-Prozesse]","complexity":"medium"}`
+        : `HR Task: ${subtask.title}. Create an AUTOMATION workflow specifically for this HR task. Use terms like "Auto", "Smart", "Pro", "Bot", "Machine". Generate: {"name":"Auto-[Specific Name]","description":"Automates ${subtask.title} through [specific HR processes]","complexity":"medium"}`
     },
     {
-      system: lang === 'de' ? 'Generiere einen KOLLABORATIONS-Workflow. Fokussiere auf TEAMWORK und ZUSAMMENARBEIT. Nur JSON.' : 'Generate a COLLABORATION workflow. Focus on TEAMWORK and COLLABORATION. JSON only.',
+      system: lang === 'de' ? 'Generiere einen KOLLABORATIONS-Workflow für die spezifische HR-Aufgabe. Fokussiere auf TEAMWORK und ZUSAMMENARBEIT. Nur JSON.' : 'Generate a COLLABORATION workflow for the specific HR task. Focus on TEAMWORK and COLLABORATION. JSON only.',
       user: lang === 'de' 
-        ? `Teilaufgabe: ${subtask.title}. Erstelle einen KOLLABORATIONS-Workflow. Verwende Begriffe wie "Team", "Collaborative", "Hub", "Connect", "Social". Generiere: {"name":"Team-[Spezifischer Name]","description":"Fördert Zusammenarbeit bei [was]","complexity":"medium"}`
-        : `Subtask: ${subtask.title}. Create a COLLABORATION workflow. Use terms like "Team", "Collaborative", "Hub", "Connect", "Social". Generate: {"name":"Team-[Specific Name]","description":"Promotes collaboration in [what]","complexity":"medium"}`
+        ? `HR-Aufgabe: ${subtask.title}. Erstelle einen KOLLABORATIONS-Workflow der spezifisch für diese HR-Aufgabe ist. Verwende Begriffe wie "Team", "Collaborative", "Hub", "Connect", "Social". Generiere: {"name":"Team-[Spezifischer Name]","description":"Fördert Zusammenarbeit bei ${subtask.title} durch [spezifische HR-Prozesse]","complexity":"medium"}`
+        : `HR Task: ${subtask.title}. Create a COLLABORATION workflow specifically for this HR task. Use terms like "Team", "Collaborative", "Hub", "Connect", "Social". Generate: {"name":"Team-[Specific Name]","description":"Promotes collaboration in ${subtask.title} through [specific HR processes]","complexity":"medium"}`
     },
     {
-      system: lang === 'de' ? 'Generiere einen ANALYSE-Workflow. Fokussiere auf DATENANALYSE und INSIGHTS. Nur JSON.' : 'Generate an ANALYTICS workflow. Focus on DATA ANALYSIS and INSIGHTS. JSON only.',
+      system: lang === 'de' ? 'Generiere einen ANALYSE-Workflow für die spezifische HR-Aufgabe. Fokussiere auf DATENANALYSE und INSIGHTS. Nur JSON.' : 'Generate an ANALYTICS workflow for the specific HR task. Focus on DATA ANALYSIS and INSIGHTS. JSON only.',
       user: lang === 'de' 
-        ? `Teilaufgabe: ${subtask.title}. Erstelle einen ANALYSE-Workflow. Verwende Begriffe wie "Analytics", "Insights", "Metrics", "Data", "Intelligence". Generiere: {"name":"Analytics-[Spezifischer Name]","description":"Analysiert und optimiert [was]","complexity":"medium"}`
-        : `Subtask: ${subtask.title}. Create an ANALYTICS workflow. Use terms like "Analytics", "Insights", "Metrics", "Data", "Intelligence". Generate: {"name":"Analytics-[Specific Name]","description":"Analyzes and optimizes [what]","complexity":"medium"}`
+        ? `HR-Aufgabe: ${subtask.title}. Erstelle einen ANALYSE-Workflow der spezifisch für diese HR-Aufgabe ist. Verwende Begriffe wie "Analytics", "Insights", "Metrics", "Data", "Intelligence". Generiere: {"name":"Analytics-[Spezifischer Name]","description":"Analysiert und optimiert ${subtask.title} durch [spezifische HR-Datenanalyse]","complexity":"medium"}`
+        : `HR Task: ${subtask.title}. Create an ANALYTICS workflow specifically for this HR task. Use terms like "Analytics", "Insights", "Metrics", "Data", "Intelligence". Generate: {"name":"Analytics-[Specific Name]","description":"Analyzes and optimizes ${subtask.title} through [specific HR data analysis]","complexity":"medium"}`
     }
   ];
 
@@ -731,7 +764,7 @@ async function generateWorkflowMetadata(
     
     // Create a minimal valid blueprint with just metadata
     const validBlueprint: GeneratedBlueprint = {
-      id: `metadata-v3-${subtask.id}-${Date.now()}`,
+      id: `metadata-v3-${subtask.id}-${variation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`,
       name: metadata.name || (subtask.title.toLowerCase().includes('konflikt') || subtask.title.toLowerCase().includes('mediation') 
         ? `Mediations-Assistent: ${subtask.title}`
         : subtask.title.toLowerCase().includes('gespräch')
@@ -873,7 +906,7 @@ async function generateWorkflowUltraFast(
     
     // Create a basic valid blueprint
     const validBlueprint: GeneratedBlueprint = {
-      id: `ultra-fast-${subtask.id}-${Date.now()}`,
+      id: `ultra-fast-${subtask.id}-${variation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`,
       name: blueprint.name || `Automatisierungs-Workflow: ${subtask.title}`,
       description: blueprint.description || `Automatisierung für ${subtask.title}`,
       timeSavings: blueprint.timeSavings || 4.0,
@@ -1034,7 +1067,7 @@ export async function generateWorkflowFast(
   console.log(`⚡ [WorkflowGenerator] Fast generation for: "${subtask.title}"`);
   
   // Create generation metadata for caching based on context
-  const cacheKey = `ai_metadata_v7_${subtask.id}_${lang}_${variation}_${context}`;
+  const cacheKey = `ai_metadata_v8_${subtask.id}_${lang}_${variation}_${context}`;
   const metadata: GenerationMetadata = {
     timestamp: Date.now(),
     model: 'gpt-4o-mini',
@@ -1042,29 +1075,34 @@ export async function generateWorkflowFast(
     cacheKey: cacheKey
   };
 
-  // Check cache first for AI-generated workflow - DISABLED TO FORCE NEW GENERATION
-  // const cachedBlueprint = cacheManager.getCachedWorkflow(subtask.id, metadata);
-  // if (cachedBlueprint) {
-  //   console.log('💾 [WorkflowGenerator] Using cached AI workflow:', cachedBlueprint.name);
-  //   return cachedBlueprint;
-  // }
+  // Check cache first for AI-generated workflow
+  const cachedBlueprint = cacheManager.getCachedWorkflow(subtask.id, metadata);
+  if (cachedBlueprint) {
+    console.log('💾 [WorkflowGenerator] Using cached AI workflow:', cachedBlueprint.name, 'ID:', cachedBlueprint.id);
+    return cachedBlueprint;
+  }
 
   // Try AI generation with context
   try {
     const blueprint = await generateWorkflowMetadata(subtask, lang, 5000, variation, context);
     if (blueprint) {
       console.log(`✅ [WorkflowGenerator] AI workflow metadata generated (${context}): "${blueprint.name}"`);
-      // Cache the AI-generated workflow - DISABLED TO FORCE NEW GENERATION
-      // cacheManager.cacheWorkflow(subtask.id, metadata, blueprint, 12 * 60 * 60 * 1000);
+      // Cache the AI-generated workflow
+      cacheManager.cacheWorkflow(subtask.id, metadata, blueprint, 12 * 60 * 60 * 1000);
       return blueprint;
     }
   } catch (error) {
     console.log(`❌ [WorkflowGenerator] AI generation failed: ${error.message}`);
   }
   
-  // NO FALLBACKS! Return null if AI fails
-  console.log(`❌ [WorkflowGenerator] No AI workflow generated for: "${subtask.title}" (${context})`);
-  return null;
+  // Use fallback with variation if AI fails
+  console.log(`🔄 [WorkflowGenerator] Using fallback workflow for: "${subtask.title}" (${context}, variation: ${variation})`);
+  const fallbackBlueprint = generateFallbackBlueprint(subtask, lang, variation);
+  
+  // Cache the fallback workflow
+  cacheManager.cacheWorkflow(subtask.id, metadata, fallbackBlueprint, 12 * 60 * 60 * 1000);
+  
+  return fallbackBlueprint;
 }
 
 // Clear all workflow caches to force regeneration
@@ -1074,7 +1112,10 @@ export function clearAllWorkflowCaches() {
   const workflowKeys = keys.filter(key => 
     key.includes('ai_metadata_') || 
     key.includes('fallback_') || 
-    key.includes('workflow_')
+    key.includes('workflow_') ||
+    key.includes('subtask_') ||
+    key.includes('blueprint_') ||
+    key.includes('cache_')
   );
   
   workflowKeys.forEach(key => {
@@ -1082,7 +1123,83 @@ export function clearAllWorkflowCaches() {
     console.log(`🗑️ [WorkflowGenerator] Removed cache key: ${key}`);
   });
   
+  // Also clear the in-memory cache
+  if (typeof window !== 'undefined') {
+    // Clear any global generation tracking
+    if ((window as any).subtaskGenerationInProgress) {
+      (window as any).subtaskGenerationInProgress.clear();
+    }
+  }
+  
   console.log(`✅ [WorkflowGenerator] Cleared ${workflowKeys.length} cache entries`);
+}
+
+/**
+ * NEW: Generate UnifiedWorkflow directly
+ * Generiert direkt ein UnifiedWorkflow ohne Legacy-Schema
+ */
+export async function generateUnifiedWorkflow(
+  subtask: DynamicSubtask,
+  context: WorkflowCreationContext
+): Promise<UnifiedWorkflow | null> {
+  console.log(`🎯 [WorkflowGenerator] Generating UnifiedWorkflow for: "${subtask.title}"`);
+  
+  // Generate metadata using existing function
+  const blueprint = await generateWorkflowFast(
+    subtask, 
+    context.language, 
+    context.variation || 0, 
+    context.context || 'subtask-specific'
+  );
+  
+  if (!blueprint) {
+    console.warn('⚠️ [WorkflowGenerator] Failed to generate blueprint for UnifiedWorkflow');
+    return null;
+  }
+  
+  // Convert to UnifiedWorkflow
+  const unifiedWorkflow = WorkflowSchemaMapper.fromGeneratedBlueprint(blueprint);
+  
+  console.log(`✅ [WorkflowGenerator] Generated UnifiedWorkflow: "${unifiedWorkflow.title}"`);
+  return unifiedWorkflow;
+}
+
+/**
+ * NEW: Generate multiple UnifiedWorkflows
+ * Generiert mehrere UnifiedWorkflows für eine Aufgabe
+ */
+export async function generateMultipleUnifiedWorkflows(
+  subtask: DynamicSubtask,
+  count: number = 3,
+  context: WorkflowCreationContext
+): Promise<UnifiedWorkflow[]> {
+  console.log(`🎯 [WorkflowGenerator] Generating ${count} UnifiedWorkflows for: "${subtask.title}"`);
+  
+  const workflows: UnifiedWorkflow[] = [];
+  
+  const seenIds = new Set<string>();
+  
+  for (let i = 0; i < count; i++) {
+    try {
+      const workflow = await generateUnifiedWorkflow(subtask, {
+        ...context,
+        variation: i
+      });
+      
+      if (workflow && !seenIds.has(workflow.id)) {
+        seenIds.add(workflow.id);
+        workflows.push(workflow);
+        console.log(`✅ [WorkflowGenerator] Generated workflow ${i + 1}/${count}: "${workflow.title}" (ID: ${workflow.id})`);
+      } else if (workflow && seenIds.has(workflow.id)) {
+        console.warn(`⚠️ [WorkflowGenerator] Skipping duplicate workflow ID: ${workflow.id}`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ [WorkflowGenerator] Failed to generate workflow ${i + 1}:`, error);
+    }
+  }
+  
+  console.log(`🎯 [WorkflowGenerator] Generated ${workflows.length}/${count} UnifiedWorkflows`);
+  return workflows;
 }
 
 export default {

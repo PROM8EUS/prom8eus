@@ -177,7 +177,7 @@ export function AgentTierDisplay({
           </div>
           <div className="space-y-1">
             {score.reasoning.map((reason, index) => (
-              <div key={index} className="text-sm text-gray-600 flex items-start gap-2">
+              <div key={`agent-tier-${index}-${reason.slice(0, 20)}`} className="text-sm text-gray-600 flex items-start gap-2">
                 <span className="text-gray-400 mt-1">•</span>
                 <span>{reason}</span>
               </div>

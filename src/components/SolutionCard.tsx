@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Star, Eye, Settings, Share2 } from 'lucide-react';
 import IntegrationIcon from '@/components/IntegrationIcon';
 import CreatorBadge from './CreatorBadge';
 import { CapabilityChips } from './CapabilityChip';
@@ -63,8 +64,8 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
         : (solution.tags || [])).slice(0, 4);
 
   return (
-    <Card className={`transition-shadow h-full hover:shadow-md ${className}`} onClick={handleClick} role="button">
-      <CardContent className="p-4 h-full flex flex-col">
+    <Card className={`transition-shadow hover:shadow-md ${className}`} onClick={handleClick} role="button">
+      <CardContent className="p-4 flex flex-col">
         {/* Title with type badge and score */}
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-semibold text-gray-900 text-base leading-snug flex-1" title={solution.filename || solution.name}>
@@ -127,7 +128,7 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {techs.map((t, i) => (
-                  <IntegrationIcon key={i} name={t} size="sm" />
+                  <IntegrationIcon key={`${t}-${i}`} name={t} size="sm" />
                 ))}
               </div>
             )}
@@ -229,6 +230,58 @@ function SolutionCard({ solution, onView, className }: SolutionCardProps) {
               ) : null}
             </div>
           )}
+        </div>
+
+        {/* CTA Buttons */}
+        <div className="flex gap-2 pt-4">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1 h-9"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView?.(solution);
+            }}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Ansehen
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle setup action
+            }}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Einrichten
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle configure action
+            }}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Konfigurieren
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle share action
+            }}
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Teilen
+          </Button>
         </div>
       </CardContent>
     </Card>

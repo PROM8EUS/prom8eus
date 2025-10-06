@@ -147,7 +147,7 @@ export function ReasoningChip({
 
             <div className="space-y-1">
               {sortedItems.map((item, index) => (
-                <div key={index} className="flex items-start gap-2 text-xs">
+                <div key={`reasoning-${index}-${item.text?.slice(0, 20) || 'item'}`} className="flex items-start gap-2 text-xs">
                   {item.icon || getReasoningIcon(item.type)}
                   <span className={getReasoningColor(item.type)}>
                     {item.message}
@@ -263,7 +263,7 @@ export function ReasoningDisplay({
 
         <div className="space-y-2">
           {sortedItems.map((item, index) => (
-            <div key={index} className="flex items-start gap-2 text-sm">
+            <div key={`reasoning-display-${index}-${item.text?.slice(0, 20) || 'item'}`} className="flex items-start gap-2 text-sm">
               {item.icon || getReasoningIcon(item.type)}
               <span className={getReasoningColor(item.type)}>
                 {item.message}

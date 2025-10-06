@@ -4,7 +4,7 @@
  * with animated transitions, smart defaults, and modern design patterns
  */
 
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -321,6 +321,13 @@ export function ExpandedSolutionTabs({
     );
   };
 
+  // Memoize the onUpdateCount function to prevent infinite loops
+  const createUpdateCountHandler = useCallback((tabId: TabType) => {
+    return (count: number) => {
+      setTabCounts(prev => ({ ...prev, [tabId]: count }));
+    };
+  }, []);
+
   // Render tab content with loading states
   const renderTabContent = (tabId: TabType) => {
     if (isTransitioning) {
@@ -337,9 +344,7 @@ export function ExpandedSolutionTabs({
     const commonProps = {
       subtask,
       lang,
-      onUpdateCount: (count: number) => {
-        setTabCounts(prev => ({ ...prev, [tabId]: count }));
-      }
+      onUpdateCount: createUpdateCountHandler(tabId)
     };
 
     // console.log('🔍 [ExpandedSolutionTabs] Passing subtask to WorkflowTab:', subtask);

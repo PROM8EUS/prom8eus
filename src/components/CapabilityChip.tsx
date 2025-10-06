@@ -158,7 +158,7 @@ export function CapabilityChips({
     <div className={`flex flex-wrap gap-1 ${className}`}>
       {displayCapabilities.map((capability, index) => (
         <CapabilityChip 
-          key={index} 
+          key={`${capability}-${index}`} 
           capability={capability} 
           size={size}
         />
@@ -179,7 +179,7 @@ export function CapabilityChips({
                 <div className="font-medium mb-2">Additional Capabilities</div>
                 <div className="space-y-1">
                   {capabilities.slice(maxDisplay).map((capability, index) => (
-                    <div key={index} className="text-sm">
+                    <div key={`hidden-${capability}-${index}`} className="text-sm">
                       <CapabilityChip capability={capability} size="sm" />
                     </div>
                   ))}

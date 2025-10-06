@@ -80,7 +80,7 @@ export function WorkflowScoreDisplay({
                 <div className="text-sm text-gray-600 mb-2">Confidence: {score.confidence}%</div>
                 <div className="text-xs text-gray-500">
                   {score.reasoning.slice(0, 2).map((reason, index) => (
-                    <div key={index}>• {reason}</div>
+                    <div key={`reasoning-${index}-${reason.slice(0, 20)}`}>• {reason}</div>
                   ))}
                   {score.reasoning.length > 2 && (
                     <div>• +{score.reasoning.length - 2} more factors</div>
@@ -171,7 +171,7 @@ export function WorkflowScoreDisplay({
           </div>
           <div className="space-y-1">
             {score.reasoning.map((reason, index) => (
-              <div key={index} className="text-sm text-gray-600 flex items-start gap-2">
+              <div key={`reasoning-display-${index}-${reason.slice(0, 20)}`} className="text-sm text-gray-600 flex items-start gap-2">
                 <span className="text-gray-400 mt-1">•</span>
                 <span>{reason}</span>
               </div>

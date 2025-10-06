@@ -29,8 +29,8 @@ export function TypeBadge({
         return {
           label: 'Workflow',
           reliabilityLabel: 'Reliable',
-          icon: <Workflow className="h-3 w-3" />,
-          reliabilityIcon: <Shield className="h-3 w-3" />,
+          icon: <Workflow className="h-4 w-4" />,
+          reliabilityIcon: <Shield className="h-4 w-4" />,
           color: 'text-primary-700 bg-primary/10 border-primary/30',
           reliabilityColor: 'text-primary-700 bg-primary/10 border-primary/30',
           description: 'Predefined automation workflow with reliable, predictable outcomes',
@@ -40,8 +40,8 @@ export function TypeBadge({
         return {
           label: 'Agent',
           reliabilityLabel: 'Adaptive',
-          icon: <Bot className="h-3 w-3" />,
-          reliabilityIcon: <Zap className="h-3 w-3" />,
+          icon: <Bot className="h-4 w-4" />,
+          reliabilityIcon: <Zap className="h-4 w-4" />,
           color: 'text-primary-700 bg-primary/10 border-primary/30',
           reliabilityColor: 'text-primary-700 bg-primary/10 border-primary/30',
           description: 'AI agent with adaptive capabilities that may vary in outcomes',

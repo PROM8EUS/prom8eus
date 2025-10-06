@@ -851,7 +851,7 @@ Choose up to 3 most relevant domains from the available list with confidence sco
       // Ensure ID is not empty and doesn't contain invalid characters
       sanitized.id = sanitized.id.replace(/[^a-zA-Z0-9\-_]/g, '-');
       if (sanitized.id.length === 0) {
-        sanitized.id = `unknown-${Date.now()}`;
+        sanitized.id = `unknown-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       }
     }
 
@@ -1247,7 +1247,7 @@ export class WorkflowIndexer {
     if (isWorkflow) {
       // Ensure workflow has required fields with fallbacks
       const workflowData = {
-        id: sanitizedSolution.id || `workflow-${Date.now()}`,
+        id: sanitizedSolution.id || `workflow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         source: sanitizedSolution.source || 'unknown',
         title: sanitizedSolution.title || 'Untitled Workflow',
         summary: sanitizedSolution.summary || 'No description available',
@@ -1288,7 +1288,7 @@ export class WorkflowIndexer {
 
       // Ensure agent has required fields with fallbacks
       const agentData = {
-        id: sanitizedSolution.id || `agent-${Date.now()}`,
+        id: sanitizedSolution.id || `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         source: sanitizedSolution.source || 'unknown',
         title: sanitizedSolution.title || 'Untitled Agent',
         summary: sanitizedSolution.summary || 'No description available',
@@ -1312,7 +1312,7 @@ export class WorkflowIndexer {
     // Default to workflow if type cannot be determined
     console.warn(`Could not determine solution type for ${sanitizedSolution.id}, defaulting to workflow`);
     const workflowData = {
-      id: sanitizedSolution.id || `workflow-${Date.now()}`,
+      id: sanitizedSolution.id || `workflow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       source: sanitizedSolution.source || 'unknown',
       title: sanitizedSolution.title || 'Untitled Workflow',
       summary: sanitizedSolution.summary || 'No description available',

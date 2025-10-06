@@ -326,7 +326,7 @@ export const TaskSpecificWorkflows: React.FC<TaskSpecificWorkflowsProps> = ({
         </div>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
+      <div className="grid grid-cols-1 gap-6 w-full">
         {workflows.map((workflow) => (
           <WorkflowItem
             key={`${workflow.id}-${workflow.name}`}

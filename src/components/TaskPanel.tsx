@@ -29,11 +29,12 @@ import { ContextualHelpProvider, useContextualHelp } from './ContextualHelpSyste
 import { HelpTrigger, SectionHelp } from './HelpTrigger';
 import { analyzeTrends } from '@/lib/trendAnalysis';
 import { matchWorkflowsToSubtasks } from '@/lib/workflowMatcher';
-import { DynamicSubtask } from '@/lib/types';
+import { DynamicSubtask, UnifiedWorkflow, WorkflowCreationContext } from '@/lib/types';
 import { generateSubtasksWithAI } from '@/lib/aiAnalysis';
 import { isOpenAIAvailable } from '@/lib/openai';
-import { generateWorkflowFast } from '@/lib/workflowGenerator';
+import { generateWorkflowFast, generateUnifiedWorkflow, generateMultipleUnifiedWorkflows } from '@/lib/workflowGenerator';
 import { workflowIndexer } from '@/lib/workflowIndexer';
+import { WorkflowMigration } from '@/lib/schemas/migration';
 
 // Simple string->SHA256 helper for stable cache keys
 async function sha256(input: string): Promise<string> {
@@ -142,7 +143,8 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
   useEffect(() => {
     if (isVisible && task) {
       const taskText = task.title || task.name || task.description || '';
-      if (taskText && !task.subtasks) {
+      // Always generate subtasks if we don't have any yet (either from task or generated)
+      if (taskText && !isGenerating && generatedSubtasks.length === 0) {
         console.log('🔄 [TaskPanel] Generating subtasks for:', taskText);
         setIsGenerating(true);
         
@@ -150,6 +152,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
         const taskId = taskText;
         if ((window as any).subtaskGenerationInProgress?.has(taskId)) {
           console.log('⏳ [TaskPanel] Subtask generation already in progress for:', taskText);
+          setIsGenerating(false);
           return;
         }
         
@@ -167,6 +170,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
               console.log('✅ [TaskPanel] Using cached subtasks:', cached.length);
               setGeneratedSubtasks(cached);
               (window as any).subtaskGenerationInProgress.delete(taskId);
+              setIsGenerating(false);
               return;
             }
             
@@ -193,6 +197,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
                 setGeneratedSubtasks(mappedSubtasks);
                 await setCachedSubtasksForText(taskText, mappedSubtasks);
                 (window as any).subtaskGenerationInProgress.delete(taskId);
+                setIsGenerating(false);
                 return;
               }
             }
@@ -201,11 +206,11 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
             console.log('❌ [TaskPanel] AI subtask generation failed - no fallback available');
             setGeneratedSubtasks([]);
             (window as any).subtaskGenerationInProgress.delete(taskId);
+            setIsGenerating(false);
           } catch (error) {
             console.error('❌ [TaskPanel] Error generating subtasks:', error);
             (window as any).subtaskGenerationInProgress.delete(taskId);
             setGeneratedSubtasks([]);
-          } finally {
             setIsGenerating(false);
           }
         };
@@ -213,7 +218,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
         generateSubtasks();
       }
     }
-  }, [isVisible, task, lang]);
+  }, [isVisible, task, lang, isGenerating, generatedSubtasks.length]);
   
   // Use real subtasks from task prop or generated subtasks
   const realSubtasks = useMemo(() => {
@@ -312,11 +317,16 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
   }, [realSubtasks, basePerTaskHours]);
 
   // Load workflows for matching
-  const [workflows, setWorkflows] = useState<any[]>([]);
-  const [allWorkflows, setAllWorkflows] = useState<any[]>([]); // Store all generated workflows
+  const [workflows, setWorkflows] = useState<UnifiedWorkflow[]>([]);
+  const [allWorkflows, setAllWorkflows] = useState<UnifiedWorkflow[]>([]); // Store all generated workflows
   const [workflowsToShow, setWorkflowsToShow] = useState(3); // Number of workflows to show
   const [isGeneratingInitial, setIsGeneratingInitial] = useState(false); // Initial generation state
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+
+  // Memoize workflows to prevent unnecessary re-renders
+  const memoizedWorkflows = useMemo(() => {
+    return workflows;
+  }, [workflows.length, workflows.map(w => w.id).join(',')]);
   const [trendInsights, setTrendInsights] = useState<any[]>([]);
 
   useEffect(() => {
@@ -351,31 +361,19 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
             aiTools: ['Workflow-Generator', 'Prozess-Analyzer']
           };
           
-          for (let i = 0; i < maxInitialWorkflows; i++) {
-            try {
-              const blueprint = await generateWorkflowFast(mainTask, lang, i, 'overarching');
-              if (blueprint) {
-                generatedWorkflows.push({
-                  id: `generated-overarching-${i}-${Date.now()}`,
-                  title: blueprint.name,
-                  summary: blueprint.description,
-                  category: 'AI Generated',
-                  integrations: blueprint.integrations || [],
-                  complexity: blueprint.complexity || 'Medium',
-                  automationPotential: mainTask.automationPotential,
-                  timeSavings: blueprint.timeSavings || 5,
-                  subtaskMatches: ['all'], // Mark as overarching
-                  source: 'ai-generated',
-                  link: '#',
-                  domains: ['hr', 'automation'],
-                  domain_confidences: [0.9],
-                  domain_origin: 'llm'
-                });
-                console.log(`✅ [TaskPanel] Generated overarching workflow ${i+1}: "${blueprint.name}"`);
-              }
-            } catch (error) {
-              console.warn('⚠️ [TaskPanel] Failed to generate overarching workflow:', error);
-            }
+          // Generate initial workflows using new UnifiedWorkflow function
+          const context: WorkflowCreationContext = {
+            subtaskId: mainTask.id,
+            language: lang,
+            timeout: 5000,
+            context: 'overarching'
+          };
+          
+          const unifiedWorkflows = await generateMultipleUnifiedWorkflows(mainTask, maxInitialWorkflows, context);
+          
+          for (const workflow of unifiedWorkflows) {
+            generatedWorkflows.push(workflow);
+            console.log(`✅ [TaskPanel] Generated overarching workflow: "${workflow.title}"`);
           }
           
           console.log('✅ [TaskPanel] Generated initial workflows:', generatedWorkflows.length);
@@ -416,31 +414,20 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
       if (selectedSubtaskId !== 'all') {
         const selectedSubtask = dynamicSubtasks.find(s => s.id === selectedSubtaskId);
         if (selectedSubtask) {
-          for (let i = 0; i < additionalWorkflows; i++) {
-            try {
-              const blueprint = await generateWorkflowFast(selectedSubtask, lang, allWorkflows.length + i, 'subtask-specific'); // Use subtask-specific context
-              if (blueprint) {
-                newWorkflows.push({
-                  id: `generated-${selectedSubtask.id}-${allWorkflows.length + i}-${Date.now()}`,
-                  title: blueprint.name,
-                  summary: blueprint.description,
-                  category: 'AI Generated',
-                  integrations: blueprint.integrations || [],
-                  complexity: blueprint.complexity || 'Medium',
-                  automationPotential: selectedSubtask.automationPotential,
-                  timeSavings: blueprint.timeSavings || 5,
-                  subtaskMatches: [selectedSubtask.id],
-                  source: 'ai-generated',
-                  link: '#',
-                  domains: ['hr', 'automation'],
-                  domain_confidences: [0.9],
-                  domain_origin: 'llm'
-                });
-                console.log(`✅ [TaskPanel] Generated additional workflow ${i+1} for "${selectedSubtask.title}": "${blueprint.name}"`);
-              }
-            } catch (error) {
-              console.warn('⚠️ [TaskPanel] Failed to generate additional workflow for subtask:', selectedSubtask.title, error);
-            }
+          // Generate more workflows for selected subtask using UnifiedWorkflow
+          const context: WorkflowCreationContext = {
+            subtaskId: selectedSubtask.id,
+            language: lang,
+            timeout: 5000,
+            context: 'subtask-specific',
+            variation: allWorkflows.length
+          };
+          
+          const unifiedWorkflows = await generateMultipleUnifiedWorkflows(selectedSubtask, additionalWorkflows, context);
+          
+          for (const workflow of unifiedWorkflows) {
+            newWorkflows.push(workflow);
+            console.log(`✅ [TaskPanel] Generated subtask-specific workflow: "${workflow.title}"`);
           }
         }
       } else {
@@ -460,38 +447,35 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
           aiTools: ['Workflow-Generator', 'Prozess-Analyzer']
         };
         
-        for (let i = 0; i < additionalWorkflows; i++) {
-          try {
-            const blueprint = await generateWorkflowFast(mainTask, lang, allWorkflows.length + i, 'overarching'); // Use overarching context
-            if (blueprint) {
-              newWorkflows.push({
-                id: `generated-overarching-${allWorkflows.length + i}-${Date.now()}`,
-                title: blueprint.name,
-                summary: blueprint.description,
-                category: 'AI Generated',
-                integrations: blueprint.integrations || [],
-                complexity: blueprint.complexity || 'Medium',
-                automationPotential: mainTask.automationPotential,
-                timeSavings: blueprint.timeSavings || 5,
-                subtaskMatches: ['all'], // Mark as overarching
-                source: 'ai-generated',
-                link: '#',
-                domains: ['hr', 'automation'],
-                domain_confidences: [0.9],
-                domain_origin: 'llm'
-              });
-              workflowCount++;
-              console.log(`✅ [TaskPanel] Generated additional overarching workflow ${workflowCount}: "${blueprint.name}"`);
-            }
-          } catch (error) {
-            console.warn('⚠️ [TaskPanel] Failed to generate additional overarching workflow:', error);
-          }
+        // Generate more overarching workflows using UnifiedWorkflow
+        const context: WorkflowCreationContext = {
+          subtaskId: mainTask.id,
+          language: lang,
+          timeout: 5000,
+          context: 'overarching',
+          variation: allWorkflows.length
+        };
+        
+        const unifiedWorkflows = await generateMultipleUnifiedWorkflows(mainTask, additionalWorkflows, context);
+        
+        for (const workflow of unifiedWorkflows) {
+          newWorkflows.push(workflow);
+          workflowCount++;
+          console.log(`✅ [TaskPanel] Generated additional overarching workflow ${workflowCount}: "${workflow.title}"`);
         }
       }
       
+      // Deduplicate workflows by ID before updating state
+      const existingIds = new Set(allWorkflows.map(w => w.id));
+      const uniqueNewWorkflows = newWorkflows.filter(w => !existingIds.has(w.id));
+      
+      if (uniqueNewWorkflows.length !== newWorkflows.length) {
+        console.log(`🧹 [TaskPanel] Removed ${newWorkflows.length - uniqueNewWorkflows.length} duplicate workflows`);
+      }
+      
       // Add new workflows to existing ones
-      const updatedAllWorkflows = [...allWorkflows, ...newWorkflows];
-      const updatedWorkflowsToShow = workflowsToShow + newWorkflows.length;
+      const updatedAllWorkflows = [...allWorkflows, ...uniqueNewWorkflows];
+      const updatedWorkflowsToShow = workflowsToShow + uniqueNewWorkflows.length;
       
       setAllWorkflows(updatedAllWorkflows);
       setWorkflows(updatedAllWorkflows.slice(0, updatedWorkflowsToShow));
@@ -534,33 +518,19 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
       const generatedWorkflows = [];
       const workflowsPerSubtask = 3; // Generate 3 workflows for this specific subtask
       
-      for (let i = 0; i < workflowsPerSubtask; i++) {
-        try {
-          const blueprint = await generateWorkflowFast(subtask, lang, i, 'subtask-specific'); // Use subtask-specific context
-          if (blueprint) {
-            generatedWorkflows.push({
-              id: `generated-${subtask.id}-${i}-${Date.now()}`,
-              title: blueprint.name,
-              summary: blueprint.description,
-              category: 'AI Generated',
-              integrations: blueprint.integrations || [],
-              complexity: blueprint.complexity || 'Medium',
-              automationPotential: subtask.automationPotential,
-              timeSavings: blueprint.timeSavings || 5,
-              subtaskMatches: [subtask.id], // This workflow is specific to this subtask
-              source: 'ai-generated',
-              link: '#',
-              domains: ['hr', 'automation'],
-              domain_confidences: [0.9],
-              domain_origin: 'llm'
-            });
-            console.log(`✅ [TaskPanel] Generated workflow ${i+1} for "${subtask.title}": "${blueprint.name}"`);
-          } else {
-            console.warn(`⚠️ [TaskPanel] No AI workflow generated for "${subtask.title}" (attempt ${i+1})`);
-          }
-        } catch (error) {
-          console.warn('⚠️ [TaskPanel] Failed to generate workflow for subtask:', subtask.title, error);
-        }
+      // Generate workflows for specific subtask using UnifiedWorkflow
+      const context: WorkflowCreationContext = {
+        subtaskId: subtask.id,
+        language: lang,
+        timeout: 5000,
+        context: 'subtask-specific'
+      };
+      
+      const unifiedWorkflows = await generateMultipleUnifiedWorkflows(subtask, workflowsPerSubtask, context);
+      
+      for (const workflow of unifiedWorkflows) {
+        generatedWorkflows.push(workflow);
+        console.log(`✅ [TaskPanel] Generated workflow for "${subtask.title}": "${workflow.title}"`);
       }
       
       console.log('✅ [TaskPanel] Generated workflows for subtask:', generatedWorkflows.length);
@@ -653,21 +623,18 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
             <ExpandedSolutionTabs
               subtask={selectedSubtask}
               lang={lang}
-              generatedWorkflows={workflows}
+              generatedWorkflows={memoizedWorkflows}
               isGeneratingInitial={isGeneratingInitial}
               onLoadMore={generateMoreWorkflows}
               isLoadingMore={isGeneratingMore}
-              onWorkflowSelect={(workflow: any) => {
-                const name = workflow?.workflow?.title || workflow?.workflow?.name || 'Unknown';
-                console.log('🔍 [TaskPanel] Workflow selected:', name);
+              onWorkflowSelect={(workflow: UnifiedWorkflow) => {
+                console.log('🔍 [TaskPanel] Workflow selected:', workflow.title);
               }}
-              onWorkflowDownload={(workflow: any) => {
-                const name = workflow?.workflow?.title || workflow?.workflow?.name || 'Unknown';
-                console.log('📥 [TaskPanel] Download requested:', name);
+              onWorkflowDownload={(workflow: UnifiedWorkflow) => {
+                console.log('📥 [TaskPanel] Download requested:', workflow.title);
               }}
-              onWorkflowSetup={(workflow: any) => {
-                const name = workflow?.workflow?.title || workflow?.workflow?.name || 'Unknown';
-                console.log('⚙️ [TaskPanel] Setup requested:', name);
+              onWorkflowSetup={(workflow: UnifiedWorkflow) => {
+                console.log('⚙️ [TaskPanel] Setup requested:', workflow.title);
               }}
               onAgentSelect={(agent: any) => {
                 console.log('🔍 [TaskPanel] Agent selected:', agent?.name);

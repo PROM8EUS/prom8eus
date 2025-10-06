@@ -179,7 +179,7 @@ export function DomainBadge({
           
           <div className="space-y-2">
             {sortedDomains.map((domain, index) => (
-              <div key={index} className="flex items-center justify-between p-2 rounded-md bg-gray-50">
+              <div key={`domain-${index}-${domain.domain}`} className="flex items-center justify-between p-2 rounded-md bg-gray-50">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-gray-600" />
                   <span className="font-medium text-sm">

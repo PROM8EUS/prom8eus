@@ -256,10 +256,8 @@ export default function SubtaskSidebar({
     
     let baseSubtasks: Subtask[] = [];
     
-    if (aiGeneratedSubtasks.length > 0) {
-      console.log('✅ [SubtaskSidebar] Using AI-generated subtasks:', aiGeneratedSubtasks.length);
-      baseSubtasks = [...aiGeneratedSubtasks];
-    } else if (task?.subtasks && task.subtasks.length > 0) {
+    // Prioritize existing task subtasks first (for immediate display)
+    if (task?.subtasks && task.subtasks.length > 0) {
       console.log('✅ [SubtaskSidebar] Using real subtasks from task prop:', task.subtasks.length);
       baseSubtasks = task.subtasks.map(subtask => ({
         id: subtask.id || `subtask-${Math.random().toString(36).substr(2, 9)}`,
@@ -272,6 +270,9 @@ export default function SubtaskSidebar({
         kpis: [],
         qualityGates: []
       }));
+    } else if (aiGeneratedSubtasks.length > 0) {
+      console.log('✅ [SubtaskSidebar] Using AI-generated subtasks:', aiGeneratedSubtasks.length);
+      baseSubtasks = [...aiGeneratedSubtasks];
     } else if (generatedSubtasks.length > 0) {
       console.log('✅ [SubtaskSidebar] Using generated subtasks:', generatedSubtasks.length);
       baseSubtasks = [...generatedSubtasks];

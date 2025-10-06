@@ -13,7 +13,7 @@ export interface GenerationMetadata {
   cacheKey: string;
 }
 
-// Workflow Solution Types
+// Workflow Solution Types - DEPRECATED: Use UnifiedWorkflow instead
 export interface WorkflowSolution {
   id: string;
   name: string;
@@ -28,6 +28,9 @@ export interface WorkflowSolution {
   downloadUrl?: string;
   validationStatus?: 'valid' | 'invalid';
 }
+
+// Re-export UnifiedWorkflow for convenience
+export { UnifiedWorkflow, WorkflowCreationContext, WorkflowSearchParams } from './schemas/unifiedWorkflow';
 
 // Agent Solution Types
 export interface AgentSolution {
