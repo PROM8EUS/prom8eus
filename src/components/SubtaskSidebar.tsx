@@ -139,6 +139,7 @@ type SubtaskSidebarProps = {
   isVisible?: boolean;
   onSubtaskSelect?: (subtaskId: string) => void;
   selectedSubtaskId?: string;
+  aiGeneratedSubtasks?: Subtask[]; // Add AI-generated subtasks prop
 };
 
 // Removed unused types: SortOption, FilterOption
@@ -148,7 +149,8 @@ export default function SubtaskSidebar({
   lang = 'de', 
   isVisible = false, 
   onSubtaskSelect,
-  selectedSubtaskId 
+  selectedSubtaskId,
+  aiGeneratedSubtasks = []
 }: SubtaskSidebarProps) {
   const [generatedSubtasks, setGeneratedSubtasks] = useState<Subtask[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -254,7 +256,10 @@ export default function SubtaskSidebar({
     
     let baseSubtasks: Subtask[] = [];
     
-    if (task?.subtasks && task.subtasks.length > 0) {
+    if (aiGeneratedSubtasks.length > 0) {
+      console.log('✅ [SubtaskSidebar] Using AI-generated subtasks:', aiGeneratedSubtasks.length);
+      baseSubtasks = [...aiGeneratedSubtasks];
+    } else if (task?.subtasks && task.subtasks.length > 0) {
       console.log('✅ [SubtaskSidebar] Using real subtasks from task prop:', task.subtasks.length);
       baseSubtasks = task.subtasks.map(subtask => ({
         id: subtask.id || `subtask-${Math.random().toString(36).substr(2, 9)}`,
@@ -271,42 +276,15 @@ export default function SubtaskSidebar({
       console.log('✅ [SubtaskSidebar] Using generated subtasks:', generatedSubtasks.length);
       baseSubtasks = [...generatedSubtasks];
     } else {
-      console.log('⚠️ [SubtaskSidebar] No subtasks available, using fallback');
-      baseSubtasks = [
-        {
-          id: 'task-1',
-          title: 'Aufgabe planen und strukturieren',
-          systems: ['Planning Tools', 'Documentation'],
-          manualHoursShare: 0.20,
-          automationPotential: 0.60
-        },
-        {
-          id: 'task-2',
-          title: 'Aufgabe ausführen',
-          systems: ['Execution Tools', 'Workflow'],
-          manualHoursShare: 0.40,
-          automationPotential: 0.80
-        },
-        {
-          id: 'task-3',
-          title: 'Koordination und Kommunikation',
-          systems: ['Communication Tools', 'Collaboration'],
-          manualHoursShare: 0.25,
-          automationPotential: 0.75
-        },
-        {
-          id: 'task-4',
-          title: 'Ergebnisse evaluieren und dokumentieren',
-          systems: ['Analytics', 'Documentation'],
-          manualHoursShare: 0.15,
-          automationPotential: 0.85
-        }
-      ];
+      console.log('⏳ [SubtaskSidebar] Subtasks are being generated, showing loading state');
+      
+      // Return empty array to show loading state instead of fallback
+      baseSubtasks = [];
     }
 
     // Always show all subtasks, sorted by automation potential (highest first)
     return baseSubtasks.sort((a, b) => b.automationPotential - a.automationPotential);
-  }, [task?.subtasks, generatedSubtasks]);
+  }, [task?.subtasks, generatedSubtasks, aiGeneratedSubtasks]);
 
   if (!isVisible) return null;
 
@@ -355,7 +333,19 @@ export default function SubtaskSidebar({
               </Card>
 
               {/* Individual subtasks */}
-              {realSubtasks.map((subtask, index) => (
+              {realSubtasks.length === 0 && isGenerating ? (
+                <Card className="border-gray-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-center gap-3 text-gray-500">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">
+                        {lang === 'de' ? 'Generiere Teilaufgaben...' : 'Generating subtasks...'}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                realSubtasks.map((subtask, index) => (
                 <Card
                   key={subtask.id}
                   className={`cursor-pointer transition-all duration-200 ${
@@ -434,7 +424,8 @@ export default function SubtaskSidebar({
                   </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
         </div>
       </div>
     </div>

@@ -260,7 +260,7 @@ export const EffortSection: React.FC<EffortSectionProps> = ({
   return (
     <Card 
       className={cn(
-        'bg-gray-50 border-gray-200 transition-all duration-300',
+        'bg-gray-50 border-gray-200 transition-all duration-300 relative z-10',
         className
       )}
       aria-label={ariaLabel || (lang === 'de' ? 'Aufwand und ROI Übersicht' : 'Effort and ROI Overview')}

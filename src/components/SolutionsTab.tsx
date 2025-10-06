@@ -444,41 +444,56 @@ export default function SolutionsTab({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2 bg-primary/10 rounded-full p-1">
+          {/* Sliding background indicator */}
+          <div 
+            className={`absolute top-1 bottom-1 bg-white rounded-full shadow-sm transition-all duration-300 ease-out ${
+              activeTab === 'all' ? 'left-1' :
+              activeTab === 'workflows' ? 'left-1' :
+              activeTab === 'agents' ? 'left-1' : 'left-1'
+            }`}
+            style={{
+              width: 'calc(33.333% - 4px)',
+              transform: activeTab === 'all' ? 'translateX(0)' :
+                        activeTab === 'workflows' ? 'translateX(calc(100% + 4px))' :
+                        activeTab === 'agents' ? 'translateX(calc(200% + 8px))' : 'translateX(0)'
+            }}
+          />
+          
           <button
             onClick={() => setActiveTab('all')}
-            className={`text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
+            className={`relative z-10 text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
               activeTab === 'all' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-primary/10 text-primary hover:bg-primary/20'
+                ? 'text-primary' 
+                : 'text-primary/70 hover:text-primary'
             }`}
           >
             {lang === 'de' ? 'Alle' : 'All'}
-            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-white/20' : 'bg-primary/10'}`}>{solutions.length}</span>
+            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-primary/10' : 'bg-primary/5'}`}>{solutions.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('workflows')}
-            className={`text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
+            className={`relative z-10 text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
               activeTab === 'workflows' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-primary/10 text-primary hover:bg-primary/20'
+                ? 'text-primary' 
+                : 'text-primary/70 hover:text-primary'
             }`}
           >
             <SolutionIcon type="workflow" className="h-4 w-4" />
             {lang === 'de' ? 'Workflows' : 'Workflows'}
-            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'workflows' ? 'bg-white/20' : 'bg-primary/10'}`}>{solutions.filter(s => s.type === 'workflow').length}</span>
+            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'workflows' ? 'bg-primary/10' : 'bg-primary/5'}`}>{solutions.filter(s => s.type === 'workflow').length}</span>
           </button>
           <button
             onClick={() => setActiveTab('agents')}
-            className={`text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
+            className={`relative z-10 text-xs font-medium rounded-full px-3 py-1 transition-colors flex items-center gap-2 ${
               activeTab === 'agents' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-primary/10 text-primary hover:bg-primary/20'
+                ? 'text-primary' 
+                : 'text-primary/70 hover:text-primary'
             }`}
           >
             <SolutionIcon type="agent" className="h-4 w-4" />
             {lang === 'de' ? 'KI-Agenten' : 'AI Agents'}
-            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'agents' ? 'bg-white/20' : 'bg-primary/10'}`}>{solutions.filter(s => s.type === 'agent').length}</span>
+            <span className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full ${activeTab === 'agents' ? 'bg-primary/10' : 'bg-primary/5'}`}>{solutions.filter(s => s.type === 'agent').length}</span>
           </button>
         </div>
       </div>

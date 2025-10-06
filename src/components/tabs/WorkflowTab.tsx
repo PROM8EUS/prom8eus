@@ -26,7 +26,8 @@ import {
   Target,
   TrendingUp,
   X,
-  RefreshCw
+  RefreshCw,
+  Plus
 } from 'lucide-react';
 import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
 import { SmartSearch } from '../ui/SmartSearch';
@@ -35,12 +36,16 @@ import { useSmartSearch } from '@/hooks/useSmartSearch';
 import { DynamicSubtask } from '@/lib/types';
 import { WorkflowMatch } from '@/lib/workflowMatcher';
 import { matchWorkflowsWithFallback } from '@/lib/workflowMatcher';
-import { generateBlueprintWithFallback } from '@/lib/blueprintGenerator';
+import { generateWorkflowFast } from '@/lib/workflowGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 
 type WorkflowTabProps = {
   subtask: DynamicSubtask | null;
   lang?: 'de' | 'en';
+  generatedWorkflows?: any[]; // NEW: Generated workflows from TaskPanel
+  isGeneratingInitial?: boolean; // NEW: Initial generation state
+  onLoadMore?: () => void; // NEW: Load more workflows
+  isLoadingMore?: boolean; // NEW: Loading state for more workflows
   onWorkflowSelect?: (workflow: WorkflowMatch) => void;
   onDownloadRequest?: (workflow: WorkflowMatch) => void;
   onSetupRequest?: (workflow: WorkflowMatch) => void;
@@ -50,13 +55,17 @@ type WorkflowTabProps = {
 export default function WorkflowTab({ 
   subtask, 
   lang = 'en', 
+  generatedWorkflows = [],
+  isGeneratingInitial = false,
+  onLoadMore,
+  isLoadingMore = false,
   onWorkflowSelect,
   onDownloadRequest,
   onSetupRequest,
   onUpdateCount
 }: WorkflowTabProps) {
   const [workflows, setWorkflows] = useState<WorkflowMatch[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading state
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -162,10 +171,59 @@ export default function WorkflowTab({
     historyKey: 'workflow-search-history'
   });
 
-  // Load workflows when subtask changes
+  // Load workflows when subtask changes OR when generatedWorkflows change
   useEffect(() => {
-    loadWorkflows();
-  }, [subtask]);
+    // Show loading state if initial generation is in progress
+    if (isGeneratingInitial) {
+      setIsLoading(true);
+      console.log('⏳ [WorkflowTab] Initial generation in progress, showing loading state');
+      return;
+    }
+
+    if (generatedWorkflows && generatedWorkflows.length > 0) {
+      // Filter workflows based on selected subtask
+      let filteredWorkflows = generatedWorkflows;
+      
+      if (subtask && subtask.id !== 'all') {
+        // Filter workflows that match the selected subtask
+        filteredWorkflows = generatedWorkflows.filter(w => 
+          w.subtaskMatches && w.subtaskMatches.includes(subtask.id)
+        );
+        console.log(`🎯 [WorkflowTab] Filtered workflows for subtask "${subtask.title}":`, filteredWorkflows.length);
+      } else {
+        console.log('🎯 [WorkflowTab] Showing all workflows for "Alle":', generatedWorkflows.length);
+      }
+      
+      const convertedWorkflows = filteredWorkflows.map(w => ({
+        workflow: {
+          id: w.id,
+          title: w.title,
+          description: w.summary,
+          category: w.category,
+          complexity: w.complexity,
+          integrations: w.integrations,
+          estimatedTime: w.timeSavings,
+          automationLevel: w.automationPotential * 100,
+          source: w.source,
+          link: w.link,
+          domains: w.domains,
+          domain_confidences: w.domain_confidences,
+          domain_origin: w.domain_origin
+        },
+        score: 95,
+        reasons: ['AI-generated', 'Task-specific'],
+        source: 'ai-generated'
+      }));
+      setWorkflows(convertedWorkflows);
+      setIsLoading(false); // Stop loading when workflows are ready
+      onUpdateCount?.(convertedWorkflows.length);
+    } else {
+      // Show loading state when no workflows are available yet
+      setIsLoading(true);
+      console.log('⏳ [WorkflowTab] No workflows available yet, showing loading state');
+      // Don't call loadWorkflows() - TaskPanel will generate workflows
+    }
+  }, [subtask, generatedWorkflows, isGeneratingInitial]);
 
   const loadWorkflows = async () => {
       // console.log('🔍 [WorkflowTab] Current subtask:', subtask);
@@ -279,7 +337,7 @@ export default function WorkflowTab({
       // If it's a generated workflow, ensure we have the blueprint
       if (workflow.isAIGenerated && !workflow.downloadUrl) {
         console.log('🔄 [WorkflowTab] Generating blueprint for download...');
-        const blueprint = await generateBlueprintWithFallback(subtask!, lang);
+        const blueprint = await generateWorkflowFast(subtask!, lang);
         if (blueprint) {
           workflow.downloadUrl = blueprint.downloadUrl;
         }
@@ -521,6 +579,29 @@ export default function WorkflowTab({
         </div>
       ) : null}
 
+      {/* Load More Button */}
+      {!isLoading && !error && filteredWorkflows.length > 0 && onLoadMore && (
+        <div className="text-center py-6">
+          <button
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                {lang === 'de' ? 'Lade weitere...' : 'Loading more...'}
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                {lang === 'de' ? 'Mehr Workflows laden' : 'Load More Workflows'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Empty State */}
       {!isLoading && !error && filteredWorkflows.length === 0 && (
         <div className="text-center py-12">
@@ -537,73 +618,11 @@ export default function WorkflowTab({
   );
 }
 
-// Generate complete solution workflows for "Alle (Komplettlösungen)"
+// Generate complete solution workflows for "Alle (Komplettlösungen)" - DISABLED
 function generateCompleteSolutionWorkflows(lang: 'de' | 'en'): WorkflowMatch[] {
-  console.log('🔍 [generateCompleteSolutionWorkflows] Creating COMPLETE SOLUTION workflows');
-  const workflows: WorkflowMatch[] = [
-    {
-      workflow: {
-        id: 'complete-1',
-        title: lang === 'de' ? 'Komplette Marketing-Automatisierung' : 'Complete Marketing Automation',
-        description: lang === 'de' 
-          ? 'End-to-End Marketing-Automatisierung von Lead-Generierung bis Conversion-Tracking'
-          : 'End-to-end marketing automation from lead generation to conversion tracking',
-        category: 'marketing',
-        complexity: 'high',
-        integrations: ['HubSpot', 'Mailchimp', 'Google Analytics', 'Facebook Ads', 'LinkedIn'],
-        estimatedTime: 25.0,
-        automationLevel: 85
-      },
-      score: 95,
-      reasons: [
-        lang === 'de' ? 'Umfassende Automatisierung' : 'Comprehensive automation',
-        lang === 'de' ? 'End-to-End Lösung' : 'End-to-end solution'
-      ],
-      source: 'complete-solution'
-    },
-    {
-      workflow: {
-        id: 'complete-2',
-        title: lang === 'de' ? 'Vollständige Datenanalyse-Pipeline' : 'Complete Data Analysis Pipeline',
-        description: lang === 'de'
-          ? 'Komplette Datenverarbeitung von Sammlung bis Berichterstellung mit KI-Insights'
-          : 'Complete data processing from collection to reporting with AI insights',
-        category: 'analytics',
-        complexity: 'high',
-        integrations: ['Google Analytics', 'Tableau', 'Power BI', 'Python', 'Jupyter'],
-        estimatedTime: 30.0,
-        automationLevel: 90
-      },
-      score: 92,
-      reasons: [
-        lang === 'de' ? 'KI-gestützte Analyse' : 'AI-powered analysis',
-        lang === 'de' ? 'Automatisierte Berichte' : 'Automated reports'
-      ],
-      source: 'complete-solution'
-    },
-    {
-      workflow: {
-        id: 'complete-3',
-        title: lang === 'de' ? 'Integrierte Kommunikations-Plattform' : 'Integrated Communication Platform',
-        description: lang === 'de'
-          ? 'Zentrale Kommunikations-Automatisierung für alle Kanäle und Stakeholder'
-          : 'Central communication automation for all channels and stakeholders',
-        category: 'communication',
-        complexity: 'medium',
-        integrations: ['Slack', 'Microsoft Teams', 'Zoom', 'Calendly', 'Email'],
-        estimatedTime: 18.0,
-        automationLevel: 80
-      },
-      score: 88,
-      reasons: [
-        lang === 'de' ? 'Multi-Channel Integration' : 'Multi-channel integration',
-        lang === 'de' ? 'Zentrale Steuerung' : 'Central control'
-      ],
-      source: 'complete-solution'
-    }
-  ];
-
-  return workflows;
+  console.log('🔍 [generateCompleteSolutionWorkflows] DISABLED - No more generic workflows!');
+  // Return empty array - no more hardcoded generic workflows
+  return [];
 }
 
 // Generate specific workflows for individual subtasks
@@ -687,71 +706,206 @@ function generateSubtaskWorkflows(subtask: DynamicSubtask, lang: 'de' | 'en'): W
   // Generate multiple specific workflows for any subtask
   const workflows: WorkflowMatch[] = [];
   
-  // Workflow 1: Main automation workflow
-  workflows.push({
-    workflow: {
-      id: `subtask-${subtask.id}-1`,
-      title: lang === 'de' ? `${subtask.title} - Automatisierung` : `${subtask.title} - Automation`,
-      description: lang === 'de'
-        ? `Spezifischer Workflow für: ${subtask.title}`
-        : `Specific workflow for: ${subtask.title}`,
-      category: 'general',
-      complexity: 'medium',
-      integrations: ['General Tools', 'APIs'],
-      estimatedTime: 10.0,
-      automationLevel: 75
-    },
-    score: 80,
-    reasons: [
-      lang === 'de' ? 'Spezifisch für diese Teilaufgabe' : 'Specific for this subtask',
-      lang === 'de' ? 'Maßgeschneidert' : 'Tailored'
-    ],
-    source: 'subtask-specific'
-  });
+  // Generate specific workflows based on task type
+  const taskTitle = subtask.title.toLowerCase();
+  
+  if (taskTitle.includes('mitarbeiterentwicklung') || taskTitle.includes('personalplanung')) {
+    // Workflow 1: Talent Development
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-1`,
+        title: lang === 'de' ? `Talent-Entwickler: ${subtask.title}` : `Talent Developer: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Strategischer Workflow für Mitarbeiterentwicklung: ${subtask.title}`
+          : `Strategic workflow for employee development: ${subtask.title}`,
+        category: 'hr',
+        complexity: 'medium',
+        integrations: ['HR-Software', 'Learning Management', 'Slack'],
+        estimatedTime: 12.0,
+        automationLevel: 80
+      },
+      score: 85,
+      reasons: [
+        lang === 'de' ? 'HR-spezifisch' : 'HR-specific',
+        lang === 'de' ? 'Strategisch ausgerichtet' : 'Strategically aligned'
+      ],
+      source: 'subtask-specific'
+    });
 
-  // Workflow 2: Data processing workflow
-  workflows.push({
-    workflow: {
-      id: `subtask-${subtask.id}-2`,
-      title: lang === 'de' ? `${subtask.title} - Datenverarbeitung` : `${subtask.title} - Data Processing`,
-      description: lang === 'de'
-        ? `Automatisierte Datenverarbeitung für: ${subtask.title}`
-        : `Automated data processing for: ${subtask.title}`,
-      category: 'data',
-      complexity: 'high',
-      integrations: ['Python', 'SQL', 'APIs'],
-      estimatedTime: 15.0,
-      automationLevel: 85
-    },
-    score: 75,
-    reasons: [
-      lang === 'de' ? 'Datenverarbeitung' : 'Data processing',
-      lang === 'de' ? 'KI-gestützt' : 'AI-powered'
-    ],
-    source: 'subtask-specific'
-  });
+    // Workflow 2: Performance Tracking
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-2`,
+        title: lang === 'de' ? `Performance-Tracker: ${subtask.title}` : `Performance Tracker: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Automatisierte Leistungsverfolgung und Feedback: ${subtask.title}`
+          : `Automated performance tracking and feedback: ${subtask.title}`,
+        category: 'analytics',
+        complexity: 'high',
+        integrations: ['Google Analytics', 'Slack', 'Google Sheets'],
+        estimatedTime: 15.0,
+        automationLevel: 85
+      },
+      score: 80,
+      reasons: [
+        lang === 'de' ? 'Leistungsanalyse' : 'Performance analysis',
+        lang === 'de' ? 'KI-gestützt' : 'AI-powered'
+      ],
+      source: 'subtask-specific'
+    });
 
-  // Workflow 3: Integration workflow
-  workflows.push({
-    workflow: {
-      id: `subtask-${subtask.id}-3`,
-      title: lang === 'de' ? `${subtask.title} - Integration` : `${subtask.title} - Integration`,
-      description: lang === 'de'
-        ? `System-Integration für: ${subtask.title}`
-        : `System integration for: ${subtask.title}`,
-      category: 'integration',
-      complexity: 'medium',
-      integrations: ['Zapier', 'n8n', 'Webhooks'],
-      estimatedTime: 8.0,
-      automationLevel: 70
-    },
-    score: 70,
-    reasons: [
-      lang === 'de' ? 'System-Integration' : 'System integration',
-      lang === 'de' ? 'Multi-Platform' : 'Multi-platform'
-    ],
-    source: 'subtask-specific'
-  });
+    // Workflow 3: Learning Path
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-3`,
+        title: lang === 'de' ? `Lernpfad-Designer: ${subtask.title}` : `Learning Path Designer: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Intelligente Lernpfad-Erstellung: ${subtask.title}`
+          : `Intelligent learning path creation: ${subtask.title}`,
+        category: 'education',
+        complexity: 'medium',
+        integrations: ['Learning Management', 'Google Calendar', 'Gmail'],
+        estimatedTime: 10.0,
+        automationLevel: 75
+      },
+      score: 75,
+      reasons: [
+        lang === 'de' ? 'Bildungsfokus' : 'Education-focused',
+        lang === 'de' ? 'Personalisierung' : 'Personalization'
+      ],
+      source: 'subtask-specific'
+    });
+  } else if (taskTitle.includes('onboarding') || taskTitle.includes('einarbeitung')) {
+    // Workflow 1: Onboarding Guide
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-1`,
+        title: lang === 'de' ? `Onboarding-Guide: ${subtask.title}` : `Onboarding Guide: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Strukturierter Workflow für nahtlose Einarbeitung: ${subtask.title}`
+          : `Structured workflow for seamless onboarding: ${subtask.title}`,
+        category: 'hr',
+        complexity: 'medium',
+        integrations: ['Google Docs', 'Gmail', 'Slack'],
+        estimatedTime: 8.0,
+        automationLevel: 80
+      },
+      score: 85,
+      reasons: [
+        lang === 'de' ? 'Onboarding-spezifisch' : 'Onboarding-specific',
+        lang === 'de' ? 'Strukturiert' : 'Structured'
+      ],
+      source: 'subtask-specific'
+    });
+
+    // Workflow 2: Document Automation
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-2`,
+        title: lang === 'de' ? `Dokument-Assistent: ${subtask.title}` : `Document Assistant: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Automatisierte Dokumentenerstellung: ${subtask.title}`
+          : `Automated document creation: ${subtask.title}`,
+        category: 'documentation',
+        complexity: 'medium',
+        integrations: ['Google Docs', 'Airtable', 'Gmail'],
+        estimatedTime: 6.0,
+        automationLevel: 75
+      },
+      score: 80,
+      reasons: [
+        lang === 'de' ? 'Dokumentenautomatisierung' : 'Document automation',
+        lang === 'de' ? 'Zeitersparnis' : 'Time-saving'
+      ],
+      source: 'subtask-specific'
+    });
+
+    // Workflow 3: Welcome Sequence
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-3`,
+        title: lang === 'de' ? `Willkommens-Sequenz: ${subtask.title}` : `Welcome Sequence: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Automatisierte Willkommens-E-Mails und Termine: ${subtask.title}`
+          : `Automated welcome emails and appointments: ${subtask.title}`,
+        category: 'communication',
+        complexity: 'low',
+        integrations: ['Gmail', 'Google Calendar', 'Slack'],
+        estimatedTime: 4.0,
+        automationLevel: 90
+      },
+      score: 75,
+      reasons: [
+        lang === 'de' ? 'Kommunikationsautomatisierung' : 'Communication automation',
+        lang === 'de' ? 'Benutzerfreundlich' : 'User-friendly'
+      ],
+      source: 'subtask-specific'
+    });
+  } else {
+    // Generic workflows for other task types
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-1`,
+        title: lang === 'de' ? `Smart-Workflow: ${subtask.title}` : `Smart Workflow: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Intelligenter Workflow für optimierte Prozesse: ${subtask.title}`
+          : `Intelligent workflow for optimized processes: ${subtask.title}`,
+        category: 'general',
+        complexity: 'medium',
+        integrations: ['General Tools', 'APIs'],
+        estimatedTime: 10.0,
+        automationLevel: 75
+      },
+      score: 80,
+      reasons: [
+        lang === 'de' ? 'Spezifisch für diese Teilaufgabe' : 'Specific for this subtask',
+        lang === 'de' ? 'Maßgeschneidert' : 'Tailored'
+      ],
+      source: 'subtask-specific'
+    });
+
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-2`,
+        title: lang === 'de' ? `Prozess-Optimierer: ${subtask.title}` : `Process Optimizer: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Intelligente Prozessoptimierung: ${subtask.title}`
+          : `Intelligent process optimization: ${subtask.title}`,
+        category: 'optimization',
+        complexity: 'high',
+        integrations: ['Analytics', 'APIs', 'Database'],
+        estimatedTime: 15.0,
+        automationLevel: 85
+      },
+      score: 75,
+      reasons: [
+        lang === 'de' ? 'Prozessoptimierung' : 'Process optimization',
+        lang === 'de' ? 'KI-gestützt' : 'AI-powered'
+      ],
+      source: 'subtask-specific'
+    });
+
+    workflows.push({
+      workflow: {
+        id: `subtask-${subtask.id}-3`,
+        title: lang === 'de' ? `System-Connector: ${subtask.title}` : `System Connector: ${subtask.title}`,
+        description: lang === 'de'
+          ? `Intelligente Systemverbindungen: ${subtask.title}`
+          : `Intelligent system connections: ${subtask.title}`,
+        category: 'integration',
+        complexity: 'medium',
+        integrations: ['Zapier', 'n8n', 'Webhooks'],
+        estimatedTime: 8.0,
+        automationLevel: 70
+      },
+      score: 70,
+      reasons: [
+        lang === 'de' ? 'System-Integration' : 'System integration',
+        lang === 'de' ? 'Multi-Platform' : 'Multi-platform'
+      ],
+      source: 'subtask-specific'
+    });
+  }
 
   return workflows;
 }

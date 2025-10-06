@@ -566,7 +566,7 @@ async function generateFallbackWorkflow(
   subtask: DynamicSubtask,
   options: MatchingOptions = {}
 ): Promise<WorkflowMatch | null> {
-  // This would integrate with the blueprintGenerator service
+  // This would integrate with the workflowGenerator service
   // For now, return a basic fallback structure
   const fallbackWorkflow: N8nWorkflow = {
     id: `fallback_${subtask.id}_${Date.now()}`,

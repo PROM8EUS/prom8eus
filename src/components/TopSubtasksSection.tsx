@@ -6,7 +6,7 @@ import { SubtaskCard } from './SubtaskCard';
 import { BlueprintCard, BlueprintData } from './BlueprintCard';
 import { matchWorkflowsToSubtask } from '@/lib/workflowMatcher';
 import { WorkflowIndex } from '@/lib/workflowIndexer';
-import { generateBlueprintForSubtask } from '@/lib/blueprintGenerator';
+import { generateWorkflowFast } from '@/lib/workflowGenerator';
 import { isOpenAIAvailable } from '@/lib/openai';
 
 /**
@@ -45,20 +45,55 @@ function createFallbackBlueprint(subtask: DynamicSubtask, lang: 'de' | 'en'): Bl
       : 'Automatic creation and publishing of job postings';
     nodes = ['Job Board API', 'Content Template', 'Multi-Platform Posting', 'Analytics'];
     integrations.push('LinkedIn', 'Indeed', 'Xing');
+  } else if (titleLower.includes('mitarbeiterentwicklung') || titleLower.includes('personalplanung')) {
+    workflowName = lang === 'de' ? `Talent-Entwickler: ${subtask.title}` : `Talent Developer: ${subtask.title}`;
+    workflowDescription = lang === 'de'
+      ? `Strategischer Workflow für Mitarbeiterentwicklung: ${subtask.title}`
+      : `Strategic workflow for employee development: ${subtask.title}`;
+    nodes = ['HR-System', 'Learning Platform', 'Performance Tracking', 'Feedback Loop'];
+    integrations.push('HR-Software', 'Learning Management', 'Slack', 'Google Calendar');
+  } else if (titleLower.includes('onboarding') || titleLower.includes('einarbeitung')) {
+    workflowName = lang === 'de' ? `Onboarding-Guide: ${subtask.title}` : `Onboarding Guide: ${subtask.title}`;
+    workflowDescription = lang === 'de'
+      ? `Strukturierter Workflow für nahtlose Einarbeitung: ${subtask.title}`
+      : `Structured workflow for seamless onboarding: ${subtask.title}`;
+    nodes = ['New Employee Trigger', 'Document Creation', 'Welcome Email', 'Task Assignment'];
+    integrations.push('Google Docs', 'Gmail', 'Slack', 'Airtable');
+  } else if (titleLower.includes('bewerbung') || titleLower.includes('recruiting')) {
+    workflowName = lang === 'de' ? `Recruiting-Expert: ${subtask.title}` : `Recruiting Expert: ${subtask.title}`;
+    workflowDescription = lang === 'de'
+      ? `Intelligenter Workflow für effizientes Recruiting: ${subtask.title}`
+      : `Intelligent workflow for efficient recruiting: ${subtask.title}`;
+    nodes = ['Application Received', 'AI Analysis', 'Status Update', 'Interview Scheduling'];
+    integrations.push('Airtable', 'OpenAI', 'Gmail', 'LinkedIn');
+  } else if (titleLower.includes('konflikt') || titleLower.includes('mediation')) {
+    workflowName = lang === 'de' ? `Mediations-Assistent: ${subtask.title}` : `Mediation Assistant: ${subtask.title}`;
+    workflowDescription = lang === 'de'
+      ? `Intelligenter Workflow für strukturierte Konfliktlösung: ${subtask.title}`
+      : `Intelligent workflow for structured conflict resolution: ${subtask.title}`;
+    nodes = ['Conflict Detection', 'Guide Creation', 'Meeting Scheduling', 'Follow-up'];
+    integrations.push('Google Docs', 'Google Calendar', 'Gmail', 'Slack');
+  } else if (titleLower.includes('gespräch')) {
+    workflowName = lang === 'de' ? `Gesprächs-Coach: ${subtask.title}` : `Conversation Coach: ${subtask.title}`;
+    workflowDescription = lang === 'de'
+      ? `KI-gestützter Workflow für effektive Gesprächsführung: ${subtask.title}`
+      : `AI-powered workflow for effective conversation management: ${subtask.title}`;
+    nodes = ['Conversation Setup', 'Guide Generation', 'Meeting Management', 'Outcome Tracking'];
+    integrations.push('Google Docs', 'Google Calendar', 'Gmail', 'Slack');
   } else {
     // Generic workflow
-    workflowName = lang === 'de' ? `${subtask.title} - Automatisierung` : `${subtask.title} - Automation`;
+    workflowName = lang === 'de' ? `Smart-Workflow: ${subtask.title}` : `Smart Workflow: ${subtask.title}`;
     workflowDescription = lang === 'de'
-      ? `Automatisierter Workflow für: ${subtask.title}`
-      : `Automated workflow for: ${subtask.title}`;
+      ? `Intelligenter Workflow für optimierte Prozesse: ${subtask.title}`
+      : `Intelligent workflow for optimized processes: ${subtask.title}`;
     nodes = systems.length > 0 
-      ? [...systems.slice(0, 3), 'Automation', 'Notification']
+      ? [...systems.slice(0, 3), 'Processing', 'Notification']
       : ['Webhook', 'Processing', 'Database', 'Notification'];
     integrations.push(...(systems.slice(0, 3) || ['n8n', 'Zapier']));
   }
   
   return {
-    id: `fallback-${subtask.id}-${Date.now()}`,
+    id: `fallback-v2-${subtask.id}-${Date.now()}`,
     name: workflowName,
     description: workflowDescription,
     timeSavings: subtask.estimatedTime * subtask.automationPotential,
@@ -119,22 +154,20 @@ export const TopSubtasksSection: React.FC<TopSubtasksSectionProps> = ({
       // Generate for top 3 subtasks only (to avoid rate limits)
       const topSubtasks = subtasks.slice(0, 3);
       
-      // Try AI generation with timeout, but don't block - use Promise.allSettled
+      // Try fast AI generation with immediate fallback
       const aiPromises = topSubtasks.map(async (subtask) => {
         try {
-          console.log(`🎨 [TopSubtasksSection] Generating AI blueprint for: "${subtask.title}"`);
-          const aiBlueprint = await generateBlueprintForSubtask(subtask, lang, 3000); // 3 second timeout
-          if (aiBlueprint) {
-            console.log(`✅ [TopSubtasksSection] Generated AI blueprint: "${aiBlueprint.name}"`);
-            return { subtaskId: subtask.id, blueprint: aiBlueprint };
-          }
+          console.log(`⚡ [TopSubtasksSection] Fast generating workflow for: "${subtask.title}"`);
+          const aiBlueprint = await generateWorkflowFast(subtask, lang);
+          console.log(`✅ [TopSubtasksSection] Generated workflow: "${aiBlueprint.name}"`);
+          return { subtaskId: subtask.id, blueprint: aiBlueprint };
         } catch (error) {
-          console.warn(`⚠️ [TopSubtasksSection] AI generation failed for "${subtask.title}":`, error.message);
+          console.warn(`⚠️ [TopSubtasksSection] Fast generation failed for "${subtask.title}":`, error.message);
+          // Fallback
+          const fallbackBlueprint = createFallbackBlueprint(subtask, lang);
+          console.log(`📦 [TopSubtasksSection] Created fallback blueprint for "${subtask.title}"`);
+          return { subtaskId: subtask.id, blueprint: fallbackBlueprint };
         }
-        // Fallback
-        const fallbackBlueprint = createFallbackBlueprint(subtask, lang);
-        console.log(`📦 [TopSubtasksSection] Created fallback blueprint for "${subtask.title}"`);
-        return { subtaskId: subtask.id, blueprint: fallbackBlueprint };
       });
       
       // Wait for all AI attempts to complete (or timeout)

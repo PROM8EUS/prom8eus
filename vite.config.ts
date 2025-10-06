@@ -31,7 +31,7 @@ export default defineConfig({
             './src/components/ui/EnhancedBlueprintCard.tsx',
             './src/components/ui/WorkflowTabSkeleton.tsx',
             './src/lib/workflowMatcher.ts',
-            './src/lib/blueprintGenerator.ts'
+            './src/lib/workflowGenerator.ts'
           ],
           'agent-features': [
             './src/components/tabs/AgentTab.tsx',

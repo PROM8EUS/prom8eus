@@ -610,59 +610,158 @@ function extractTitle(taskInput: string): string {
 }
 
 function generateFallbackSubtasks(task: EnhancedTask): EnhancedSubtask[] {
-  return [
+  // Generate specific subtasks based on task category and content
+  const taskTitle = task.title.toLowerCase();
+  const taskDescription = task.description.toLowerCase();
+  
+  // Category-specific subtask patterns
+  const categoryPatterns = {
+    'finanzen': [
+      {
+        title: 'Budgetvorgaben definieren und Kostenstellen strukturieren',
+        description: 'Festlegung von Budgetrichtlinien und Aufbau der Kostenstellenstruktur',
+        systems: ['ERP-Systeme', 'Budget-Tools', 'Finanzplanung'],
+        automationPotential: 0.7,
+        manualHoursShare: 0.25
+      },
+      {
+        title: 'Monatliche Ist-Kosten erfassen und Soll-Ist-Abweichungen analysieren',
+        description: 'Datenerfassung und Abweichungsanalyse für Budgetkontrolle',
+        systems: ['Buchhaltungssysteme', 'Analytics-Tools', 'Reporting'],
+        automationPotential: 0.8,
+        manualHoursShare: 0.4
+      },
+      {
+        title: 'Budget-Reporting erstellen und Stakeholder informieren',
+        description: 'Erstellung von Berichten und Kommunikation mit Verantwortlichen',
+        systems: ['Reporting-Tools', 'Dashboard-Systeme', 'Kommunikation'],
+        automationPotential: 0.6,
+        manualHoursShare: 0.35
+      }
+    ],
+    'marketing': [
+      {
+        title: 'Marktanalyse durchführen und Zielgruppen identifizieren',
+        description: 'Recherche und Analyse von Marktdaten und Zielgruppen',
+        systems: ['Analytics-Tools', 'CRM-Systeme', 'Marktforschung'],
+        automationPotential: 0.7,
+        manualHoursShare: 0.3
+      },
+      {
+        title: 'Kampagnenstrategie entwickeln und Kanäle auswählen',
+        description: 'Strategische Planung und Kanalauswahl für Marketingkampagnen',
+        systems: ['Marketing-Tools', 'Planungssoftware', 'Kreativ-Tools'],
+        automationPotential: 0.5,
+        manualHoursShare: 0.35
+      },
+      {
+        title: 'Kampagnenausführung überwachen und Performance messen',
+        description: 'Monitoring und Performance-Analyse der Marketingaktivitäten',
+        systems: ['Analytics-Dashboards', 'Tracking-Tools', 'Reporting'],
+        automationPotential: 0.8,
+        manualHoursShare: 0.35
+      }
+    ],
+    'hr': [
+      {
+        title: 'Stellenausschreibungen erstellen und Kanäle bespielen',
+        description: 'Entwicklung von Job-Postings und Verteilung auf Recruiting-Kanäle',
+        systems: ['ATS-Systeme', 'Job-Portale', 'Social Media'],
+        automationPotential: 0.6,
+        manualHoursShare: 0.3
+      },
+      {
+        title: 'Bewerbungen sichten und Kandidaten vorauswählen',
+        description: 'Erstbewertung von Bewerbungen und Vorauswahl geeigneter Kandidaten',
+        systems: ['ATS-Systeme', 'AI-Screening', 'Bewertungstools'],
+        automationPotential: 0.7,
+        manualHoursShare: 0.4
+      },
+      {
+        title: 'Interviews führen und Entscheidungen treffen',
+        description: 'Durchführung von Vorstellungsgesprächen und finale Kandidatenauswahl',
+        systems: ['Interview-Tools', 'Bewertungssysteme', 'Kommunikation'],
+        automationPotential: 0.3,
+        manualHoursShare: 0.3
+      }
+    ],
+    'vertrieb': [
+      {
+        title: 'Lead-Generierung und Qualifizierung durchführen',
+        description: 'Gewinnung und Erstqualifizierung von Verkaufschancen',
+        systems: ['CRM-Systeme', 'Marketing-Automation', 'Lead-Scoring'],
+        automationPotential: 0.7,
+        manualHoursShare: 0.3
+      },
+      {
+        title: 'Kundenberatung und Angebotserstellung',
+        description: 'Beratungsgespräche führen und maßgeschneiderte Angebote erstellen',
+        systems: ['CRM-Systeme', 'CPQ-Tools', 'Kommunikation'],
+        automationPotential: 0.5,
+        manualHoursShare: 0.4
+      },
+      {
+        title: 'Vertragsverhandlung und Abschlussabwicklung',
+        description: 'Verhandlungen führen und Vertragsabschlüsse abwickeln',
+        systems: ['Vertragsmanagement', 'E-Signature', 'CRM-Systeme'],
+        automationPotential: 0.6,
+        manualHoursShare: 0.3
+      }
+    ]
+  };
+
+  // Determine category based on task content
+  let selectedPattern = null;
+  for (const [category, pattern] of Object.entries(categoryPatterns)) {
+    if (taskTitle.includes(category) || taskDescription.includes(category) || 
+        task.category?.toLowerCase().includes(category)) {
+      selectedPattern = pattern;
+      break;
+    }
+  }
+
+  // Use specific pattern or create generic but more specific subtasks
+  const subtaskTemplates = selectedPattern || [
     {
-      id: `${task.id}-planning`,
-      title: 'Aufgabe planen und strukturieren',
-      description: 'Planung und Strukturierung der Aufgabe',
-      parentTaskId: task.id,
-      systems: ['Planning Tools', 'Documentation'],
-      manualHoursShare: 0.2,
+      title: 'Anforderungsanalyse und Zieldefinition',
+      description: 'Analyse der Anforderungen und Definition klarer Ziele',
+      systems: ['Analytics-Tools', 'Dokumentation', 'Planungstools'],
       automationPotential: 0.6,
-      complexity: 'medium',
-      risks: ['Unvollständige Planung'],
-      assumptions: ['Klare Anforderungen'],
-      kpis: ['Planungsqualität', 'Zeitplan-Einhaltung'],
-      qualityGates: ['Plan genehmigt', 'Ressourcen zugewiesen'],
-      dependencies: [],
-      estimatedTime: 60,
-      priority: 'high'
+      manualHoursShare: 0.25
     },
     {
-      id: `${task.id}-execution`,
-      title: 'Aufgabe ausführen',
-      description: 'Ausführung der Hauptaufgabe',
-      parentTaskId: task.id,
-      systems: ['Execution Tools', 'Workflow'],
-      manualHoursShare: 0.5,
-      automationPotential: 0.8,
-      complexity: task.complexity,
-      risks: ['Ausführungsfehler', 'Qualitätsprobleme'],
-      assumptions: ['Verfügbare Tools', 'Klare Anweisungen'],
-      kpis: ['Ausführungsqualität', 'Zeitplan-Einhaltung'],
-      qualityGates: ['Ergebnis validiert', 'Qualitätskriterien erfüllt'],
-      dependencies: [`${task.id}-planning`],
-      estimatedTime: 240,
-      priority: 'critical'
-    },
-    {
-      id: `${task.id}-evaluation`,
-      title: 'Ergebnisse evaluieren',
-      description: 'Evaluation und Dokumentation der Ergebnisse',
-      parentTaskId: task.id,
-      systems: ['Analytics', 'Documentation'],
-      manualHoursShare: 0.3,
+      title: 'Prozessdesign und Workflow-Entwicklung',
+      description: 'Entwicklung von Prozessen und Arbeitsabläufen',
+      systems: ['Workflow-Tools', 'Prozessmanagement', 'Design-Tools'],
       automationPotential: 0.7,
-      complexity: 'medium',
-      risks: ['Fehlende Dokumentation', 'Unvollständige Evaluation'],
-      assumptions: ['Performance-Daten verfügbar'],
-      kpis: ['Dokumentationsqualität', 'Evaluation-Vollständigkeit'],
-      qualityGates: ['Dokumentation erstellt', 'Ergebnisse validiert'],
-      dependencies: [`${task.id}-execution`],
-      estimatedTime: 90,
-      priority: 'medium'
+      manualHoursShare: 0.4
+    },
+    {
+      title: 'Implementierung und Qualitätssicherung',
+      description: 'Umsetzung der Lösung und Sicherstellung der Qualität',
+      systems: ['Implementierungs-Tools', 'Testing-Systeme', 'Monitoring'],
+      automationPotential: 0.8,
+      manualHoursShare: 0.35
     }
   ];
+
+  return subtaskTemplates.map((template, index) => ({
+    id: `${task.id}-${index + 1}`,
+    title: template.title,
+    description: template.description,
+    parentTaskId: task.id,
+    systems: template.systems,
+    manualHoursShare: template.manualHoursShare,
+    automationPotential: template.automationPotential,
+    complexity: task.complexity || 'medium',
+    risks: ['Qualitätsrisiken', 'Zeitverzögerungen'],
+    assumptions: ['Verfügbare Ressourcen', 'Klare Anforderungen'],
+    kpis: ['Qualitätskriterien', 'Zeitplan-Einhaltung'],
+    qualityGates: ['Qualitätsprüfung', 'Freigabe'],
+    dependencies: index > 0 ? [`${task.id}-${index}`] : [],
+    estimatedTime: Math.round(template.manualHoursShare * 400), // Base 400h per task
+    priority: index === 0 ? 'high' : index === subtaskTemplates.length - 1 ? 'medium' : 'critical'
+  }));
 }
 
 function customizeAutomationPotential(basePotential: number, taskSystems: string[], templateSystems: string[]): number {

@@ -25,6 +25,10 @@ const LLMTab = lazy(() => import('./tabs/LLMTab'));
 interface ExpandedSolutionTabsProps {
   subtask: DynamicSubtask | null;
   lang?: 'de' | 'en';
+  generatedWorkflows?: any[]; // NEW: Generated workflows from TaskPanel
+  isGeneratingInitial?: boolean; // NEW: Initial generation state
+  onLoadMore?: () => void; // NEW: Load more workflows
+  isLoadingMore?: boolean; // NEW: Loading state for more workflows
   onWorkflowSelect?: (workflow: unknown) => void;
   onWorkflowDownload?: (workflow: unknown) => void;
   onWorkflowSetup?: (workflow: unknown) => void;
@@ -52,6 +56,10 @@ interface TabInfo {
 
 export function ExpandedSolutionTabs({
   subtask,
+  generatedWorkflows = [],
+  isGeneratingInitial = false,
+  onLoadMore,
+  isLoadingMore = false,
   lang = 'de',
   onWorkflowSelect,
   onWorkflowDownload,
@@ -71,7 +79,11 @@ export function ExpandedSolutionTabs({
     llms: 0
   });
   const [isPreloading, setIsPreloading] = useState(true);
-  const [tabPositions, setTabPositions] = useState<Record<TabType, { left: number; width: number }>>({});
+  const [tabPositions, setTabPositions] = useState<Record<TabType, { left: number; width: number }>>({
+    workflows: { left: 0, width: 0 },
+    agents: { left: 0, width: 0 },
+    llms: { left: 0, width: 0 }
+  });
 
   // Estimate tab counts based on subtask properties (no API calls)
   useEffect(() => {
@@ -348,6 +360,10 @@ export function ExpandedSolutionTabs({
           <Suspense fallback={<LoadingFallback />}>
             <WorkflowTab
               {...commonProps}
+              generatedWorkflows={generatedWorkflows}
+              isGeneratingInitial={isGeneratingInitial}
+              onLoadMore={onLoadMore}
+              isLoadingMore={isLoadingMore}
               onWorkflowSelect={onWorkflowSelect}
               onDownloadRequest={onWorkflowDownload}
               onSetupRequest={onWorkflowSetup}
@@ -383,11 +399,11 @@ export function ExpandedSolutionTabs({
   // Always show tabs, even when no subtask is selected
 
   return (
-    <Card className={`shadow-sm ${className}`}>
+    <Card className={`shadow-sm relative z-10 ${className}`}>
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           {/* Enhanced TabsList with modern styling */}
-          <div className="bg-gray-50 p-2 rounded-lg relative">
+          <div className="bg-gray-50 p-2 rounded-lg relative z-10">
             {/* Animated background */}
             {tabPositions[activeTab] && (
               <div

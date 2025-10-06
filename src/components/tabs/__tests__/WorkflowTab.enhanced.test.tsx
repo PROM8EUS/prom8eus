@@ -14,7 +14,7 @@ jest.mock('@/lib/workflowMatcher', () => ({
   matchWorkflowsWithFallback: jest.fn().mockResolvedValue([])
 }));
 
-jest.mock('@/lib/blueprintGenerator', () => ({
+jest.mock('@/lib/workflowGenerator', () => ({
   generateBlueprintWithFallback: jest.fn().mockResolvedValue({})
 }));
 
