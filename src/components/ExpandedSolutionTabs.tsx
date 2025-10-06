@@ -408,11 +408,11 @@ export function ExpandedSolutionTabs({
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           {/* Enhanced TabsList with modern styling */}
-          <div className="bg-gray-50 p-2 rounded-lg relative z-10">
+          <div className="bg-purple-50 p-2 rounded-lg relative z-10">
             {/* Animated background */}
             {tabPositions[activeTab] && (
               <div
-                className="absolute top-2 bottom-2 bg-white rounded-lg shadow-sm transition-all duration-300 ease-out z-0"
+                className="absolute top-2 bottom-2 bg-purple-100 rounded-lg shadow-sm transition-all duration-300 ease-out z-0"
                 style={{
                   left: `${tabPositions[activeTab].left}px`,
                   width: `${tabPositions[activeTab].width}px`,

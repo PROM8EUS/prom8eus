@@ -139,12 +139,13 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
   const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
   const hasLoadedSolutions = useRef(false);
 
-  // Generate subtasks when task becomes visible - WITH DEBOUNCING
+  // Generate subtasks when task becomes visible - OPTIMIZED FOR IMMEDIATE LOADING
   useEffect(() => {
-    if (isVisible && task) {
+    if (task) {
       const taskText = task.title || task.name || task.description || '';
-      // Always generate subtasks if we don't have any yet (either from task or generated)
-      if (taskText && !isGenerating && generatedSubtasks.length === 0) {
+      // Generate subtasks if we don't have any yet (either from task or generated)
+      // This ensures all tasks have subtasks, even if the analysis didn't generate them
+      if (taskText && !isGenerating && generatedSubtasks.length === 0 && (!task.subtasks || task.subtasks.length === 0)) {
         console.log('🔄 [TaskPanel] Generating subtasks for:', taskText);
         setIsGenerating(true);
         
@@ -162,9 +163,10 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
         }
         (window as any).subtaskGenerationInProgress.add(taskId);
         
+        // Start generation immediately without waiting
         const generateSubtasks = async () => {
           try {
-            // 0) Try cache per analysis first
+            // 0) Try cache per analysis first - IMMEDIATE LOADING
             const cached = await getCachedSubtasksForText(taskText);
             if (cached && cached.length > 0) {
               console.log('✅ [TaskPanel] Using cached subtasks:', cached.length);
@@ -174,10 +176,20 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
               return;
             }
             
-            // 1) Try AI-powered generation first if available
+            // If no cache, show loading state immediately
+            console.log('⏳ [TaskPanel] No cache found, generating new subtasks...');
+            
+            // 1) Try AI-powered generation first if available - WITH TIMEOUT
             if (isOpenAIAvailable()) {
               console.log('🤖 [TaskPanel] Using AI for subtask generation...');
-              const aiResult = await generateSubtasksWithAI(taskText, lang);
+              
+              // Set a timeout for AI generation to prevent hanging
+              const aiGenerationPromise = generateSubtasksWithAI(taskText, lang);
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('AI generation timeout')), 10000)
+              );
+              
+              const aiResult = await Promise.race([aiGenerationPromise, timeoutPromise]) as any;
               
               if (aiResult.aiEnabled && aiResult.subtasks.length > 0) {
                 console.log('✅ [TaskPanel] AI generated subtasks:', aiResult.subtasks.length);
@@ -218,7 +230,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
         generateSubtasks();
       }
     }
-  }, [isVisible, task, lang, isGenerating, generatedSubtasks.length]);
+  }, [task, task?.subtasks?.length, lang, isGenerating, generatedSubtasks.length]);
   
   // Use real subtasks from task prop or generated subtasks
   const realSubtasks = useMemo(() => {
@@ -230,7 +242,7 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
     });
     
     if (task?.subtasks && task.subtasks.length > 0) {
-      console.log('✅ [TaskPanel] Using real subtasks from task prop:', task.subtasks.length);
+      console.log('✅ [TaskPanel] Using real subtasks from task prop (IMMEDIATE):', task.subtasks.length);
       const mapped = task.subtasks.map(subtask => ({
         id: subtask.id || `subtask-${Math.random().toString(36).substr(2, 9)}`,
         title: subtask.title || 'Unbekannte Teilaufgabe',
@@ -251,10 +263,29 @@ function TaskPanelContent({ task, lang = 'de', isVisible = false, onWorkflowsGen
     } else {
       console.log('⏳ [TaskPanel] Subtasks are being generated, showing loading state');
       
-      // Return empty array to show loading state instead of fallback
+      // Return optimistic loading subtasks to show immediate feedback
+      if (isGenerating) {
+        return [
+          {
+            id: 'loading-1',
+            title: 'Lade Teilaufgaben...',
+            systems: [],
+            aiTools: [],
+            selectedTools: [],
+            manualHoursShare: 0.5,
+            automationPotential: 0.5,
+            risks: [],
+            assumptions: [],
+            kpis: [],
+            qualityGates: []
+          }
+        ];
+      }
+      
+      // Return empty array if not generating - this will trigger subtask generation
       return [];
     }
-  }, [task?.subtasks, generatedSubtasks]);
+  }, [task?.subtasks?.length, generatedSubtasks, isGenerating]);
 
   // Preload workflows when task panel becomes visible
   useEffect(() => {

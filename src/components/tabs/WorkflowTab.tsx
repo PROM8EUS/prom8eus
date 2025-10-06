@@ -22,11 +22,13 @@ import {
   Plus,
   Search,
   Filter,
+  ListFilter,
   RefreshCw
 } from 'lucide-react';
 import { DynamicSubtask, UnifiedWorkflow } from '@/lib/types';
 import { UnifiedSolutionCard } from '@/components/UnifiedSolutionCard';
 import { clearAllWorkflowCaches } from '@/lib/workflowGenerator';
+import FilterBar from '@/components/FilterBar';
 
 type WorkflowTabProps = {
   subtask: DynamicSubtask | null;
@@ -61,22 +63,10 @@ export default function WorkflowTab({
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [complexityFilter, setComplexityFilter] = useState<string>('all');
-  const [sourceFilter, setSourceFilter] = useState<string>('ai-generated'); // Default to AI-generated only
   const [sortBy, setSortBy] = useState<string>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Get available sources from workflows
-  const getAvailableSources = (workflows: UnifiedWorkflow[]): string[] => {
-    const sources = new Set<string>();
-    workflows.forEach(workflow => {
-      if (workflow.isAIGenerated) {
-        sources.add('ai-generated');
-      } else {
-        sources.add(workflow.source || 'unknown');
-      }
-    });
-    return Array.from(sources).sort();
-  };
 
   // Load workflows when subtask changes OR when generatedWorkflows change
   useEffect(() => {
@@ -101,25 +91,18 @@ export default function WorkflowTab({
       let filteredWorkflows = generatedWorkflows;
       
       if (subtask && subtask.id !== 'all') {
-        // Filter workflows that match the selected subtask and source filter
+        // Filter workflows that match the selected subtask
         filteredWorkflows = generatedWorkflows.filter(w => {
-          // Apply source filter first
-          const matchesSource = sourceFilter === 'all' || w.source === sourceFilter || 
-                               (sourceFilter === 'ai-generated' && w.isAIGenerated);
-          
           // Apply subtask-specific filtering
           const matchesSubtask = w.source === 'ai-generated' && w.isAIGenerated;
           
-          return matchesSource && matchesSubtask;
+          return matchesSubtask;
         });
-        console.log(`🎯 [WorkflowTab] Filtered workflows for subtask "${subtask.title}" with source "${sourceFilter}":`, filteredWorkflows.length);
+        console.log(`🎯 [WorkflowTab] Filtered workflows for subtask "${subtask.title}":`, filteredWorkflows.length);
       } else {
-        // Apply only source filter when showing all workflows
-        filteredWorkflows = generatedWorkflows.filter(w => {
-          return sourceFilter === 'all' || w.source === sourceFilter || 
-                 (sourceFilter === 'ai-generated' && w.isAIGenerated);
-        });
-        console.log(`🎯 [WorkflowTab] Showing workflows with source "${sourceFilter}":`, filteredWorkflows.length);
+        // Show all workflows when no specific subtask is selected
+        filteredWorkflows = generatedWorkflows;
+        console.log(`🎯 [WorkflowTab] Showing all workflows:`, filteredWorkflows.length);
       }
       
       // Deduplicate workflows by ID
@@ -137,18 +120,12 @@ export default function WorkflowTab({
       setIsLoading(false); // Stop loading when workflows are ready
       onUpdateCount?.(deduplicatedWorkflows.length);
 
-      // Auto-adjust source filter if current filter has no results
-      const availableSources = getAvailableSources(deduplicatedWorkflows);
-      if (sourceFilter !== 'all' && !availableSources.includes(sourceFilter)) {
-        console.log(`🔄 [WorkflowTab] Source filter "${sourceFilter}" has no results, switching to "all"`);
-        setSourceFilter('all');
-      }
     } else {
       // Show loading state when no workflows are available yet
       setIsLoading(true);
       console.log('⏳ [WorkflowTab] No workflows available yet, showing loading state');
     }
-  }, [subtask, generatedWorkflows, isGeneratingInitial, sourceFilter]);
+  }, [subtask, generatedWorkflows, isGeneratingInitial]);
 
   // Filter and sort workflows based on search and filter criteria
   useEffect(() => {
@@ -268,125 +245,56 @@ export default function WorkflowTab({
             }
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.location.reload()}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
-        </Button>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center gap-4">
-          {/* Search Input */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={lang === 'de' ? 'Workflows durchsuchen...' : 'Search workflows...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          
-          {/* Filters */}
-          <div className="flex items-center gap-3">
-            <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="h-9 w-40">
-                <SelectValue placeholder={lang === 'de' ? 'Quelle' : 'Source'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-3 w-3 text-gray-500" />
-                    {lang === 'de' ? 'Alle Quellen' : 'All Sources'}
-                  </div>
-                </SelectItem>
-                {getAvailableSources(generatedWorkflows).map(source => (
-                  <SelectItem key={source} value={source}>
-                    <div className="flex items-center gap-2">
-                      {source === 'ai-generated' ? (
-                        <>
-                          <Sparkles className="h-3 w-3 text-purple-500" />
-                          {lang === 'de' ? 'AI-Generiert' : 'AI Generated'}
-                        </>
-                      ) : source === 'github' ? (
-                        <>
-                          <Workflow className="h-3 w-3 text-gray-600" />
-                          GitHub
-                        </>
-                      ) : source === 'n8n.io' ? (
-                        <>
-                          <Workflow className="h-3 w-3 text-blue-600" />
-                          n8n.io
-                        </>
-                      ) : (
-                        <>
-                          <Workflow className="h-3 w-3 text-gray-500" />
-                          {source}
-                        </>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={complexityFilter} onValueChange={setComplexityFilter}>
-              <SelectTrigger className="h-9 w-32">
-                <SelectValue placeholder={lang === 'de' ? 'Komplexität' : 'Complexity'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{lang === 'de' ? 'Alle' : 'All'}</SelectItem>
-                <SelectItem value="Low">{lang === 'de' ? 'Einfach' : 'Low'}</SelectItem>
-                <SelectItem value="Medium">{lang === 'de' ? 'Mittel' : 'Medium'}</SelectItem>
-                <SelectItem value="High">{lang === 'de' ? 'Schwer' : 'High'}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-9 w-32">
-                <SelectValue placeholder={lang === 'de' ? 'Sortieren' : 'Sort'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="title">{lang === 'de' ? 'Titel' : 'Title'}</SelectItem>
-                <SelectItem value="complexity">{lang === 'de' ? 'Komplexität' : 'Complexity'}</SelectItem>
-                <SelectItem value="timeSavings">{lang === 'de' ? 'Zeitersparnis' : 'Time Savings'}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            >
-              {sortOrder === 'asc' ? '↑' : '↓'}
-            </Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.reload()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <ListFilter className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        {lang === 'de' 
-          ? `${filteredWorkflows.length} Workflow${filteredWorkflows.length !== 1 ? 's' : ''} gefunden`
-          : `${filteredWorkflows.length} workflow${filteredWorkflows.length !== 1 ? 's' : ''} found`
-        }
-        {sourceFilter !== 'all' && (
-          <span className="ml-2 text-gray-500">
-            {lang === 'de' 
-              ? `(Quelle: ${sourceFilter === 'ai-generated' ? 'AI-Generiert' : sourceFilter})`
-              : `(Source: ${sourceFilter === 'ai-generated' ? 'AI Generated' : sourceFilter})`
+      {/* Search and Filter Bar */}
+      {showFilters && (
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder={lang === 'de' ? 'Workflows durchsuchen...' : 'Search workflows...'}
+          filters={[
+            {
+              label: lang === 'de' ? 'Komplexität' : 'Complexity',
+              value: complexityFilter,
+              options: [
+                { value: 'all', label: lang === 'de' ? 'Alle' : 'All' },
+                { value: 'Low', label: lang === 'de' ? 'Einfach' : 'Low' },
+                { value: 'Medium', label: lang === 'de' ? 'Mittel' : 'Medium' },
+                { value: 'High', label: lang === 'de' ? 'Schwer' : 'High' }
+              ],
+              onValueChange: setComplexityFilter
             }
-          </span>
-        )}
-      </div>
+          ]}
+          sortBy={sortBy}
+          sortOptions={[
+            { value: 'title', label: lang === 'de' ? 'Titel' : 'Title' },
+            { value: 'complexity', label: lang === 'de' ? 'Komplexität' : 'Complexity' },
+            { value: 'timeSavings', label: lang === 'de' ? 'Zeitersparnis' : 'Time Savings' }
+          ]}
+          onSortByChange={setSortBy}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          lang={lang}
+        />
+      )}
 
       {/* Workflows Grid */}
       <div className="grid grid-cols-1 gap-6">

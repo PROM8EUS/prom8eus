@@ -682,7 +682,7 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       </div>
                     )}
                     
-                    {/* TaskPanel - New Structured Layout */}
+                    {/* TaskPanel - New Structured Layout - Preload subtasks */}
                     <TaskPanel 
                       task={task}
                       lang={lang}

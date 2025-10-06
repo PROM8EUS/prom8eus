@@ -13,7 +13,7 @@ const Header = ({ showBack = false }: HeaderProps) => {
   const lang = resolveLang(searchParams.get("lang") || undefined);
 
   return (
-    <header className="absolute lg:fixed top-0 left-0 right-0 z-50 px-6 py-6 pointer-events-none">
+    <header className="absolute custom-xl:fixed top-0 left-0 right-0 z-50 px-6 py-6 pointer-events-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Left side - Back button or Logo */}
         {showBack ? (

@@ -24,6 +24,9 @@ export default {
 			}
 		},
 		extend: {
+			screens: {
+				'custom-xl': '1330px',
+			},
 			fontFamily: {
 				sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
 			},

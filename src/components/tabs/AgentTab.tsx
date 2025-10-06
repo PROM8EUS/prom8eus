@@ -16,6 +16,7 @@ import {
   Sparkles,
   Search,
   Filter,
+  ListFilter,
   RefreshCw,
   AlertCircle,
   CheckCircle,
@@ -29,6 +30,7 @@ import { GeneratedAgent } from '@/lib/services/agentGenerator';
 import { generateAgentWithFallback } from '@/lib/services/agentGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
+import FilterBar from '@/components/FilterBar';
 
 type AgentTabProps = {
   subtask: DynamicSubtask | null;
@@ -53,8 +55,10 @@ export default function AgentTab({
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'experience' | 'availability'>('relevance');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filterTechnology, setFilterTechnology] = useState<string>('all');
   const [filterComplexity, setFilterComplexity] = useState<'all' | 'Low' | 'Medium' | 'High'>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load agents when subtask changes
   useEffect(() => {
@@ -285,54 +289,69 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
             }
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <ListFilter className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder={lang === 'de' ? 'Agenten durchsuchen...' : 'Search agents...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <select
-            value={filterTechnology}
-            onChange={(e) => setFilterTechnology(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">{lang === 'de' ? 'Alle Technologien' : 'All Technologies'}</option>
-            <option value="Python">Python</option>
-            <option value="Node.js">Node.js</option>
-            <option value="JavaScript">JavaScript</option>
-            <option value="Custom">Custom</option>
-          </select>
-          
-          <select
-            value={filterComplexity}
-            onChange={(e) => setFilterComplexity(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">{lang === 'de' ? 'Alle Komplexität' : 'All Complexity'}</option>
-            <option value="Low">{lang === 'de' ? 'Niedrig' : 'Low'}</option>
-            <option value="Medium">{lang === 'de' ? 'Mittel' : 'Medium'}</option>
-            <option value="High">{lang === 'de' ? 'Hoch' : 'High'}</option>
-          </select>
-        </div>
-      </div>
+      {showFilters && (
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder={lang === 'de' ? 'Agenten durchsuchen...' : 'Search agents...'}
+          filters={[
+            {
+              label: lang === 'de' ? 'Technologie' : 'Technology',
+              value: filterTechnology,
+              options: [
+                { value: 'all', label: lang === 'de' ? 'Alle Technologien' : 'All Technologies' },
+                { value: 'Python', label: 'Python' },
+                { value: 'Node.js', label: 'Node.js' },
+                { value: 'JavaScript', label: 'JavaScript' },
+                { value: 'Custom', label: 'Custom' }
+              ],
+              onValueChange: setFilterTechnology
+            },
+            {
+              label: lang === 'de' ? 'Komplexität' : 'Complexity',
+              value: filterComplexity,
+              options: [
+                { value: 'all', label: lang === 'de' ? 'Alle Komplexität' : 'All Complexity' },
+                { value: 'Low', label: lang === 'de' ? 'Niedrig' : 'Low' },
+                { value: 'Medium', label: lang === 'de' ? 'Mittel' : 'Medium' },
+                { value: 'High', label: lang === 'de' ? 'Hoch' : 'High' }
+              ],
+              onValueChange: setFilterComplexity
+            }
+          ]}
+          sortBy={sortBy}
+          sortOptions={[
+            { value: 'relevance', label: lang === 'de' ? 'Relevanz' : 'Relevance' },
+            { value: 'rating', label: lang === 'de' ? 'Bewertung' : 'Rating' },
+            { value: 'experience', label: lang === 'de' ? 'Erfahrung' : 'Experience' },
+            { value: 'availability', label: lang === 'de' ? 'Verfügbarkeit' : 'Availability' }
+          ]}
+          onSortByChange={setSortBy}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          lang={lang}
+        />
+      )}
 
       {/* Loading State */}
       {isLoading && (

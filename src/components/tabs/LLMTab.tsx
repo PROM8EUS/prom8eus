@@ -16,6 +16,7 @@ import {
   Sparkles,
   Search,
   Filter,
+  ListFilter,
   RefreshCw,
   AlertCircle,
   CheckCircle,
@@ -29,6 +30,7 @@ import { GeneratedPrompt } from '@/lib/services/promptGenerator';
 import { generatePromptVariations } from '@/lib/services/promptGenerator';
 import { cacheManager } from '@/lib/services/cacheManager';
 import { UnifiedSolutionCard, UnifiedSolutionData } from '../UnifiedSolutionCard';
+import FilterBar from '@/components/FilterBar';
 
 type LLMTabProps = {
   subtask: DynamicSubtask | null;
@@ -53,9 +55,11 @@ export default function LLMTab({
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'relevance' | 'effectiveness' | 'tokens' | 'service'>('relevance');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filterService, setFilterService] = useState<string>('all');
   const [filterStyle, setFilterStyle] = useState<'all' | 'formal' | 'creative' | 'technical'>('all');
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load prompts when subtask changes
   useEffect(() => {
@@ -277,54 +281,69 @@ export default function LLMTab({
             }
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <ListFilter className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder={lang === 'de' ? 'Prompts durchsuchen...' : 'Search prompts...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <select
-            value={filterService}
-            onChange={(e) => setFilterService(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">{lang === 'de' ? 'Alle Services' : 'All Services'}</option>
-            <option value="ChatGPT">ChatGPT</option>
-            <option value="Claude">Claude</option>
-            <option value="Gemini">Gemini</option>
-            <option value="Custom">Custom</option>
-          </select>
-          
-          <select
-            value={filterStyle}
-            onChange={(e) => setFilterStyle(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">{lang === 'de' ? 'Alle Stile' : 'All Styles'}</option>
-            <option value="formal">{lang === 'de' ? 'Formell' : 'Formal'}</option>
-            <option value="creative">{lang === 'de' ? 'Kreativ' : 'Creative'}</option>
-            <option value="technical">{lang === 'de' ? 'Technisch' : 'Technical'}</option>
-          </select>
-        </div>
-      </div>
+      {showFilters && (
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder={lang === 'de' ? 'Prompts durchsuchen...' : 'Search prompts...'}
+          filters={[
+            {
+              label: lang === 'de' ? 'Service' : 'Service',
+              value: filterService,
+              options: [
+                { value: 'all', label: lang === 'de' ? 'Alle Services' : 'All Services' },
+                { value: 'ChatGPT', label: 'ChatGPT' },
+                { value: 'Claude', label: 'Claude' },
+                { value: 'Gemini', label: 'Gemini' },
+                { value: 'Custom', label: 'Custom' }
+              ],
+              onValueChange: setFilterService
+            },
+            {
+              label: lang === 'de' ? 'Stil' : 'Style',
+              value: filterStyle,
+              options: [
+                { value: 'all', label: lang === 'de' ? 'Alle Stile' : 'All Styles' },
+                { value: 'formal', label: lang === 'de' ? 'Formell' : 'Formal' },
+                { value: 'creative', label: lang === 'de' ? 'Kreativ' : 'Creative' },
+                { value: 'technical', label: lang === 'de' ? 'Technisch' : 'Technical' }
+              ],
+              onValueChange: setFilterStyle
+            }
+          ]}
+          sortBy={sortBy}
+          sortOptions={[
+            { value: 'relevance', label: lang === 'de' ? 'Relevanz' : 'Relevance' },
+            { value: 'effectiveness', label: lang === 'de' ? 'Effektivität' : 'Effectiveness' },
+            { value: 'tokens', label: lang === 'de' ? 'Tokens' : 'Tokens' },
+            { value: 'service', label: lang === 'de' ? 'Service' : 'Service' }
+          ]}
+          onSortByChange={setSortBy}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          lang={lang}
+        />
+      )}
 
       {/* Loading State */}
       {isLoading && (
