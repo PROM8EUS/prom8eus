@@ -13,8 +13,8 @@ export interface GenerationMetadata {
   cacheKey: string;
 }
 
-// Workflow Solution Types - DEPRECATED: Use UnifiedWorkflow instead
-// WorkflowSolution interface removed - use UnifiedWorkflow from schemas/unifiedWorkflow.ts
+// NOTE: WorkflowSolution interface has been removed
+// Use UnifiedWorkflow from schemas/unifiedWorkflow.ts for all workflow operations
 
 // Re-export UnifiedWorkflow for convenience
 export { UnifiedWorkflow, WorkflowCreationContext, WorkflowSearchParams } from './schemas/unifiedWorkflow';

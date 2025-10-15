@@ -454,14 +454,6 @@ export default function LLMTab({
   );
 }
 
-// Generate example prompts when no real data is available (DEPRECATED)
-function generateExamplePrompts(lang: 'de' | 'en'): GeneratedPrompt[] {
-  // This function is deprecated and should not be used
-  // Use generateCompleteSolutionPrompts() instead
-  console.warn('⚠️ [LLMTab] generateExamplePrompts is deprecated, use specific functions instead');
-  return generateCompleteSolutionPrompts(lang);
-}
-
 // Generate complete solution prompts for "Alle (Komplettlösungen)"
 function generateCompleteSolutionPrompts(lang: 'de' | 'en'): GeneratedPrompt[] {
   const prompts: GeneratedPrompt[] = [

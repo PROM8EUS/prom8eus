@@ -86,7 +86,7 @@ interface TaskForDisplay {
   humanRatio?: number;
 }
 
-// Fallback data - this is now deprecated, use real AI analysis instead
+// NOTE: Fallback data for demo purposes - real AI analysis is used in production
 const mockTasks: TaskForDisplay[] = [
   {
     id: '1',

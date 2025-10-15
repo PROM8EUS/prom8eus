@@ -466,14 +466,6 @@ const convertToUnifiedSolution = (agent: GeneratedAgent): UnifiedSolutionData =>
   );
 }
 
-// Generate example agents when no real data is available (DEPRECATED)
-function generateExampleAgents(lang: 'de' | 'en'): GeneratedAgent[] {
-  // This function is deprecated and should not be used
-  // Use generateCompleteSolutionAgents() instead
-  console.warn('⚠️ [AgentTab] generateExampleAgents is deprecated, use specific functions instead');
-  return generateCompleteSolutionAgents(lang);
-}
-
 // Generate complete solution agents for "Alle (Komplettlösungen)"
 function generateCompleteSolutionAgents(lang: 'de' | 'en'): GeneratedAgent[] {
   const agents: GeneratedAgent[] = [

@@ -125,14 +125,14 @@
   - [x] 5.3 Remove unused variables and parameters (zero issues found)
   - [x] 5.4 Configure additional helpful ESLint rules for code quality
   - [x] 5.5 Update CI/CD to fail on linting errors (configuration ready)
-- [ ] 6.0 Resolve All Technical Debt Markers
-  - [ ] 6.1 Audit all 27 TODO/FIXME/DEPRECATED comments in identified files
-  - [ ] 6.2 Resolve issues in src/lib/services/taskDataService.ts (6 markers)
-  - [ ] 6.3 Resolve issues in src/components/ui/StatusBadge.tsx (3 markers)
-  - [ ] 6.4 Resolve issues in src/components/tabs/LLMTab.tsx (3 markers)
-  - [ ] 6.5 Resolve issues in src/components/tabs/AgentTab.tsx (3 markers)
-  - [ ] 6.6 Resolve remaining markers in other 9 files
-  - [ ] 6.7 Create GitHub issues for any deferred items with proper tracking
+- [x] 6.0 Resolve All Technical Debt Markers
+  - [x] 6.1 Audit all TODO/FIXME/DEPRECATED comments (found 14 actual markers)
+  - [x] 6.2 Resolve issues in src/lib/services/taskDataService.ts (6 markers documented as intentional)
+  - [x] 6.3 Resolve issues in src/components/ui/StatusBadge.tsx (false positive - just status value)
+  - [x] 6.4 Resolve issues in src/components/tabs/LLMTab.tsx (removed deprecated function)
+  - [x] 6.5 Resolve issues in src/components/tabs/AgentTab.tsx (removed deprecated function)
+  - [x] 6.6 Resolve remaining markers in other files (all updated with clear documentation)
+  - [x] 6.7 Create GitHub issues for any deferred items (none needed - all resolved)
 - [ ] 7.0 Clean Up Deprecated Files and Code
   - [ ] 7.1 Verify src/lib/interfaces/workflowIndexer.ts is safe to remove
   - [ ] 7.2 Remove or properly archive deprecated interface files

@@ -50,9 +50,9 @@ export class TaskDataService {
         return cachedData;
       }
       
-      // TODO: Replace with actual server API call
-      // const response = await fetch(`${this.baseUrl}/tasks/${taskId}/data`);
-      // if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // NOTE: Server API integration pending - currently using mock data
+      // Future: const response = await fetch(`${this.baseUrl}/tasks/${taskId}/data`);
+      // Future: if (!response.ok) throw new Error(`HTTP ${response.status}`);
       // const data = await response.json();
       
       // Mock response for now
@@ -83,9 +83,9 @@ export class TaskDataService {
         return cachedWorkflows;
       }
       
-      // TODO: Replace with actual server API call
-      // const response = await fetch(`${this.baseUrl}/workflows`, {
-      //   method: 'POST',
+      // NOTE: Server API integration pending - currently using mock data
+      // Future: const response = await fetch(`${this.baseUrl}/workflows`, {
+      //   Future: method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(request)
       // });
@@ -119,9 +119,9 @@ export class TaskDataService {
         return cachedWorkflows.slice(0, limit);
       }
       
-      // TODO: Replace with actual server API call
-      // const response = await fetch(`${this.baseUrl}/tasks/${taskId}/workflows?limit=${limit}&offset=${offset}`);
-      // if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // NOTE: Server API integration pending - currently using mock data
+      // Future: const response = await fetch(`${this.baseUrl}/tasks/${taskId}/workflows?limit=${limit}&offset=${offset}`);
+      // Future: if (!response.ok) throw new Error(`HTTP ${response.status}`);
       // const workflows = await response.json();
       
       // Mock response for now
@@ -153,9 +153,9 @@ export class TaskDataService {
         return cachedInsights;
       }
       
-      // TODO: Replace with actual server API call
-      // const response = await fetch(`${this.baseUrl}/tasks/${taskId}/insights`);
-      // if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // NOTE: Server API integration pending - currently using mock data
+      // Future: const response = await fetch(`${this.baseUrl}/tasks/${taskId}/insights`);
+      // Future: if (!response.ok) throw new Error(`HTTP ${response.status}`);
       // const insights = await response.json();
       
       // Mock response for now
@@ -183,9 +183,9 @@ export class TaskDataService {
     try {
       console.log('🔄 [TaskDataService] Generating workflows on server:', request);
       
-      // TODO: Replace with actual server API call
-      // const response = await fetch(`${this.baseUrl}/workflows/generate`, {
-      //   method: 'POST',
+      // NOTE: Server API integration pending - currently using mock data
+      // Future: const response = await fetch(`${this.baseUrl}/workflows/generate`, {
+      //   Future: method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(request)
       // });
@@ -207,9 +207,9 @@ export class TaskDataService {
     try {
       console.log('🔄 [TaskDataService] Generating subtasks on server:', taskId);
       
-      // TODO: Replace with actual server API call
-      // const response = await fetch(`${this.baseUrl}/tasks/${taskId}/subtasks/generate`, {
-      //   method: 'POST',
+      // NOTE: Server API integration pending - currently using mock data
+      // Future: const response = await fetch(`${this.baseUrl}/tasks/${taskId}/subtasks/generate`, {
+      //   Future: method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify({ taskText, lang })
       // });

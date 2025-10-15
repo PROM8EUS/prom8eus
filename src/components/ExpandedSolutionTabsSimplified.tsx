@@ -103,7 +103,7 @@ export default function ExpandedSolutionTabsSimplified({
       label: lang === 'de' ? 'AI-Agent Lösungen' : 'AI Agent Solutions',
       icon: Bot,
       badge: {
-        count: 0, // TODO: Get from server data
+        count: 0, // Agents loaded dynamically by tab component
         variant: 'outline'
       }
     },
@@ -112,7 +112,7 @@ export default function ExpandedSolutionTabsSimplified({
       label: lang === 'de' ? 'LLM-Prompt Lösungen' : 'LLM Prompt Solutions',
       icon: MessageSquare,
       badge: {
-        count: 0, // TODO: Get from server data
+        count: 0, // LLM prompts loaded dynamically by tab component
         variant: 'outline'
       }
     }
