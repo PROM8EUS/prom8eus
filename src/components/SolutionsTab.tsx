@@ -4,7 +4,7 @@ import SolutionCard from './SolutionCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SolutionDetailModal from './SolutionDetailModal';
 import SolutionIcon from './ui/SolutionIcon';
-import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
+import { simplifiedWorkflowIndexer } from '@/lib/workflowIndexerSimplified';
 import { rerankWorkflows } from '@/lib/aiRerank';
 import { recommendWorkflows } from '@/lib/recommendations/client';
 
@@ -199,12 +199,12 @@ export default function SolutionsTab({
       let searchParams: any = { source: 'all', limit: 1200, offset: 0 };
       const wantedCombined = new Set<string>([...Array.from(wantedTools), ...inferred.map(normalizeTool)]);
       if (wantedCombined.size > 0) searchParams.integrations = Array.from(wantedCombined);
-      let { workflows } = await unifiedWorkflowIndexer.searchWorkflows(searchParams);
+      let { workflows } = await simplifiedWorkflowIndexer.search(searchParams);
 
       // secondary fetch: query-scoped pool driven by task/subtasks
       let scoped: any[] = [];
       try {
-        const qRes = await unifiedWorkflowIndexer.searchWorkflows({ source: 'all', q, limit: 1200, offset: 0 });
+        const qRes = await simplifiedWorkflowIndexer.search({ source: 'all', query: q, limit: 1200, offset: 0 });
         scoped = qRes.workflows || [];
       } catch {}
 

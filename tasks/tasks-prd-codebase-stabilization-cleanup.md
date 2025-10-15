@@ -104,14 +104,14 @@
   - [x] 2.5 Update vite.config.ts build chunks to reference new consolidated file
   - [x] 2.6 Run comprehensive tests to ensure no functionality is lost
   - [x] 2.7 Archive old workflowGenerator.ts and workflowGeneratorUnified.ts files
-- [ ] 3.0 Consolidate Workflow Indexer Implementations
-  - [ ] 3.1 Audit features in workflowIndexerUnified.ts and workflowIndexerSimplified.ts
-  - [ ] 3.2 Choose canonical implementation (likely workflowIndexerSimplified.ts)
-  - [ ] 3.3 Port missing features to chosen implementation
-  - [ ] 3.4 Update imports in SolutionsTab.tsx, EnhancedSourcesManagement.tsx
-  - [ ] 3.5 Update vite.config.ts build configuration
-  - [ ] 3.6 Test all workflow indexing functionality
-  - [ ] 3.7 Archive old implementation files
+- [x] 3.0 Consolidate Workflow Indexer Implementations
+  - [x] 3.1 Audit features in workflowIndexerUnified.ts and workflowIndexerSimplified.ts
+  - [x] 3.2 Choose canonical implementation (workflowIndexerSimplified.ts)
+  - [x] 3.3 Port missing features to chosen implementation
+  - [x] 3.4 Update imports in SolutionsTab.tsx, EnhancedSourcesManagement.tsx
+  - [x] 3.5 Update vite.config.ts build configuration
+  - [x] 3.6 Test all workflow indexing functionality
+  - [x] 3.7 Archive old implementation files
 - [ ] 4.0 Enable TypeScript Strict Mode
   - [ ] 4.1 Enable "noImplicitAny": true and fix all resulting errors
   - [ ] 4.2 Enable "strictNullChecks": true and fix null/undefined errors

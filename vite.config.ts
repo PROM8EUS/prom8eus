@@ -49,7 +49,7 @@ export default defineConfig({
             './src/components/ui/CollapsibleSection.tsx'
           ],
           'services': [
-            './src/lib/workflowIndexerUnified.ts',
+            './src/lib/workflowIndexerSimplified.ts',
             './src/lib/trendAnalysis.ts'
           ]
         }

@@ -49,7 +49,7 @@ import {
   AgentIndex,
   isAgentIndex
 } from '@/lib/schemas/workflowIndex';
-import { unifiedWorkflowIndexer } from '@/lib/workflowIndexerUnified';
+import { simplifiedWorkflowIndexer } from '@/lib/workflowIndexerSimplified';
 import { CacheStats } from '@/lib/schemas/workflowIndex';
 import SolutionCard, { SolutionData } from './SolutionCard';
 import SolutionDetailModal from './SolutionDetailModal';
@@ -908,7 +908,7 @@ export function EnhancedSourcesManagement({ lang = 'de' }: EnhancedSourcesManage
     if (managedSource.kind !== 'workflow') return;
     setIsRefreshingSelected(true);
     try {
-      await unifiedWorkflowIndexer.forceRefreshWorkflows(managedSource.source.id);
+      await simplifiedWorkflowIndexer.refresh({ sourceId: managedSource.source.id, force: true });
       await loadSourceStats();
       await loadSourceEntries(managedSource, entriesState.page);
     } finally {
