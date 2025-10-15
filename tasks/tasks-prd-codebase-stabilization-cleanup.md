@@ -90,12 +90,12 @@
 ## Tasks
 
 - [ ] 1.0 Complete Simplified Component Migration
-  - [ ] 1.1 Update TaskList.tsx to import TaskPanelSimplified instead of TaskPanel
-  - [ ] 1.2 Test TaskPanelSimplified integration in Results page
-  - [ ] 1.3 Verify all simplified component functionality works in production scenario
-  - [ ] 1.4 Update any other imports of old TaskPanel components
-  - [ ] 1.5 Archive or delete old TaskPanel.tsx, SubtaskSidebar.tsx, ExpandedSolutionTabs.tsx
-  - [ ] 1.6 Update component documentation to reflect active components
+  - [x] 1.1 Update TaskList.tsx to import TaskPanelSimplified instead of TaskPanel
+  - [x] 1.2 Test TaskPanelSimplified integration in Results page
+  - [x] 1.3 Verify all simplified component functionality works in production scenario
+  - [x] 1.4 Update any other imports of old TaskPanel components
+  - [x] 1.5 Archive or delete old TaskPanel.tsx, SubtaskSidebar.tsx, ExpandedSolutionTabs.tsx
+  - [x] 1.6 Update component documentation to reflect active components
 - [ ] 2.0 Consolidate Workflow Generator Implementations
   - [ ] 2.1 Audit features in workflowGenerator.ts, workflowGeneratorUnified.ts, workflowGeneratorSimplified.ts
   - [ ] 2.2 Choose workflowGeneratorSimplified.ts as the canonical implementation

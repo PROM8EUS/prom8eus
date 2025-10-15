@@ -414,7 +414,7 @@ function TaskPanelContent({ task, lang, isVisible }: TaskPanelContentProps) {
 }
 
 // Main TaskPanel component with providers
-export default function TaskPanelSimplified(props: TaskPanelProps) {
+function TaskPanelSimplifiedComponent(props: TaskPanelProps) {
   return (
     <SmartDefaultsProvider>
       <ContextualHelpProvider>
@@ -423,3 +423,7 @@ export default function TaskPanelSimplified(props: TaskPanelProps) {
     </SmartDefaultsProvider>
   );
 }
+
+// Export both as default and named export for compatibility
+export default TaskPanelSimplifiedComponent;
+export { TaskPanelSimplifiedComponent as TaskPanelSimplified };

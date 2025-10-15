@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { t, translateCategory } from "@/lib/i18n/i18n";
 import { AppIcon } from './AppIcon';
 import { AITool, getToolById, getToolDescription, getToolFeatures, getToolsByIndustry, getTopToolsByIndustry } from '../lib/catalog/aiTools';
-import TaskPanel from './TaskPanel';
+import TaskPanelSimplified from './TaskPanelSimplified';
 import { AIToolRecommendations } from './AIToolRecommendations';
 import ScoreCircle from './ScoreCircle';
 import { recommendAgentsWithAI } from '../lib/aiAnalysis';
@@ -682,11 +682,10 @@ const TaskList = ({ tasks, lang = "de" }: TaskListProps) => {
                       </div>
                     )}
                     
-                    {/* TaskPanel - New Structured Layout - Preload subtasks */}
-                    <TaskPanel 
+                    {/* TaskPanelSimplified - Simplified Layout */}
+                    <TaskPanelSimplified 
                       task={task}
                       lang={lang}
-                      onOpenSolutions={() => {}}
                       isVisible={isExpanded}
                     />
                 </div>

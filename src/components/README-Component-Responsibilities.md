@@ -3,6 +3,8 @@
 ## Overview
 This document clarifies the responsibilities and boundaries of the main UI components in the task detail view.
 
+**Note**: As of January 2025, the old TaskPanel components (TaskPanel.tsx, SubtaskSidebar.tsx, ExpandedSolutionTabs.tsx) have been archived and replaced with simplified versions that are now in production.
+
 ## Component Architecture
 
 ### 1. TaskPanel (Container Component)
