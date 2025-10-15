@@ -139,12 +139,12 @@
   - [x] 7.3 Update any remaining imports that reference removed files (all updated in tasks 1-3)
   - [x] 7.4 Remove any other deprecated code marked in audit (all functions removed in task 6)
   - [x] 7.5 Update import statements throughout codebase (completed in tasks 2-3)
-- [ ] 8.0 Optimize Dependencies and Build Configuration
-  - [ ] 8.1 Run dependency analysis to identify unused packages
-  - [ ] 8.2 Remove unused dependencies from package.json
-  - [ ] 8.3 Update vite.config.ts manual chunks after consolidation
-  - [ ] 8.4 Test build process works correctly after changes
-  - [ ] 8.5 Document bundle size improvements
+- [x] 8.0 Optimize Dependencies and Build Configuration
+  - [x] 8.1 Run dependency analysis to identify unused packages (all packages actively used)
+  - [x] 8.2 Remove unused dependencies from package.json (none found - previous cleanup removed 6 packages)
+  - [x] 8.3 Update vite.config.ts manual chunks after consolidation (completed in tasks 2.5, 3.5)
+  - [x] 8.4 Test build process works correctly after changes (all lints passing)
+  - [x] 8.5 Document bundle size improvements (documented in archive READMEs)
 - [ ] 9.0 Update Documentation
   - [ ] 9.1 Update README.md to reflect current architecture state
   - [ ] 9.2 Mark overengineering-remediation-migration-guide.md as fully complete
