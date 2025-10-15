@@ -89,21 +89,21 @@
 
 ## Tasks
 
-- [ ] 1.0 Complete Simplified Component Migration
+- [x] 1.0 Complete Simplified Component Migration
   - [x] 1.1 Update TaskList.tsx to import TaskPanelSimplified instead of TaskPanel
   - [x] 1.2 Test TaskPanelSimplified integration in Results page
   - [x] 1.3 Verify all simplified component functionality works in production scenario
   - [x] 1.4 Update any other imports of old TaskPanel components
   - [x] 1.5 Archive or delete old TaskPanel.tsx, SubtaskSidebar.tsx, ExpandedSolutionTabs.tsx
   - [x] 1.6 Update component documentation to reflect active components
-- [ ] 2.0 Consolidate Workflow Generator Implementations
-  - [ ] 2.1 Audit features in workflowGenerator.ts, workflowGeneratorUnified.ts, workflowGeneratorSimplified.ts
-  - [ ] 2.2 Choose workflowGeneratorSimplified.ts as the canonical implementation
-  - [ ] 2.3 Port missing critical features from other generators to simplified version
-  - [ ] 2.4 Update all imports in components (TaskPanel.tsx, TopSubtasksSection.tsx, WorkflowTab.tsx)
-  - [ ] 2.5 Update vite.config.ts build chunks to reference new consolidated file
-  - [ ] 2.6 Run comprehensive tests to ensure no functionality is lost
-  - [ ] 2.7 Archive old workflowGenerator.ts and workflowGeneratorUnified.ts files
+- [x] 2.0 Consolidate Workflow Generator Implementations
+  - [x] 2.1 Audit features in workflowGenerator.ts, workflowGeneratorUnified.ts, workflowGeneratorSimplified.ts
+  - [x] 2.2 Choose workflowGeneratorSimplified.ts as the canonical implementation
+  - [x] 2.3 Port missing critical features from other generators to simplified version
+  - [x] 2.4 Update all imports in components (TopSubtasksSection.tsx, WorkflowTab.tsx)
+  - [x] 2.5 Update vite.config.ts build chunks to reference new consolidated file
+  - [x] 2.6 Run comprehensive tests to ensure no functionality is lost
+  - [x] 2.7 Archive old workflowGenerator.ts and workflowGeneratorUnified.ts files
 - [ ] 3.0 Consolidate Workflow Indexer Implementations
   - [ ] 3.1 Audit features in workflowIndexerUnified.ts and workflowIndexerSimplified.ts
   - [ ] 3.2 Choose canonical implementation (likely workflowIndexerSimplified.ts)

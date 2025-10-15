@@ -29,7 +29,7 @@ export default defineConfig({
           'workflow-features': [
             './src/components/tabs/WorkflowTab.tsx',
             './src/lib/workflowMatcher.ts',
-            './src/lib/workflowGenerator.ts'
+            './src/lib/workflowGeneratorSimplified.ts'
           ],
           'agent-features': [
             './src/components/tabs/AgentTab.tsx',

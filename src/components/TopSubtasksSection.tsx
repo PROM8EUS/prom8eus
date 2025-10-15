@@ -6,7 +6,7 @@ import { SubtaskCard } from './SubtaskCard';
 import { BlueprintCard, BlueprintData } from './BlueprintCard';
 import { matchWorkflowsToSubtask } from '@/lib/workflowMatcher';
 import { WorkflowIndex } from '@/lib/schemas/workflowIndex';
-import { generateWorkflowFast } from '@/lib/workflowGenerator';
+import { generateWorkflowFast } from '@/lib/workflowGeneratorSimplified';
 import { isOpenAIAvailable } from '@/lib/openai';
 
 /**

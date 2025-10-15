@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { DynamicSubtask, UnifiedWorkflow } from '@/lib/types';
 import { UnifiedSolutionCard } from '@/components/UnifiedSolutionCard';
-import { clearAllWorkflowCaches } from '@/lib/workflowGenerator';
+import { clearAllWorkflowCaches } from '@/lib/workflowGeneratorSimplified';
 import FilterBar from '@/components/FilterBar';
 import WorkflowDetailModal from '@/components/WorkflowDetailModal';
 
