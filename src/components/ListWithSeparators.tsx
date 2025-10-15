@@ -3,7 +3,7 @@ import { ListItem } from './ListItem';
 import { DynamicSubtask } from '@/lib/types';
 
 interface ListWithSeparatorsProps {
-  subtasks: DynamicSubtask[];
+  subtasks?: DynamicSubtask[];
   selectedSubtaskId?: string;
   lang?: 'de' | 'en';
   onSubtaskSelect?: (subtaskId: string) => void;
@@ -11,7 +11,7 @@ interface ListWithSeparatorsProps {
 }
 
 export const ListWithSeparators: React.FC<ListWithSeparatorsProps> = ({
-  subtasks,
+  subtasks = [],
   selectedSubtaskId,
   lang = 'de',
   onSubtaskSelect,
