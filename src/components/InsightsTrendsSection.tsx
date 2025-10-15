@@ -127,7 +127,7 @@ const InsightItem: React.FC<InsightItemProps> = ({ insight, lang }) => {
         </span>
         
         {/* Related integrations */}
-        {insight.relatedIntegrations.length > 0 && (
+        {insight.relatedIntegrations && insight.relatedIntegrations.length > 0 && (
           <div className="flex items-center gap-1 mt-1 flex-wrap">
             {insight.relatedIntegrations.slice(0, 2).map((integration, idx) => (
               <Badge 
