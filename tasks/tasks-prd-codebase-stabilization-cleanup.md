@@ -133,12 +133,12 @@
   - [x] 6.5 Resolve issues in src/components/tabs/AgentTab.tsx (removed deprecated function)
   - [x] 6.6 Resolve remaining markers in other files (all updated with clear documentation)
   - [x] 6.7 Create GitHub issues for any deferred items (none needed - all resolved)
-- [ ] 7.0 Clean Up Deprecated Files and Code
-  - [ ] 7.1 Verify src/lib/interfaces/workflowIndexer.ts is safe to remove
-  - [ ] 7.2 Remove or properly archive deprecated interface files
-  - [ ] 7.3 Update any remaining imports that reference removed files
-  - [ ] 7.4 Remove any other deprecated code marked in audit
-  - [ ] 7.5 Update import statements throughout codebase
+- [x] 7.0 Clean Up Deprecated Files and Code
+  - [x] 7.1 Verify src/lib/interfaces/workflowIndexer.ts is safe to remove (KEEP - actively used)
+  - [x] 7.2 Remove or properly archive deprecated interface files (none found - all essential)
+  - [x] 7.3 Update any remaining imports that reference removed files (all updated in tasks 1-3)
+  - [x] 7.4 Remove any other deprecated code marked in audit (all functions removed in task 6)
+  - [x] 7.5 Update import statements throughout codebase (completed in tasks 2-3)
 - [ ] 8.0 Optimize Dependencies and Build Configuration
   - [ ] 8.1 Run dependency analysis to identify unused packages
   - [ ] 8.2 Remove unused dependencies from package.json
